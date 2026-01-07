@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj" />
+    <Project Path="src/Linksoft.Wpf.CameraWall.App/Linksoft.Wpf.CameraWall.App.csproj" />
+  </Folder>
+</Solution>

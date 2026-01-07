@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- Connection States -->
+  <data name="ConnectionTimedOut" xml:space="preserve">
+    <value>Verbindungszeitüberschreitung</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>Verbunden</value>
+  </data>
+  <data name="Connecting" xml:space="preserve">
+    <value>Verbinde...</value>
+  </data>
+  <data name="Reconnecting" xml:space="preserve">
+    <value>Verbindung wird wiederhergestellt...</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>Getrennt</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Fehler</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="ConnectionSuccessful" xml:space="preserve">
+    <value>Verbindung erfolgreich</value>
+  </data>
+  <data name="FailedWithStatus1" xml:space="preserve">
+    <value>Fehlgeschlagen: {0}</value>
+  </data>
+  <!-- Context Menu -->
+  <data name="EditCamera" xml:space="preserve">
+    <value>Kamera bearbeiten...</value>
+  </data>
+  <data name="DeleteCamera" xml:space="preserve">
+    <value>Kamera löschen</value>
+  </data>
+  <data name="ShowInFullScreen" xml:space="preserve">
+    <value>Im Vollbildmodus anzeigen</value>
+  </data>
+  <data name="SwapLeft" xml:space="preserve">
+    <value>Nach links tauschen</value>
+  </data>
+  <data name="SwapRight" xml:space="preserve">
+    <value>Nach rechts tauschen</value>
+  </data>
+  <data name="TakeSnapshot" xml:space="preserve">
+    <value>Schnappschuss aufnehmen</value>
+  </data>
+  <data name="Reconnect" xml:space="preserve">
+    <value>Erneut verbinden</value>
+  </data>
+  <data name="SaveSnapshot" xml:space="preserve">
+    <value>Schnappschuss speichern</value>
+  </data>
+  <!-- Dialog Titles -->
+  <data name="AddCamera" xml:space="preserve">
+    <value>Kamera hinzufügen</value>
+  </data>
+  <data name="NewCamera" xml:space="preserve">
+    <value>Neue Kamera</value>
+  </data>
+  <data name="FullScreen" xml:space="preserve">
+    <value>Vollbild</value>
+  </data>
+  <data name="NewLayout" xml:space="preserve">
+    <value>Neues Layout</value>
+  </data>
+  <data name="DeleteLayout" xml:space="preserve">
+    <value>Layout löschen</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <!-- Status Messages -->
+  <data name="Ready" xml:space="preserve">
+    <value>Bereit</value>
+  </data>
+  <data name="AddCameraDialog" xml:space="preserve">
+    <value>Kamera hinzufügen Dialog...</value>
+  </data>
+  <data name="AddedCamera1" xml:space="preserve">
+    <value>Kamera hinzugefügt: {0}</value>
+  </data>
+  <data name="AddCameraCancelled" xml:space="preserve">
+    <value>Kamera hinzufügen abgebrochen</value>
+  </data>
+  <data name="EditingCamera1" xml:space="preserve">
+    <value>Kamera wird bearbeitet: {0}</value>
+  </data>
+  <data name="UpdatedCamera1" xml:space="preserve">
+    <value>Kamera aktualisiert: {0}</value>
+  </data>
+  <data name="EditCameraCancelled" xml:space="preserve">
+    <value>Kamera bearbeiten abgebrochen</value>
+  </data>
+  <data name="DeletedCamera1" xml:space="preserve">
+    <value>Kamera gelöscht: {0}</value>
+  </data>
+  <data name="FullScreenCamera1" xml:space="preserve">
+    <value>Vollbild: {0}</value>
+  </data>
+  <data name="RefreshingAllCameras" xml:space="preserve">
+    <value>Alle Kameras werden aktualisiert...</value>
+  </data>
+  <data name="AllCamerasRefreshed" xml:space="preserve">
+    <value>Alle Kameras aktualisiert</value>
+  </data>
+  <data name="NewLayoutCancelled" xml:space="preserve">
+    <value>Neues Layout abgebrochen</value>
+  </data>
+  <data name="LayoutCreated1" xml:space="preserve">
+    <value>Layout erstellt: {0}</value>
+  </data>
+  <data name="DeletedLayout1" xml:space="preserve">
+    <value>Layout gelöscht: {0}</value>
+  </data>
+  <data name="SetStartupLayout1" xml:space="preserve">
+    <value>Startlayout festgelegt: {0}</value>
+  </data>
+  <data name="CameraStateChanged2" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="PositionChanged1" xml:space="preserve">
+    <value>Position geändert: {0}</value>
+  </data>
+  <data name="LoadedLayout1" xml:space="preserve">
+    <value>Layout geladen: {0}</value>
+  </data>
+  <data name="LoadedCameras1" xml:space="preserve">
+    <value>{0} Kamera(s) geladen</value>
+  </data>
+  <!-- Confirmation Messages -->
+  <data name="ConfirmDeleteCamera1" xml:space="preserve">
+    <value>Sind Sie sicher, dass Sie die Kamera '{0}' löschen möchten?</value>
+  </data>
+  <data name="ConfirmDeleteLayout1" xml:space="preserve">
+    <value>Sind Sie sicher, dass Sie das Layout '{0}' löschen möchten?</value>
+  </data>
+  <data name="EnterLayoutName" xml:space="preserve">
+    <value>Geben Sie einen Namen für das neue Layout ein:</value>
+  </data>
+  <data name="FullScreenNotImplemented1" xml:space="preserve">
+    <value>Vollbildansicht für {0} wird implementiert.</value>
+  </data>
+  <!-- Validation Errors -->
+  <data name="IpAddressRequired" xml:space="preserve">
+    <value>IP-Adresse ist erforderlich</value>
+  </data>
+  <data name="IpAddressAlreadyExists" xml:space="preserve">
+    <value>Eine Kamera mit dieser IP-Adresse existiert bereits</value>
+  </data>
+  <data name="PortRangeError" xml:space="preserve">
+    <value>Port muss zwischen 1 und 65535 liegen</value>
+  </data>
+  <data name="DisplayNameRequired" xml:space="preserve">
+    <value>Anzeigename ist erforderlich</value>
+  </data>
+  <data name="DisplayNameTooLong" xml:space="preserve">
+    <value>Anzeigename darf 256 Zeichen nicht überschreiten</value>
+  </data>
+  <data name="LayoutNameAlreadyExists" xml:space="preserve">
+    <value>Ein Layout mit diesem Namen existiert bereits</value>
+  </data>
+  <!-- XAML UI Elements - Network Scanner -->
+  <data name="NetworkScannerHeader" xml:space="preserve">
+    <value>Netzwerkscanner - Kameras finden</value>
+  </data>
+  <data name="StartIp" xml:space="preserve">
+    <value>Start-IP</value>
+  </data>
+  <data name="EndIp" xml:space="preserve">
+    <value>End-IP</value>
+  </data>
+  <data name="Ports" xml:space="preserve">
+    <value>Ports</value>
+  </data>
+  <data name="Scan" xml:space="preserve">
+    <value>Scannen</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="ShowOnlyReachable" xml:space="preserve">
+    <value>Nur erreichbare anzeigen</value>
+  </data>
+  <data name="ShowOnlyWithOpenPorts" xml:space="preserve">
+    <value>Nur mit offenen Ports anzeigen</value>
+  </data>
+  <data name="Entries" xml:space="preserve">
+    <value>Einträge</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Zeit</value>
+  </data>
+  <!-- XAML UI Elements - Camera Configuration -->
+  <data name="CameraConfiguration" xml:space="preserve">
+    <value>Kamerakonfiguration</value>
+  </data>
+  <data name="DisplayName" xml:space="preserve">
+    <value>Anzeigename</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
+  <data name="Protocol" xml:space="preserve">
+    <value>Protokoll</value>
+  </data>
+  <data name="IpAddress" xml:space="preserve">
+    <value>IP-Adresse</value>
+  </data>
+  <data name="Port" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="Path" xml:space="preserve">
+    <value>Pfad</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Benutzername</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="OverlayPosition" xml:space="preserve">
+    <value>Overlay-Position</value>
+  </data>
+  <data name="TestResult" xml:space="preserve">
+    <value>Testergebnis</value>
+  </data>
+  <data name="NotTested" xml:space="preserve">
+    <value>Nicht getestet</value>
+  </data>
+  <data name="Test" xml:space="preserve">
+    <value>Testen</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <!-- XAML UI Elements - InputBox -->
+  <data name="Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <!-- XAML UI Elements - CameraWall -->
+  <data name="NoCamerasConfigured" xml:space="preserve">
+    <value>Keine Kameras konfiguriert. Fügen Sie eine Kamera hinzu, um zu beginnen.</value>
+  </data>
+  <!-- About Dialog -->
+  <data name="About" xml:space="preserve">
+    <value>Über</value>
+  </data>
+  <data name="AboutLinksoftCameraWall" xml:space="preserve">
+    <value>Über Linksoft Camera Wall</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="ApplicationDescription" xml:space="preserve">
+    <value>Eine professionelle Kamerawand-Anwendung zur Überwachung mehrerer RTSP/HTTP-Kamerastreams in einem dynamischen Rasterlayout.</value>
+  </data>
+  <data name="Copyright" xml:space="preserve">
+    <value>Urheberrecht</value>
+  </data>
+  <data name="AllRightsReserved" xml:space="preserve">
+    <value>Alle Rechte vorbehalten.</value>
+  </data>
+  <!-- Check for Updates Dialog -->
+  <data name="CheckForUpdates" xml:space="preserve">
+    <value>Nach Updates suchen</value>
+  </data>
+  <data name="CurrentVersion" xml:space="preserve">
+    <value>Aktuelle Version</value>
+  </data>
+  <data name="LatestVersion" xml:space="preserve">
+    <value>Neueste Version</value>
+  </data>
+  <data name="CheckingForUpdates" xml:space="preserve">
+    <value>Suche nach Updates...</value>
+  </data>
+  <data name="NewVersionAvailable" xml:space="preserve">
+    <value>Eine neue Version ist verfügbar!</value>
+  </data>
+  <data name="YouAreUpToDate" xml:space="preserve">
+    <value>Sie sind auf dem neuesten Stand.</value>
+  </data>
+  <data name="DownloadLatest" xml:space="preserve">
+    <value>Neueste herunterladen</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Schließen</value>
+  </data>
+  <data name="UnableToCheckForUpdates" xml:space="preserve">
+    <value>Updates können nicht überprüft werden. Bitte überprüfen Sie Ihre Internetverbindung.</value>
+  </data>
+  <!-- Fullscreen Window -->
+  <data name="PressEscToExit" xml:space="preserve">
+    <value>Drücken Sie ESC, um den Vollbildmodus zu beenden</value>
+  </data>
+</root>

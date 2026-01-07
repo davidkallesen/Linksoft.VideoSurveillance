@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- Connection States -->
+  <data name="ConnectionTimedOut" xml:space="preserve">
+    <value>Forbindelsen fik timeout</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>Forbundet</value>
+  </data>
+  <data name="Connecting" xml:space="preserve">
+    <value>Forbinder...</value>
+  </data>
+  <data name="Reconnecting" xml:space="preserve">
+    <value>Genopretter forbindelse...</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>Afbrudt</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Fejl</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>Ukendt</value>
+  </data>
+  <data name="ConnectionSuccessful" xml:space="preserve">
+    <value>Forbindelse lykkedes</value>
+  </data>
+  <data name="FailedWithStatus1" xml:space="preserve">
+    <value>Fejlet: {0}</value>
+  </data>
+  <!-- Context Menu -->
+  <data name="EditCamera" xml:space="preserve">
+    <value>Rediger kamera...</value>
+  </data>
+  <data name="DeleteCamera" xml:space="preserve">
+    <value>Slet kamera</value>
+  </data>
+  <data name="ShowInFullScreen" xml:space="preserve">
+    <value>Vis i fuldskærm</value>
+  </data>
+  <data name="SwapLeft" xml:space="preserve">
+    <value>Byt til venstre</value>
+  </data>
+  <data name="SwapRight" xml:space="preserve">
+    <value>Byt til højre</value>
+  </data>
+  <data name="TakeSnapshot" xml:space="preserve">
+    <value>Tag skærmbillede</value>
+  </data>
+  <data name="Reconnect" xml:space="preserve">
+    <value>Genopret forbindelse</value>
+  </data>
+  <data name="SaveSnapshot" xml:space="preserve">
+    <value>Gem skærmbillede</value>
+  </data>
+  <!-- Dialog Titles -->
+  <data name="AddCamera" xml:space="preserve">
+    <value>Tilføj kamera</value>
+  </data>
+  <data name="NewCamera" xml:space="preserve">
+    <value>Nyt kamera</value>
+  </data>
+  <data name="FullScreen" xml:space="preserve">
+    <value>Fuldskærm</value>
+  </data>
+  <data name="NewLayout" xml:space="preserve">
+    <value>Nyt layout</value>
+  </data>
+  <data name="DeleteLayout" xml:space="preserve">
+    <value>Slet layout</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <!-- Status Messages -->
+  <data name="Ready" xml:space="preserve">
+    <value>Klar</value>
+  </data>
+  <data name="AddCameraDialog" xml:space="preserve">
+    <value>Tilføj kamera dialog...</value>
+  </data>
+  <data name="AddedCamera1" xml:space="preserve">
+    <value>Tilføjet kamera: {0}</value>
+  </data>
+  <data name="AddCameraCancelled" xml:space="preserve">
+    <value>Tilføj kamera annulleret</value>
+  </data>
+  <data name="EditingCamera1" xml:space="preserve">
+    <value>Redigerer kamera: {0}</value>
+  </data>
+  <data name="UpdatedCamera1" xml:space="preserve">
+    <value>Opdateret kamera: {0}</value>
+  </data>
+  <data name="EditCameraCancelled" xml:space="preserve">
+    <value>Rediger kamera annulleret</value>
+  </data>
+  <data name="DeletedCamera1" xml:space="preserve">
+    <value>Slettet kamera: {0}</value>
+  </data>
+  <data name="FullScreenCamera1" xml:space="preserve">
+    <value>Fuldskærm: {0}</value>
+  </data>
+  <data name="RefreshingAllCameras" xml:space="preserve">
+    <value>Opdaterer alle kameraer...</value>
+  </data>
+  <data name="AllCamerasRefreshed" xml:space="preserve">
+    <value>Alle kameraer opdateret</value>
+  </data>
+  <data name="NewLayoutCancelled" xml:space="preserve">
+    <value>Nyt layout annulleret</value>
+  </data>
+  <data name="LayoutCreated1" xml:space="preserve">
+    <value>Layout oprettet: {0}</value>
+  </data>
+  <data name="DeletedLayout1" xml:space="preserve">
+    <value>Slettet layout: {0}</value>
+  </data>
+  <data name="SetStartupLayout1" xml:space="preserve">
+    <value>Startlayout indstillet: {0}</value>
+  </data>
+  <data name="CameraStateChanged2" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="PositionChanged1" xml:space="preserve">
+    <value>Position ændret: {0}</value>
+  </data>
+  <data name="LoadedLayout1" xml:space="preserve">
+    <value>Indlæst layout: {0}</value>
+  </data>
+  <data name="LoadedCameras1" xml:space="preserve">
+    <value>Indlæst {0} kamera(er)</value>
+  </data>
+  <!-- Confirmation Messages -->
+  <data name="ConfirmDeleteCamera1" xml:space="preserve">
+    <value>Er du sikker på, at du vil slette kameraet '{0}'?</value>
+  </data>
+  <data name="ConfirmDeleteLayout1" xml:space="preserve">
+    <value>Er du sikker på, at du vil slette layoutet '{0}'?</value>
+  </data>
+  <data name="EnterLayoutName" xml:space="preserve">
+    <value>Indtast et navn til det nye layout:</value>
+  </data>
+  <data name="FullScreenNotImplemented1" xml:space="preserve">
+    <value>Fuldskærmsvisning for {0} vil blive implementeret.</value>
+  </data>
+  <!-- Validation Errors -->
+  <data name="IpAddressRequired" xml:space="preserve">
+    <value>IP-adresse er påkrævet</value>
+  </data>
+  <data name="IpAddressAlreadyExists" xml:space="preserve">
+    <value>Et kamera med denne IP-adresse findes allerede</value>
+  </data>
+  <data name="PortRangeError" xml:space="preserve">
+    <value>Port skal være mellem 1 og 65535</value>
+  </data>
+  <data name="DisplayNameRequired" xml:space="preserve">
+    <value>Visningsnavn er påkrævet</value>
+  </data>
+  <data name="DisplayNameTooLong" xml:space="preserve">
+    <value>Visningsnavn må ikke overstige 256 tegn</value>
+  </data>
+  <data name="LayoutNameAlreadyExists" xml:space="preserve">
+    <value>Et layout med dette navn findes allerede</value>
+  </data>
+  <!-- XAML UI Elements - Network Scanner -->
+  <data name="NetworkScannerHeader" xml:space="preserve">
+    <value>Netværksscanner - Find kameraer</value>
+  </data>
+  <data name="StartIp" xml:space="preserve">
+    <value>Start IP</value>
+  </data>
+  <data name="EndIp" xml:space="preserve">
+    <value>Slut IP</value>
+  </data>
+  <data name="Ports" xml:space="preserve">
+    <value>Porte</value>
+  </data>
+  <data name="Scan" xml:space="preserve">
+    <value>Scan</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Ryd</value>
+  </data>
+  <data name="ShowOnlyReachable" xml:space="preserve">
+    <value>Vis kun tilgængelige</value>
+  </data>
+  <data name="ShowOnlyWithOpenPorts" xml:space="preserve">
+    <value>Vis kun med åbne porte</value>
+  </data>
+  <data name="Entries" xml:space="preserve">
+    <value>Poster</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Tid</value>
+  </data>
+  <!-- XAML UI Elements - Camera Configuration -->
+  <data name="CameraConfiguration" xml:space="preserve">
+    <value>Kamerakonfiguration</value>
+  </data>
+  <data name="DisplayName" xml:space="preserve">
+    <value>Visningsnavn</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Beskrivelse</value>
+  </data>
+  <data name="Protocol" xml:space="preserve">
+    <value>Protokol</value>
+  </data>
+  <data name="IpAddress" xml:space="preserve">
+    <value>IP-adresse</value>
+  </data>
+  <data name="Port" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="Path" xml:space="preserve">
+    <value>Sti</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Brugernavn</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Adgangskode</value>
+  </data>
+  <data name="OverlayPosition" xml:space="preserve">
+    <value>Overlay-position</value>
+  </data>
+  <data name="TestResult" xml:space="preserve">
+    <value>Testresultat</value>
+  </data>
+  <data name="NotTested" xml:space="preserve">
+    <value>Ikke testet</value>
+  </data>
+  <data name="Test" xml:space="preserve">
+    <value>Test</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Gem</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Annuller</value>
+  </data>
+  <!-- XAML UI Elements - InputBox -->
+  <data name="Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <!-- XAML UI Elements - CameraWall -->
+  <data name="NoCamerasConfigured" xml:space="preserve">
+    <value>Ingen kameraer konfigureret. Tilføj et kamera for at komme i gang.</value>
+  </data>
+  <!-- About Dialog -->
+  <data name="About" xml:space="preserve">
+    <value>Om</value>
+  </data>
+  <data name="AboutLinksoftCameraWall" xml:space="preserve">
+    <value>Om Linksoft Camera Wall</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="ApplicationDescription" xml:space="preserve">
+    <value>En professionel kameravæg-applikation til overvågning af flere RTSP/HTTP kamerastrømme i et dynamisk gitter-layout.</value>
+  </data>
+  <data name="Copyright" xml:space="preserve">
+    <value>Ophavsret</value>
+  </data>
+  <data name="AllRightsReserved" xml:space="preserve">
+    <value>Alle rettigheder forbeholdes.</value>
+  </data>
+  <!-- Check for Updates Dialog -->
+  <data name="CheckForUpdates" xml:space="preserve">
+    <value>Søg efter opdateringer</value>
+  </data>
+  <data name="CurrentVersion" xml:space="preserve">
+    <value>Nuværende version</value>
+  </data>
+  <data name="LatestVersion" xml:space="preserve">
+    <value>Seneste version</value>
+  </data>
+  <data name="CheckingForUpdates" xml:space="preserve">
+    <value>Søger efter opdateringer...</value>
+  </data>
+  <data name="NewVersionAvailable" xml:space="preserve">
+    <value>En ny version er tilgængelig!</value>
+  </data>
+  <data name="YouAreUpToDate" xml:space="preserve">
+    <value>Du er opdateret.</value>
+  </data>
+  <data name="DownloadLatest" xml:space="preserve">
+    <value>Hent seneste</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Luk</value>
+  </data>
+  <data name="UnableToCheckForUpdates" xml:space="preserve">
+    <value>Kan ikke søge efter opdateringer. Tjek venligst din internetforbindelse.</value>
+  </data>
+  <!-- Fullscreen Window -->
+  <data name="PressEscToExit" xml:space="preserve">
+    <value>Tryk ESC for at afslutte fuldskærm</value>
+  </data>
+</root>

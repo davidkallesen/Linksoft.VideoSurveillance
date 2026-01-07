@@ -578,3 +578,22 @@ dotnet_diagnostic.S6964.severity = none             # Value type property used a
 # Custom - Code Analyzers Rules
 ##########################################
 [*.{cs,csx,cake}]
+
+dotnet_diagnostic.CA1002.severity = none            # Change 'List<T>' to use 'Collection<T>', 'ReadOnlyCollection<T>' or 'KeyedCollection<K,V>'
+dotnet_diagnostic.CA1003.severity = none            # Use generic event handler instances
+dotnet_diagnostic.CA1031.severity = none            # Catch general exception types
+dotnet_diagnostic.CA1823.severity = none            # Unused field - DependencyPropertys - Used by WPF/WinUI
+dotnet_diagnostic.CA1848.severity = none            # Logging performance
+dotnet_diagnostic.CA1873.severity = none            # Logging performance
+dotnet_diagnostic.CA2254.severity = none            # Logging performance
+
+dotnet_diagnostic.IDE0044.severity = none           # Make field readonly - DependencyPropertys - Used by WPF/WinUI
+dotnet_diagnostic.IDE0051.severity = none           # Type member is never used - DependencyPropertys - Used by WPF/WinUI
+
+dotnet_diagnostic.MA0046.severity = none            # The second parameter must be of type 'System.EventArgs' or a derived type
+
+dotnet_diagnostic.S1075.severity = none             # Hardcoded paths or Uris
+dotnet_diagnostic.S1121.severity = none             # Extract the assignment of '.XXX' from this expression.
+dotnet_diagnostic.S1144.severity = none             # Remove unused private methods - Used by WPF/WinUI
+dotnet_diagnostic.S1172.severity = none             # Remove unused parameters - Used by WPF/WinUI
+dotnet_diagnostic.S3267.severity = none             # Loops should be simplified using the "Where" LINQ method

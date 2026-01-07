@@ -1,0 +1,44 @@
+<UserControl
+    x:Class="Linksoft.Wpf.CameraWall.UserControls.CameraTile"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:fl="clr-namespace:FlyleafLib.Controls.WPF;assembly=FlyleafLib"
+    xmlns:local="clr-namespace:Linksoft.Wpf.CameraWall.UserControls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="240"
+    d:DesignWidth="320"
+    Background="Black"
+    mc:Ignorable="d">
+
+    <atc:GridEx>
+        <!--  Video Player with Overlay Content  -->
+        <fl:FlyleafHost
+            x:Name="VideoPlayer"
+            DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+            KeyBindings="None"
+            PanMoveOnCtrl="Overlay"
+            PanZoomOnCtrlWheel="Overlay"
+            Player="{Binding Player}">
+
+            <!--  This content goes into FlyleafHost's overlay window  -->
+            <atc:GridEx Background="Transparent">
+
+                <!--  Camera Overlay (Properties updated programmatically from CameraTile code-behind) -->
+                <local:CameraOverlay
+                    x:Name="OverlayControl"
+                    Margin="8"
+                    HorizontalAlignment="{Binding HostDataContext.OverlayHorizontalAlignment}"
+                    VerticalAlignment="{Binding HostDataContext.OverlayVerticalAlignment}"
+                    IsHitTestVisible="False" />
+
+                <!--  Selection Border  -->
+                <Border
+                    BorderBrush="{Binding HostDataContext.SelectionBorderBrush}"
+                    BorderThickness="2"
+                    IsHitTestVisible="False" />
+            </atc:GridEx>
+        </fl:FlyleafHost>
+    </atc:GridEx>
+</UserControl>
