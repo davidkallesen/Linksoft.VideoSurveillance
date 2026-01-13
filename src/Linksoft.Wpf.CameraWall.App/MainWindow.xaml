@@ -4,9 +4,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:app="clr-namespace:Linksoft.Wpf.CameraWall.App"
     xmlns:atcTheming="https://github.com/atc-net/atc-wpf/tree/main/schemas"
+    xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
     xmlns:cw="clr-namespace:Linksoft.Wpf.CameraWall.UserControls;assembly=Linksoft.Wpf.CameraWall"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:fluent="urn:fluent-ribbon"
+    xmlns:fontIcons="clr-namespace:Atc.Wpf.FontIcons;assembly=Atc.Wpf.FontIcons"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title=".:: Linksoft Camera Wall ::."
     Width="1500"
@@ -23,67 +25,130 @@
         <!--  Ribbon  -->
         <fluent:Ribbon
             Grid.Row="0"
-            AutomaticStateManagement="True"
+            AutomaticStateManagement="False"
             CanCustomizeQuickAccessToolBar="False"
+            IsMinimized="{Binding Path=IsRibbonMinimized, Mode=TwoWay}"
             IsQuickAccessToolBarMenuDropDownVisible="False"
             IsQuickAccessToolBarVisible="False">
             <!--  Backstage  -->
             <fluent:Ribbon.Menu>
-                <fluent:Backstage>
+                <fluent:Backstage x:Name="Backstage" IsOpenChanged="OnBackstageIsOpenChanged">
                     <fluent:BackstageTabControl>
-                        <fluent:Button Command="{Binding Path=ShowAboutCommand}" Header="About" />
-                        <fluent:Button Command="{Binding Path=CheckForUpdatesCommand}" Header="Check for Updates" />
+                        <fluent:Button
+                            Command="{Binding Path=ShowSettingsCommand}"
+                            Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                         Key=Settings}"
+                            KeyTip="S">
+                            <fluent:Button.Icon>
+                                <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Cog" />
+                            </fluent:Button.Icon>
+                        </fluent:Button>
+                        <fluent:SeparatorTabItem />
+                        <fluent:Button
+                            Command="{Binding Path=ShowAboutCommand}"
+                            Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                         Key=About}"
+                            KeyTip="A">
+                            <fluent:Button.Icon>
+                                <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="InfoCircle" />
+                            </fluent:Button.Icon>
+                        </fluent:Button>
+                        <fluent:Button
+                            Command="{Binding Path=CheckForUpdatesCommand}"
+                            Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                         Key=CheckForUpdates}"
+                            KeyTip="C">
+                            <fluent:Button.Icon>
+                                <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="CloudDownloadAlt" />
+                            </fluent:Button.Icon>
+                        </fluent:Button>
+                        <fluent:SeparatorTabItem />
+                        <fluent:Button
+                            Command="{Binding Path=ExitCommand}"
+                            Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                         Key=Exit}"
+                            KeyTip="X">
+                            <fluent:Button.Icon>
+                                <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="SignOutAlt" />
+                            </fluent:Button.Icon>
+                        </fluent:Button>
                     </fluent:BackstageTabControl>
                 </fluent:Backstage>
             </fluent:Ribbon.Menu>
 
             <!--  Layouts Tab  -->
-            <fluent:RibbonTabItem Header="Layouts">
-                <fluent:RibbonGroupBox Header="Current Layout">
+            <fluent:RibbonTabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Layouts}">
+                <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=CurrentLayoutGroup}">
                     <fluent:ComboBox
                         Width="150"
                         DisplayMemberPath="Name"
-                        Header="Layout"
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=Layout}"
                         IsEditable="False"
                         ItemsSource="{Binding Path=Layouts}"
                         SelectedItem="{Binding Path=CurrentLayout}" />
                 </fluent:RibbonGroupBox>
 
-                <fluent:RibbonGroupBox Header="Actions">
+                <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Actions}">
                     <fluent:Button
                         Command="{Binding Path=NewLayoutCommand}"
-                        Header="New Layout"
-                        Size="Middle" />
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=NewLayout}"
+                        Size="Middle">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="PlusCircle" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
                     <fluent:Button
                         Command="{Binding Path=DeleteLayoutCommand}"
-                        Header="Delete Layout"
-                        Size="Middle" />
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=DeleteLayout}"
+                        Size="Middle">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="TrashAlt" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
                     <fluent:Button
                         Command="{Binding Path=SetAsStartupCommand}"
-                        Header="Set as Startup"
-                        Size="Middle" />
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=SetAsStartup}"
+                        Size="Middle">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Star" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
                 </fluent:RibbonGroupBox>
             </fluent:RibbonTabItem>
 
             <!--  Cameras Tab  -->
-            <fluent:RibbonTabItem Header="Cameras">
-                <fluent:RibbonGroupBox Header="Camera">
+            <fluent:RibbonTabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Cameras}">
+                <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Camera}">
                     <fluent:Button
                         Command="{Binding Path=AddCameraCommand}"
-                        Header="Add Camera"
-                        Size="Large" />
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=AddCamera}"
+                        Size="Large">
+                        <fluent:Button.LargeIcon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Camera" />
+                        </fluent:Button.LargeIcon>
+                    </fluent:Button>
                 </fluent:RibbonGroupBox>
 
-                <fluent:RibbonGroupBox Header="Actions">
+                <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Actions}">
                     <fluent:Button
-                        Command="{Binding Path=RefreshAllCommand}"
-                        Header="Refresh All"
-                        Size="Middle" />
+                        Command="{Binding Path=ReconnectAllCommand}"
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=ReconnectAll}"
+                        Size="Middle">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="SyncAlt" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
                 </fluent:RibbonGroupBox>
             </fluent:RibbonTabItem>
 
             <!--  View Tab  -->
-            <fluent:RibbonTabItem Header="View" />
+            <fluent:RibbonTabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=View}" />
         </fluent:Ribbon>
 
         <!--  Camera Wall  -->
@@ -104,15 +169,15 @@
             <Separator />
             <StatusBarItem>
                 <TextBlock>
-                    <Run Text="Cameras: " />
-                    <Run Text="{Binding Path=CameraCount, Mode=OneWay}" />
+                    <Run Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=CamerasLabel}" />
+                    <Run Text=" " /><Run Text="{Binding Path=CameraCount, Mode=OneWay}" />
                 </TextBlock>
             </StatusBarItem>
             <Separator />
             <StatusBarItem>
                 <TextBlock>
-                    <Run Text="Connected: " />
-                    <Run Text="{Binding Path=ConnectedCount, Mode=OneWay}" />
+                    <Run Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=ConnectedLabel}" />
+                    <Run Text=" " /><Run Text="{Binding Path=ConnectedCount, Mode=OneWay}" />
                 </TextBlock>
             </StatusBarItem>
         </StatusBar>

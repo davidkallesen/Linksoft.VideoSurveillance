@@ -1,4 +1,7 @@
 // ReSharper disable RedundantArgumentDefaultValue
+
+using AssemblyHelper = Atc.Helpers.AssemblyHelper;
+
 namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
@@ -7,6 +10,15 @@ namespace Linksoft.Wpf.CameraWall.Services;
 [Registration(Lifetime.Singleton)]
 public class DialogService : IDialogService
 {
+    private readonly IApplicationSettingsService settingsService;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DialogService"/> class.
+    /// </summary>
+    /// <param name="settingsService">The application settings service.</param>
+    public DialogService(IApplicationSettingsService settingsService)
+        => this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+
     /// <inheritdoc />
     public CameraConfiguration? ShowCameraConfigurationDialog(
         CameraConfiguration? camera,
@@ -102,28 +114,12 @@ public class DialogService : IDialogService
         var version = AssemblyHelper.GetSystemVersion();
         var year = DateTime.Now.Year;
 
-        var content = $"""
-            Linksoft Camera Wall
+        var dialog = new AboutDialog(version.ToString(), year)
+        {
+            Owner = Application.Current.MainWindow,
+        };
 
-            {Translations.Version}: {version}
-
-            {Translations.ApplicationDescription}
-
-            {Translations.Copyright} {year} Linksoft
-            {Translations.AllRightsReserved}
-            """;
-
-        var dialogBox = new InfoDialogBox(
-            Application.Current.MainWindow!,
-            new DialogBoxSettings(DialogBoxType.Ok, LogCategoryType.Information)
-            {
-                TitleBarText = Translations.AboutLinksoftCameraWall,
-                Width = 750,
-                Height = 320,
-            },
-            content);
-
-        dialogBox.ShowDialog();
+        dialog.ShowDialog();
     }
 
     /// <inheritdoc />
@@ -145,7 +141,31 @@ public class DialogService : IDialogService
         ArgumentNullException.ThrowIfNull(camera);
 
         using var viewModel = new FullScreenCameraWindowViewModel(camera);
-        var window = new FullScreenCameraWindow(viewModel);
+        var window = new FullScreenCameraWindow(viewModel)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+
         window.ShowDialog();
+    }
+
+    /// <inheritdoc />
+    public bool ShowSettingsDialog()
+    {
+        // Set CultureManager.UiCulture to saved language before dialog loads
+        // This ensures LabelLanguageSelector shows the correct language on initialization
+        // (LanguageSelector falls back to Thread.CurrentThread.CurrentUICulture.LCID when SelectedKey is empty)
+        if (NumberHelper.TryParseToInt(settingsService.General.Language, out var lcid))
+        {
+            CultureManager.UiCulture = new CultureInfo(lcid);
+        }
+
+        var viewModel = new SettingsDialogViewModel(settingsService);
+        var dialog = new SettingsDialog(viewModel)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+
+        return dialog.ShowDialog() == true;
     }
 }

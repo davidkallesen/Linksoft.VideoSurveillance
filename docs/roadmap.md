@@ -61,13 +61,24 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 **Goal**: Improved usability and reliability
 
+### Settings & Configuration
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Settings Dialog | Configure theme, language, startup behavior | Done |
+| Display Settings | Configure overlay visibility and opacity | Done |
+| Auto-Save Option | Toggle automatic layout persistence | Done |
+| Snapshot Directory | Configurable save location for snapshots | Done |
+| Start Maximized | Option to start app maximized | Done |
+| Ribbon Collapsed | Option to start with ribbon collapsed | Done |
+
 ### Keyboard Navigation
 
 | Feature | Description | Status |
 |---------|-------------|--------|
 | Arrow Keys | Navigate between camera tiles | Planned |
 | F11 | Toggle fullscreen mode | Planned |
-| Escape | Exit fullscreen, close dialogs | Planned |
+| Escape | Exit fullscreen, close dialogs | Done |
 | Number Keys (1-9) | Quick jump to camera position | Planned |
 | Ctrl+S | Save current layout | Planned |
 
@@ -79,13 +90,15 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 | Health Monitoring | Periodic ping checks | Planned |
 | Connection Timeout | Configurable timeout settings | Planned |
 | Retry Limits | Maximum reconnection attempts | Planned |
+| Connect on Startup | Option to auto-connect cameras on app start | Done |
 
 ### Enhanced Overlays
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Timestamp Overlay | Optional live timestamp on each tile | Planned |
-| Custom Formatting | Font size, color, background opacity | Planned |
+| Timestamp Overlay | Optional live timestamp on each tile | Done |
+| Overlay Opacity | Configurable background opacity (0.0-1.0) | Done |
+| Overlay Position | Choose corner (TopLeft, TopRight, BottomLeft, BottomRight) | Done |
 | Stream Statistics | Frame rate, resolution, bitrate display | Planned |
 
 ### Data Management
@@ -95,6 +108,13 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 | Layout Import/Export | JSON file for sharing configurations | Planned |
 | Camera Status Tooltips | Hover shows IP, status, uptime | Planned |
 | Configuration Backup | Export all settings to file | Planned |
+
+### Help & Information
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| About Dialog | Application version and information | Done |
+| Check for Updates | GitHub-based version checking | Done |
 
 ---
 
@@ -115,6 +135,7 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 | Feature | Description | Status |
 |---------|-------------|--------|
+| Full Screen Camera | Single camera in full screen window | Done |
 | Picture-in-Picture | Floating always-on-top window | Planned |
 | Digital Zoom | Pause and zoom on frame (2x, 4x, 8x) | Planned |
 | Region Selection | Click-drag to zoom to area | Planned |
@@ -195,7 +216,8 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 |---------|-------------|--------|
 | WiX5 MSI Installer | Professional Windows installer | Planned |
 | Silent Install | Command-line deployment option | Planned |
-| Automatic Updates | Update checking and installation | Planned |
+| Update Checking | Check for new versions on GitHub | Done |
+| Update Installation | Download and install updates | Planned |
 | Uninstaller | Clean removal of all components | Planned |
 
 ### NuGet Package
@@ -239,10 +261,13 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 - Configuration persists across restarts
 - Drag-and-drop works smoothly
 
-### Phase 2 (Enhanced)
-- Auto-reconnection succeeds > 95% of the time
-- Keyboard navigation fully functional
-- Theme switching is instantaneous
+### Phase 2 (Enhanced) - Partially Achieved
+- Settings dialog with full theme and display configuration ✓
+- Configurable overlay (position, opacity, timestamp) ✓
+- Full screen camera mode ✓
+- GitHub update checking ✓
+- Auto-reconnection succeeds > 95% of the time (pending)
+- Keyboard navigation fully functional (pending)
 
 ### Phase 3 (Advanced)
 - Recording maintains stream quality

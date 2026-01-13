@@ -72,4 +72,10 @@ public interface IDialogService
     /// </summary>
     /// <param name="camera">The camera to display.</param>
     void ShowFullScreenCamera(CameraConfiguration camera);
+
+    /// <summary>
+    /// Shows the settings dialog.
+    /// </summary>
+    /// <returns>True if settings were saved, false if cancelled.</returns>
+    bool ShowSettingsDialog();
 }

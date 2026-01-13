@@ -36,11 +36,32 @@ public partial class CameraTile : IDisposable
     [DependencyProperty(DefaultValue = nameof(Brushes.Transparent))]
     private Brush selectionBorderBrush = Brushes.Transparent;
 
+    [DependencyProperty(DefaultValue = true, PropertyChangedCallback = nameof(OnOverlaySettingsChanged))]
+    private bool showOverlayTitle;
+
+    [DependencyProperty(DefaultValue = true, PropertyChangedCallback = nameof(OnOverlaySettingsChanged))]
+    private bool showOverlayDescription;
+
+    [DependencyProperty(DefaultValue = true, PropertyChangedCallback = nameof(OnOverlaySettingsChanged))]
+    private bool showOverlayConnectionStatus;
+
+    [DependencyProperty(DefaultValue = false, PropertyChangedCallback = nameof(OnOverlaySettingsChanged))]
+    private bool showOverlayTime;
+
+    [DependencyProperty(DefaultValue = 0.6, PropertyChangedCallback = nameof(OnOverlaySettingsChanged))]
+    private double overlayOpacity;
+
+    [DependencyProperty]
+    private string? snapshotDirectory;
+
     private bool disposed;
     private bool isReconnecting;
+    private bool isSwapping;
+    private bool isDragging;
+    private Point dragStartPoint;
     private ConnectionState previousState = ConnectionState.Disconnected;
     private CameraOverlay? cachedOverlay;
-    private System.Windows.Threading.DispatcherTimer? reconnectTimer;
+    private DispatcherTimer? reconnectTimer;
 
     /// <summary>
     /// Occurs when a full screen request is made.
@@ -71,6 +92,11 @@ public partial class CameraTile : IDisposable
     /// Occurs when a delete camera request is made.
     /// </summary>
     public event EventHandler<CameraConfiguration>? DeleteCameraRequested;
+
+    /// <summary>
+    /// Occurs when a camera is dropped onto this tile.
+    /// </summary>
+    public event EventHandler<CameraConfiguration>? CameraDropped;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraTile"/> class.
@@ -113,6 +139,23 @@ public partial class CameraTile : IDisposable
     }
 
     /// <summary>
+    /// Prepares the tile for a swap operation.
+    /// During swap, the player will not be disposed when the camera changes.
+    /// </summary>
+    public void PrepareForSwap()
+    {
+        isSwapping = true;
+    }
+
+    /// <summary>
+    /// Completes the swap operation, restoring normal behavior.
+    /// </summary>
+    public void CompleteSwap()
+    {
+        isSwapping = false;
+    }
+
+    /// <summary>
     /// Reconnects the camera stream.
     /// </summary>
     public void Reconnect()
@@ -131,8 +174,8 @@ public partial class CameraTile : IDisposable
         // Defer player operations to allow UI to render the "Connecting" state first
         // Player.Open() can block the UI thread, so we use BeginInvoke to let the render pass complete
         _ = Dispatcher.BeginInvoke(
-            System.Windows.Threading.DispatcherPriority.Background,
-            () => ReconnectPlayer());
+            DispatcherPriority.Background,
+            ReconnectPlayer);
     }
 
     /// <summary>
@@ -191,7 +234,7 @@ public partial class CameraTile : IDisposable
 
         // Delay overlay caching to ensure the visual tree is fully built
         _ = Dispatcher.BeginInvoke(
-            System.Windows.Threading.DispatcherPriority.Loaded,
+            DispatcherPriority.Loaded,
             CacheOverlayReference);
     }
 
@@ -203,7 +246,7 @@ public partial class CameraTile : IDisposable
 
         // Delay overlay caching to ensure the visual tree is fully built
         _ = Dispatcher.BeginInvoke(
-            System.Windows.Threading.DispatcherPriority.Loaded,
+            DispatcherPriority.Loaded,
             CacheOverlayReference);
     }
 
@@ -301,6 +344,16 @@ public partial class CameraTile : IDisposable
         }
     }
 
+    private static void OnOverlaySettingsChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraTile tile)
+        {
+            tile.ApplyOverlaySettings();
+        }
+    }
+
     private void OnCameraPropertyChanged(
         object? sender,
         PropertyChangedEventArgs e)
@@ -325,6 +378,22 @@ public partial class CameraTile : IDisposable
 
     private void OnCameraChangedInternal(CameraConfiguration? cameraConfig)
     {
+        // During swap, the player is preserved - only update visual properties
+        if (isSwapping)
+        {
+            if (cameraConfig is null)
+            {
+                CameraName = string.Empty;
+                CameraDescription = string.Empty;
+                return;
+            }
+
+            CameraName = cameraConfig.DisplayName;
+            CameraDescription = cameraConfig.Description ?? string.Empty;
+            UpdateOverlayPosition(cameraConfig.OverlayPosition);
+            return;
+        }
+
         // Cleanup previous player
         if (Player is not null)
         {
@@ -443,7 +512,23 @@ public partial class CameraTile : IDisposable
             cachedOverlay.Title = CameraName;
             cachedOverlay.Description = CameraDescription;
             cachedOverlay.ConnectionState = ConnectionState;
+            ApplyOverlaySettings();
         }
+    }
+
+    private void ApplyOverlaySettings()
+    {
+        var overlay = GetCameraOverlay();
+        if (overlay is null)
+        {
+            return;
+        }
+
+        overlay.ShowTitle = ShowOverlayTitle;
+        overlay.ShowDescription = ShowOverlayDescription;
+        overlay.ShowConnectionStatus = ShowOverlayConnectionStatus;
+        overlay.ShowTime = ShowOverlayTime;
+        overlay.OverlayOpacity = OverlayOpacity;
     }
 
     private void SubscribeToMouseEvents()
@@ -581,7 +666,7 @@ public partial class CameraTile : IDisposable
         var checkCount = 0;
         const int maxChecks = 30; // Check for up to 15 seconds (30 * 500ms)
 
-        reconnectTimer = new System.Windows.Threading.DispatcherTimer
+        reconnectTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(500),
         };
@@ -688,6 +773,12 @@ public partial class CameraTile : IDisposable
             FileName = $"{Camera.DisplayName}_{DateTime.Now:yyyyMMdd_HHmmss}",
         };
 
+        // Use configured snapshot directory as initial directory if available
+        if (!string.IsNullOrEmpty(SnapshotDirectory) && Directory.Exists(SnapshotDirectory))
+        {
+            dialog.InitialDirectory = SnapshotDirectory;
+        }
+
         if (dialog.ShowDialog() == true)
         {
             try
@@ -705,5 +796,69 @@ public partial class CameraTile : IDisposable
     private void ExecuteReconnect()
     {
         Reconnect();
+    }
+
+    private void OnDragCaptureLayerMouseLeftButtonDown(
+        object sender,
+        MouseButtonEventArgs e)
+    {
+        dragStartPoint = e.GetPosition(this);
+    }
+
+    private void OnDragCaptureLayerMouseMove(
+        object sender,
+        MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || isDragging || Camera is null)
+        {
+            return;
+        }
+
+        var currentPosition = e.GetPosition(this);
+        var diff = dragStartPoint - currentPosition;
+
+        if (Math.Abs(diff.X) <= SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(diff.Y) <= SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        isDragging = true;
+        DragDrop.DoDragDrop(this, Camera, DragDropEffects.Move);
+        isDragging = false;
+    }
+
+    private void OnDragCaptureLayerDragOver(
+        object sender,
+        DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(typeof(CameraConfiguration)))
+        {
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
+        e.Effects = DragDropEffects.Move;
+        e.Handled = true;
+    }
+
+    private void OnDragCaptureLayerDrop(
+        object sender,
+        DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(typeof(CameraConfiguration)))
+        {
+            return;
+        }
+
+        var sourceCamera = (CameraConfiguration)e.Data.GetData(typeof(CameraConfiguration))!;
+        if (Camera is null || sourceCamera.Id == Camera.Id)
+        {
+            return;
+        }
+
+        CameraDropped?.Invoke(this, sourceCamera);
+        e.Handled = true;
     }
 }

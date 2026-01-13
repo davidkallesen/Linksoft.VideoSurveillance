@@ -1,3 +1,4 @@
+// ReSharper disable RedundantArgumentDefaultValue
 namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
@@ -8,6 +9,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 {
     private readonly ICameraStorageService storageService;
     private readonly IDialogService dialogService;
+    private readonly IApplicationSettingsService settingsService;
 
     [ObservableProperty(DependentPropertyNames = [nameof(CanCreateNewLayout)])]
     private UserControls.CameraWall? cameraWall;
@@ -15,7 +17,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     [ObservableProperty]
     private string statusText = Translations.Ready;
 
-    [ObservableProperty(DependentPropertyNames = [nameof(CanRefreshAll)])]
+    [ObservableProperty(DependentPropertyNames = [nameof(CanReconnectAll)])]
     private int cameraCount;
 
     [ObservableProperty]
@@ -34,15 +36,19 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// </summary>
     /// <param name="storageService">The camera storage service.</param>
     /// <param name="dialogService">The dialog service.</param>
+    /// <param name="settingsService">The application settings service.</param>
     public CameraWallManager(
         ICameraStorageService storageService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IApplicationSettingsService settingsService)
     {
         ArgumentNullException.ThrowIfNull(storageService);
         ArgumentNullException.ThrowIfNull(dialogService);
+        ArgumentNullException.ThrowIfNull(settingsService);
 
         this.storageService = storageService;
         this.dialogService = dialogService;
+        this.settingsService = settingsService;
 
         Layouts = new ObservableCollection<CameraLayout>(storageService.GetAllLayouts());
 
@@ -71,14 +77,34 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
            CurrentLayout.Id != storageService.StartupLayoutId;
 
     /// <inheritdoc />
-    public bool CanRefreshAll
+    public bool CanReconnectAll
         => CameraCount > 0;
 
     /// <inheritdoc />
     public void Initialize(UserControls.CameraWall cameraWallControl)
     {
         CameraWall = cameraWallControl;
+        ApplyDisplaySettings();
         LoadStartupCameras();
+    }
+
+    /// <inheritdoc />
+    public void ApplyDisplaySettings()
+    {
+        if (CameraWall is null)
+        {
+            return;
+        }
+
+        var display = settingsService.Display;
+        CameraWall.ShowOverlayTitle = display.ShowOverlayTitle;
+        CameraWall.ShowOverlayDescription = display.ShowOverlayDescription;
+        CameraWall.ShowOverlayConnectionStatus = display.ShowOverlayConnectionStatus;
+        CameraWall.ShowOverlayTime = display.ShowOverlayTime;
+        CameraWall.OverlayOpacity = display.OverlayOpacity;
+        CameraWall.AllowDragAndDropReorder = display.AllowDragAndDropReorder;
+        CameraWall.AutoSave = display.AutoSaveLayoutChanges;
+        CameraWall.SnapshotDirectory = display.SnapshotDirectory;
     }
 
     /// <inheritdoc />
@@ -162,13 +188,11 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     }
 
     /// <inheritdoc />
-    public void RefreshAll()
+    public void ReconnectAll()
     {
-        UpdateStatus(Translations.RefreshingAllCameras);
-
-        // This would trigger reconnection for all tiles
-        // For now, just update status
-        UpdateStatus(Translations.AllCamerasRefreshed);
+        UpdateStatus(Translations.ReconnectingAllCameras);
+        CameraWall?.ReconnectAll();
+        UpdateStatus(Translations.AllCamerasReconnected);
     }
 
     /// <inheritdoc />
@@ -276,8 +300,12 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         ArgumentNullException.ThrowIfNull(e);
 
-        // Auto-save layout
-        SaveCurrentLayout();
+        // Auto-save layout if enabled
+        if (settingsService.Display.AutoSaveLayoutChanges)
+        {
+            SaveCurrentLayout();
+        }
+
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.PositionChanged1, e.Camera.DisplayName));
     }
 
@@ -288,6 +316,15 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <inheritdoc />
     public void ShowCheckForUpdatesDialog()
         => dialogService.ShowCheckForUpdatesDialog();
+
+    /// <inheritdoc />
+    public void ShowSettingsDialog()
+    {
+        if (dialogService.ShowSettingsDialog())
+        {
+            ApplyDisplaySettings();
+        }
+    }
 
     private void OnCurrentLayoutChangedCallback()
     {

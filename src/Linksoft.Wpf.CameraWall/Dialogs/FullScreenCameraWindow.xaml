@@ -2,11 +2,11 @@
     x:Class="Linksoft.Wpf.CameraWall.Dialogs.FullScreenCameraWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dialogs="clr-namespace:Linksoft.Wpf.CameraWall.Dialogs"
     xmlns:fl="clr-namespace:FlyleafLib.Controls.WPF;assembly=FlyleafLib"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:resx="clr-namespace:Linksoft.Wpf.CameraWall.Resources"
     xmlns:valueConverters="clr-namespace:Atc.Wpf.ValueConverters;assembly=Atc.Wpf"
     Title="{Binding Path=CameraName}"
     d:DataContext="{d:DesignInstance Type=dialogs:FullScreenCameraWindowViewModel,
@@ -95,7 +95,8 @@
                     FontSize="12"
                     Foreground="#66FFFFFF"
                     Opacity="{Binding Path=HostDataContext.IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}"
-                    Text="{x:Static resx:Translations.PressEscToExit}" />
+                    Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                               Key=PressEscToExit}" />
             </Grid>
         </fl:FlyleafHost>
     </Grid>

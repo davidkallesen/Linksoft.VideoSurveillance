@@ -25,6 +25,16 @@
             <!--  This content goes into FlyleafHost's overlay window  -->
             <atc:GridEx Background="Transparent">
 
+                <!--  Drag capture layer - must be hit-test visible to capture mouse events  -->
+                <Border
+                    x:Name="DragCaptureLayer"
+                    Background="Transparent"
+                    AllowDrop="True"
+                    MouseLeftButtonDown="OnDragCaptureLayerMouseLeftButtonDown"
+                    MouseMove="OnDragCaptureLayerMouseMove"
+                    DragOver="OnDragCaptureLayerDragOver"
+                    Drop="OnDragCaptureLayerDrop" />
+
                 <!--  Camera Overlay (Properties updated programmatically from CameraTile code-behind) -->
                 <local:CameraOverlay
                     x:Name="OverlayControl"

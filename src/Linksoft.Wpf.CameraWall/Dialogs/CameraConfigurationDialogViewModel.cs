@@ -9,8 +9,39 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     [ObservableProperty(AfterChangedCallback = nameof(OnIsTestingChanged))]
     private bool isTesting;
 
-    [ObservableProperty]
-    private string? testResult;
+    private string? testResultInternal;
+
+    /// <summary>
+    /// Gets the test result, returning "Not tested" translation when null.
+    /// </summary>
+    public string TestResult
+    {
+        get => testResultInternal ?? Translations.NotTested;
+    }
+
+    /// <summary>
+    /// Clears the test result (resets to "Not tested").
+    /// </summary>
+    private void ClearTestResult()
+    {
+        if (testResultInternal is not null)
+        {
+            testResultInternal = null;
+            OnPropertyChanged(nameof(TestResult));
+        }
+    }
+
+    /// <summary>
+    /// Sets the test result value.
+    /// </summary>
+    private void SetTestResult(string value)
+    {
+        if (testResultInternal != value)
+        {
+            testResultInternal = value;
+            OnPropertyChanged(nameof(TestResult));
+        }
+    }
 
     [ObservableProperty]
     private string? ipAddressError;
@@ -159,7 +190,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             or nameof(Camera.UserName)
             or nameof(Camera.Password))
         {
-            TestResult = null;
+            ClearTestResult();
         }
 
         // Validate IP address uniqueness when IP changes
@@ -196,7 +227,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     private async Task TestConnection()
     {
         IsTesting = true;
-        TestResult = null;
+        ClearTestResult();
 
         try
         {
@@ -208,26 +239,27 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
                     .ConnectAsync(Camera.IpAddress, Camera.Port)
                     .ConfigureAwait(false);
 
-                TestResult = Translations.ConnectionSuccessful;
+                SetTestResult(Translations.ConnectionSuccessful);
             }
             else
             {
-                using var httpClient = new System.Net.Http.HttpClient();
+                var uri = Camera.BuildUri();
+
+                using var httpClient = new HttpClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(5);
 
-                var uri = Camera.BuildUri();
                 var response = await httpClient
                     .GetAsync(uri)
                     .ConfigureAwait(false);
 
-                TestResult = response.IsSuccessStatusCode
+                SetTestResult(response.IsSuccessStatusCode
                     ? Translations.ConnectionSuccessful
-                    : string.Format(CultureInfo.CurrentCulture, Translations.FailedWithStatus1, response.StatusCode);
+                    : string.Format(CultureInfo.CurrentCulture, Translations.FailedWithStatus1, response.StatusCode));
             }
         }
         catch (Exception ex)
         {
-            TestResult = string.Format(CultureInfo.CurrentCulture, Translations.FailedWithStatus1, ex.Message);
+            SetTestResult(string.Format(CultureInfo.CurrentCulture, Translations.FailedWithStatus1, ex.Message));
         }
         finally
         {

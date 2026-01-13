@@ -8,7 +8,7 @@ namespace Linksoft.Wpf.CameraWall.UserControls;
 public partial class CameraWall
 {
     [DependencyProperty(DefaultValue = 1)]
-    private int gridRowCount = 1;
+    private int gridRowCount;
 
     [DependencyProperty(PropertyChangedCallback = nameof(OnCameraTilesChanged))]
     private ObservableCollection<CameraConfiguration> cameraTiles = [];
@@ -16,8 +16,26 @@ public partial class CameraWall
     [DependencyProperty(DefaultValue = true)]
     private bool autoSave = true;
 
-    private Point dragStartPoint;
-    private bool isDragging;
+    [DependencyProperty(DefaultValue = true)]
+    private bool showOverlayTitle;
+
+    [DependencyProperty(DefaultValue = true)]
+    private bool showOverlayDescription;
+
+    [DependencyProperty(DefaultValue = true)]
+    private bool showOverlayConnectionStatus;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool showOverlayTime;
+
+    [DependencyProperty(DefaultValue = 0.6)]
+    private double overlayOpacity;
+
+    [DependencyProperty(DefaultValue = true)]
+    private bool allowDragAndDropReorder;
+
+    [DependencyProperty]
+    private string? snapshotDirectory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraWall"/> class.
@@ -89,6 +107,8 @@ public partial class CameraWall
 
     /// <summary>
     /// Swaps a camera with an adjacent camera.
+    /// This optimized implementation swaps the Player instances between CameraTile controls
+    /// to avoid disconnecting and reconnecting streams.
     /// </summary>
     /// <param name="cameraId">The identifier of the camera to swap.</param>
     /// <param name="direction">The direction to swap.</param>
@@ -101,30 +121,100 @@ public partial class CameraWall
             return;
         }
 
-        var index = CameraTiles
+        var sourceIndex = CameraTiles
             .ToList()
             .FindIndex(c => c.Id == cameraId);
 
-        if (index < 0)
+        if (sourceIndex < 0)
         {
             return;
         }
 
-        var targetIndex = direction == SwapDirection.Left ? index - 1 : index + 1;
+        var targetIndex = direction == SwapDirection.Left ? sourceIndex - 1 : sourceIndex + 1;
 
         if (targetIndex < 0 || targetIndex >= CameraTiles.Count)
         {
             return;
         }
 
-        var camera = CameraTiles[index];
+        var sourceCamera = CameraTiles[sourceIndex];
+        PerformSwap(sourceIndex, targetIndex, sourceCamera);
+    }
 
-        // Use remove/insert instead of Move() to avoid WPF UI Automation bug
-        // in ItemAutomationPeer.GetNameCore()
-        CameraTiles.RemoveAt(index);
-        CameraTiles.Insert(targetIndex, camera);
+    /// <summary>
+    /// Gets the CameraTile control at the specified collection index.
+    /// </summary>
+    /// <param name="index">The index in the CameraTiles collection.</param>
+    /// <returns>The CameraTile control, or null if not found.</returns>
+    private CameraTile? GetCameraTileAt(int index)
+    {
+        var container = CameraItemsControl.ItemContainerGenerator.ContainerFromIndex(index);
+        if (container is null)
+        {
+            return null;
+        }
 
-        PositionChanged?.Invoke(this, new CameraPositionChangedEventArgs(camera, index, targetIndex));
+        return VisualTreeHelperEx.FindChild<CameraTile>(container);
+    }
+
+    /// <summary>
+    /// Performs an optimized swap between two camera positions.
+    /// Keeps players in place and swaps streams to avoid disconnecting/reconnecting.
+    /// </summary>
+    private void PerformSwap(
+        int sourceIndex,
+        int targetIndex,
+        CameraConfiguration sourceCamera)
+    {
+        var sourceTile = GetCameraTileAt(sourceIndex);
+        var targetTile = GetCameraTileAt(targetIndex);
+
+        if (sourceTile is not null && targetTile is not null)
+        {
+            var targetCamera = CameraTiles[targetIndex];
+            var sourceUri = sourceCamera.BuildUri();
+            var targetUri = targetCamera.BuildUri();
+
+            sourceTile.PrepareForSwap();
+            targetTile.PrepareForSwap();
+
+            CameraTiles[sourceIndex] = targetCamera;
+            CameraTiles[targetIndex] = sourceCamera;
+
+            sourceTile.CompleteSwap();
+            targetTile.CompleteSwap();
+
+            OpenStreamsInParallel(sourceTile.Player, targetUri, targetTile.Player, sourceUri);
+        }
+        else
+        {
+            CameraTiles.RemoveAt(sourceIndex);
+            CameraTiles.Insert(targetIndex, sourceCamera);
+        }
+
+        UpdateSwapCapabilities();
+        PositionChanged?.Invoke(this, new CameraPositionChangedEventArgs(sourceCamera, sourceIndex, targetIndex));
+    }
+
+    /// <summary>
+    /// Opens streams on two players in parallel to minimize swap time.
+    /// </summary>
+    private static void OpenStreamsInParallel(
+        Player? player1,
+        Uri uri1,
+        Player? player2,
+        Uri uri2)
+    {
+        if (player1 is null || player2 is null)
+        {
+            return;
+        }
+
+        var uri1Str = uri1.ToString();
+        var uri2Str = uri2.ToString();
+
+        _ = Task.Run(() => player1.Open(uri1Str));
+        _ = Task.Run(() => player2.Open(uri2Str));
     }
 
     /// <summary>
@@ -135,6 +225,18 @@ public partial class CameraWall
         CameraTiles.Clear();
         UpdateGridLayout();
         UpdateEmptyState();
+    }
+
+    /// <summary>
+    /// Reconnects all camera streams.
+    /// </summary>
+    public void ReconnectAll()
+    {
+        for (var i = 0; i < CameraTiles.Count; i++)
+        {
+            var tile = GetCameraTileAt(i);
+            tile?.Reconnect();
+        }
     }
 
     /// <summary>
@@ -256,97 +358,52 @@ public partial class CameraWall
         }
     }
 
-    private void CameraTile_FullScreenRequested(
+    private void OnFullScreenRequested(
         object? sender,
         CameraConfiguration e)
     {
         FullScreenRequested?.Invoke(this, e);
     }
 
-    private void CameraTile_SwapLeftRequested(
+    private void OnSwapLeftRequested(
         object? sender,
         CameraConfiguration e)
     {
         SwapCamera(e.Id, SwapDirection.Left);
     }
 
-    private void CameraTile_SwapRightRequested(
+    private void OnSwapRightRequested(
         object? sender,
         CameraConfiguration e)
     {
         SwapCamera(e.Id, SwapDirection.Right);
     }
 
-    private void CameraTile_ConnectionStateChanged(
+    private void OnConnectionStateChanged(
         object? sender,
         CameraConnectionChangedEventArgs e)
     {
         ConnectionStateChanged?.Invoke(this, e);
     }
 
-    private void CameraTile_EditCameraRequested(
+    private void OnEditCameraRequested(
         object? sender,
         CameraConfiguration e)
     {
         EditCameraRequested?.Invoke(this, e);
     }
 
-    private void CameraTile_DeleteCameraRequested(
+    private void OnDeleteCameraRequested(
         object? sender,
         CameraConfiguration e)
     {
         DeleteCameraRequested?.Invoke(this, e);
     }
 
-    private void CameraTile_MouseMove(
-        object sender,
-        MouseEventArgs e)
+    private void OnCameraDropped(
+        object? sender,
+        CameraConfiguration sourceCamera)
     {
-        if (e.LeftButton != MouseButtonState.Pressed || isDragging)
-        {
-            return;
-        }
-
-        var currentPosition = e.GetPosition(this);
-        var diff = dragStartPoint - currentPosition;
-
-        if ((Math.Abs(diff.X) <= SystemParameters.MinimumHorizontalDragDistance &&
-             Math.Abs(diff.Y) <= SystemParameters.MinimumVerticalDragDistance) ||
-            sender is not CameraTile { Camera: not null } tile)
-        {
-            return;
-        }
-
-        isDragging = true;
-        DragDrop.DoDragDrop(tile, tile.Camera, DragDropEffects.Move);
-        isDragging = false;
-    }
-
-    private void CameraTile_DragOver(
-        object sender,
-        DragEventArgs e)
-    {
-        if (!e.Data.GetDataPresent(typeof(CameraConfiguration)))
-        {
-            e.Effects = DragDropEffects.None;
-            e.Handled = true;
-            return;
-        }
-
-        e.Effects = DragDropEffects.Move;
-        e.Handled = true;
-    }
-
-    private void CameraTile_Drop(
-        object sender,
-        DragEventArgs e)
-    {
-        if (!e.Data.GetDataPresent(typeof(CameraConfiguration)))
-        {
-            return;
-        }
-
-        var sourceCamera = (CameraConfiguration)e.Data.GetData(typeof(CameraConfiguration))!;
         if (CameraTiles is null ||
             sender is not CameraTile targetTile ||
             targetTile.Camera is null)
@@ -366,13 +423,6 @@ public partial class CameraWall
             return;
         }
 
-        // Use remove/insert instead of Move() to avoid WPF UI Automation bug
-        // in ItemAutomationPeer.GetNameCore()
-        CameraTiles.RemoveAt(sourceIndex);
-        CameraTiles.Insert(targetIndex, sourceCamera);
-
-        PositionChanged?.Invoke(this, new CameraPositionChangedEventArgs(sourceCamera, sourceIndex, targetIndex));
-
-        e.Handled = true;
+        PerformSwap(sourceIndex, targetIndex, sourceCamera);
     }
 }

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--
-    Microsoft ResX Schema
-
+  <!-- 
+    Microsoft ResX Schema 
+    
     Version 2.0
-
-    The primary goals of this format is to allow a simple XML format
-    that is mostly human readable. The generation and parsing of the
-    various data types are done through the TypeConverter classes
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
     associated with the data types.
-
+    
     Example:
-
+    
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-
-    There are any number of "resheader" rows that contain simple
+                
+    There are any number of "resheader" rows that contain simple 
     name/value pairs.
-
-    Each data row contains a name, and value. The row also contains a
-    type or mimetype. Type corresponds to a .NET class that support
-    text/value conversion through the TypeConverter architecture.
-    Classes that don't support this are serialized and stored with the
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
     mimetype set.
-
-    The mimetype is used for serialized objects, and tells the
-    ResXResourceReader how to depersist the object. This is currently not
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
     extensible. For a given mimetype the value must be set accordingly:
-
-    Note - application/x-microsoft.net.object.binary.base64 is the format
-    that the ResXResourceWriter will generate, however the reader can
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
     read any of the formats listed below.
-
+    
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-
+    
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array
+    value   : The object must be serialized into a byte array 
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -117,7 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <!-- Connection States -->
   <data name="ConnectionTimedOut" xml:space="preserve">
     <value>Verbindungszeitüberschreitung</value>
   </data>
@@ -145,7 +144,6 @@
   <data name="FailedWithStatus1" xml:space="preserve">
     <value>Fehlgeschlagen: {0}</value>
   </data>
-  <!-- Context Menu -->
   <data name="EditCamera" xml:space="preserve">
     <value>Kamera bearbeiten...</value>
   </data>
@@ -170,7 +168,6 @@
   <data name="SaveSnapshot" xml:space="preserve">
     <value>Schnappschuss speichern</value>
   </data>
-  <!-- Dialog Titles -->
   <data name="AddCamera" xml:space="preserve">
     <value>Kamera hinzufügen</value>
   </data>
@@ -189,7 +186,6 @@
   <data name="Information" xml:space="preserve">
     <value>Information</value>
   </data>
-  <!-- Status Messages -->
   <data name="Ready" xml:space="preserve">
     <value>Bereit</value>
   </data>
@@ -217,11 +213,11 @@
   <data name="FullScreenCamera1" xml:space="preserve">
     <value>Vollbild: {0}</value>
   </data>
-  <data name="RefreshingAllCameras" xml:space="preserve">
-    <value>Alle Kameras werden aktualisiert...</value>
+  <data name="ReconnectingAllCameras" xml:space="preserve">
+    <value>Alle Kameras werden neu verbunden...</value>
   </data>
-  <data name="AllCamerasRefreshed" xml:space="preserve">
-    <value>Alle Kameras aktualisiert</value>
+  <data name="AllCamerasReconnected" xml:space="preserve">
+    <value>Alle Kameras neu verbunden</value>
   </data>
   <data name="NewLayoutCancelled" xml:space="preserve">
     <value>Neues Layout abgebrochen</value>
@@ -247,7 +243,6 @@
   <data name="LoadedCameras1" xml:space="preserve">
     <value>{0} Kamera(s) geladen</value>
   </data>
-  <!-- Confirmation Messages -->
   <data name="ConfirmDeleteCamera1" xml:space="preserve">
     <value>Sind Sie sicher, dass Sie die Kamera '{0}' löschen möchten?</value>
   </data>
@@ -260,7 +255,6 @@
   <data name="FullScreenNotImplemented1" xml:space="preserve">
     <value>Vollbildansicht für {0} wird implementiert.</value>
   </data>
-  <!-- Validation Errors -->
   <data name="IpAddressRequired" xml:space="preserve">
     <value>IP-Adresse ist erforderlich</value>
   </data>
@@ -279,7 +273,6 @@
   <data name="LayoutNameAlreadyExists" xml:space="preserve">
     <value>Ein Layout mit diesem Namen existiert bereits</value>
   </data>
-  <!-- XAML UI Elements - Network Scanner -->
   <data name="NetworkScannerHeader" xml:space="preserve">
     <value>Netzwerkscanner - Kameras finden</value>
   </data>
@@ -310,7 +303,6 @@
   <data name="Time" xml:space="preserve">
     <value>Zeit</value>
   </data>
-  <!-- XAML UI Elements - Camera Configuration -->
   <data name="CameraConfiguration" xml:space="preserve">
     <value>Kamerakonfiguration</value>
   </data>
@@ -356,15 +348,12 @@
   <data name="Cancel" xml:space="preserve">
     <value>Abbrechen</value>
   </data>
-  <!-- XAML UI Elements - InputBox -->
   <data name="Ok" xml:space="preserve">
     <value>OK</value>
   </data>
-  <!-- XAML UI Elements - CameraWall -->
   <data name="NoCamerasConfigured" xml:space="preserve">
     <value>Keine Kameras konfiguriert. Fügen Sie eine Kamera hinzu, um zu beginnen.</value>
   </data>
-  <!-- About Dialog -->
   <data name="About" xml:space="preserve">
     <value>Über</value>
   </data>
@@ -383,7 +372,6 @@
   <data name="AllRightsReserved" xml:space="preserve">
     <value>Alle Rechte vorbehalten.</value>
   </data>
-  <!-- Check for Updates Dialog -->
   <data name="CheckForUpdates" xml:space="preserve">
     <value>Nach Updates suchen</value>
   </data>
@@ -411,8 +399,226 @@
   <data name="UnableToCheckForUpdates" xml:space="preserve">
     <value>Updates können nicht überprüft werden. Bitte überprüfen Sie Ihre Internetverbindung.</value>
   </data>
-  <!-- Fullscreen Window -->
   <data name="PressEscToExit" xml:space="preserve">
     <value>Drücken Sie ESC, um den Vollbildmodus zu beenden</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>Allgemein</value>
+  </data>
+  <data name="ApplicationAppearance" xml:space="preserve">
+    <value>Anwendungsdarstellung</value>
+  </data>
+  <data name="ThemeBase" xml:space="preserve">
+    <value>Design</value>
+  </data>
+  <data name="ThemeAccent" xml:space="preserve">
+    <value>Akzentfarbe</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+  <data name="Startup" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="ConnectCamerasOnStartup" xml:space="preserve">
+    <value>Kameras beim Start verbinden</value>
+  </data>
+  <data name="CheckForUpdatesOnStartup" xml:space="preserve">
+    <value>Beim Start nach Updates suchen</value>
+  </data>
+  <data name="StartMaximized" xml:space="preserve">
+    <value>Maximiert starten (Vollbild)</value>
+  </data>
+  <data name="StartRibbonCollapsed" xml:space="preserve">
+    <value>Mit eingeklapptem Menüband starten</value>
+  </data>
+  <data name="CameraDisplay" xml:space="preserve">
+    <value>Kameraanzeige</value>
+  </data>
+  <data name="OverlaySettings" xml:space="preserve">
+    <value>Overlay-Einstellungen</value>
+  </data>
+  <data name="ShowCameraOverlayTitle" xml:space="preserve">
+    <value>Kameratitel anzeigen</value>
+  </data>
+  <data name="ShowCameraOverlayDescription" xml:space="preserve">
+    <value>Kamerabeschreibung anzeigen</value>
+  </data>
+  <data name="ShowCameraOverlayTime" xml:space="preserve">
+    <value>Aktuelle Zeit anzeigen</value>
+  </data>
+  <data name="ShowCameraOverlayConnectionStatus" xml:space="preserve">
+    <value>Verbindungsstatus anzeigen</value>
+  </data>
+  <data name="OverlayOpacity" xml:space="preserve">
+    <value>Overlay-Deckkraft</value>
+  </data>
+  <data name="GridLayout" xml:space="preserve">
+    <value>Rasterlayout</value>
+  </data>
+  <data name="AllowDragAndDropReorder" xml:space="preserve">
+    <value>Drag &amp; Drop-Neuanordnung erlauben</value>
+  </data>
+  <data name="AutoSaveLayoutChanges" xml:space="preserve">
+    <value>Layout-Änderungen automatisch speichern</value>
+  </data>
+  <data name="Connection" xml:space="preserve">
+    <value>Verbindung</value>
+  </data>
+  <data name="ConnectionSettings" xml:space="preserve">
+    <value>Verbindungseinstellungen</value>
+  </data>
+  <data name="ConnectionTimeoutSeconds" xml:space="preserve">
+    <value>Verbindungszeitüberschreitung (Sekunden)</value>
+  </data>
+  <data name="ReconnectDelaySeconds" xml:space="preserve">
+    <value>Wiederverbindungsverzögerung (Sekunden)</value>
+  </data>
+  <data name="MaxReconnectAttempts" xml:space="preserve">
+    <value>Maximale Wiederverbindungsversuche</value>
+  </data>
+  <data name="AutoReconnectOnFailure" xml:space="preserve">
+    <value>Bei Fehler automatisch wiederverbinden</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>Benachrichtigungen</value>
+  </data>
+  <data name="ShowNotificationOnDisconnect" xml:space="preserve">
+    <value>Benachrichtigung bei Trennung anzeigen</value>
+  </data>
+  <data name="ShowNotificationOnReconnect" xml:space="preserve">
+    <value>Benachrichtigung bei Wiederverbindung anzeigen</value>
+  </data>
+  <data name="PlayNotificationSound" xml:space="preserve">
+    <value>Benachrichtigungston abspielen</value>
+  </data>
+  <data name="Performance" xml:space="preserve">
+    <value>Leistung</value>
+  </data>
+  <data name="VideoSettings" xml:space="preserve">
+    <value>Videoeinstellungen</value>
+  </data>
+  <data name="VideoQuality" xml:space="preserve">
+    <value>Videoqualität</value>
+  </data>
+  <data name="HardwareAcceleration" xml:space="preserve">
+    <value>Hardwarebeschleunigung aktivieren</value>
+  </data>
+  <data name="LowLatencyMode" xml:space="preserve">
+    <value>Niedrige Latenz-Modus</value>
+  </data>
+  <data name="BufferDurationMs" xml:space="preserve">
+    <value>Pufferdauer (ms)</value>
+  </data>
+  <data name="Recording" xml:space="preserve">
+    <value>Aufnahme</value>
+  </data>
+  <data name="RecordingSettings" xml:space="preserve">
+    <value>Aufnahmeeinstellungen</value>
+  </data>
+  <data name="RecordingPath" xml:space="preserve">
+    <value>Aufnahmeordner</value>
+  </data>
+  <data name="SelectRecordingFolder" xml:space="preserve">
+    <value>Aufnahmeordner auswählen...</value>
+  </data>
+  <data name="RecordingFormat" xml:space="preserve">
+    <value>Aufnahmeformat</value>
+  </data>
+  <data name="EnableRecordingOnMotion" xml:space="preserve">
+    <value>Aufnahme bei Bewegungserkennung aktivieren</value>
+  </data>
+  <data name="Advanced" xml:space="preserve">
+    <value>Erweitert</value>
+  </data>
+  <data name="Logging" xml:space="preserve">
+    <value>Protokollierung</value>
+  </data>
+  <data name="EnableDebugLogging" xml:space="preserve">
+    <value>Debug-Protokollierung aktivieren</value>
+  </data>
+  <data name="LogFilePath" xml:space="preserve">
+    <value>Protokolldatei-Ordner</value>
+  </data>
+  <data name="SelectLogFolder" xml:space="preserve">
+    <value>Protokollordner auswählen...</value>
+  </data>
+  <data name="Maintenance" xml:space="preserve">
+    <value>Wartung</value>
+  </data>
+  <data name="RestoreDefaults" xml:space="preserve">
+    <value>Standardeinstellungen wiederherstellen</value>
+  </data>
+  <data name="Layouts" xml:space="preserve">
+    <value>Layouts</value>
+  </data>
+  <data name="CurrentLayoutGroup" xml:space="preserve">
+    <value>Aktuelles Layout</value>
+  </data>
+  <data name="Layout" xml:space="preserve">
+    <value>Layout</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Aktionen</value>
+  </data>
+  <data name="SetAsStartup" xml:space="preserve">
+    <value>Als Startlayout festlegen</value>
+  </data>
+  <data name="Cameras" xml:space="preserve">
+    <value>Kameras</value>
+  </data>
+  <data name="Camera" xml:space="preserve">
+    <value>Kamera</value>
+  </data>
+  <data name="ReconnectAll" xml:space="preserve">
+    <value>Alle neu verbinden</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>Ansicht</value>
+  </data>
+  <data name="CamerasLabel" xml:space="preserve">
+    <value>Kameras:</value>
+  </data>
+  <data name="ConnectedLabel" xml:space="preserve">
+    <value>Verbunden:</value>
+  </data>
+  <data name="ApplicationTitle" xml:space="preserve">
+    <value>Linksoft Camera Wall</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Lädt</value>
+  </data>
+  <data name="InitializeLoadConfiguration" xml:space="preserve">
+    <value>Konfiguration laden</value>
+  </data>
+  <data name="InitializeStartHost" xml:space="preserve">
+    <value>Host starten</value>
+  </data>
+  <data name="InitializeApplyUISettings" xml:space="preserve">
+    <value>UI-Einstellungen anwenden</value>
+  </data>
+  <data name="InitializeCameraEngine" xml:space="preserve">
+    <value>Kamera-Engine initialisieren</value>
+  </data>
+  <data name="InitializeLoadMainWindow" xml:space="preserve">
+    <value>Hauptfenster laden</value>
+  </data>
+  <data name="InitializeComplete" xml:space="preserve">
+    <value>Abgeschlossen</value>
+  </data>
+  <data name="SnapshotSettings" xml:space="preserve">
+    <value>Schnappschuss-Einstellungen</value>
+  </data>
+  <data name="SnapshotDirectory" xml:space="preserve">
+    <value>Standard-Schnappschuss-Ordner</value>
+  </data>
+  <data name="SelectSnapshotFolder" xml:space="preserve">
+    <value>Schnappschuss-Ordner auswählen...</value>
+  </data>
+  <data name="Exit" xml:space="preserve">
+    <value>Beenden</value>
   </data>
 </root>

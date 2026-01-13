@@ -30,19 +30,14 @@ public static class GridLayoutHelper
         int itemCount,
         double aspectRatio)
     {
-        if (itemCount <= 0)
+        switch (itemCount)
         {
-            return 0;
-        }
-
-        if (itemCount <= 2)
-        {
-            return 1;
-        }
-
-        if (itemCount <= 4)
-        {
-            return 2;
+            case <= 0:
+                return 0;
+            case <= 2:
+                return 1;
+            case <= 4:
+                return 2;
         }
 
         // Calculate optimal rows based on aspect ratio

@@ -28,19 +28,45 @@ Main facade for all camera wall operations. Apps inject this and delegate busine
 ```csharp
 public interface ICameraWallManager : INotifyPropertyChanged
 {
+    // Properties
     ObservableCollection<CameraLayout> Layouts { get; }
     CameraLayout? CurrentLayout { get; set; }
+    CameraLayout? SelectedStartupLayout { get; }
     int CameraCount { get; }
+    int ConnectedCount { get; }
     string StatusText { get; }
+    UserControls.CameraWall? CameraWall { get; }
 
+    // Initialization
     void Initialize(UserControls.CameraWall cameraWallControl);
+
+    // Camera operations
     void AddCamera();
     void EditCamera(CameraConfiguration camera);
     void DeleteCamera(CameraConfiguration camera);
+    void ShowFullScreen(CameraConfiguration camera);
+    void RefreshAll();
+
+    // Layout operations
     void CreateNewLayout();
     void DeleteCurrentLayout();
     void SetCurrentAsStartup();
-    // ... etc
+    void SaveCurrentLayout();
+
+    // Event handlers
+    void OnConnectionStateChanged(CameraConnectionChangedEventArgs e);
+    void OnPositionChanged(CameraPositionChangedEventArgs e);
+
+    // Dialog operations
+    void ShowAboutDialog();
+    void ShowCheckForUpdatesDialog();
+    void ShowSettingsDialog();
+
+    // CanExecute properties
+    bool CanCreateNewLayout { get; }
+    bool CanDeleteCurrentLayout { get; }
+    bool CanSetCurrentAsStartup { get; }
+    bool CanRefreshAll { get; }
 }
 ```
 
@@ -52,11 +78,50 @@ public interface IDialogService
     CameraConfiguration? ShowCameraConfigurationDialog(CameraConfiguration? camera, bool isNew);
     string? ShowInputBox(string title, string prompt, string defaultText = "");
     bool ShowConfirmation(string message, string title);
+    void ShowError(string message, string title = "Error");
+    void ShowInfo(string message, string title = "Information");
+    void ShowAboutDialog();
+    void ShowCheckForUpdatesDialog();
+    void ShowFullScreenCamera(CameraConfiguration camera);
+    void ShowSettingsDialog();
 }
 ```
 
 ### ICameraStorageService
-Abstraction for camera/layout persistence (JSON file implementation provided).
+Abstraction for camera/layout persistence (JSON file implementation provided):
+```csharp
+public interface ICameraStorageService
+{
+    List<CameraConfiguration> GetAllCameras();
+    CameraConfiguration? GetCameraById(Guid id);
+    List<CameraLayout> GetAllLayouts();
+    CameraLayout? GetLayoutById(Guid id);
+    void AddOrUpdateCamera(CameraConfiguration camera);
+    void DeleteCamera(Guid id);
+    void AddOrUpdateLayout(CameraLayout layout);
+    void DeleteLayout(Guid id);
+    Guid? StartupLayoutId { get; set; }
+    void Load();
+    void Save();
+}
+```
+
+### IApplicationSettingsService
+Abstraction for application settings (theme, language, display options):
+```csharp
+public interface IApplicationSettingsService
+{
+    GeneralSettings General { get; }
+    DisplaySettings Display { get; }
+    void SaveGeneral();
+    void SaveDisplay();
+    void Load();
+    void Save();
+}
+```
+
+### IGitHubReleaseService
+Service for checking GitHub releases for updates.
 
 ## MVVM Patterns
 
@@ -154,6 +219,9 @@ public static string ToScheme(this CameraProtocol protocol)
 ## Dialogs (in Library)
 - `CameraConfigurationDialog` - Add/Edit camera with integrated network scanner
 - `InputBox` - Simple text input dialog (for layout names)
+- `SettingsDialog` - Configure general and display settings
+- `CheckForUpdatesDialog` - Check for and display available updates from GitHub
+- `FullScreenCameraWindow` - Display single camera in full screen mode
 
 ## Naming Conventions
 - ViewModels: `{Name}ViewModel` (e.g., `CameraConfigurationDialogViewModel`)
@@ -237,6 +305,36 @@ public partial class CameraConfiguration : ObservableObject
 }
 ```
 
+## Settings Models
+
+### GeneralSettings
+```csharp
+public class GeneralSettings
+{
+    public string ThemeBase { get; set; } = "Dark";           // "Dark" or "Light"
+    public string ThemeAccent { get; set; } = "Blue";         // Accent color name
+    public string Language { get; set; } = "1033";            // LCID as string (1033 = en-US)
+    public bool ConnectCamerasOnStartup { get; set; } = true;
+    public bool StartMaximized { get; set; } = false;
+    public bool StartRibbonCollapsed { get; set; } = false;
+}
+```
+
+### DisplaySettings
+```csharp
+public class DisplaySettings
+{
+    public bool ShowOverlayTitle { get; set; } = true;
+    public bool ShowOverlayDescription { get; set; } = true;
+    public bool ShowOverlayTime { get; set; } = false;
+    public bool ShowOverlayConnectionStatus { get; set; } = true;
+    public double OverlayOpacity { get; set; } = 0.7;         // 0.0 to 1.0
+    public bool AllowDragAndDropReorder { get; set; } = true;
+    public bool AutoSaveLayoutChanges { get; set; } = true;
+    public string? SnapshotDirectory { get; set; }            // Optional custom directory
+}
+```
+
 ## Threading
 Use `SemaphoreSlim` for thread-safe operations with proper acquisition tracking:
 ```csharp
@@ -255,6 +353,11 @@ finally
     }
 }
 ```
+
+## Converters
+- `BoolToOpacityConverter` - Converts bool to opacity value (0.0-1.0)
+- `ConnectionStateToColorConverter` - Converts ConnectionState enum to brush color
+- `ConnectionStateToTextConverter` - Converts ConnectionState enum to localized text
 
 ## Build
 ```bash

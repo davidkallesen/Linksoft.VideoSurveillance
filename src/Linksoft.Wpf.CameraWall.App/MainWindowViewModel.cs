@@ -9,18 +9,30 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
     /// </summary>
     /// <param name="cameraWallManager">The camera wall manager.</param>
-    public MainWindowViewModel(ICameraWallManager cameraWallManager)
+    /// <param name="settingsService">The application settings service.</param>
+    public MainWindowViewModel(
+        ICameraWallManager cameraWallManager,
+        IApplicationSettingsService settingsService)
     {
         ArgumentNullException.ThrowIfNull(cameraWallManager);
+        ArgumentNullException.ThrowIfNull(settingsService);
 
         Manager = cameraWallManager;
         Manager.PropertyChanged += OnManagerPropertyChanged;
+
+        IsRibbonMinimized = settingsService.General.StartRibbonCollapsed;
     }
 
     /// <summary>
     /// Gets the camera wall manager.
     /// </summary>
     public ICameraWallManager Manager { get; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the ribbon is minimized (collapsed).
+    /// </summary>
+    [ObservableProperty]
+    private bool isRibbonMinimized;
 
     /// <summary>
     /// Gets the collection of available layouts.
@@ -125,7 +137,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             or nameof(ICameraWallManager.CanCreateNewLayout)
             or nameof(ICameraWallManager.CanDeleteCurrentLayout)
             or nameof(ICameraWallManager.CanSetCurrentAsStartup)
-            or nameof(ICameraWallManager.CanRefreshAll))
+            or nameof(ICameraWallManager.CanReconnectAll))
         {
             CommandManager.InvalidateRequerySuggested();
         }
@@ -156,12 +168,12 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     private bool CanSetAsStartup()
         => Manager.CanSetCurrentAsStartup;
 
-    [RelayCommand(CanExecute = nameof(CanRefreshAll))]
-    private void RefreshAll()
-        => Manager.RefreshAll();
+    [RelayCommand(CanExecute = nameof(CanReconnectAll))]
+    private void ReconnectAll()
+        => Manager.ReconnectAll();
 
-    private bool CanRefreshAll()
-        => Manager.CanRefreshAll;
+    private bool CanReconnectAll()
+        => Manager.CanReconnectAll;
 
     [RelayCommand]
     private void ShowAbout()
@@ -170,4 +182,12 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     [RelayCommand]
     private void CheckForUpdates()
         => Manager.ShowCheckForUpdatesDialog();
+
+    [RelayCommand]
+    private void ShowSettings()
+        => Manager.ShowSettingsDialog();
+
+    [RelayCommand]
+    private static void Exit()
+        => Application.Current.Shutdown();
 }

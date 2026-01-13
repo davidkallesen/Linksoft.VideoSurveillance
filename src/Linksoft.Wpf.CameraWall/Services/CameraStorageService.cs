@@ -1,3 +1,4 @@
+// ReSharper disable RedundantArgumentDefaultValue
 namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
@@ -18,7 +19,7 @@ public class CameraStorageService : ICameraStorageService
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraStorageService"/> class.
-    /// Uses the default storage location: %AppData%/Linksoft/CameraWall/cameras.json.
+    /// Uses the default storage location: %ProgramData%\Linksoft\CameraWall\cameras.json.
     /// </summary>
     public CameraStorageService()
         : this(GetDefaultStoragePath())
@@ -190,8 +191,9 @@ public class CameraStorageService : ICameraStorageService
     /// </summary>
     /// <returns>The default storage file path.</returns>
     private static string GetDefaultStoragePath()
-    {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        return Path.Combine(appData, "Linksoft", "CameraWall", "cameras.json");
-    }
+        => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "Linksoft",
+            "CameraWall",
+            "cameras.json");
 }

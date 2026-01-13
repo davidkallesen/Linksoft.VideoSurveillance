@@ -1,51 +1,58 @@
-<UserControl x:Class="Linksoft.Wpf.CameraWall.UserControls.CameraWall"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
-             xmlns:local="clr-namespace:Linksoft.Wpf.CameraWall.UserControls"
-             mc:Ignorable="d"
-             d:DesignHeight="480"
-             d:DesignWidth="640"
-             Background="#1E1E1E">
+<UserControl
+    x:Class="Linksoft.Wpf.CameraWall.UserControls.CameraWall"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Linksoft.Wpf.CameraWall.UserControls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="480"
+    d:DesignWidth="640"
+    Background="#1E1E1E"
+    mc:Ignorable="d">
 
     <Grid>
-        <ItemsControl x:Name="CameraItemsControl"
-                      ItemsSource="{Binding Path=CameraTiles, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                      AllowDrop="True"
-                      Background="Transparent">
+        <ItemsControl
+            x:Name="CameraItemsControl"
+            AllowDrop="True"
+            Background="Transparent"
+            ItemsSource="{Binding Path=CameraTiles, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <UniformGrid x:Name="CameraGrid"
-                                 Rows="{Binding Path=GridRowCount, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    <UniformGrid x:Name="CameraGrid" Rows="{Binding Path=GridRowCount, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <local:CameraTile Camera="{Binding}"
-                                      Margin="1"
-                                      AllowDrop="True"
-                                      MouseMove="CameraTile_MouseMove"
-                                      DragOver="CameraTile_DragOver"
-                                      Drop="CameraTile_Drop"
-                                      FullScreenRequested="CameraTile_FullScreenRequested"
-                                      SwapLeftRequested="CameraTile_SwapLeftRequested"
-                                      SwapRightRequested="CameraTile_SwapRightRequested"
-                                      ConnectionStateChanged="CameraTile_ConnectionStateChanged"
-                                      EditCameraRequested="CameraTile_EditCameraRequested"
-                                      DeleteCameraRequested="CameraTile_DeleteCameraRequested" />
+                    <local:CameraTile
+                        Margin="1"
+                        Camera="{Binding}"
+                        CameraDropped="OnCameraDropped"
+                        ConnectionStateChanged="OnConnectionStateChanged"
+                        DeleteCameraRequested="OnDeleteCameraRequested"
+                        EditCameraRequested="OnEditCameraRequested"
+                        FullScreenRequested="OnFullScreenRequested"
+                        OverlayOpacity="{Binding Path=OverlayOpacity, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
+                        ShowOverlayConnectionStatus="{Binding Path=ShowOverlayConnectionStatus, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
+                        ShowOverlayDescription="{Binding Path=ShowOverlayDescription, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
+                        ShowOverlayTime="{Binding Path=ShowOverlayTime, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
+                        ShowOverlayTitle="{Binding Path=ShowOverlayTitle, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
+                        SnapshotDirectory="{Binding Path=SnapshotDirectory, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
+                        SwapLeftRequested="OnSwapLeftRequested"
+                        SwapRightRequested="OnSwapRightRequested" />
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <!-- Empty State Message -->
-        <TextBlock x:Name="EmptyStateText"
-                   Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=NoCamerasConfigured}"
-                   Foreground="#888888"
-                   FontSize="16"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   Visibility="Collapsed" />
+        <!--  Empty State Message  -->
+        <TextBlock
+            x:Name="EmptyStateText"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontSize="16"
+            Foreground="#888888"
+            Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                       Key=NoCamerasConfigured}"
+            Visibility="Collapsed" />
     </Grid>
 </UserControl>

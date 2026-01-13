@@ -86,15 +86,22 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         Player = new Player(config);
         Player.PropertyChanged += OnPlayerPropertyChanged;
 
-        try
+        // Defer stream opening to avoid blocking UI during window creation
+        var uri = camera
+            .BuildUri()
+            .ToString();
+
+        _ = Task.Run(() =>
         {
-            var uri = camera.BuildUri();
-            Player.Open(uri.ToString());
-        }
-        catch
-        {
-            ConnectionState = ConnectionState.ConnectionFailed;
-        }
+            try
+            {
+                Player?.Open(uri);
+            }
+            catch
+            {
+                // Status will be updated via PropertyChanged
+            }
+        });
     }
 
     private void OnPlayerPropertyChanged(

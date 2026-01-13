@@ -75,9 +75,9 @@ public interface ICameraWallManager : INotifyPropertyChanged
     void ShowFullScreen(CameraConfiguration camera);
 
     /// <summary>
-    /// Refreshes all cameras.
+    /// Reconnects all cameras.
     /// </summary>
-    void RefreshAll();
+    void ReconnectAll();
 
     /// <summary>
     /// Creates a new layout.
@@ -127,9 +127,9 @@ public interface ICameraWallManager : INotifyPropertyChanged
     bool CanSetCurrentAsStartup { get; }
 
     /// <summary>
-    /// Gets a value indicating whether all cameras can be refreshed.
+    /// Gets a value indicating whether all cameras can be reconnected.
     /// </summary>
-    bool CanRefreshAll { get; }
+    bool CanReconnectAll { get; }
 
     /// <summary>
     /// Shows the about dialog.
@@ -140,4 +140,14 @@ public interface ICameraWallManager : INotifyPropertyChanged
     /// Shows the check for updates dialog.
     /// </summary>
     void ShowCheckForUpdatesDialog();
+
+    /// <summary>
+    /// Shows the settings dialog.
+    /// </summary>
+    void ShowSettingsDialog();
+
+    /// <summary>
+    /// Applies the display settings to the camera wall.
+    /// </summary>
+    void ApplyDisplaySettings();
 }

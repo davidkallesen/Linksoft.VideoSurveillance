@@ -3,28 +3,8 @@ namespace Linksoft.Wpf.CameraWall.App;
 
 public partial class CameraWallApp
 {
-    private static AppOptions? appOptions;
     private readonly ILogger<CameraWallApp>? logger;
     private readonly IHost host;
-
-    public static AppOptions AppOptions
-    {
-        get
-        {
-            if (appOptions is null)
-            {
-                LoadAppOptions();
-            }
-
-            return appOptions!;
-        }
-
-        set
-        {
-            appOptions = value ?? throw new ArgumentNullException(nameof(value));
-            SaveAppOptions();
-        }
-    }
 
     public CameraWallApp()
     {
@@ -69,22 +49,6 @@ public partial class CameraWallApp
         {
             BindingErrorTraceListener.StartTrace();
         }
-    }
-
-    private static void LoadAppOptions()
-    {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-            .Build();
-
-        var options = new AppOptions();
-        config.Bind("App", options);
-        AppOptions = options;
-    }
-
-    private static void SaveAppOptions()
-    {
-        // TODO:
     }
 
     private void CurrentDomainUnhandledException(
@@ -138,28 +102,64 @@ public partial class CameraWallApp
     {
         logger!.LogInformation("App starting");
 
-        LoadAppOptions();
+        // Show splash screen
+        var splashScreen = new SplashScreenWindow
+        {
+            Header = Translations.ApplicationTitle,
+            VersionText = $"Version {Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(1, 0)}",
+        };
 
-        await host
-            .StartAsync()
-            .ConfigureAwait(false);
+        splashScreen.Show();
 
-        // Initialize the CameraWall engine (FlyleafLib)
+        // Load configuration (0%)
+        AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeLoadConfiguration, 0);
+
+        // Start host (10%)
+        AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeStartHost, 10);
+        await host.StartAsync();
+
+        // Apply UI settings (30%)
+        AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeApplyUISettings, 30);
+        var settingsService = host.Services.GetRequiredService<IApplicationSettingsService>();
+        ApplyStartupSettings(settingsService.General);
+
+        // Initialize camera engine (50%)
+        AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeCameraEngine, 50);
         CameraWallEngine.Initialize();
 
-        CultureManager.SetCultures(AppOptions.ApplicationUi!.Language);
+        // Load main window (80%)
+        AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeLoadMainWindow, 80);
+        var mainWindow = host.Services.GetService<MainWindow>()!;
 
-        ThemeManagerHelper.SetThemeAndAccent(
-            Current,
-            $"{AppOptions.ApplicationUi.ThemeBase}.{AppOptions.ApplicationUi.ThemeAccent}");
+        // Apply window state from settings
+        if (settingsService.General.StartMaximized)
+        {
+            mainWindow.WindowState = WindowState.Maximized;
+        }
 
-        var mainWindow = host
-            .Services
-            .GetService<MainWindow>()!;
+        // Complete (100%)
+        AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeComplete, 100);
 
+        // Show main window and close splash
         mainWindow.Show();
+        splashScreen.Close();
 
         logger!.LogInformation("App started");
+    }
+
+    private static void ApplyStartupSettings(GeneralSettings settings)
+    {
+        // Apply language
+        if (NumberHelper.TryParseToInt(settings.Language, out var lcid))
+        {
+            var cultureInfo = new CultureInfo(lcid);
+            CultureManager.SetCultures(cultureInfo.Name);
+        }
+
+        // Apply theme and accent
+        ThemeManagerHelper.SetThemeAndAccent(
+            Current,
+            $"{settings.ThemeBase}.{settings.ThemeAccent}");
     }
 
     private async void ApplicationExit(

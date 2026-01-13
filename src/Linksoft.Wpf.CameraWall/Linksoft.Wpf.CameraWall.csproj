@@ -28,6 +28,7 @@
     </PackageReference>
     <PackageReference Include="Atc.Network" Version="1.0.235" />
     <PackageReference Include="Atc.Wpf" Version="3.0.4" />
+    <PackageReference Include="Atc.Wpf.FontIcons" Version="3.0.4" />
     <PackageReference Include="Atc.Wpf.Controls" Version="3.0.4" />
     <PackageReference Include="Atc.Wpf.NetworkControls" Version="3.0.4" />
     <PackageReference Include="Atc.Wpf.Theming" Version="3.0.4" />
@@ -35,6 +36,7 @@
     <PackageReference Include="Atc.XamlToolkit.Wpf" Version="3.0.1" />
     <PackageReference Include="FlyleafLib" Version="3.10.2" />
     <PackageReference Include="FlyleafLib.Controls.WPF" Version="1.6.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.0-preview.3.25171.5" />
   </ItemGroup>
 

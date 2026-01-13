@@ -36,9 +36,16 @@ The library is designed to be a complete, self-contained package that other appl
 ```
 src/Linksoft.Wpf.CameraWall/
 ├── CameraWallEngine.cs              # FlyleafLib initialization
+├── Converters/
+│   ├── BoolToOpacityConverter.cs    # Bool to opacity value
+│   ├── ConnectionStateToColorConverter.cs   # State to brush color
+│   └── ConnectionStateToTextConverter.cs    # State to localized text
 ├── Dialogs/
 │   ├── CameraConfigurationDialog.xaml/.cs  # Add/Edit camera dialog
-│   └── InputBox.xaml/.cs            # Simple text input dialog
+│   ├── CheckForUpdatesDialog.xaml/.cs      # GitHub update checker
+│   ├── FullScreenCameraWindow.xaml/.cs     # Full screen camera view
+│   ├── InputBox.xaml/.cs            # Simple text input dialog
+│   └── SettingsDialog.xaml/.cs      # Application settings dialog
 ├── Enums/
 │   ├── CameraProtocol.cs            # Rtsp, Http, Https
 │   ├── ConnectionState.cs           # Connected, Connecting, Error
@@ -51,6 +58,7 @@ src/Linksoft.Wpf.CameraWall/
 ├── Extensions/
 │   └── CameraProtocolExtensions.cs  # Protocol-related extensions
 ├── Helpers/
+│   ├── AppHelper.cs                 # Splash screen and app helpers
 │   ├── CameraUriHelper.cs           # Build RTSP/HTTP URIs
 │   └── GridLayoutHelper.cs          # Auto-calculate rows/columns
 ├── Messages/
@@ -61,14 +69,20 @@ src/Linksoft.Wpf.CameraWall/
 │   ├── CameraConfiguration.cs       # Camera settings
 │   ├── CameraLayout.cs              # Named layout
 │   ├── CameraLayoutItem.cs          # Camera position in layout
-│   └── CameraStorageData.cs         # Root persistence model
+│   ├── CameraStorageData.cs         # Root persistence model
+│   ├── DisplaySettings.cs           # Display configuration
+│   └── GeneralSettings.cs           # General app settings
 ├── Options/
 │   └── CameraWallOptions.cs         # Library configuration options
 ├── Services/
+│   ├── IApplicationSettingsService.cs  # Settings abstraction
+│   ├── ApplicationSettingsService.cs   # Settings implementation
 │   ├── ICameraStorageService.cs     # Storage abstraction
 │   ├── CameraStorageService.cs      # JSON file implementation
 │   ├── IDialogService.cs            # Dialog abstraction
 │   ├── DialogService.cs             # Default dialog implementation
+│   ├── IGitHubReleaseService.cs     # Update checker abstraction
+│   ├── GitHubReleaseService.cs      # GitHub API implementation
 │   ├── ICameraWallManager.cs        # Main facade interface
 │   └── CameraWallManager.cs         # Core business logic
 ├── UserControls/
@@ -76,7 +90,10 @@ src/Linksoft.Wpf.CameraWall/
 │   ├── CameraOverlay.xaml/.cs       # Title/status overlay
 │   └── CameraWall.xaml/.cs          # Multi-camera grid control
 └── ViewModels/
-    └── CameraConfigurationDialogViewModel.cs  # Dialog ViewModel
+    ├── CameraConfigurationDialogViewModel.cs
+    ├── CheckForUpdatesDialogViewModel.cs
+    ├── FullScreenCameraWindowViewModel.cs
+    └── SettingsDialogViewModel.cs
 ```
 
 ### Linksoft.Wpf.CameraWall.App (Application)
@@ -149,8 +166,32 @@ public interface IDialogService
     bool ShowConfirmation(string message, string title);
     void ShowError(string message, string title = "Error");
     void ShowInfo(string message, string title = "Information");
+    void ShowAboutDialog();
+    void ShowCheckForUpdatesDialog();
+    void ShowFullScreenCamera(CameraConfiguration camera);
+    void ShowSettingsDialog();
 }
 ```
+
+### IApplicationSettingsService
+
+Abstraction for application settings (theme, language, display options).
+
+```csharp
+public interface IApplicationSettingsService
+{
+    GeneralSettings General { get; }
+    DisplaySettings Display { get; }
+    void SaveGeneral();
+    void SaveDisplay();
+    void Load();
+    void Save();
+}
+```
+
+### IGitHubReleaseService
+
+Service for checking GitHub releases for application updates.
 
 ### ICameraStorageService
 
@@ -160,12 +201,16 @@ Abstraction for camera and layout persistence.
 public interface ICameraStorageService
 {
     List<CameraConfiguration> GetAllCameras();
+    CameraConfiguration? GetCameraById(Guid id);
     List<CameraLayout> GetAllLayouts();
+    CameraLayout? GetLayoutById(Guid id);
     void AddOrUpdateCamera(CameraConfiguration camera);
     void DeleteCamera(Guid id);
     void AddOrUpdateLayout(CameraLayout layout);
     void DeleteLayout(Guid id);
     Guid? StartupLayoutId { get; set; }
+    void Load();
+    void Save();
 }
 ```
 
@@ -246,7 +291,10 @@ services.AddSingleton<MainWindow>();
 │    [Add Camera] [Refresh All]                               │
 ├─────────────────────────────────────────────────────────────┤
 │  View Tab                                                    │
-│    [Theme Dropdown] [Full Screen]                           │
+│    [Settings]                                                │
+├─────────────────────────────────────────────────────────────┤
+│  Help Tab                                                    │
+│    [About] [Check for Updates]                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -304,11 +352,42 @@ public partial class CameraWallOptions
 }
 ```
 
+### Settings Models
+
+**GeneralSettings:**
+```csharp
+public class GeneralSettings
+{
+    public string ThemeBase { get; set; } = "Dark";           // "Dark" or "Light"
+    public string ThemeAccent { get; set; } = "Blue";         // Accent color name
+    public string Language { get; set; } = "1033";            // LCID as string
+    public bool ConnectCamerasOnStartup { get; set; } = true;
+    public bool StartMaximized { get; set; } = false;
+    public bool StartRibbonCollapsed { get; set; } = false;
+}
+```
+
+**DisplaySettings:**
+```csharp
+public class DisplaySettings
+{
+    public bool ShowOverlayTitle { get; set; } = true;
+    public bool ShowOverlayDescription { get; set; } = true;
+    public bool ShowOverlayTime { get; set; } = false;
+    public bool ShowOverlayConnectionStatus { get; set; } = true;
+    public double OverlayOpacity { get; set; } = 0.7;
+    public bool AllowDragAndDropReorder { get; set; } = true;
+    public bool AutoSaveLayoutChanges { get; set; } = true;
+    public string? SnapshotDirectory { get; set; }
+}
+```
+
 ### User Data Storage
 
 - Location: `%AppData%/Linksoft/CameraWall/`
 - Files:
   - `cameras.json` - Camera configurations and layouts
+  - `settings.json` - Application settings (GeneralSettings, DisplaySettings)
 
 ## Dependencies
 
@@ -348,6 +427,12 @@ public class DialogService : IDialogService { }
 
 [Registration(Lifetime.Singleton)]
 public class CameraWallManager : ObservableObject, ICameraWallManager { }
+
+[Registration(Lifetime.Singleton)]
+public class ApplicationSettingsService : IApplicationSettingsService { }
+
+[Registration(Lifetime.Singleton)]
+public class GitHubReleaseService : IGitHubReleaseService { }
 ```
 
 The generator creates `AddDependencyRegistrationsFrom{AssemblySuffix}()` extension methods based on the assembly name. For `Linksoft.Wpf.CameraWall`, this generates `AddDependencyRegistrationsFromCameraWall()`.

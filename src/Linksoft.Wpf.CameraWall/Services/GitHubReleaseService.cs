@@ -1,3 +1,4 @@
+// ReSharper disable RedundantArgumentDefaultValue
 namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>

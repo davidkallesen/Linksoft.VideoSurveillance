@@ -8,7 +8,6 @@
     xmlns:dialogs="clr-namespace:Linksoft.Wpf.CameraWall.Dialogs"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:networkControls="clr-namespace:Atc.Wpf.NetworkControls;assembly=Atc.Wpf.NetworkControls"
-    xmlns:resx="clr-namespace:Linksoft.Wpf.CameraWall.Resources"
     xmlns:valueConverters="clr-namespace:Atc.Wpf.ValueConverters;assembly=Atc.Wpf"
     Title="{Binding Path=DialogTitle}"
     Width="1200"
@@ -141,14 +140,12 @@
                                 Text="{Binding Path=Camera.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                             <atc:LabelTextBox
-                                Margin="0,8,0,0"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                 Key=Description}"
                                 Orientation="Vertical"
                                 Text="{Binding Path=Camera.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                             <atc:LabelComboBox
-                                Margin="0,8,0,0"
                                 IsMandatory="True"
                                 Items="{Binding Path=ProtocolItems}"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
@@ -165,15 +162,10 @@
                                                                 Key=IpAddress}"
                                 Orientation="Vertical"
                                 Text="{Binding Path=Camera.IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                ValidationFormat="IPv4Address" />
-                            <TextBlock
-                                Margin="0,2,0,0"
-                                Foreground="Red"
-                                Text="{Binding Path=IpAddressError}"
-                                Visibility="{Binding Path=IpAddressError, Converter={x:Static valueConverters:StringNullOrEmptyToVisibilityCollapsedValueConverter.Instance}}" />
+                                ValidationFormat="IPv4Address"
+                                ValidationText="{Binding Path=IpAddressError}" />
 
                             <atc:LabelIntegerBox
-                                Margin="0,8,0,0"
                                 IsMandatory="True"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                 Key=Port}"
@@ -183,7 +175,6 @@
                                 Value="{Binding Path=Camera.Port, Mode=TwoWay}" />
 
                             <atc:LabelTextBox
-                                Margin="0,8,0,0"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                 Key=Path}"
                                 Orientation="Vertical"
@@ -199,14 +190,12 @@
                                 Text="{Binding Path=Camera.UserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                             <atc:LabelPasswordBox
-                                Margin="0,8,0,0"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                 Key=Password}"
                                 Orientation="Vertical"
                                 Text="{Binding Path=Camera.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                             <atc:LabelComboBox
-                                Margin="0,8,0,0"
                                 Items="{Binding Path=OverlayPositionItems}"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                 Key=OverlayPosition}"
@@ -220,11 +209,10 @@
             <!--  Test Result  -->
             <atc:LabelTextInfo
                 Grid.Row="3"
-                Margin="0,8,0,0"
                 HideAreas="All"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=TestResult}"
-                Text="{Binding Path=TestResult, TargetNullValue={x:Static resx:Translations.NotTested}}" />
+                Text="{Binding Path=TestResult}" />
 
             <!--  Buttons  -->
             <atc:UniformSpacingPanel

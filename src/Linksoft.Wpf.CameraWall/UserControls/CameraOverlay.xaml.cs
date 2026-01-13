@@ -7,6 +7,8 @@ namespace Linksoft.Wpf.CameraWall.UserControls;
 /// </summary>
 public partial class CameraOverlay
 {
+    private DispatcherTimer? timeTimer;
+
     [DependencyProperty]
     private string title = string.Empty;
 
@@ -27,6 +29,24 @@ public partial class CameraOverlay
     [DependencyProperty]
     private string statusText = string.Empty;
 
+    [DependencyProperty(DefaultValue = true)]
+    private bool showTitle;
+
+    [DependencyProperty(DefaultValue = true)]
+    private bool showDescription;
+
+    [DependencyProperty(DefaultValue = true)]
+    private bool showConnectionStatus;
+
+    [DependencyProperty(DefaultValue = false, PropertyChangedCallback = nameof(OnShowTimeChanged))]
+    private bool showTime;
+
+    [DependencyProperty]
+    private string currentTime = string.Empty;
+
+    [DependencyProperty(DefaultValue = 0.6)]
+    private double overlayOpacity;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraOverlay"/> class.
     /// </summary>
@@ -34,7 +54,13 @@ public partial class CameraOverlay
     {
         InitializeComponent();
         StatusText = Translations.Disconnected;
+        Unloaded += OnUnloaded;
     }
+
+    private void OnUnloaded(
+        object sender,
+        RoutedEventArgs e)
+        => StopTimeTimer();
 
     private static void OnDescriptionChanged(
         DependencyObject d,
@@ -75,5 +101,51 @@ public partial class CameraOverlay
         // Also directly set UI elements in case bindings don't work in overlay window
         StatusIndicator.Fill = color;
         StatusTextBlock.Text = text;
+    }
+
+    private static void OnShowTimeChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraOverlay overlay && e.NewValue is bool showTime)
+        {
+            if (showTime)
+            {
+                overlay.StartTimeTimer();
+            }
+            else
+            {
+                overlay.StopTimeTimer();
+            }
+        }
+    }
+
+    private void StartTimeTimer()
+    {
+        if (timeTimer is not null)
+        {
+            return;
+        }
+
+        // Update time immediately
+        UpdateCurrentTime();
+
+        timeTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1),
+        };
+        timeTimer.Tick += (_, _) => UpdateCurrentTime();
+        timeTimer.Start();
+    }
+
+    private void StopTimeTimer()
+    {
+        timeTimer?.Stop();
+        timeTimer = null;
+    }
+
+    private void UpdateCurrentTime()
+    {
+        CurrentTime = DateTime.Now.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
     }
 }

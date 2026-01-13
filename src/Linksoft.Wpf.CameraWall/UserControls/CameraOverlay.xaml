@@ -16,7 +16,8 @@
                 CornerRadius="4"
                 Padding="8,4"
                 HorizontalAlignment="Left"
-                VerticalAlignment="Top">
+                VerticalAlignment="Top"
+                Opacity="{Binding Path=OverlayOpacity, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <StackPanel Orientation="Vertical">
                 <TextBlock x:Name="TitleTextBlock"
                            Text="{Binding Path=Title, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -24,7 +25,8 @@
                            FontSize="12"
                            FontWeight="SemiBold"
                            TextTrimming="CharacterEllipsis"
-                           MaxWidth="180" />
+                           MaxWidth="180"
+                           Visibility="{Binding Path=ShowTitle, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                 <TextBlock x:Name="DescriptionTextBlock"
                            Text="{Binding Path=Description, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -32,10 +34,17 @@
                            FontSize="10"
                            TextTrimming="CharacterEllipsis"
                            MaxWidth="180"
-                           Visibility="{Binding Path=HasDescription, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                           Visibility="{Binding Path=ShowDescription, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                <TextBlock x:Name="TimeTextBlock"
+                           Text="{Binding Path=CurrentTime, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           Foreground="#CCCCCC"
+                           FontSize="10"
+                           Visibility="{Binding Path=ShowTime, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                 <StackPanel Orientation="Horizontal"
-                            Margin="0,2,0,0">
+                            Margin="0,2,0,0"
+                            Visibility="{Binding Path=ShowConnectionStatus, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Ellipse x:Name="StatusIndicator"
                              Width="8"
                              Height="8"

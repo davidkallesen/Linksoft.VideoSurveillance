@@ -24,12 +24,17 @@ global using Atc.Network.Helpers;
 global using Atc.SourceGenerators.Annotations;
 global using Atc.Wpf.Controls.Dialogs;
 global using Atc.Wpf.Controls.LabelControls;
+global using Atc.Wpf.DependencyObjects;
+global using Atc.Wpf.Helpers;
 global using Atc.Wpf.NetworkControls;
+global using Atc.Wpf.Translation;
 global using Atc.XamlToolkit;
 global using Atc.XamlToolkit.Command;
 global using Atc.XamlToolkit.Controls.Attributes;
 global using Atc.XamlToolkit.Messaging;
 global using Atc.XamlToolkit.Mvvm;
+
+global using ControlzEx.Theming;
 
 global using FlyleafLib;
 global using FlyleafLib.MediaPlayer;
@@ -43,4 +48,5 @@ global using Linksoft.Wpf.CameraWall.Models;
 global using Linksoft.Wpf.CameraWall.Resources;
 global using Linksoft.Wpf.CameraWall.Services;
 
+global using Microsoft.Extensions.Logging;
 global using Microsoft.Win32;
