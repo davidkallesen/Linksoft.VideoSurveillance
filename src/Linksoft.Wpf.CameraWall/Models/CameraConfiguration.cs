@@ -10,42 +10,36 @@ public partial class CameraConfiguration : ObservableObject
     /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    [ObservableProperty]
-    [Required(ErrorMessageResourceType = typeof(Translations), ErrorMessageResourceName = nameof(Translations.IpAddressRequired))]
-    private string ipAddress = string.Empty;
+    [ObservableProperty(AfterChangedCallback = nameof(OnConnectionChanged))]
+    private ConnectionSettings connection = new();
 
-    [ObservableProperty]
-    private CameraProtocol protocol = CameraProtocol.Rtsp;
+    [ObservableProperty(AfterChangedCallback = nameof(OnAuthenticationChanged))]
+    private AuthenticationSettings authentication = new();
 
-    [ObservableProperty]
-    [Range(1, 65535, ErrorMessageResourceType = typeof(Translations), ErrorMessageResourceName = nameof(Translations.PortRangeError))]
-    private int port = 554;
+    [ObservableProperty(AfterChangedCallback = nameof(OnDisplayChanged))]
+    private CameraDisplaySettings display = new();
 
-    [ObservableProperty]
-    private string? path;
+    [ObservableProperty(AfterChangedCallback = nameof(OnStreamChanged))]
+    private StreamSettings stream = new();
 
-    [ObservableProperty]
-    private string? userName;
-
-    [ObservableProperty]
-    private string? password;
-
-    [ObservableProperty]
-    [Required(ErrorMessageResourceType = typeof(Translations), ErrorMessageResourceName = nameof(Translations.DisplayNameRequired))]
-    [StringLength(256, ErrorMessageResourceType = typeof(Translations), ErrorMessageResourceName = nameof(Translations.DisplayNameTooLong))]
-    private string displayName = string.Empty;
-
-    [ObservableProperty]
-    private string? description;
-
-    [ObservableProperty]
-    private OverlayPosition overlayPosition = OverlayPosition.TopLeft;
-
+    [JsonIgnore]
     [ObservableProperty]
     private bool canSwapLeft;
 
+    [JsonIgnore]
     [ObservableProperty]
     private bool canSwapRight;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CameraConfiguration"/> class.
+    /// </summary>
+    public CameraConfiguration()
+    {
+        SubscribeToNestedChanges(Connection);
+        SubscribeToNestedChanges(Authentication);
+        SubscribeToNestedChanges(Display);
+        SubscribeToNestedChanges(Stream);
+    }
 
     /// <summary>
     /// Builds the camera stream URI based on the configuration.
@@ -53,17 +47,17 @@ public partial class CameraConfiguration : ObservableObject
     /// <returns>The constructed URI for the camera stream.</returns>
     public Uri BuildUri()
     {
-        var scheme = Protocol.ToScheme();
+        var scheme = Connection.Protocol.ToScheme();
 
-        var userInfo = !string.IsNullOrEmpty(UserName)
-            ? $"{Uri.EscapeDataString(UserName)}:{Uri.EscapeDataString(Password ?? string.Empty)}@"
+        var userInfo = !string.IsNullOrEmpty(Authentication.UserName)
+            ? $"{Uri.EscapeDataString(Authentication.UserName)}:{Uri.EscapeDataString(Authentication.Password ?? string.Empty)}@"
             : string.Empty;
 
-        var normalizedPath = string.IsNullOrEmpty(Path)
+        var normalizedPath = string.IsNullOrEmpty(Connection.Path)
             ? string.Empty
-            : $"/{Path.TrimStart('/')}";
+            : $"/{Connection.Path.TrimStart('/')}";
 
-        return new Uri($"{scheme}://{userInfo}{IpAddress}:{Port}{normalizedPath}");
+        return new Uri($"{scheme}://{userInfo}{Connection.IpAddress}:{Connection.Port}{normalizedPath}");
     }
 
     /// <summary>
@@ -71,5 +65,54 @@ public partial class CameraConfiguration : ObservableObject
     /// </summary>
     /// <returns>The display name.</returns>
     public override string ToString()
-        => DisplayName;
+        => Display.DisplayName;
+
+    private void OnConnectionChanged()
+    {
+        // Resubscribe to the new nested object's property changes
+        SubscribeToNestedChanges(Connection);
+    }
+
+    private void OnAuthenticationChanged()
+    {
+        SubscribeToNestedChanges(Authentication);
+    }
+
+    private void OnDisplayChanged()
+    {
+        SubscribeToNestedChanges(Display);
+    }
+
+    private void OnStreamChanged()
+    {
+        SubscribeToNestedChanges(Stream);
+    }
+
+    private void SubscribeToNestedChanges(INotifyPropertyChanged? nested)
+    {
+        if (nested is not null)
+        {
+            nested.PropertyChanged += OnNestedPropertyChanged;
+        }
+    }
+
+    private void OnNestedPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Forward the change notification for the parent property
+        // WPF bindings to nested paths (e.g., Camera.Connection.IpAddress) work automatically
+        // because WPF subscribes to each object's PropertyChanged in the path
+        var parentPropertyName = sender switch
+        {
+            ConnectionSettings => nameof(Connection),
+            AuthenticationSettings => nameof(Authentication),
+            CameraDisplaySettings => nameof(Display),
+            StreamSettings => nameof(Stream),
+            _ => null,
+        };
+
+        if (parentPropertyName is not null)
+        {
+            OnPropertyChanged(parentPropertyName);
+        }
+    }
 }

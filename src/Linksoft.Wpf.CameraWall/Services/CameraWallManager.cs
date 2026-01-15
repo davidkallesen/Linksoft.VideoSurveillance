@@ -66,10 +66,15 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     public bool CanCreateNewLayout => CameraWall is not null;
 
     /// <inheritdoc />
+    public bool CanAssignCameraToLayout
+        => CameraWall is not null && CurrentLayout is not null;
+
+    /// <inheritdoc />
     public bool CanDeleteCurrentLayout
         => CurrentLayout is not null &&
            Layouts.Count > 1 &&
-           CurrentLayout.Id != storageService.StartupLayoutId;
+           CurrentLayout.Id != storageService.StartupLayoutId &&
+           CurrentLayout.Items.Count == 0;
 
     /// <inheritdoc />
     public bool CanSetCurrentAsStartup
@@ -121,7 +126,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             Messenger.Default.Send(new CameraAddMessage(camera));
             SaveCurrentLayout();
             CameraCount = storageService.GetAllCameras().Count;
-            UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.AddedCamera1, camera.DisplayName));
+            UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.AddedCamera1, camera.Display.DisplayName));
         }
         else
         {
@@ -134,7 +139,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         ArgumentNullException.ThrowIfNull(camera);
 
-        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.EditingCamera1, camera.DisplayName));
+        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.EditingCamera1, camera.Display.DisplayName));
 
         // Exclude current camera's IP when editing (allow keeping same IP)
         var existingIpAddresses = GetExistingIpAddresses(excludeCameraId: camera.Id);
@@ -143,7 +148,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         if (result is not null)
         {
             storageService.AddOrUpdateCamera(camera);
-            UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.UpdatedCamera1, camera.DisplayName));
+            UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.UpdatedCamera1, camera.Display.DisplayName));
         }
         else
         {
@@ -155,7 +160,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         => storageService
             .GetAllCameras()
             .Where(c => excludeCameraId is null || c.Id != excludeCameraId)
-            .Select(c => c.IpAddress)
+            .Select(c => c.Connection.IpAddress)
             .Where(ip => !string.IsNullOrWhiteSpace(ip))
             .ToList();
 
@@ -165,7 +170,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         ArgumentNullException.ThrowIfNull(camera);
 
         var confirmed = dialogService.ShowConfirmation(
-            string.Format(CultureInfo.CurrentCulture, Translations.ConfirmDeleteCamera1, camera.DisplayName),
+            string.Format(CultureInfo.CurrentCulture, Translations.ConfirmDeleteCamera1, camera.Display.DisplayName),
             Translations.DeleteCamera);
 
         if (confirmed)
@@ -174,7 +179,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             Messenger.Default.Send(new CameraRemoveMessage(camera.Id));
             SaveCurrentLayout();
             CameraCount = storageService.GetAllCameras().Count;
-            UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.DeletedCamera1, camera.DisplayName));
+            UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.DeletedCamera1, camera.Display.DisplayName));
         }
     }
 
@@ -183,7 +188,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         ArgumentNullException.ThrowIfNull(camera);
 
-        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.FullScreenCamera1, camera.DisplayName));
+        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.FullScreenCamera1, camera.Display.DisplayName));
         dialogService.ShowFullScreenCamera(camera);
     }
 
@@ -232,6 +237,141 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CurrentLayout = layout;
 
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.LayoutCreated1, layout.Name));
+    }
+
+    /// <inheritdoc />
+    public void AssignCameraToLayout()
+    {
+        if (CameraWall is null || CurrentLayout is null)
+        {
+            return;
+        }
+
+        var allCameras = storageService.GetAllCameras();
+        var cameraDict = allCameras.ToDictionary(c => c.Id);
+
+        // Get assigned cameras in their current layout order
+        var assignedCameras = CurrentLayout.Items
+            .Where(i => cameraDict.ContainsKey(i.CameraId))
+            .OrderBy(i => i.OrderNumber)
+            .Select(i => cameraDict[i.CameraId])
+            .ToList();
+
+        var assignedCameraIds = assignedCameras
+            .Select(c => c.Id)
+            .ToHashSet();
+
+        var availableCameras = allCameras
+            .Where(c => !assignedCameraIds.Contains(c.Id))
+            .ToList();
+
+        UpdateStatus(Translations.AssignCameraToLayout);
+
+        var result = dialogService.ShowAssignCameraDialog(
+            CurrentLayout.Name,
+            availableCameras,
+            assignedCameras);
+
+        if (result is null)
+        {
+            UpdateStatus(Translations.AssignCameraCancelled);
+            return;
+        }
+
+        ApplyLayoutCameraChanges(result, assignedCameraIds);
+    }
+
+    private void ApplyLayoutCameraChanges(
+        IReadOnlyCollection<CameraConfiguration> newAssignedCameras,
+        HashSet<Guid> previousAssignedIds)
+    {
+        if (CameraWall is null || CurrentLayout is null)
+        {
+            return;
+        }
+
+        // Build a dictionary of existing layout items by camera ID to preserve their IDs
+        var existingItemsDict = CurrentLayout.Items.ToDictionary(i => i.CameraId);
+
+        // Build new layout items preserving existing IDs where possible
+        var newLayoutItems = new List<CameraLayoutItem>();
+        var orderNumber = 0;
+
+        foreach (var camera in newAssignedCameras)
+        {
+            CameraLayoutItem item;
+            if (existingItemsDict.TryGetValue(camera.Id, out var existingItem))
+            {
+                // Preserve existing item ID, update order
+                item = existingItem;
+                item.OrderNumber = orderNumber;
+            }
+            else
+            {
+                // New camera - create new layout item
+                item = new CameraLayoutItem
+                {
+                    CameraId = camera.Id,
+                    OrderNumber = orderNumber,
+                };
+            }
+
+            newLayoutItems.Add(item);
+            orderNumber++;
+        }
+
+        // Calculate what changed for status message
+        var newAssignedIds = newAssignedCameras
+            .Select(c => c.Id)
+            .ToHashSet();
+
+        var (addedCount, removedCount) = CalculateLayoutChangeCounts(newAssignedIds, previousAssignedIds);
+
+        // Update the layout items directly
+        CurrentLayout.Items = newLayoutItems;
+        CurrentLayout.ModifiedAt = DateTime.UtcNow;
+        storageService.AddOrUpdateLayout(CurrentLayout);
+
+        // Reload the CameraWall with the new order
+        var allCameras = storageService.GetAllCameras();
+        CameraWall.ApplyLayout(CurrentLayout, allCameras);
+
+        CameraCount = CameraWall.CameraTiles?.Count ?? 0;
+        OnPropertyChanged(nameof(CanDeleteCurrentLayout));
+        UpdateLayoutChangeStatus(addedCount, removedCount);
+    }
+
+    private static (int Added, int Removed) CalculateLayoutChangeCounts(
+        HashSet<Guid> newAssignedIds,
+        HashSet<Guid> previousAssignedIds)
+    {
+        var added = newAssignedIds
+            .Except(previousAssignedIds)
+            .Count();
+
+        var removed = previousAssignedIds
+            .Except(newAssignedIds)
+            .Count();
+
+        return (added, removed);
+    }
+
+    private void UpdateLayoutChangeStatus(
+        int addedCount,
+        int removedCount)
+    {
+        if (addedCount > 0 || removedCount > 0)
+        {
+            UpdateStatus(string.Format(
+                CultureInfo.CurrentCulture,
+                Translations.LayoutCamerasUpdated2,
+                addedCount,
+                removedCount));
+        }
+        else
+        {
+            UpdateStatus(Translations.LayoutOrderUpdated);
+        }
     }
 
     /// <inheritdoc />
@@ -291,7 +431,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         ArgumentNullException.ThrowIfNull(e);
 
-        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.CameraStateChanged2, e.Camera.DisplayName, e.NewState));
+        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.CameraStateChanged2, e.Camera.Display.DisplayName, e.NewState));
         UpdateConnectionCount();
     }
 
@@ -306,7 +446,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             SaveCurrentLayout();
         }
 
-        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.PositionChanged1, e.Camera.DisplayName));
+        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.PositionChanged1, e.Camera.Display.DisplayName));
     }
 
     /// <inheritdoc />

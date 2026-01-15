@@ -77,12 +77,12 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string SelectedProtocolKey
     {
-        get => Camera.Protocol.ToString();
+        get => Camera.Connection.Protocol.ToString();
         set
         {
             if (Enum.TryParse<CameraProtocol>(value, out var protocol))
             {
-                Camera.Protocol = protocol;
+                Camera.Connection.Protocol = protocol;
                 RaisePropertyChanged();
             }
         }
@@ -94,14 +94,30 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string SelectedOverlayPositionKey
     {
-        get => Camera.OverlayPosition.ToString();
+        get => Camera.Display.OverlayPosition.ToString();
         set
         {
             if (Enum.TryParse<OverlayPosition>(value, out var position))
             {
-                Camera.OverlayPosition = position;
+                Camera.Display.OverlayPosition = position;
                 RaisePropertyChanged();
             }
+        }
+    }
+
+    public IDictionary<string, string> RtspTransportItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["tcp"] = "TCP",
+        ["udp"] = "UDP",
+    };
+
+    public string SelectedRtspTransportKey
+    {
+        get => Camera.Stream.RtspTransport;
+        set
+        {
+            Camera.Stream.RtspTransport = value;
+            RaisePropertyChanged();
         }
     }
 
@@ -137,41 +153,41 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
 
         // Populate IP address
-        Camera.IpAddress = e.SelectedHost.IpAddress.ToString();
+        Camera.Connection.IpAddress = e.SelectedHost.IpAddress.ToString();
 
         // Set display name from hostname if available and display name is default
         if (!string.IsNullOrWhiteSpace(e.SelectedHost.Hostname) &&
-            (string.IsNullOrWhiteSpace(Camera.DisplayName) || Camera.DisplayName == Translations.NewCamera))
+            (string.IsNullOrWhiteSpace(Camera.Display.DisplayName) || Camera.Display.DisplayName == Translations.NewCamera))
         {
-            Camera.DisplayName = e.SelectedHost.Hostname;
+            Camera.Display.DisplayName = e.SelectedHost.Hostname;
         }
 
         // Auto-detect protocol and port from open ports
         var openPorts = e.SelectedHost.OpenPortNumbers.ToList();
         if (openPorts.Contains(554))
         {
-            Camera.Protocol = CameraProtocol.Rtsp;
-            Camera.Port = 554;
+            Camera.Connection.Protocol = CameraProtocol.Rtsp;
+            Camera.Connection.Port = 554;
         }
         else if (openPorts.Contains(8554))
         {
-            Camera.Protocol = CameraProtocol.Rtsp;
-            Camera.Port = 8554;
+            Camera.Connection.Protocol = CameraProtocol.Rtsp;
+            Camera.Connection.Port = 8554;
         }
         else if (openPorts.Contains(80))
         {
-            Camera.Protocol = CameraProtocol.Http;
-            Camera.Port = 80;
+            Camera.Connection.Protocol = CameraProtocol.Http;
+            Camera.Connection.Port = 80;
         }
         else if (openPorts.Contains(8080))
         {
-            Camera.Protocol = CameraProtocol.Http;
-            Camera.Port = 8080;
+            Camera.Connection.Protocol = CameraProtocol.Http;
+            Camera.Connection.Port = 8080;
         }
         else if (openPorts.Count > 0)
         {
             // Use first open port
-            Camera.Port = openPorts[0];
+            Camera.Connection.Port = openPorts[0];
         }
 
         // Notify property changes for combo boxes
@@ -182,19 +198,14 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         object? sender,
         PropertyChangedEventArgs e)
     {
-        // Reset test result when connection-related properties change
-        if (e.PropertyName is nameof(Camera.Protocol)
-            or nameof(Camera.IpAddress)
-            or nameof(Camera.Port)
-            or nameof(Camera.Path)
-            or nameof(Camera.UserName)
-            or nameof(Camera.Password))
+        // Reset test result when connection or authentication properties change
+        if (e.PropertyName is nameof(Camera.Connection) or nameof(Camera.Authentication))
         {
             ClearTestResult();
         }
 
-        // Validate IP address uniqueness when IP changes
-        if (e.PropertyName == nameof(Camera.IpAddress))
+        // Validate IP address uniqueness when connection changes
+        if (e.PropertyName == nameof(Camera.Connection))
         {
             ValidateIpAddress();
             CommandManager.InvalidateRequerySuggested();
@@ -203,59 +214,36 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     private void ValidateIpAddress()
     {
-        if (string.IsNullOrWhiteSpace(Camera.IpAddress))
+        if (string.IsNullOrWhiteSpace(Camera.Connection.IpAddress))
         {
             IpAddressError = null;
             return;
         }
 
-        var isDuplicate = existingIpAddresses.Contains(Camera.IpAddress, StringComparer.OrdinalIgnoreCase);
+        var isDuplicate = existingIpAddresses.Contains(Camera.Connection.IpAddress, StringComparer.OrdinalIgnoreCase);
         IpAddressError = isDuplicate ? Translations.IpAddressAlreadyExists : null;
     }
 
     private bool IsIpAddressUnique()
     {
-        if (string.IsNullOrWhiteSpace(Camera.IpAddress))
+        if (string.IsNullOrWhiteSpace(Camera.Connection.IpAddress))
         {
             return true;
         }
 
-        return !existingIpAddresses.Contains(Camera.IpAddress, StringComparer.OrdinalIgnoreCase);
+        return !existingIpAddresses.Contains(Camera.Connection.IpAddress, StringComparer.OrdinalIgnoreCase);
     }
 
-    [RelayCommand(CanExecute = nameof(CanTestConnection))]
-    private async Task TestConnection()
+    [RelayCommand("TestConnection", CanExecute = nameof(CanTestConnection))]
+    private async Task TestConnectionAsync()
     {
         IsTesting = true;
         ClearTestResult();
 
         try
         {
-            if (Camera.Protocol == CameraProtocol.Rtsp)
-            {
-                using var tcpClient = new System.Net.Sockets.TcpClient();
-
-                await tcpClient
-                    .ConnectAsync(Camera.IpAddress, Camera.Port)
-                    .ConfigureAwait(false);
-
-                SetTestResult(Translations.ConnectionSuccessful);
-            }
-            else
-            {
-                var uri = Camera.BuildUri();
-
-                using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(5);
-
-                var response = await httpClient
-                    .GetAsync(uri)
-                    .ConfigureAwait(false);
-
-                SetTestResult(response.IsSuccessStatusCode
-                    ? Translations.ConnectionSuccessful
-                    : string.Format(CultureInfo.CurrentCulture, Translations.FailedWithStatus1, response.StatusCode));
-            }
+            var uri = Camera.BuildUri();
+            await TestStreamWithPlayerAsync(uri).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -267,8 +255,93 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
+    private async Task TestStreamWithPlayerAsync(Uri uri)
+    {
+        using var player = CreateTestPlayer();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var tcs = new TaskCompletionSource<bool>();
+
+        SubscribeToPlayerStatus(player, tcs);
+
+        try
+        {
+            player.Open(uri.ToString());
+            await WaitForConnectionResultAsync(tcs, cts.Token).ConfigureAwait(false);
+        }
+        finally
+        {
+            player.PropertyChanged -= OnPlayerStatusChanged;
+            player.Stop();
+        }
+
+        void OnPlayerStatusChanged(
+            object? sender,
+            PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(Player.Status))
+            {
+                return;
+            }
+
+            switch (player.Status)
+            {
+                case Status.Playing:
+                    tcs.TrySetResult(true);
+                    break;
+                case Status.Failed:
+                    tcs.TrySetResult(false);
+                    break;
+            }
+        }
+
+        void SubscribeToPlayerStatus(
+            Player p,
+            TaskCompletionSource<bool> taskSource)
+        {
+            p.PropertyChanged += OnPlayerStatusChanged;
+        }
+    }
+
+    private static Player CreateTestPlayer()
+    {
+        var config = new Config
+        {
+            Player =
+            {
+                AutoPlay = true,
+            },
+            Video =
+            {
+                BackColor = Colors.Black,
+            },
+            Audio =
+            {
+                Enabled = false,
+            },
+        };
+
+        return new Player(config);
+    }
+
+    private async Task WaitForConnectionResultAsync(
+        TaskCompletionSource<bool> tcs,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var success = await tcs.Task
+                .WaitAsync(cancellationToken)
+                .ConfigureAwait(false);
+            SetTestResult(success ? Translations.ConnectionSuccessful : Translations.StreamOpenFailed);
+        }
+        catch (OperationCanceledException)
+        {
+            SetTestResult(Translations.ConnectionTimedOut);
+        }
+    }
+
     private bool CanTestConnection()
-        => !string.IsNullOrWhiteSpace(Camera.IpAddress) && !IsTesting;
+        => !string.IsNullOrWhiteSpace(Camera.Connection.IpAddress) && !IsTesting;
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private void Save()
@@ -277,8 +350,8 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     }
 
     private bool CanSave()
-        => !string.IsNullOrWhiteSpace(Camera.DisplayName) &&
-           !string.IsNullOrWhiteSpace(Camera.IpAddress) &&
+        => !string.IsNullOrWhiteSpace(Camera.Display.DisplayName) &&
+           !string.IsNullOrWhiteSpace(Camera.Connection.IpAddress) &&
            IsIpAddressUnique();
 
     [RelayCommand]

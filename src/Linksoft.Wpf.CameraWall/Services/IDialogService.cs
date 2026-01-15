@@ -78,4 +78,16 @@ public interface IDialogService
     /// </summary>
     /// <returns>True if settings were saved, false if cancelled.</returns>
     bool ShowSettingsDialog();
+
+    /// <summary>
+    /// Shows the assign camera to layout dialog with dual-list multi-select.
+    /// </summary>
+    /// <param name="layoutName">The name of the layout being edited.</param>
+    /// <param name="availableCameras">The cameras available for assignment (not in current layout).</param>
+    /// <param name="assignedCameras">The cameras currently assigned to the layout.</param>
+    /// <returns>The final list of assigned cameras if confirmed, or null if cancelled.</returns>
+    IReadOnlyCollection<CameraConfiguration>? ShowAssignCameraDialog(
+        string layoutName,
+        IReadOnlyCollection<CameraConfiguration> availableCameras,
+        IReadOnlyCollection<CameraConfiguration> assignedCameras);
 }

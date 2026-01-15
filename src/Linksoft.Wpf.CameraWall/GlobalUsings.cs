@@ -39,6 +39,7 @@ global using ControlzEx.Theming;
 global using FlyleafLib;
 global using FlyleafLib.MediaPlayer;
 
+global using Linksoft.Wpf.CameraWall.Converters;
 global using Linksoft.Wpf.CameraWall.Dialogs;
 global using Linksoft.Wpf.CameraWall.Events;
 global using Linksoft.Wpf.CameraWall.Extensions;

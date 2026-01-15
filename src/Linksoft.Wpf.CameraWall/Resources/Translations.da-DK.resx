@@ -141,6 +141,9 @@
   <data name="ConnectionSuccessful" xml:space="preserve">
     <value>Forbindelse lykkedes</value>
   </data>
+  <data name="StreamOpenFailed" xml:space="preserve">
+    <value>Kunne ikke åbne stream</value>
+  </data>
   <data name="FailedWithStatus1" xml:space="preserve">
     <value>Fejlet: {0}</value>
   </data>
@@ -620,5 +623,65 @@
   </data>
   <data name="Exit" xml:space="preserve">
     <value>Afslut</value>
+  </data>
+  <data name="AssignCamera" xml:space="preserve">
+    <value>Tildel kamera</value>
+  </data>
+  <data name="AssignCameraToLayout" xml:space="preserve">
+    <value>Tildel kamera til layout</value>
+  </data>
+  <data name="SelectCameraToAssign" xml:space="preserve">
+    <value>Vælg et kamera at tilføje til dette layout:</value>
+  </data>
+  <data name="NoCamerasAvailable" xml:space="preserve">
+    <value>Alle kameraer er allerede i dette layout.</value>
+  </data>
+  <data name="AssignedCamera1" xml:space="preserve">
+    <value>Tildelt kamera: {0}</value>
+  </data>
+  <data name="AssignCameraCancelled" xml:space="preserve">
+    <value>Tildel kamera annulleret</value>
+  </data>
+  <data name="AvailableCameras" xml:space="preserve">
+    <value>Tilgængelige kameraer</value>
+  </data>
+  <data name="AssignedToLayout" xml:space="preserve">
+    <value>Tildelt til layout</value>
+  </data>
+  <data name="MoveToAssigned" xml:space="preserve">
+    <value>Flyt valgte til tildelt</value>
+  </data>
+  <data name="MoveToAvailable" xml:space="preserve">
+    <value>Flyt valgte til tilgængelige</value>
+  </data>
+  <data name="MoveAllToAssigned" xml:space="preserve">
+    <value>Flyt alle til tildelt</value>
+  </data>
+  <data name="MoveAllToAvailable" xml:space="preserve">
+    <value>Flyt alle til tilgængelige</value>
+  </data>
+  <data name="LayoutCamerasUpdated2" xml:space="preserve">
+    <value>Layout opdateret: {0} tilføjet, {1} fjernet</value>
+  </data>
+  <data name="MoveUp" xml:space="preserve">
+    <value>Flyt op</value>
+  </data>
+  <data name="MoveDown" xml:space="preserve">
+    <value>Flyt ned</value>
+  </data>
+  <data name="LayoutOrderUpdated" xml:space="preserve">
+    <value>Layoutrækkefølge opdateret</value>
+  </data>
+  <data name="AdvancedSettings" xml:space="preserve">
+    <value>Avancerede indstillinger</value>
+  </data>
+  <data name="UseLowLatencyMode" xml:space="preserve">
+    <value>Brug lav latenstilstand</value>
+  </data>
+  <data name="MaxLatencyMs" xml:space="preserve">
+    <value>Maks. latens (ms)</value>
+  </data>
+  <data name="RtspTransport" xml:space="preserve">
+    <value>RTSP transport</value>
   </data>
 </root>

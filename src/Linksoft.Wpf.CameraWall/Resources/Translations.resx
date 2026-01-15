@@ -141,6 +141,9 @@
   <data name="ConnectionSuccessful" xml:space="preserve">
     <value>Connection successful</value>
   </data>
+  <data name="StreamOpenFailed" xml:space="preserve">
+    <value>Failed to open stream</value>
+  </data>
   <data name="FailedWithStatus1" xml:space="preserve">
     <value>Failed: {0}</value>
   </data>
@@ -620,5 +623,65 @@
   </data>
   <data name="Exit" xml:space="preserve">
     <value>Exit</value>
+  </data>
+  <data name="AssignCamera" xml:space="preserve">
+    <value>Assign Camera</value>
+  </data>
+  <data name="AssignCameraToLayout" xml:space="preserve">
+    <value>Assign Camera to Layout</value>
+  </data>
+  <data name="SelectCameraToAssign" xml:space="preserve">
+    <value>Select a camera to add to this layout:</value>
+  </data>
+  <data name="NoCamerasAvailable" xml:space="preserve">
+    <value>All cameras are already in this layout.</value>
+  </data>
+  <data name="AssignedCamera1" xml:space="preserve">
+    <value>Assigned camera: {0}</value>
+  </data>
+  <data name="AssignCameraCancelled" xml:space="preserve">
+    <value>Assign camera cancelled</value>
+  </data>
+  <data name="AvailableCameras" xml:space="preserve">
+    <value>Available Cameras</value>
+  </data>
+  <data name="AssignedToLayout" xml:space="preserve">
+    <value>Assigned to Layout</value>
+  </data>
+  <data name="MoveToAssigned" xml:space="preserve">
+    <value>Move selected to assigned</value>
+  </data>
+  <data name="MoveToAvailable" xml:space="preserve">
+    <value>Move selected to available</value>
+  </data>
+  <data name="MoveAllToAssigned" xml:space="preserve">
+    <value>Move all to assigned</value>
+  </data>
+  <data name="MoveAllToAvailable" xml:space="preserve">
+    <value>Move all to available</value>
+  </data>
+  <data name="LayoutCamerasUpdated2" xml:space="preserve">
+    <value>Layout updated: {0} added, {1} removed</value>
+  </data>
+  <data name="MoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="MoveDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="LayoutOrderUpdated" xml:space="preserve">
+    <value>Layout order updated</value>
+  </data>
+  <data name="AdvancedSettings" xml:space="preserve">
+    <value>Advanced Settings</value>
+  </data>
+  <data name="UseLowLatencyMode" xml:space="preserve">
+    <value>Use low latency mode</value>
+  </data>
+  <data name="MaxLatencyMs" xml:space="preserve">
+    <value>Max latency (ms)</value>
+  </data>
+  <data name="RtspTransport" xml:space="preserve">
+    <value>RTSP transport</value>
   </data>
 </root>

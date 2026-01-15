@@ -366,11 +366,9 @@ public partial class CameraTile : IDisposable
                 case nameof(CameraConfiguration.CanSwapRight):
                     CommandManager.InvalidateRequerySuggested();
                     break;
-                case nameof(CameraConfiguration.DisplayName):
-                    CameraName = Camera?.DisplayName ?? string.Empty;
-                    break;
-                case nameof(CameraConfiguration.Description):
-                    CameraDescription = Camera?.Description ?? string.Empty;
+                case nameof(CameraConfiguration.Display):
+                    CameraName = Camera?.Display.DisplayName ?? string.Empty;
+                    CameraDescription = Camera?.Display.Description ?? string.Empty;
                     break;
             }
         });
@@ -388,9 +386,9 @@ public partial class CameraTile : IDisposable
                 return;
             }
 
-            CameraName = cameraConfig.DisplayName;
-            CameraDescription = cameraConfig.Description ?? string.Empty;
-            UpdateOverlayPosition(cameraConfig.OverlayPosition);
+            CameraName = cameraConfig.Display.DisplayName;
+            CameraDescription = cameraConfig.Display.Description ?? string.Empty;
+            UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
             return;
         }
 
@@ -409,15 +407,61 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        CameraName = cameraConfig.DisplayName;
-        CameraDescription = cameraConfig.Description ?? string.Empty;
+        CameraName = cameraConfig.Display.DisplayName;
+        CameraDescription = cameraConfig.Display.Description ?? string.Empty;
 
-        // Create new player
+        Player = CreatePlayer(cameraConfig);
+        Player.PropertyChanged += OnPlayerPropertyChanged;
+
+        UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
+
+        // Show connecting state immediately
+        UpdateConnectionState(ConnectionState.Connecting);
+
+        // Defer player open to allow UI to render first
+        // Player.Open() can block the UI thread, so we use BeginInvoke to let the render pass complete
+        _ = Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            PlayOnBackgroundThread);
+    }
+
+    private void PlayOnBackgroundThread()
+    {
+        if (Camera is null || Player is null)
+        {
+            return;
+        }
+
+        // Capture references for background thread
+        var capturedPlayer = Player;
+        var capturedCamera = Camera;
+
+        // Run blocking player operations on background thread to keep UI responsive
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                var uri = capturedCamera.BuildUri();
+                capturedPlayer.Open(uri.ToString());
+            }
+            catch (Exception ex)
+            {
+                _ = Dispatcher.BeginInvoke(() =>
+                {
+                    UpdateConnectionState(ConnectionState.ConnectionFailed, ex.Message);
+                });
+            }
+        });
+    }
+
+    private static Player CreatePlayer(CameraConfiguration camera)
+    {
         var config = new Config
         {
             Player =
             {
                 AutoPlay = true,
+                MaxLatency = camera.Stream.MaxLatencyMs * 10000L,
             },
             Video =
             {
@@ -429,13 +473,14 @@ public partial class CameraTile : IDisposable
             },
         };
 
-        Player = new Player(config);
-        Player.PropertyChanged += OnPlayerPropertyChanged;
+        if (camera.Stream.UseLowLatencyMode)
+        {
+            config.Demuxer.BufferDuration = camera.Stream.BufferDurationMs * 10000L;
+            config.Demuxer.FormatOpt["rtsp_transport"] = camera.Stream.RtspTransport;
+            config.Demuxer.FormatOpt["fflags"] = "nobuffer";
+        }
 
-        UpdateOverlayPosition(cameraConfig.OverlayPosition);
-
-        // Start streaming
-        Play();
+        return new Player(config);
     }
 
     private void OnPlayerPropertyChanged(
@@ -770,7 +815,7 @@ public partial class CameraTile : IDisposable
         {
             Title = Translations.SaveSnapshot,
             Filter = "PNG Image|*.png|JPEG Image|*.jpg",
-            FileName = $"{Camera.DisplayName}_{DateTime.Now:yyyyMMdd_HHmmss}",
+            FileName = $"{Camera.Display.DisplayName}_{DateTime.Now:yyyyMMdd_HHmmss}",
         };
 
         // Use configured snapshot directory as initial directory if available

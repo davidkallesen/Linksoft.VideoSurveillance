@@ -85,6 +85,11 @@ public interface ICameraWallManager : INotifyPropertyChanged
     void CreateNewLayout();
 
     /// <summary>
+    /// Assigns an existing camera to the current layout.
+    /// </summary>
+    void AssignCameraToLayout();
+
+    /// <summary>
     /// Deletes the current layout.
     /// </summary>
     void DeleteCurrentLayout();
@@ -115,6 +120,11 @@ public interface ICameraWallManager : INotifyPropertyChanged
     /// Gets a value indicating whether a new layout can be created.
     /// </summary>
     bool CanCreateNewLayout { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether a camera can be assigned to the current layout.
+    /// </summary>
+    bool CanAssignCameraToLayout { get; }
 
     /// <summary>
     /// Gets a value indicating whether the current layout can be deleted.

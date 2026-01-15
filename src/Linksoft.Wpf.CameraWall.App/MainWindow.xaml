@@ -100,6 +100,15 @@
                         </fluent:Button.Icon>
                     </fluent:Button>
                     <fluent:Button
+                        Command="{Binding Path=AssignCameraCommand}"
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=AssignCamera}"
+                        Size="Middle">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Link" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
+                    <fluent:Button
                         Command="{Binding Path=DeleteLayoutCommand}"
                         Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                      Key=DeleteLayout}"

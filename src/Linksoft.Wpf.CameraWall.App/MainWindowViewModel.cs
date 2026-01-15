@@ -135,6 +135,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             or nameof(ICameraWallManager.CameraWall)
             or nameof(ICameraWallManager.CurrentLayout)
             or nameof(ICameraWallManager.CanCreateNewLayout)
+            or nameof(ICameraWallManager.CanAssignCameraToLayout)
             or nameof(ICameraWallManager.CanDeleteCurrentLayout)
             or nameof(ICameraWallManager.CanSetCurrentAsStartup)
             or nameof(ICameraWallManager.CanReconnectAll))
@@ -153,6 +154,13 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
 
     private bool CanNewLayout()
         => Manager.CanCreateNewLayout;
+
+    [RelayCommand(CanExecute = nameof(CanAssignCamera))]
+    private void AssignCamera()
+        => Manager.AssignCameraToLayout();
+
+    private bool CanAssignCamera()
+        => Manager.CanAssignCameraToLayout;
 
     [RelayCommand(CanExecute = nameof(CanDeleteLayout))]
     private void DeleteLayout()

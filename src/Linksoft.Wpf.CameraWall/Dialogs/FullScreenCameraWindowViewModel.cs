@@ -30,8 +30,8 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         ArgumentNullException.ThrowIfNull(camera);
 
         this.camera = camera;
-        CameraName = camera.DisplayName;
-        CameraDescription = camera.Description ?? string.Empty;
+        CameraName = camera.Display.DisplayName;
+        CameraDescription = camera.Display.Description ?? string.Empty;
 
         InitializePlayer();
         StartOverlayHideTimer();
