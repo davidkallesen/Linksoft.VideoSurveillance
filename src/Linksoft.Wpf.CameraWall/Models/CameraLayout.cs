@@ -3,7 +3,7 @@ namespace Linksoft.Wpf.CameraWall.Models;
 /// <summary>
 /// Represents a named layout containing camera positions.
 /// </summary>
-public class CameraLayout
+public partial class CameraLayout : ObservableObject
 {
     /// <summary>
     /// Gets or sets the unique identifier for the layout.
@@ -13,7 +13,8 @@ public class CameraLayout
     /// <summary>
     /// Gets or sets the name of the layout.
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string name = string.Empty;
 
     /// <summary>
     /// Gets or sets the list of camera positions in this layout.

@@ -7,7 +7,10 @@ namespace Linksoft.Wpf.CameraWall.Converters;
 public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfiguration>
 {
     /// <inheritdoc />
-    public override CameraConfiguration? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override CameraConfiguration? Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null)
         {
@@ -45,8 +48,15 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
     }
 
     /// <inheritdoc />
-    public override void Write(Utf8JsonWriter writer, CameraConfiguration value, JsonSerializerOptions options)
+    public override void Write(
+        Utf8JsonWriter writer,
+        CameraConfiguration value,
+        JsonSerializerOptions options)
     {
+        ArgumentNullException.ThrowIfNull(writer);
+        ArgumentNullException.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(options);
+
         writer.WriteStartObject();
 
         // Id
@@ -71,7 +81,10 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         writer.WriteEndObject();
     }
 
-    private static void ReadNestedFormat(JsonElement root, CameraConfiguration config, JsonElement connectionElement)
+    private static void ReadNestedFormat(
+        JsonElement root,
+        CameraConfiguration config,
+        JsonElement connectionElement)
     {
         // Connection
         ReadConnectionSettings(connectionElement, config.Connection);
@@ -101,7 +114,9 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         }
     }
 
-    private static void ReadLegacyFormat(JsonElement root, CameraConfiguration config)
+    private static void ReadLegacyFormat(
+        JsonElement root,
+        CameraConfiguration config)
     {
         // Connection properties (flat)
         if (TryGetStringProperty(root, "ipAddress", "IpAddress", out var ipAddress))
@@ -109,12 +124,10 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
             config.Connection.IpAddress = ipAddress;
         }
 
-        if (TryGetStringProperty(root, "protocol", "Protocol", out var protocol))
+        if (TryGetStringProperty(root, "protocol", "Protocol", out var protocol) &&
+            Enum.TryParse<CameraProtocol>(protocol, ignoreCase: true, out var protocolEnum))
         {
-            if (Enum.TryParse<CameraProtocol>(protocol, ignoreCase: true, out var protocolEnum))
-            {
-                config.Connection.Protocol = protocolEnum;
-            }
+            config.Connection.Protocol = protocolEnum;
         }
 
         if (TryGetInt32Property(root, "port", "Port", out var port))
@@ -149,12 +162,10 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
             config.Display.Description = description;
         }
 
-        if (TryGetStringProperty(root, "overlayPosition", "OverlayPosition", out var overlayPosition))
+        if (TryGetStringProperty(root, "overlayPosition", "OverlayPosition", out var overlayPosition) &&
+            Enum.TryParse<OverlayPosition>(overlayPosition, ignoreCase: true, out var positionEnum))
         {
-            if (Enum.TryParse<OverlayPosition>(overlayPosition, ignoreCase: true, out var positionEnum))
-            {
-                config.Display.OverlayPosition = positionEnum;
-            }
+            config.Display.OverlayPosition = positionEnum;
         }
 
         // Stream properties (flat)
@@ -179,19 +190,19 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         }
     }
 
-    private static void ReadConnectionSettings(JsonElement element, ConnectionSettings settings)
+    private static void ReadConnectionSettings(
+        JsonElement element,
+        ConnectionSettings settings)
     {
         if (TryGetStringProperty(element, "ipAddress", "IpAddress", out var ipAddress))
         {
             settings.IpAddress = ipAddress;
         }
 
-        if (TryGetStringProperty(element, "protocol", "Protocol", out var protocol))
+        if (TryGetStringProperty(element, "protocol", "Protocol", out var protocol) &&
+            Enum.TryParse<CameraProtocol>(protocol, ignoreCase: true, out var protocolEnum))
         {
-            if (Enum.TryParse<CameraProtocol>(protocol, ignoreCase: true, out var protocolEnum))
-            {
-                settings.Protocol = protocolEnum;
-            }
+            settings.Protocol = protocolEnum;
         }
 
         if (TryGetInt32Property(element, "port", "Port", out var port))
@@ -205,7 +216,9 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         }
     }
 
-    private static void ReadAuthenticationSettings(JsonElement element, AuthenticationSettings settings)
+    private static void ReadAuthenticationSettings(
+        JsonElement element,
+        AuthenticationSettings settings)
     {
         if (TryGetStringProperty(element, "userName", "UserName", out var userName))
         {
@@ -218,7 +231,9 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         }
     }
 
-    private static void ReadDisplaySettings(JsonElement element, CameraDisplaySettings settings)
+    private static void ReadDisplaySettings(
+        JsonElement element,
+        CameraDisplaySettings settings)
     {
         if (TryGetStringProperty(element, "displayName", "DisplayName", out var displayName))
         {
@@ -230,16 +245,16 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
             settings.Description = description;
         }
 
-        if (TryGetStringProperty(element, "overlayPosition", "OverlayPosition", out var overlayPosition))
+        if (TryGetStringProperty(element, "overlayPosition", "OverlayPosition", out var overlayPosition) &&
+            Enum.TryParse<OverlayPosition>(overlayPosition, ignoreCase: true, out var positionEnum))
         {
-            if (Enum.TryParse<OverlayPosition>(overlayPosition, ignoreCase: true, out var positionEnum))
-            {
-                settings.OverlayPosition = positionEnum;
-            }
+            settings.OverlayPosition = positionEnum;
         }
     }
 
-    private static void ReadStreamSettings(JsonElement element, StreamSettings settings)
+    private static void ReadStreamSettings(
+        JsonElement element,
+        StreamSettings settings)
     {
         if (TryGetBoolProperty(element, "useLowLatencyMode", "UseLowLatencyMode", out var useLowLatencyMode))
         {
@@ -262,7 +277,9 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         }
     }
 
-    private static void WriteConnectionSettings(Utf8JsonWriter writer, ConnectionSettings settings)
+    private static void WriteConnectionSettings(
+        Utf8JsonWriter writer,
+        ConnectionSettings settings)
     {
         writer.WriteStartObject();
         writer.WriteString("ipAddress", settings.IpAddress);
@@ -280,7 +297,9 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         writer.WriteEndObject();
     }
 
-    private static void WriteAuthenticationSettings(Utf8JsonWriter writer, AuthenticationSettings settings)
+    private static void WriteAuthenticationSettings(
+        Utf8JsonWriter writer,
+        AuthenticationSettings settings)
     {
         writer.WriteStartObject();
         if (settings.UserName is not null)
@@ -304,7 +323,9 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         writer.WriteEndObject();
     }
 
-    private static void WriteDisplaySettings(Utf8JsonWriter writer, CameraDisplaySettings settings)
+    private static void WriteDisplaySettings(
+        Utf8JsonWriter writer,
+        CameraDisplaySettings settings)
     {
         writer.WriteStartObject();
         writer.WriteString("displayName", settings.DisplayName);
@@ -321,7 +342,9 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         writer.WriteEndObject();
     }
 
-    private static void WriteStreamSettings(Utf8JsonWriter writer, StreamSettings settings)
+    private static void WriteStreamSettings(
+        Utf8JsonWriter writer,
+        StreamSettings settings)
     {
         writer.WriteStartObject();
         writer.WriteBoolean("useLowLatencyMode", settings.UseLowLatencyMode);
@@ -331,44 +354,53 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         writer.WriteEndObject();
     }
 
-    private static bool TryGetStringProperty(JsonElement element, string camelName, string pascalName, [NotNullWhen(true)] out string? value)
+    private static bool TryGetStringProperty(
+        JsonElement element,
+        string camelName,
+        string pascalName,
+        [NotNullWhen(true)] out string? value)
     {
-        if (element.TryGetProperty(camelName, out var prop) || element.TryGetProperty(pascalName, out prop))
+        if ((element.TryGetProperty(camelName, out var prop) ||
+             element.TryGetProperty(pascalName, out prop)) &&
+            prop.ValueKind == JsonValueKind.String)
         {
-            if (prop.ValueKind == JsonValueKind.String)
-            {
-                value = prop.GetString();
-                return value is not null;
-            }
+            value = prop.GetString();
+            return value is not null;
         }
 
         value = null;
         return false;
     }
 
-    private static bool TryGetInt32Property(JsonElement element, string camelName, string pascalName, out int value)
+    private static bool TryGetInt32Property(
+        JsonElement element,
+        string camelName,
+        string pascalName,
+        out int value)
     {
-        if (element.TryGetProperty(camelName, out var prop) || element.TryGetProperty(pascalName, out prop))
+        if ((element.TryGetProperty(camelName, out var prop) ||
+             element.TryGetProperty(pascalName, out prop)) &&
+            prop.ValueKind == JsonValueKind.Number && prop.TryGetInt32(out value))
         {
-            if (prop.ValueKind == JsonValueKind.Number && prop.TryGetInt32(out value))
-            {
-                return true;
-            }
+            return true;
         }
 
         value = 0;
         return false;
     }
 
-    private static bool TryGetBoolProperty(JsonElement element, string camelName, string pascalName, out bool value)
+    private static bool TryGetBoolProperty(
+        JsonElement element,
+        string camelName,
+        string pascalName,
+        out bool value)
     {
-        if (element.TryGetProperty(camelName, out var prop) || element.TryGetProperty(pascalName, out prop))
+        if ((element.TryGetProperty(camelName, out var prop) ||
+             element.TryGetProperty(pascalName, out prop)) &&
+            prop.ValueKind is JsonValueKind.True or JsonValueKind.False)
         {
-            if (prop.ValueKind is JsonValueKind.True or JsonValueKind.False)
-            {
-                value = prop.GetBoolean();
-                return true;
-            }
+            value = prop.GetBoolean();
+            return true;
         }
 
         value = false;

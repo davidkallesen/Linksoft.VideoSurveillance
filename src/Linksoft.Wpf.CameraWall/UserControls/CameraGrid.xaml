@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="Linksoft.Wpf.CameraWall.UserControls.CameraWall"
+    x:Class="Linksoft.Wpf.CameraWall.UserControls.CameraGrid"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
@@ -19,7 +19,7 @@
             ItemsSource="{Binding Path=CameraTiles, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <UniformGrid x:Name="CameraGrid" Rows="{Binding Path=GridRowCount, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    <UniformGrid x:Name="TileGrid" Rows="{Binding Path=GridRowCount, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
@@ -32,12 +32,12 @@
                         DeleteCameraRequested="OnDeleteCameraRequested"
                         EditCameraRequested="OnEditCameraRequested"
                         FullScreenRequested="OnFullScreenRequested"
-                        OverlayOpacity="{Binding Path=OverlayOpacity, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
-                        ShowOverlayConnectionStatus="{Binding Path=ShowOverlayConnectionStatus, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
-                        ShowOverlayDescription="{Binding Path=ShowOverlayDescription, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
-                        ShowOverlayTime="{Binding Path=ShowOverlayTime, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
-                        ShowOverlayTitle="{Binding Path=ShowOverlayTitle, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
-                        SnapshotDirectory="{Binding Path=SnapshotDirectory, RelativeSource={RelativeSource AncestorType=local:CameraWall}}"
+                        OverlayOpacity="{Binding Path=OverlayOpacity, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
+                        ShowOverlayConnectionStatus="{Binding Path=ShowOverlayConnectionStatus, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
+                        ShowOverlayDescription="{Binding Path=ShowOverlayDescription, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
+                        ShowOverlayTime="{Binding Path=ShowOverlayTime, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
+                        ShowOverlayTitle="{Binding Path=ShowOverlayTitle, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
+                        SnapshotDirectory="{Binding Path=SnapshotDirectory, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
                         SwapLeftRequested="OnSwapLeftRequested"
                         SwapRightRequested="OnSwapRightRequested" />
                 </DataTemplate>

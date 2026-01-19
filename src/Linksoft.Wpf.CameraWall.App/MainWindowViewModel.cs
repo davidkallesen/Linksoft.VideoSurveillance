@@ -74,11 +74,11 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         => Manager.StatusText;
 
     /// <summary>
-    /// Initializes the view model with the camera wall control.
+    /// Initializes the view model with the camera grid control.
     /// </summary>
-    /// <param name="cameraWallControl">The camera wall control.</param>
-    public void Initialize(UserControls.CameraWall cameraWallControl)
-        => Manager.Initialize(cameraWallControl);
+    /// <param name="cameraGridControl">The camera grid control.</param>
+    public void Initialize(CameraGrid cameraGridControl)
+        => Manager.Initialize(cameraGridControl);
 
     /// <summary>
     /// Shows a camera in full screen.
@@ -131,10 +131,12 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         }
 
         // Handle CanExecute invalidation for commands
-        if (e.PropertyName is nameof(ICameraWallManager.CameraCount)
-            or nameof(ICameraWallManager.CameraWall)
+        if (e.PropertyName
+            is nameof(ICameraWallManager.CameraCount)
+            or nameof(ICameraWallManager.CameraGrid)
             or nameof(ICameraWallManager.CurrentLayout)
             or nameof(ICameraWallManager.CanCreateNewLayout)
+            or nameof(ICameraWallManager.CanRenameCurrentLayout)
             or nameof(ICameraWallManager.CanAssignCameraToLayout)
             or nameof(ICameraWallManager.CanDeleteCurrentLayout)
             or nameof(ICameraWallManager.CanSetCurrentAsStartup)
@@ -154,6 +156,13 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
 
     private bool CanNewLayout()
         => Manager.CanCreateNewLayout;
+
+    [RelayCommand(CanExecute = nameof(CanRenameLayout))]
+    private void RenameLayout()
+        => Manager.RenameCurrentLayout();
+
+    private bool CanRenameLayout()
+        => Manager.CanRenameCurrentLayout;
 
     [RelayCommand(CanExecute = nameof(CanAssignCamera))]
     private void AssignCamera()

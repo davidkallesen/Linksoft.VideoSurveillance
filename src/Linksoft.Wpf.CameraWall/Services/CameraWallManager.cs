@@ -12,7 +12,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     private readonly IApplicationSettingsService settingsService;
 
     [ObservableProperty(DependentPropertyNames = [nameof(CanCreateNewLayout)])]
-    private UserControls.CameraWall? cameraWall;
+    private Linksoft.Wpf.CameraWall.UserControls.CameraGrid? cameraGrid;
 
     [ObservableProperty]
     private string statusText = Translations.Ready;
@@ -63,11 +63,14 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     public ObservableCollection<CameraLayout> Layouts { get; }
 
     /// <inheritdoc />
-    public bool CanCreateNewLayout => CameraWall is not null;
+    public bool CanCreateNewLayout => CameraGrid is not null;
+
+    /// <inheritdoc />
+    public bool CanRenameCurrentLayout => CurrentLayout is not null;
 
     /// <inheritdoc />
     public bool CanAssignCameraToLayout
-        => CameraWall is not null && CurrentLayout is not null;
+        => CameraGrid is not null && CurrentLayout is not null;
 
     /// <inheritdoc />
     public bool CanDeleteCurrentLayout
@@ -86,9 +89,9 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         => CameraCount > 0;
 
     /// <inheritdoc />
-    public void Initialize(UserControls.CameraWall cameraWallControl)
+    public void Initialize(CameraGrid cameraGridControl)
     {
-        CameraWall = cameraWallControl;
+        CameraGrid = cameraGridControl;
         ApplyDisplaySettings();
         LoadStartupCameras();
     }
@@ -96,20 +99,20 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <inheritdoc />
     public void ApplyDisplaySettings()
     {
-        if (CameraWall is null)
+        if (CameraGrid is null)
         {
             return;
         }
 
         var display = settingsService.Display;
-        CameraWall.ShowOverlayTitle = display.ShowOverlayTitle;
-        CameraWall.ShowOverlayDescription = display.ShowOverlayDescription;
-        CameraWall.ShowOverlayConnectionStatus = display.ShowOverlayConnectionStatus;
-        CameraWall.ShowOverlayTime = display.ShowOverlayTime;
-        CameraWall.OverlayOpacity = display.OverlayOpacity;
-        CameraWall.AllowDragAndDropReorder = display.AllowDragAndDropReorder;
-        CameraWall.AutoSave = display.AutoSaveLayoutChanges;
-        CameraWall.SnapshotDirectory = display.SnapshotDirectory;
+        CameraGrid.ShowOverlayTitle = display.ShowOverlayTitle;
+        CameraGrid.ShowOverlayDescription = display.ShowOverlayDescription;
+        CameraGrid.ShowOverlayConnectionStatus = display.ShowOverlayConnectionStatus;
+        CameraGrid.ShowOverlayTime = display.ShowOverlayTime;
+        CameraGrid.OverlayOpacity = display.OverlayOpacity;
+        CameraGrid.AllowDragAndDropReorder = display.AllowDragAndDropReorder;
+        CameraGrid.AutoSave = display.AutoSaveLayoutChanges;
+        CameraGrid.SnapshotDirectory = display.SnapshotDirectory;
     }
 
     /// <inheritdoc />
@@ -196,33 +199,29 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     public void ReconnectAll()
     {
         UpdateStatus(Translations.ReconnectingAllCameras);
-        CameraWall?.ReconnectAll();
+        CameraGrid?.ReconnectAll();
         UpdateStatus(Translations.AllCamerasReconnected);
     }
 
     /// <inheritdoc />
     public void CreateNewLayout()
     {
-        if (CameraWall is null)
+        if (CameraGrid is null)
         {
             return;
         }
 
+        var existingNames = Layouts.Select(l => l.Name).ToList();
         var layoutName = dialogService.ShowInputBox(
             Translations.NewLayout,
             Translations.EnterLayoutName,
-            $"Layout {DateTime.Now:yyyy-MM-dd HH:mm}");
+            $"Layout {DateTime.Now:yyyy-MM-dd HH:mm}",
+            existingNames,
+            Translations.LayoutNameAlreadyExists);
 
         if (string.IsNullOrWhiteSpace(layoutName))
         {
             UpdateStatus(Translations.NewLayoutCancelled);
-            return;
-        }
-
-        // Check for duplicate layout name (case-insensitive)
-        if (Layouts.Any(l => l.Name.Equals(layoutName, StringComparison.OrdinalIgnoreCase)))
-        {
-            dialogService.ShowError(Translations.LayoutNameAlreadyExists);
             return;
         }
 
@@ -240,9 +239,45 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     }
 
     /// <inheritdoc />
+    public void RenameCurrentLayout()
+    {
+        if (CurrentLayout is null)
+        {
+            return;
+        }
+
+        var oldName = CurrentLayout.Name;
+
+        // Exclude current layout name from forbidden values (allow keeping the same name)
+        var existingNames = Layouts
+            .Where(l => l.Id != CurrentLayout.Id)
+            .Select(l => l.Name)
+            .ToList();
+
+        var newName = dialogService.ShowInputBox(
+            Translations.RenameLayout,
+            Translations.EnterNewLayoutName,
+            oldName,
+            existingNames,
+            Translations.LayoutNameAlreadyExists);
+
+        if (string.IsNullOrWhiteSpace(newName) || newName == oldName)
+        {
+            UpdateStatus(Translations.RenameLayoutCancelled);
+            return;
+        }
+
+        CurrentLayout.Name = newName;
+        CurrentLayout.ModifiedAt = DateTime.UtcNow;
+        storageService.AddOrUpdateLayout(CurrentLayout);
+
+        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.LayoutRenamed2, oldName, newName));
+    }
+
+    /// <inheritdoc />
     public void AssignCameraToLayout()
     {
-        if (CameraWall is null || CurrentLayout is null)
+        if (CameraGrid is null || CurrentLayout is null)
         {
             return;
         }
@@ -285,7 +320,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         IReadOnlyCollection<CameraConfiguration> newAssignedCameras,
         HashSet<Guid> previousAssignedIds)
     {
-        if (CameraWall is null || CurrentLayout is null)
+        if (CameraGrid is null || CurrentLayout is null)
         {
             return;
         }
@@ -332,11 +367,11 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CurrentLayout.ModifiedAt = DateTime.UtcNow;
         storageService.AddOrUpdateLayout(CurrentLayout);
 
-        // Reload the CameraWall with the new order
+        // Reload the CameraGrid with the new order
         var allCameras = storageService.GetAllCameras();
-        CameraWall.ApplyLayout(CurrentLayout, allCameras);
+        CameraGrid.ApplyLayout(CurrentLayout, allCameras);
 
-        CameraCount = CameraWall.CameraTiles?.Count ?? 0;
+        CameraCount = CameraGrid.CameraTiles?.Count ?? 0;
         OnPropertyChanged(nameof(CanDeleteCurrentLayout));
         UpdateLayoutChangeStatus(addedCount, removedCount);
     }
@@ -416,12 +451,12 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <inheritdoc />
     public void SaveCurrentLayout()
     {
-        if (CameraWall is null || CurrentLayout is null)
+        if (CameraGrid is null || CurrentLayout is null)
         {
             return;
         }
 
-        CurrentLayout.Items = CameraWall.GetCurrentLayout();
+        CurrentLayout.Items = CameraGrid.GetCurrentLayout();
         CurrentLayout.ModifiedAt = DateTime.UtcNow;
         storageService.AddOrUpdateLayout(CurrentLayout);
     }
@@ -468,14 +503,14 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
     private void OnCurrentLayoutChangedCallback()
     {
-        if (CameraWall is null || CurrentLayout is null)
+        if (CameraGrid is null || CurrentLayout is null)
         {
             return;
         }
 
         var cameras = storageService.GetAllCameras();
-        CameraWall.ApplyLayout(CurrentLayout, cameras);
-        CameraCount = CameraWall.CameraTiles?.Count ?? 0;
+        CameraGrid.ApplyLayout(CurrentLayout, cameras);
+        CameraCount = CameraGrid.CameraTiles?.Count ?? 0;
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.LoadedLayout1, CurrentLayout.Name));
     }
 
@@ -512,7 +547,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
     private void LoadStartupCameras()
     {
-        if (CameraWall is null)
+        if (CameraGrid is null)
         {
             return;
         }
@@ -521,7 +556,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
         if (SelectedStartupLayout is not null)
         {
-            CameraWall.ApplyLayout(SelectedStartupLayout, cameras);
+            CameraGrid.ApplyLayout(SelectedStartupLayout, cameras);
         }
         else
         {

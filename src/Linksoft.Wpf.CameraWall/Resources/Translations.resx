@@ -186,6 +186,18 @@
   <data name="DeleteLayout" xml:space="preserve">
     <value>Delete Layout</value>
   </data>
+  <data name="RenameLayout" xml:space="preserve">
+    <value>Rename Layout</value>
+  </data>
+  <data name="EnterNewLayoutName" xml:space="preserve">
+    <value>Enter a new name for the layout:</value>
+  </data>
+  <data name="RenameLayoutCancelled" xml:space="preserve">
+    <value>Rename layout cancelled</value>
+  </data>
+  <data name="LayoutRenamed2" xml:space="preserve">
+    <value>Layout renamed: {0} → {1}</value>
+  </data>
   <data name="Information" xml:space="preserve">
     <value>Information</value>
   </data>
@@ -683,5 +695,17 @@
   </data>
   <data name="RtspTransport" xml:space="preserve">
     <value>RTSP transport</value>
+  </data>
+  <data name="UseLowLatencyModeInfo" xml:space="preserve">
+    <value>Enables optimized settings for minimal delay. Reduces buffer size and disables some processing to achieve near real-time video playback.</value>
+  </data>
+  <data name="MaxLatencyMsInfo" xml:space="preserve">
+    <value>Maximum allowed delay in milliseconds before the player skips frames to catch up. Lower values reduce delay but may cause stuttering on slow connections.</value>
+  </data>
+  <data name="RtspTransportInfo" xml:space="preserve">
+    <value>TCP is more reliable but may have higher latency. UDP is faster but packets may be lost on unstable networks.</value>
+  </data>
+  <data name="BufferDurationMsInfo" xml:space="preserve">
+    <value>Amount of video data to buffer before playback. Higher values provide smoother playback but increase delay. Set to 0 for minimal buffering in low latency mode.</value>
   </data>
 </root>

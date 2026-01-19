@@ -10,7 +10,7 @@ A WPF application for displaying multiple camera streams in a configurable grid 
 ## Architecture
 The library contains all business logic. The App is a thin shell that:
 - Provides Ribbon UI (Fluent.Ribbon)
-- Hosts the CameraWall control
+- Hosts the CameraGrid control
 - Delegates all operations to `ICameraWallManager`
 
 ## Key Frameworks & Packages
@@ -35,10 +35,10 @@ public interface ICameraWallManager : INotifyPropertyChanged
     int CameraCount { get; }
     int ConnectedCount { get; }
     string StatusText { get; }
-    UserControls.CameraWall? CameraWall { get; }
+    Linksoft.Wpf.CameraWall.UserControls.CameraGrid? CameraGrid { get; }
 
     // Initialization
-    void Initialize(UserControls.CameraWall cameraWallControl);
+    void Initialize(Linksoft.Wpf.CameraWall.UserControls.CameraGrid cameraGridControl);
 
     // Camera operations
     void AddCamera();
@@ -227,7 +227,7 @@ public static string ToScheme(this CameraProtocol protocol)
 - ViewModels: `{Name}ViewModel` (e.g., `CameraConfigurationDialogViewModel`)
 - Dialogs: `{Name}Dialog` (e.g., `CameraConfigurationDialog`)
 - Extensions: `{Type}Extensions` (e.g., `CameraProtocolExtensions`)
-- UserControls: PascalCase (e.g., `CameraTile`, `CameraWall`, `CameraOverlay`)
+- UserControls: PascalCase (e.g., `CameraTile`, `CameraGrid`, `CameraOverlay`)
 - Services: `I{Name}Service` / `{Name}Service` (e.g., `ICameraWallManager`, `CameraWallManager`)
 
 ## Dependency Injection

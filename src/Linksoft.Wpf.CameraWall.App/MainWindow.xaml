@@ -100,6 +100,15 @@
                         </fluent:Button.Icon>
                     </fluent:Button>
                     <fluent:Button
+                        Command="{Binding Path=RenameLayoutCommand}"
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=RenameLayout}"
+                        Size="Middle">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Edit" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
+                    <fluent:Button
                         Command="{Binding Path=AssignCameraCommand}"
                         Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                      Key=AssignCamera}"
@@ -160,15 +169,15 @@
             <fluent:RibbonTabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=View}" />
         </fluent:Ribbon>
 
-        <!--  Camera Wall  -->
-        <cw:CameraWall
-            x:Name="CameraWallControl"
+        <!--  Camera Grid  -->
+        <cw:CameraGrid
+            x:Name="CameraGridControl"
             Grid.Row="1"
-            ConnectionStateChanged="CameraWall_ConnectionStateChanged"
-            DeleteCameraRequested="CameraWall_DeleteCameraRequested"
-            EditCameraRequested="CameraWall_EditCameraRequested"
-            FullScreenRequested="CameraWall_FullScreenRequested"
-            PositionChanged="CameraWall_PositionChanged" />
+            ConnectionStateChanged="CameraGrid_ConnectionStateChanged"
+            DeleteCameraRequested="CameraGrid_DeleteCameraRequested"
+            EditCameraRequested="CameraGrid_EditCameraRequested"
+            FullScreenRequested="CameraGrid_FullScreenRequested"
+            PositionChanged="CameraGrid_PositionChanged" />
 
         <!--  Status Bar  -->
         <StatusBar Grid.Row="2">

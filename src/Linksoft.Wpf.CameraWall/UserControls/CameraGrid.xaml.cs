@@ -5,7 +5,7 @@ namespace Linksoft.Wpf.CameraWall.UserControls;
 /// <summary>
 /// Control for displaying multiple camera tiles in a dynamic grid layout.
 /// </summary>
-public partial class CameraWall
+public partial class CameraGrid
 {
     [DependencyProperty(DefaultValue = 1)]
     private int gridRowCount;
@@ -38,9 +38,9 @@ public partial class CameraWall
     private string? snapshotDirectory;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CameraWall"/> class.
+    /// Initializes a new instance of the <see cref="CameraGrid"/> class.
     /// </summary>
-    public CameraWall()
+    public CameraGrid()
     {
         InitializeComponent();
         CameraTiles = [];
@@ -283,20 +283,20 @@ public partial class CameraWall
         DependencyObject d,
         DependencyPropertyChangedEventArgs e)
     {
-        if (d is CameraWall wall)
+        if (d is CameraGrid grid)
         {
-            wall.UpdateGridLayout();
-            wall.UpdateEmptyState();
-            wall.UpdateSwapCapabilities();
+            grid.UpdateGridLayout();
+            grid.UpdateEmptyState();
+            grid.UpdateSwapCapabilities();
 
             if (e.OldValue is ObservableCollection<CameraConfiguration> oldCollection)
             {
-                oldCollection.CollectionChanged -= wall.OnCameraTilesCollectionChanged;
+                oldCollection.CollectionChanged -= grid.OnCameraTilesCollectionChanged;
             }
 
             if (e.NewValue is ObservableCollection<CameraConfiguration> newCollection)
             {
-                newCollection.CollectionChanged += wall.OnCameraTilesCollectionChanged;
+                newCollection.CollectionChanged += grid.OnCameraTilesCollectionChanged;
             }
         }
     }

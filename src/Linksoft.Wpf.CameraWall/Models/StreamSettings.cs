@@ -16,4 +16,45 @@ public partial class StreamSettings : ObservableObject
 
     [ObservableProperty]
     private int bufferDurationMs;
+
+    /// <summary>
+    /// Creates a deep copy of this instance.
+    /// </summary>
+    public StreamSettings Clone()
+        => new()
+        {
+            UseLowLatencyMode = UseLowLatencyMode,
+            MaxLatencyMs = MaxLatencyMs,
+            RtspTransport = RtspTransport,
+            BufferDurationMs = BufferDurationMs,
+        };
+
+    /// <summary>
+    /// Copies values from another instance.
+    /// </summary>
+    public void CopyFrom(StreamSettings source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        UseLowLatencyMode = source.UseLowLatencyMode;
+        MaxLatencyMs = source.MaxLatencyMs;
+        RtspTransport = source.RtspTransport;
+        BufferDurationMs = source.BufferDurationMs;
+    }
+
+    /// <summary>
+    /// Determines whether the specified instance has the same values.
+    /// </summary>
+    public bool ValueEquals(StreamSettings? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        return UseLowLatencyMode == other.UseLowLatencyMode &&
+               MaxLatencyMs == other.MaxLatencyMs &&
+               string.Equals(RtspTransport, other.RtspTransport, StringComparison.Ordinal) &&
+               BufferDurationMs == other.BufferDurationMs;
+    }
 }

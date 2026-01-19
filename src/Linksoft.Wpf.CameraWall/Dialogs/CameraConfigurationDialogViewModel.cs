@@ -3,6 +3,7 @@ namespace Linksoft.Wpf.CameraWall.Dialogs;
 
 public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 {
+    private readonly CameraConfiguration originalCamera;
     private readonly bool isNew;
     private readonly IReadOnlyCollection<string> existingIpAddresses;
 
@@ -51,9 +52,14 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         bool isNew,
         IReadOnlyCollection<string> existingIpAddresses)
     {
-        Camera = camera ?? throw new ArgumentNullException(nameof(camera));
+        ArgumentNullException.ThrowIfNull(camera);
+
+        originalCamera = camera;
         this.isNew = isNew;
         this.existingIpAddresses = existingIpAddresses ?? [];
+
+        // Create a clone for editing - changes only apply when Save is clicked
+        Camera = camera.Clone();
 
         Camera.PropertyChanged += OnCameraPropertyChanged;
         NetworkScanner.EntrySelected += OnNetworkScannerEntrySelected;
@@ -208,8 +214,10 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         if (e.PropertyName == nameof(Camera.Connection))
         {
             ValidateIpAddress();
-            CommandManager.InvalidateRequerySuggested();
         }
+
+        // Always invalidate commands when any property changes (for Save button CanExecute)
+        CommandManager.InvalidateRequerySuggested();
     }
 
     private void ValidateIpAddress()
@@ -346,13 +354,29 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     [RelayCommand(CanExecute = nameof(CanSave))]
     private void Save()
     {
+        // Copy edited values back to the original camera
+        originalCamera.CopyFrom(Camera);
+
         CloseRequested?.Invoke(this, new DialogClosedEventArgs(dialogResult: true));
     }
 
     private bool CanSave()
         => !string.IsNullOrWhiteSpace(Camera.Display.DisplayName) &&
            !string.IsNullOrWhiteSpace(Camera.Connection.IpAddress) &&
-           IsIpAddressUnique();
+           IsIpAddressUnique() &&
+           HasChanges();
+
+    private bool HasChanges()
+    {
+        // For new cameras, always consider as having changes if fields are filled
+        if (isNew)
+        {
+            return true;
+        }
+
+        // For existing cameras, compare with original to detect changes
+        return !Camera.ValueEquals(originalCamera);
+    }
 
     [RelayCommand]
     private void Cancel()

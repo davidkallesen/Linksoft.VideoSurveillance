@@ -150,7 +150,7 @@
             </TabItem>
 
             <!--  Connection Tab  -->
-            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Connection}" IsEnabled="False">
+            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Connection}">
                 <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
                     <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
 
@@ -224,7 +224,7 @@
             </TabItem>
 
             <!--  Performance Tab  -->
-            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Performance}" IsEnabled="False">
+            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Performance}">
                 <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
                     <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
 
@@ -304,7 +304,7 @@
             </TabItem>
 
             <!--  Advanced Tab  -->
-            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Advanced}" IsEnabled="False">
+            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Advanced}">
                 <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
                     <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
 

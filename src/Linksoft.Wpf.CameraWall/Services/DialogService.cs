@@ -1,7 +1,4 @@
 // ReSharper disable RedundantArgumentDefaultValue
-
-using AssemblyHelper = Atc.Helpers.AssemblyHelper;
-
 namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
@@ -42,7 +39,18 @@ public class DialogService : IDialogService
         string title,
         string prompt,
         string defaultText = "")
+        => ShowInputBox(title, prompt, defaultText, [], string.Empty);
+
+    /// <inheritdoc />
+    public string? ShowInputBox(
+        string title,
+        string prompt,
+        string defaultText,
+        IReadOnlyCollection<string> forbiddenValues,
+        string forbiddenValueError)
     {
+        ArgumentNullException.ThrowIfNull(forbiddenValues);
+
         var labelTextBox = new LabelTextBox
         {
             LabelText = prompt,
@@ -55,6 +63,28 @@ public class DialogService : IDialogService
             Application.Current.MainWindow!,
             title,
             labelTextBox);
+
+        // Add validation for forbidden values
+        if (forbiddenValues.Count > 0)
+        {
+            var forbiddenSet = new HashSet<string>(forbiddenValues, StringComparer.OrdinalIgnoreCase);
+
+            labelTextBox.TextChanged += (_, _) =>
+            {
+                var currentText = labelTextBox.Text.Trim();
+                var isForbidden = forbiddenSet.Contains(currentText);
+                labelTextBox.ValidationText = isForbidden
+                    ? forbiddenValueError
+                    : string.Empty;
+            };
+
+            // Initial validation check
+            var initialText = labelTextBox.Text?.Trim() ?? string.Empty;
+            if (forbiddenSet.Contains(initialText))
+            {
+                labelTextBox.ValidationText = forbiddenValueError;
+            }
+        }
 
         var dialogResult = dialogBox.ShowDialog();
         if (dialogResult.HasValue && dialogResult.Value)
@@ -111,7 +141,7 @@ public class DialogService : IDialogService
     /// <inheritdoc />
     public void ShowAboutDialog()
     {
-        var version = AssemblyHelper.GetSystemVersion();
+        var version = Atc.Helpers.AssemblyHelper.GetSystemVersion();
         var year = DateTime.Now.Year;
 
         var dialog = new AboutDialog(version.ToString(), year)
@@ -141,10 +171,8 @@ public class DialogService : IDialogService
         ArgumentNullException.ThrowIfNull(camera);
 
         using var viewModel = new FullScreenCameraWindowViewModel(camera);
-        var window = new FullScreenCameraWindow(viewModel)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        using var window = new FullScreenCameraWindow(viewModel);
+        window.Owner = Application.Current.MainWindow;
 
         window.ShowDialog();
     }

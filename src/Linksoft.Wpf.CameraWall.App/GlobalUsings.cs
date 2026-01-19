@@ -1,3 +1,4 @@
+global using System;
 global using System.Collections.ObjectModel;
 global using System.ComponentModel;
 global using System.Diagnostics;
@@ -20,6 +21,7 @@ global using Linksoft.Wpf.CameraWall.Models;
 global using Linksoft.Wpf.CameraWall.Resources;
 global using Linksoft.Wpf.CameraWall.Services;
 global using Linksoft.Wpf.CameraWall.SplashScreens;
+global using Linksoft.Wpf.CameraWall.UserControls;
 
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;

@@ -18,4 +18,45 @@ public partial class ConnectionSettings : ObservableObject
 
     [ObservableProperty]
     private string? path;
+
+    /// <summary>
+    /// Creates a deep copy of this instance.
+    /// </summary>
+    public ConnectionSettings Clone()
+        => new()
+        {
+            IpAddress = IpAddress,
+            Protocol = Protocol,
+            Port = Port,
+            Path = Path,
+        };
+
+    /// <summary>
+    /// Copies values from another instance.
+    /// </summary>
+    public void CopyFrom(ConnectionSettings source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        IpAddress = source.IpAddress;
+        Protocol = source.Protocol;
+        Port = source.Port;
+        Path = source.Path;
+    }
+
+    /// <summary>
+    /// Determines whether the specified instance has the same values.
+    /// </summary>
+    public bool ValueEquals(ConnectionSettings? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        return string.Equals(IpAddress, other.IpAddress, StringComparison.Ordinal) &&
+               Protocol == other.Protocol &&
+               Port == other.Port &&
+               string.Equals(Path, other.Path, StringComparison.Ordinal);
+    }
 }

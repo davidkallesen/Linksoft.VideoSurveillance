@@ -67,6 +67,53 @@ public partial class CameraConfiguration : ObservableObject
     public override string ToString()
         => Display.DisplayName;
 
+    /// <summary>
+    /// Creates a deep copy of this camera configuration.
+    /// </summary>
+    /// <returns>A new instance with the same values.</returns>
+    public CameraConfiguration Clone()
+        => new()
+        {
+            Id = Id,
+            Connection = Connection.Clone(),
+            Authentication = Authentication.Clone(),
+            Display = Display.Clone(),
+            Stream = Stream.Clone(),
+            CanSwapLeft = CanSwapLeft,
+            CanSwapRight = CanSwapRight,
+        };
+
+    /// <summary>
+    /// Copies values from another camera configuration.
+    /// </summary>
+    /// <param name="source">The source configuration to copy from.</param>
+    public void CopyFrom(CameraConfiguration source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        // Note: Id is intentionally not copied - we're copying values, not identity
+        Connection.CopyFrom(source.Connection);
+        Authentication.CopyFrom(source.Authentication);
+        Display.CopyFrom(source.Display);
+        Stream.CopyFrom(source.Stream);
+    }
+
+    /// <summary>
+    /// Determines whether the specified instance has the same values (excluding Id and swap flags).
+    /// </summary>
+    public bool ValueEquals(CameraConfiguration? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        return Connection.ValueEquals(other.Connection) &&
+               Authentication.ValueEquals(other.Authentication) &&
+               Display.ValueEquals(other.Display) &&
+               Stream.ValueEquals(other.Stream);
+    }
+
     private void OnConnectionChanged()
     {
         // Resubscribe to the new nested object's property changes
@@ -96,7 +143,9 @@ public partial class CameraConfiguration : ObservableObject
         }
     }
 
-    private void OnNestedPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnNestedPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
     {
         // Forward the change notification for the parent property
         // WPF bindings to nested paths (e.g., Camera.Connection.IpAddress) work automatically

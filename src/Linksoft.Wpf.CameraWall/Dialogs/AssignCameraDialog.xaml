@@ -50,7 +50,7 @@
                 x:Name="AvailableListBox"
                 Grid.Row="1"
                 Grid.Column="0"
-                DisplayMemberPath="DisplayName"
+                DisplayMemberPath="Display.DisplayName"
                 ItemsSource="{Binding Path=AvailableCameras}"
                 SelectionChanged="OnAvailableSelectionChanged"
                 SelectionMode="Extended" />
@@ -109,7 +109,7 @@
                 x:Name="AssignedListBox"
                 Grid.Row="1"
                 Grid.Column="2"
-                DisplayMemberPath="DisplayName"
+                DisplayMemberPath="Display.DisplayName"
                 ItemsSource="{Binding Path=AssignedCameras}"
                 SelectionChanged="OnAssignedSelectionChanged"
                 SelectionMode="Extended" />

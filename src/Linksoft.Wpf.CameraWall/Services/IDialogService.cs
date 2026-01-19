@@ -30,6 +30,22 @@ public interface IDialogService
         string defaultText = "");
 
     /// <summary>
+    /// Shows an input box dialog with validation against forbidden values.
+    /// </summary>
+    /// <param name="title">The dialog title.</param>
+    /// <param name="prompt">The prompt text.</param>
+    /// <param name="defaultText">The default input text.</param>
+    /// <param name="forbiddenValues">Values that are not allowed (case-insensitive comparison).</param>
+    /// <param name="forbiddenValueError">Error message to show when a forbidden value is entered.</param>
+    /// <returns>The entered text if OK was clicked, or null if cancelled.</returns>
+    string? ShowInputBox(
+        string title,
+        string prompt,
+        string defaultText,
+        IReadOnlyCollection<string> forbiddenValues,
+        string forbiddenValueError);
+
+    /// <summary>
     /// Shows a confirmation dialog.
     /// </summary>
     /// <param name="message">The confirmation message.</param>

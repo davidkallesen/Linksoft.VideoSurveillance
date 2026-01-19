@@ -321,6 +321,7 @@ public partial class CameraTile : IDisposable
         if (d is CameraTile tile && e.NewValue is ConnectionState newState)
         {
             tile.UpdateOverlayConnectionState(newState);
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -369,9 +370,46 @@ public partial class CameraTile : IDisposable
                 case nameof(CameraConfiguration.Display):
                     CameraName = Camera?.Display.DisplayName ?? string.Empty;
                     CameraDescription = Camera?.Display.Description ?? string.Empty;
+                    if (Camera is not null)
+                    {
+                        UpdateOverlayPosition(Camera.Display.OverlayPosition);
+                    }
+
+                    break;
+                case nameof(CameraConfiguration.Connection):
+                case nameof(CameraConfiguration.Authentication):
+                case nameof(CameraConfiguration.Stream):
+                    // Stream settings require player recreation to take effect
+                    RecreatePlayer();
                     break;
             }
         });
+    }
+
+    private void RecreatePlayer()
+    {
+        if (Camera is null)
+        {
+            return;
+        }
+
+        // Cleanup existing player
+        if (Player is not null)
+        {
+            Player.PropertyChanged -= OnPlayerPropertyChanged;
+            Player.Dispose();
+            Player = null;
+        }
+
+        // Create new player with updated settings
+        Player = CreatePlayer(Camera);
+        Player.PropertyChanged += OnPlayerPropertyChanged;
+
+        UpdateConnectionState(ConnectionState.Connecting);
+
+        _ = Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            PlayOnBackgroundThread);
     }
 
     private void OnCameraChangedInternal(CameraConfiguration? cameraConfig)
@@ -767,7 +805,7 @@ public partial class CameraTile : IDisposable
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanExecuteCameraCommand))]
+    [RelayCommand(CanExecute = nameof(CanExecuteWhenConnected))]
     private void FullScreen()
     {
         if (Camera is not null)
@@ -800,10 +838,11 @@ public partial class CameraTile : IDisposable
         }
     }
 
-    private bool CanExecuteSnapshot()
-        => Camera is not null && ConnectionState == ConnectionState.Connected;
+    private bool CanExecuteWhenConnected()
+        => Camera is not null &&
+           ConnectionState == ConnectionState.Connected;
 
-    [RelayCommand(CanExecute = nameof(CanExecuteSnapshot))]
+    [RelayCommand(CanExecute = nameof(CanExecuteWhenConnected))]
     private void Snapshot()
     {
         if (Player is null || Camera is null)

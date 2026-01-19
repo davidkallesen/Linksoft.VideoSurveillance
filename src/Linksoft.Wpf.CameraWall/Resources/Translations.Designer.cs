@@ -277,6 +277,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Amount of video data to buffer before playback. Higher values provide smoother playback but increase delay. Set to 0 for minimal buffering in low latency mode..
+        /// </summary>
+        public static string BufferDurationMsInfo {
+            get {
+                return ResourceManager.GetString("BufferDurationMsInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Camera.
         /// </summary>
         public static string Camera {
@@ -664,6 +673,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enter a new name for the layout:.
+        /// </summary>
+        public static string EnterNewLayoutName {
+            get {
+                return ResourceManager.GetString("EnterNewLayoutName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Entries.
         /// </summary>
         public static string Entries {
@@ -907,6 +925,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Layout renamed: {0} → {1}.
+        /// </summary>
+        public static string LayoutRenamed2 {
+            get {
+                return ResourceManager.GetString("LayoutRenamed2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Layouts.
         /// </summary>
         public static string Layouts {
@@ -984,6 +1011,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string MaxLatencyMs {
             get {
                 return ResourceManager.GetString("MaxLatencyMs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Maximum allowed delay in milliseconds before the player skips frames to catch up. Lower values reduce delay but may cause stuttering on slow connections..
+        /// </summary>
+        public static string MaxLatencyMsInfo {
+            get {
+                return ResourceManager.GetString("MaxLatencyMsInfo", resourceCulture);
             }
         }
         
@@ -1348,6 +1384,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Rename Layout.
+        /// </summary>
+        public static string RenameLayout {
+            get {
+                return ResourceManager.GetString("RenameLayout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rename layout cancelled.
+        /// </summary>
+        public static string RenameLayoutCancelled {
+            get {
+                return ResourceManager.GetString("RenameLayoutCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Restore Defaults.
         /// </summary>
         public static string RestoreDefaults {
@@ -1362,6 +1416,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string RtspTransport {
             get {
                 return ResourceManager.GetString("RtspTransport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TCP is more reliable but may have higher latency. UDP is faster but packets may be lost on unstable networks..
+        /// </summary>
+        public static string RtspTransportInfo {
+            get {
+                return ResourceManager.GetString("RtspTransportInfo", resourceCulture);
             }
         }
         
@@ -1704,6 +1767,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string UseLowLatencyMode {
             get {
                 return ResourceManager.GetString("UseLowLatencyMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enables optimized settings for minimal delay. Reduces buffer size and disables some processing to achieve near real-time video playback..
+        /// </summary>
+        public static string UseLowLatencyModeInfo {
+            get {
+                return ResourceManager.GetString("UseLowLatencyModeInfo", resourceCulture);
             }
         }
         

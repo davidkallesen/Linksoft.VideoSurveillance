@@ -37,7 +37,7 @@ public partial class MainWindow : Fluent.IRibbonWindow
         RoutedEventArgs e)
     {
         viewModel.OnLoaded(this, e);
-        viewModel.Initialize(CameraWallControl);
+        viewModel.Initialize(CameraGridControl);
     }
 
     private void OnClosing(
@@ -55,46 +55,46 @@ public partial class MainWindow : Fluent.IRibbonWindow
         KeyEventArgs e)
         => viewModel.OnKeyUp(this, e);
 
-    private void CameraWall_FullScreenRequested(
+    private void CameraGrid_FullScreenRequested(
         object? sender,
         CameraConfiguration e)
     {
         viewModel.ShowFullScreen(e);
     }
 
-    private void CameraWall_ConnectionStateChanged(
+    private void CameraGrid_ConnectionStateChanged(
         object? sender,
         CameraConnectionChangedEventArgs e)
     {
         viewModel.OnConnectionStateChanged(e);
     }
 
-    private void CameraWall_PositionChanged(
+    private void CameraGrid_PositionChanged(
         object? sender,
         CameraPositionChangedEventArgs e)
     {
         viewModel.OnPositionChanged(e);
     }
 
-    private void CameraWall_EditCameraRequested(
+    private void CameraGrid_EditCameraRequested(
         object? sender,
         CameraConfiguration e)
     {
         viewModel.EditCamera(e);
     }
 
-    private void CameraWall_DeleteCameraRequested(
+    private void CameraGrid_DeleteCameraRequested(
         object? sender,
         CameraConfiguration e)
     {
         viewModel.DeleteCamera(e);
     }
 
-    // Hide CameraWall when Backstage opens to avoid z-order issues with hardware-accelerated video
+    // Hide CameraGrid when Backstage opens to avoid z-order issues with hardware-accelerated video
     private void OnBackstageIsOpenChanged(
         object sender,
         DependencyPropertyChangedEventArgs e)
-        => CameraWallControl.Visibility = (bool)e.NewValue
+        => CameraGridControl.Visibility = (bool)e.NewValue
             ? Visibility.Hidden
             : Visibility.Visible;
 }

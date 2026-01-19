@@ -36,9 +36,9 @@ public interface ICameraWallManager : INotifyPropertyChanged
     string StatusText { get; }
 
     /// <summary>
-    /// Gets the camera wall control reference.
+    /// Gets the camera grid control reference.
     /// </summary>
-    UserControls.CameraWall? CameraWall { get; }
+    CameraGrid? CameraGrid { get; }
 
     /// <summary>
     /// Occurs when the status text changes.
@@ -46,10 +46,10 @@ public interface ICameraWallManager : INotifyPropertyChanged
     event EventHandler<string>? StatusChanged;
 
     /// <summary>
-    /// Initializes the manager with the camera wall control.
+    /// Initializes the manager with the camera grid control.
     /// </summary>
-    /// <param name="cameraWallControl">The camera wall control.</param>
-    void Initialize(UserControls.CameraWall cameraWallControl);
+    /// <param name="cameraGridControl">The camera grid control.</param>
+    void Initialize(CameraGrid cameraGridControl);
 
     /// <summary>
     /// Adds a new camera.
@@ -83,6 +83,11 @@ public interface ICameraWallManager : INotifyPropertyChanged
     /// Creates a new layout.
     /// </summary>
     void CreateNewLayout();
+
+    /// <summary>
+    /// Renames the current layout.
+    /// </summary>
+    void RenameCurrentLayout();
 
     /// <summary>
     /// Assigns an existing camera to the current layout.
@@ -120,6 +125,11 @@ public interface ICameraWallManager : INotifyPropertyChanged
     /// Gets a value indicating whether a new layout can be created.
     /// </summary>
     bool CanCreateNewLayout { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the current layout can be renamed.
+    /// </summary>
+    bool CanRenameCurrentLayout { get; }
 
     /// <summary>
     /// Gets a value indicating whether a camera can be assigned to the current layout.
