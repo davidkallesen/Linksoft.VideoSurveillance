@@ -16,6 +16,7 @@
     MinWidth="700"
     MinHeight="400"
     d:DataContext="{d:DesignInstance Type=app:MainWindowViewModel}"
+    Icon="pack://application:,,,/Linksoft.Wpf.CameraWall;component/Resources/Images/cctv-camera.ico"
     WindowStartupLocation="CenterScreen"
     WindowState="{Binding Path=WindowState}"
     mc:Ignorable="d">

@@ -51,6 +51,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\Images\cctv-camera.ico" />
+    <Resource Include="Resources\Images\cctv-camera.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Update="Atc.Analyzer" Version="0.1.19" />
   </ItemGroup>
 

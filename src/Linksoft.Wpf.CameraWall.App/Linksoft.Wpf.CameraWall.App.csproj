@@ -5,6 +5,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <Description>Camera Wall application for monitoring multiple RTSP/HTTP camera streams in a dynamic grid layout.</Description>
+    <ApplicationIcon>..\Linksoft.Wpf.CameraWall\Resources\Images\cctv-camera.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

@@ -15,11 +15,20 @@
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
 
-    <atc:GridEx Margin="24" Rows="Auto,Auto,Auto,Auto,Auto">
+    <atc:GridEx Margin="24" Rows="Auto,Auto,Auto,Auto,Auto,Auto">
+
+        <!--  Logo  -->
+        <Image
+            Grid.Row="0"
+            Width="80"
+            Height="80"
+            HorizontalAlignment="Center"
+            Source="/Linksoft.Wpf.CameraWall;component/Resources/Images/cctv-camera.png" />
 
         <!--  Application Title  -->
         <TextBlock
-            Grid.Row="0"
+            Grid.Row="1"
+            Margin="0,16,0,0"
             HorizontalAlignment="Center"
             FontSize="20"
             FontWeight="Bold"
@@ -27,7 +36,7 @@
 
         <!--  Version  -->
         <TextBlock
-            Grid.Row="1"
+            Grid.Row="2"
             Margin="0,16,0,0"
             FontSize="14">
             <Run Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Version}" />
@@ -37,7 +46,7 @@
 
         <!--  Description (with word wrap)  -->
         <TextBlock
-            Grid.Row="2"
+            Grid.Row="3"
             Margin="0,16,0,0"
             FontSize="13"
             Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
@@ -46,7 +55,7 @@
 
         <!--  Copyright  -->
         <TextBlock
-            Grid.Row="3"
+            Grid.Row="4"
             Margin="0,16,0,0"
             FontSize="12">
             <Run Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Copyright}" />
@@ -58,7 +67,7 @@
 
         <!--  OK Button  -->
         <Button
-            Grid.Row="4"
+            Grid.Row="5"
             MinWidth="80"
             Margin="0,24,0,0"
             Padding="16,8"
