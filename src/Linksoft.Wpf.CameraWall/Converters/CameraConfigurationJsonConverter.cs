@@ -78,6 +78,13 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         writer.WritePropertyName("stream");
         WriteStreamSettings(writer, value.Stream);
 
+        // Overrides - only write if any override is set
+        if (value.Overrides is not null && value.Overrides.HasAnyOverride())
+        {
+            writer.WritePropertyName("overrides");
+            WriteOverridesSettings(writer, value.Overrides);
+        }
+
         writer.WriteEndObject();
     }
 
@@ -111,6 +118,14 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
             streamElement.ValueKind == JsonValueKind.Object)
         {
             ReadStreamSettings(streamElement, config.Stream);
+        }
+
+        // Overrides
+        if ((root.TryGetProperty("overrides", out var overridesElement) ||
+             root.TryGetProperty("Overrides", out overridesElement)) &&
+            overridesElement.ValueKind == JsonValueKind.Object)
+        {
+            config.Overrides = ReadOverridesSettings(overridesElement);
         }
     }
 
@@ -277,6 +292,102 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         }
     }
 
+    private static CameraOverrides ReadOverridesSettings(JsonElement element)
+    {
+        var overrides = new CameraOverrides();
+
+        // Connection overrides
+        if (TryGetNullableInt32Property(element, "connectionTimeoutSeconds", "ConnectionTimeoutSeconds", out var connectionTimeout))
+        {
+            overrides.ConnectionTimeoutSeconds = connectionTimeout;
+        }
+
+        if (TryGetNullableInt32Property(element, "reconnectDelaySeconds", "ReconnectDelaySeconds", out var reconnectDelay))
+        {
+            overrides.ReconnectDelaySeconds = reconnectDelay;
+        }
+
+        if (TryGetNullableInt32Property(element, "maxReconnectAttempts", "MaxReconnectAttempts", out var maxReconnectAttempts))
+        {
+            overrides.MaxReconnectAttempts = maxReconnectAttempts;
+        }
+
+        if (TryGetNullableBoolProperty(element, "autoReconnectOnFailure", "AutoReconnectOnFailure", out var autoReconnect))
+        {
+            overrides.AutoReconnectOnFailure = autoReconnect;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showNotificationOnDisconnect", "ShowNotificationOnDisconnect", out var notifyDisconnect))
+        {
+            overrides.ShowNotificationOnDisconnect = notifyDisconnect;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showNotificationOnReconnect", "ShowNotificationOnReconnect", out var notifyReconnect))
+        {
+            overrides.ShowNotificationOnReconnect = notifyReconnect;
+        }
+
+        if (TryGetNullableBoolProperty(element, "playNotificationSound", "PlayNotificationSound", out var playSound))
+        {
+            overrides.PlayNotificationSound = playSound;
+        }
+
+        // Performance overrides
+        if (TryGetStringProperty(element, "videoQuality", "VideoQuality", out var videoQuality))
+        {
+            overrides.VideoQuality = videoQuality;
+        }
+
+        if (TryGetNullableBoolProperty(element, "hardwareAcceleration", "HardwareAcceleration", out var hardwareAccel))
+        {
+            overrides.HardwareAcceleration = hardwareAccel;
+        }
+
+        // Display overrides
+        if (TryGetNullableBoolProperty(element, "showOverlayTitle", "ShowOverlayTitle", out var showTitle))
+        {
+            overrides.ShowOverlayTitle = showTitle;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showOverlayDescription", "ShowOverlayDescription", out var showDescription))
+        {
+            overrides.ShowOverlayDescription = showDescription;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showOverlayTime", "ShowOverlayTime", out var showTime))
+        {
+            overrides.ShowOverlayTime = showTime;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showOverlayConnectionStatus", "ShowOverlayConnectionStatus", out var showStatus))
+        {
+            overrides.ShowOverlayConnectionStatus = showStatus;
+        }
+
+        if (TryGetNullableDoubleProperty(element, "overlayOpacity", "OverlayOpacity", out var opacity))
+        {
+            overrides.OverlayOpacity = opacity;
+        }
+
+        // Recording overrides
+        if (TryGetStringProperty(element, "recordingPath", "RecordingPath", out var recordingPath))
+        {
+            overrides.RecordingPath = recordingPath;
+        }
+
+        if (TryGetStringProperty(element, "recordingFormat", "RecordingFormat", out var recordingFormat))
+        {
+            overrides.RecordingFormat = recordingFormat;
+        }
+
+        if (TryGetNullableBoolProperty(element, "enableRecordingOnMotion", "EnableRecordingOnMotion", out var recordOnMotion))
+        {
+            overrides.EnableRecordingOnMotion = recordOnMotion;
+        }
+
+        return overrides;
+    }
+
     private static void WriteConnectionSettings(
         Utf8JsonWriter writer,
         ConnectionSettings settings)
@@ -354,6 +465,104 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         writer.WriteEndObject();
     }
 
+    private static void WriteOverridesSettings(
+        Utf8JsonWriter writer,
+        CameraOverrides overrides)
+    {
+        writer.WriteStartObject();
+
+        // Connection overrides - only write non-null values
+        if (overrides.ConnectionTimeoutSeconds.HasValue)
+        {
+            writer.WriteNumber("connectionTimeoutSeconds", overrides.ConnectionTimeoutSeconds.Value);
+        }
+
+        if (overrides.ReconnectDelaySeconds.HasValue)
+        {
+            writer.WriteNumber("reconnectDelaySeconds", overrides.ReconnectDelaySeconds.Value);
+        }
+
+        if (overrides.MaxReconnectAttempts.HasValue)
+        {
+            writer.WriteNumber("maxReconnectAttempts", overrides.MaxReconnectAttempts.Value);
+        }
+
+        if (overrides.AutoReconnectOnFailure.HasValue)
+        {
+            writer.WriteBoolean("autoReconnectOnFailure", overrides.AutoReconnectOnFailure.Value);
+        }
+
+        if (overrides.ShowNotificationOnDisconnect.HasValue)
+        {
+            writer.WriteBoolean("showNotificationOnDisconnect", overrides.ShowNotificationOnDisconnect.Value);
+        }
+
+        if (overrides.ShowNotificationOnReconnect.HasValue)
+        {
+            writer.WriteBoolean("showNotificationOnReconnect", overrides.ShowNotificationOnReconnect.Value);
+        }
+
+        if (overrides.PlayNotificationSound.HasValue)
+        {
+            writer.WriteBoolean("playNotificationSound", overrides.PlayNotificationSound.Value);
+        }
+
+        // Performance overrides
+        if (overrides.VideoQuality is not null)
+        {
+            writer.WriteString("videoQuality", overrides.VideoQuality);
+        }
+
+        if (overrides.HardwareAcceleration.HasValue)
+        {
+            writer.WriteBoolean("hardwareAcceleration", overrides.HardwareAcceleration.Value);
+        }
+
+        // Display overrides
+        if (overrides.ShowOverlayTitle.HasValue)
+        {
+            writer.WriteBoolean("showOverlayTitle", overrides.ShowOverlayTitle.Value);
+        }
+
+        if (overrides.ShowOverlayDescription.HasValue)
+        {
+            writer.WriteBoolean("showOverlayDescription", overrides.ShowOverlayDescription.Value);
+        }
+
+        if (overrides.ShowOverlayTime.HasValue)
+        {
+            writer.WriteBoolean("showOverlayTime", overrides.ShowOverlayTime.Value);
+        }
+
+        if (overrides.ShowOverlayConnectionStatus.HasValue)
+        {
+            writer.WriteBoolean("showOverlayConnectionStatus", overrides.ShowOverlayConnectionStatus.Value);
+        }
+
+        if (overrides.OverlayOpacity.HasValue)
+        {
+            writer.WriteNumber("overlayOpacity", overrides.OverlayOpacity.Value);
+        }
+
+        // Recording overrides
+        if (overrides.RecordingPath is not null)
+        {
+            writer.WriteString("recordingPath", overrides.RecordingPath);
+        }
+
+        if (overrides.RecordingFormat is not null)
+        {
+            writer.WriteString("recordingFormat", overrides.RecordingFormat);
+        }
+
+        if (overrides.EnableRecordingOnMotion.HasValue)
+        {
+            writer.WriteBoolean("enableRecordingOnMotion", overrides.EnableRecordingOnMotion.Value);
+        }
+
+        writer.WriteEndObject();
+    }
+
     private static bool TryGetStringProperty(
         JsonElement element,
         string camelName,
@@ -404,6 +613,60 @@ public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfi
         }
 
         value = false;
+        return false;
+    }
+
+    private static bool TryGetNullableInt32Property(
+        JsonElement element,
+        string camelName,
+        string pascalName,
+        out int? value)
+    {
+        if ((element.TryGetProperty(camelName, out var prop) ||
+             element.TryGetProperty(pascalName, out prop)) &&
+            prop.ValueKind == JsonValueKind.Number && prop.TryGetInt32(out var intValue))
+        {
+            value = intValue;
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryGetNullableBoolProperty(
+        JsonElement element,
+        string camelName,
+        string pascalName,
+        out bool? value)
+    {
+        if ((element.TryGetProperty(camelName, out var prop) ||
+             element.TryGetProperty(pascalName, out prop)) &&
+            prop.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            value = prop.GetBoolean();
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryGetNullableDoubleProperty(
+        JsonElement element,
+        string camelName,
+        string pascalName,
+        out double? value)
+    {
+        if ((element.TryGetProperty(camelName, out var prop) ||
+             element.TryGetProperty(pascalName, out prop)) &&
+            prop.ValueKind == JsonValueKind.Number && prop.TryGetDouble(out var doubleValue))
+        {
+            value = doubleValue;
+            return true;
+        }
+
+        value = null;
         return false;
     }
 }

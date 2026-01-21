@@ -177,14 +177,23 @@
   <data name="NewCamera" xml:space="preserve">
     <value>Neue Kamera</value>
   </data>
-  <data name="FullScreen" xml:space="preserve">
-    <value>Vollbild</value>
-  </data>
   <data name="NewLayout" xml:space="preserve">
     <value>Neues Layout</value>
   </data>
   <data name="DeleteLayout" xml:space="preserve">
     <value>Layout löschen</value>
+  </data>
+  <data name="RenameLayout" xml:space="preserve">
+    <value>Layout umbenennen</value>
+  </data>
+  <data name="EnterNewLayoutName" xml:space="preserve">
+    <value>Geben Sie einen neuen Namen für das Layout ein:</value>
+  </data>
+  <data name="RenameLayoutCancelled" xml:space="preserve">
+    <value>Layout umbenennen abgebrochen</value>
+  </data>
+  <data name="LayoutRenamed2" xml:space="preserve">
+    <value>Layout umbenannt: {0} → {1}</value>
   </data>
   <data name="Information" xml:space="preserve">
     <value>Information</value>
@@ -255,9 +264,6 @@
   <data name="EnterLayoutName" xml:space="preserve">
     <value>Geben Sie einen Namen für das neue Layout ein:</value>
   </data>
-  <data name="FullScreenNotImplemented1" xml:space="preserve">
-    <value>Vollbildansicht für {0} wird implementiert.</value>
-  </data>
   <data name="IpAddressRequired" xml:space="preserve">
     <value>IP-Adresse ist erforderlich</value>
   </data>
@@ -278,33 +284,6 @@
   </data>
   <data name="NetworkScannerHeader" xml:space="preserve">
     <value>Netzwerkscanner - Kameras finden</value>
-  </data>
-  <data name="StartIp" xml:space="preserve">
-    <value>Start-IP</value>
-  </data>
-  <data name="EndIp" xml:space="preserve">
-    <value>End-IP</value>
-  </data>
-  <data name="Ports" xml:space="preserve">
-    <value>Ports</value>
-  </data>
-  <data name="Scan" xml:space="preserve">
-    <value>Scannen</value>
-  </data>
-  <data name="Clear" xml:space="preserve">
-    <value>Löschen</value>
-  </data>
-  <data name="ShowOnlyReachable" xml:space="preserve">
-    <value>Nur erreichbare anzeigen</value>
-  </data>
-  <data name="ShowOnlyWithOpenPorts" xml:space="preserve">
-    <value>Nur mit offenen Ports anzeigen</value>
-  </data>
-  <data name="Entries" xml:space="preserve">
-    <value>Einträge</value>
-  </data>
-  <data name="Time" xml:space="preserve">
-    <value>Zeit</value>
   </data>
   <data name="CameraConfiguration" xml:space="preserve">
     <value>Kamerakonfiguration</value>
@@ -414,23 +393,11 @@
   <data name="ApplicationAppearance" xml:space="preserve">
     <value>Anwendungsdarstellung</value>
   </data>
-  <data name="ThemeBase" xml:space="preserve">
-    <value>Design</value>
-  </data>
-  <data name="ThemeAccent" xml:space="preserve">
-    <value>Akzentfarbe</value>
-  </data>
-  <data name="Language" xml:space="preserve">
-    <value>Sprache</value>
-  </data>
   <data name="Startup" xml:space="preserve">
     <value>Start</value>
   </data>
   <data name="ConnectCamerasOnStartup" xml:space="preserve">
     <value>Kameras beim Start verbinden</value>
-  </data>
-  <data name="CheckForUpdatesOnStartup" xml:space="preserve">
-    <value>Beim Start nach Updates suchen</value>
   </data>
   <data name="StartMaximized" xml:space="preserve">
     <value>Maximiert starten (Vollbild)</value>
@@ -591,9 +558,6 @@
   <data name="ApplicationTitle" xml:space="preserve">
     <value>Linksoft Camera Wall</value>
   </data>
-  <data name="Loading" xml:space="preserve">
-    <value>Lädt</value>
-  </data>
   <data name="InitializeLoadConfiguration" xml:space="preserve">
     <value>Konfiguration laden</value>
   </data>
@@ -629,15 +593,6 @@
   </data>
   <data name="AssignCameraToLayout" xml:space="preserve">
     <value>Kamera zu Layout zuweisen</value>
-  </data>
-  <data name="SelectCameraToAssign" xml:space="preserve">
-    <value>Wählen Sie eine Kamera, die diesem Layout hinzugefügt werden soll:</value>
-  </data>
-  <data name="NoCamerasAvailable" xml:space="preserve">
-    <value>Alle Kameras sind bereits in diesem Layout.</value>
-  </data>
-  <data name="AssignedCamera1" xml:space="preserve">
-    <value>Zugewiesene Kamera: {0}</value>
   </data>
   <data name="AssignCameraCancelled" xml:space="preserve">
     <value>Kamera zuweisen abgebrochen</value>
@@ -683,5 +638,53 @@
   </data>
   <data name="RtspTransport" xml:space="preserve">
     <value>RTSP-Transport</value>
+  </data>
+  <data name="UseLowLatencyModeInfo" xml:space="preserve">
+    <value>Aktiviert optimierte Einstellungen für minimale Verzögerung. Reduziert die Puffergröße und deaktiviert einige Verarbeitungen, um nahezu Echtzeit-Videowiedergabe zu erreichen.</value>
+  </data>
+  <data name="MaxLatencyMsInfo" xml:space="preserve">
+    <value>Maximal erlaubte Verzögerung in Millisekunden, bevor der Player Frames überspringt, um aufzuholen. Niedrigere Werte reduzieren die Verzögerung, können aber bei langsamen Verbindungen zu Ruckeln führen.</value>
+  </data>
+  <data name="RtspTransportInfo" xml:space="preserve">
+    <value>TCP ist zuverlässiger, kann aber eine höhere Latenz haben. UDP ist schneller, aber Pakete können in instabilen Netzwerken verloren gehen.</value>
+  </data>
+  <data name="BufferDurationMsInfo" xml:space="preserve">
+    <value>Menge der Videodaten, die vor der Wiedergabe gepuffert werden. Höhere Werte bieten eine flüssigere Wiedergabe, erhöhen aber die Verzögerung. Auf 0 setzen für minimale Pufferung im Niedrige-Latenz-Modus.</value>
+  </data>
+  <data name="DefaultOverlayPosition" xml:space="preserve">
+    <value>Standard Overlay-Position</value>
+  </data>
+  <data name="DefaultProtocol" xml:space="preserve">
+    <value>Standard Protokoll</value>
+  </data>
+  <data name="DefaultPort" xml:space="preserve">
+    <value>Standard Port</value>
+  </data>
+  <data name="DefaultCameraSettings" xml:space="preserve">
+    <value>Standard Kameraeinstellungen</value>
+  </data>
+  <data name="StreamingSettings" xml:space="preserve">
+    <value>Streaming-Einstellungen</value>
+  </data>
+  <data name="Overrides" xml:space="preserve">
+    <value>Überschreibungen</value>
+  </data>
+  <data name="UseDefaultSetting" xml:space="preserve">
+    <value>Standard verwenden</value>
+  </data>
+  <data name="DisplayOverrides" xml:space="preserve">
+    <value>Anzeige-Überschreibungen</value>
+  </data>
+  <data name="ConnectionOverrides" xml:space="preserve">
+    <value>Verbindungs-Überschreibungen</value>
+  </data>
+  <data name="PerformanceOverrides" xml:space="preserve">
+    <value>Leistungs-Überschreibungen</value>
+  </data>
+  <data name="RecordingOverrides" xml:space="preserve">
+    <value>Aufnahme-Überschreibungen</value>
+  </data>
+  <data name="OverrideSettingsInfo" xml:space="preserve">
+    <value>Überschreiben Sie die Anwendungsstandards nur für diese Kamera. Deaktivieren Sie "Standard verwenden", um einen kameraspezifischen Wert festzulegen.</value>
   </data>
 </root>

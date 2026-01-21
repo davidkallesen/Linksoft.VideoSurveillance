@@ -69,6 +69,17 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     };
 
     [ObservableProperty]
+    private string selectedOverlayPosition = "TopLeft";
+
+    public IDictionary<string, string> OverlayPositionItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["TopLeft"] = "Top Left",
+        ["TopRight"] = "Top Right",
+        ["BottomLeft"] = "Bottom Left",
+        ["BottomRight"] = "Bottom Right",
+    };
+
+    [ObservableProperty]
     private bool allowDragAndDropReorder = true;
 
     [ObservableProperty]
@@ -80,6 +91,18 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     #endregion
 
     #region Connection Tab Settings
+
+    [ObservableProperty]
+    private string selectedDefaultProtocol = "Rtsp";
+
+    public IDictionary<string, string> DefaultProtocolItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Rtsp"] = "RTSP",
+        ["Http"] = "HTTP",
+    };
+
+    [ObservableProperty]
+    private int defaultPort = 554;
 
     [ObservableProperty]
     private int connectionTimeoutSeconds = 10;
@@ -127,12 +150,24 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     [ObservableProperty]
     private int bufferDurationMs = 500;
 
+    [ObservableProperty]
+    private string selectedRtspTransport = "tcp";
+
+    public IDictionary<string, string> RtspTransportItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["tcp"] = "TCP",
+        ["udp"] = "UDP",
+    };
+
+    [ObservableProperty]
+    private int maxLatencyMs = 500;
+
     #endregion
 
     #region Recording Tab Settings
 
     [ObservableProperty]
-    private FileInfo? recordingPath;
+    private DirectoryInfo? recordingPath;
 
     [ObservableProperty]
     private string selectedRecordingFormat = "mp4";
@@ -165,7 +200,11 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private void Save()
     {
         SaveGeneralSettings();
-        SaveDisplaySettings();
+        SaveCameraDisplaySettings();
+        SaveConnectionSettings();
+        SavePerformanceSettings();
+        SaveRecordingSettings();
+        SaveAdvancedSettings();
         CloseRequested?.Invoke(this, new DialogClosedEventArgs(dialogResult: true));
     }
 
@@ -196,11 +235,14 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         ShowCameraOverlayTime = false;
         ShowCameraOverlayConnectionStatus = true;
         SelectedOverlayOpacity = "0.7";
+        SelectedOverlayPosition = "TopLeft";
         AllowDragAndDropReorder = true;
         AutoSaveLayoutChanges = true;
         SnapshotDirectory = null;
 
         // Connection Tab
+        SelectedDefaultProtocol = "Rtsp";
+        DefaultPort = 554;
         ConnectionTimeoutSeconds = 10;
         ReconnectDelaySeconds = 5;
         MaxReconnectAttempts = 3;
@@ -214,6 +256,8 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         HardwareAcceleration = true;
         LowLatencyMode = false;
         BufferDurationMs = 500;
+        SelectedRtspTransport = "tcp";
+        MaxLatencyMs = 500;
 
         // Recording Tab
         RecordingPath = null;
@@ -244,17 +288,54 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         StartMaximized = general.StartMaximized;
         StartRibbonCollapsed = general.StartRibbonCollapsed;
 
-        // Load Display Tab settings
-        var display = settingsService.Display;
-        ShowCameraOverlayTitle = display.ShowOverlayTitle;
-        ShowCameraOverlayDescription = display.ShowOverlayDescription;
-        ShowCameraOverlayTime = display.ShowOverlayTime;
-        ShowCameraOverlayConnectionStatus = display.ShowOverlayConnectionStatus;
-        SelectedOverlayOpacity = display.OverlayOpacity.ToString("F1", CultureInfo.InvariantCulture);
-        AllowDragAndDropReorder = display.AllowDragAndDropReorder;
-        AutoSaveLayoutChanges = display.AutoSaveLayoutChanges;
-        SnapshotDirectory = !string.IsNullOrEmpty(display.SnapshotDirectory)
-            ? new DirectoryInfo(display.SnapshotDirectory)
+        // Load Camera Display Tab settings
+        var cameraDisplay = settingsService.CameraDisplay;
+        ShowCameraOverlayTitle = cameraDisplay.ShowOverlayTitle;
+        ShowCameraOverlayDescription = cameraDisplay.ShowOverlayDescription;
+        ShowCameraOverlayTime = cameraDisplay.ShowOverlayTime;
+        ShowCameraOverlayConnectionStatus = cameraDisplay.ShowOverlayConnectionStatus;
+        SelectedOverlayOpacity = cameraDisplay.OverlayOpacity.ToString("F1", CultureInfo.InvariantCulture);
+        SelectedOverlayPosition = cameraDisplay.OverlayPosition.ToString();
+        AllowDragAndDropReorder = cameraDisplay.AllowDragAndDropReorder;
+        AutoSaveLayoutChanges = cameraDisplay.AutoSaveLayoutChanges;
+        SnapshotDirectory = !string.IsNullOrEmpty(cameraDisplay.SnapshotDirectory)
+            ? new DirectoryInfo(cameraDisplay.SnapshotDirectory)
+            : null;
+
+        // Load Connection Tab settings
+        var connection = settingsService.Connection;
+        SelectedDefaultProtocol = connection.DefaultProtocol.ToString();
+        DefaultPort = connection.DefaultPort;
+        ConnectionTimeoutSeconds = connection.ConnectionTimeoutSeconds;
+        ReconnectDelaySeconds = connection.ReconnectDelaySeconds;
+        MaxReconnectAttempts = connection.MaxReconnectAttempts;
+        AutoReconnectOnFailure = connection.AutoReconnectOnFailure;
+        ShowNotificationOnDisconnect = connection.ShowNotificationOnDisconnect;
+        ShowNotificationOnReconnect = connection.ShowNotificationOnReconnect;
+        PlayNotificationSound = connection.PlayNotificationSound;
+
+        // Load Performance Tab settings
+        var performance = settingsService.Performance;
+        SelectedVideoQuality = performance.VideoQuality;
+        HardwareAcceleration = performance.HardwareAcceleration;
+        LowLatencyMode = performance.LowLatencyMode;
+        BufferDurationMs = performance.BufferDurationMs;
+        SelectedRtspTransport = performance.RtspTransport;
+        MaxLatencyMs = performance.MaxLatencyMs;
+
+        // Load Recording Tab settings
+        var recording = settingsService.Recording;
+        RecordingPath = !string.IsNullOrEmpty(recording.RecordingPath)
+            ? new DirectoryInfo(recording.RecordingPath)
+            : null;
+        SelectedRecordingFormat = recording.RecordingFormat;
+        EnableRecordingOnMotion = recording.EnableRecordingOnMotion;
+
+        // Load Advanced Tab settings
+        var advanced = settingsService.Advanced;
+        EnableDebugLogging = advanced.EnableDebugLogging;
+        LogFilePath = !string.IsNullOrEmpty(advanced.LogFilePath)
+            ? new FileInfo(advanced.LogFilePath)
             : null;
     }
 
@@ -281,23 +362,83 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         settingsService.SaveGeneral(settings);
     }
 
-    private void SaveDisplaySettings()
+    private void SaveCameraDisplaySettings()
     {
         _ = double.TryParse(SelectedOverlayOpacity, NumberStyles.Float, CultureInfo.InvariantCulture, out var opacity);
+        _ = Enum.TryParse<OverlayPosition>(SelectedOverlayPosition, out var overlayPosition);
 
-        var settings = new DisplaySettings
+        var settings = new CameraDisplayAppSettings
         {
             ShowOverlayTitle = ShowCameraOverlayTitle,
             ShowOverlayDescription = ShowCameraOverlayDescription,
             ShowOverlayTime = ShowCameraOverlayTime,
             ShowOverlayConnectionStatus = ShowCameraOverlayConnectionStatus,
             OverlayOpacity = opacity,
+            OverlayPosition = overlayPosition,
             AllowDragAndDropReorder = AllowDragAndDropReorder,
             AutoSaveLayoutChanges = AutoSaveLayoutChanges,
             SnapshotDirectory = SnapshotDirectory?.FullName,
         };
 
-        settingsService.SaveDisplay(settings);
+        settingsService.SaveCameraDisplay(settings);
+    }
+
+    private void SaveConnectionSettings()
+    {
+        _ = Enum.TryParse<CameraProtocol>(SelectedDefaultProtocol, out var protocol);
+
+        var settings = new ConnectionAppSettings
+        {
+            DefaultProtocol = protocol,
+            DefaultPort = DefaultPort,
+            ConnectionTimeoutSeconds = ConnectionTimeoutSeconds,
+            ReconnectDelaySeconds = ReconnectDelaySeconds,
+            MaxReconnectAttempts = MaxReconnectAttempts,
+            AutoReconnectOnFailure = AutoReconnectOnFailure,
+            ShowNotificationOnDisconnect = ShowNotificationOnDisconnect,
+            ShowNotificationOnReconnect = ShowNotificationOnReconnect,
+            PlayNotificationSound = PlayNotificationSound,
+        };
+
+        settingsService.SaveConnection(settings);
+    }
+
+    private void SavePerformanceSettings()
+    {
+        var settings = new PerformanceSettings
+        {
+            VideoQuality = SelectedVideoQuality,
+            HardwareAcceleration = HardwareAcceleration,
+            LowLatencyMode = LowLatencyMode,
+            BufferDurationMs = BufferDurationMs,
+            RtspTransport = SelectedRtspTransport,
+            MaxLatencyMs = MaxLatencyMs,
+        };
+
+        settingsService.SavePerformance(settings);
+    }
+
+    private void SaveRecordingSettings()
+    {
+        var settings = new RecordingSettings
+        {
+            RecordingPath = RecordingPath?.FullName,
+            RecordingFormat = SelectedRecordingFormat,
+            EnableRecordingOnMotion = EnableRecordingOnMotion,
+        };
+
+        settingsService.SaveRecording(settings);
+    }
+
+    private void SaveAdvancedSettings()
+    {
+        var settings = new AdvancedSettings
+        {
+            EnableDebugLogging = EnableDebugLogging,
+            LogFilePath = LogFilePath?.FullName,
+        };
+
+        settingsService.SaveAdvanced(settings);
     }
 
     private void RestoreOriginalThemeAndLanguage()

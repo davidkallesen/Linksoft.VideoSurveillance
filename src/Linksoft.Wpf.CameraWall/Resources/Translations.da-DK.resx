@@ -177,14 +177,23 @@
   <data name="NewCamera" xml:space="preserve">
     <value>Nyt kamera</value>
   </data>
-  <data name="FullScreen" xml:space="preserve">
-    <value>Fuldskærm</value>
-  </data>
   <data name="NewLayout" xml:space="preserve">
     <value>Nyt layout</value>
   </data>
   <data name="DeleteLayout" xml:space="preserve">
     <value>Slet layout</value>
+  </data>
+  <data name="RenameLayout" xml:space="preserve">
+    <value>Omdøb layout</value>
+  </data>
+  <data name="EnterNewLayoutName" xml:space="preserve">
+    <value>Indtast et nyt navn til layoutet:</value>
+  </data>
+  <data name="RenameLayoutCancelled" xml:space="preserve">
+    <value>Omdøb layout annulleret</value>
+  </data>
+  <data name="LayoutRenamed2" xml:space="preserve">
+    <value>Layout omdøbt: {0} → {1}</value>
   </data>
   <data name="Information" xml:space="preserve">
     <value>Information</value>
@@ -255,9 +264,6 @@
   <data name="EnterLayoutName" xml:space="preserve">
     <value>Indtast et navn til det nye layout:</value>
   </data>
-  <data name="FullScreenNotImplemented1" xml:space="preserve">
-    <value>Fuldskærmsvisning for {0} vil blive implementeret.</value>
-  </data>
   <data name="IpAddressRequired" xml:space="preserve">
     <value>IP-adresse er påkrævet</value>
   </data>
@@ -278,33 +284,6 @@
   </data>
   <data name="NetworkScannerHeader" xml:space="preserve">
     <value>Netværksscanner - Find kameraer</value>
-  </data>
-  <data name="StartIp" xml:space="preserve">
-    <value>Start IP</value>
-  </data>
-  <data name="EndIp" xml:space="preserve">
-    <value>Slut IP</value>
-  </data>
-  <data name="Ports" xml:space="preserve">
-    <value>Porte</value>
-  </data>
-  <data name="Scan" xml:space="preserve">
-    <value>Scan</value>
-  </data>
-  <data name="Clear" xml:space="preserve">
-    <value>Ryd</value>
-  </data>
-  <data name="ShowOnlyReachable" xml:space="preserve">
-    <value>Vis kun tilgængelige</value>
-  </data>
-  <data name="ShowOnlyWithOpenPorts" xml:space="preserve">
-    <value>Vis kun med åbne porte</value>
-  </data>
-  <data name="Entries" xml:space="preserve">
-    <value>Poster</value>
-  </data>
-  <data name="Time" xml:space="preserve">
-    <value>Tid</value>
   </data>
   <data name="CameraConfiguration" xml:space="preserve">
     <value>Kamerakonfiguration</value>
@@ -414,23 +393,11 @@
   <data name="ApplicationAppearance" xml:space="preserve">
     <value>Programudseende</value>
   </data>
-  <data name="ThemeBase" xml:space="preserve">
-    <value>Tema</value>
-  </data>
-  <data name="ThemeAccent" xml:space="preserve">
-    <value>Accentfarve</value>
-  </data>
-  <data name="Language" xml:space="preserve">
-    <value>Sprog</value>
-  </data>
   <data name="Startup" xml:space="preserve">
     <value>Opstart</value>
   </data>
   <data name="ConnectCamerasOnStartup" xml:space="preserve">
     <value>Tilslut kameraer ved opstart</value>
-  </data>
-  <data name="CheckForUpdatesOnStartup" xml:space="preserve">
-    <value>Søg efter opdateringer ved opstart</value>
   </data>
   <data name="StartMaximized" xml:space="preserve">
     <value>Start maksimeret (fuldskærm)</value>
@@ -591,9 +558,6 @@
   <data name="ApplicationTitle" xml:space="preserve">
     <value>Linksoft Camera Wall</value>
   </data>
-  <data name="Loading" xml:space="preserve">
-    <value>Indlæser</value>
-  </data>
   <data name="InitializeLoadConfiguration" xml:space="preserve">
     <value>Indlæs konfiguration</value>
   </data>
@@ -629,15 +593,6 @@
   </data>
   <data name="AssignCameraToLayout" xml:space="preserve">
     <value>Tildel kamera til layout</value>
-  </data>
-  <data name="SelectCameraToAssign" xml:space="preserve">
-    <value>Vælg et kamera at tilføje til dette layout:</value>
-  </data>
-  <data name="NoCamerasAvailable" xml:space="preserve">
-    <value>Alle kameraer er allerede i dette layout.</value>
-  </data>
-  <data name="AssignedCamera1" xml:space="preserve">
-    <value>Tildelt kamera: {0}</value>
   </data>
   <data name="AssignCameraCancelled" xml:space="preserve">
     <value>Tildel kamera annulleret</value>
@@ -683,5 +638,53 @@
   </data>
   <data name="RtspTransport" xml:space="preserve">
     <value>RTSP transport</value>
+  </data>
+  <data name="UseLowLatencyModeInfo" xml:space="preserve">
+    <value>Aktiverer optimerede indstillinger for minimal forsinkelse. Reducerer bufferstørrelse og deaktiverer noget behandling for at opnå næsten realtids videoafspilning.</value>
+  </data>
+  <data name="MaxLatencyMsInfo" xml:space="preserve">
+    <value>Maksimal tilladt forsinkelse i millisekunder, før afspilleren springer billeder over for at indhente. Lavere værdier reducerer forsinkelse, men kan forårsage hakken på langsomme forbindelser.</value>
+  </data>
+  <data name="RtspTransportInfo" xml:space="preserve">
+    <value>TCP er mere pålidelig, men kan have højere latens. UDP er hurtigere, men pakker kan gå tabt på ustabile netværk.</value>
+  </data>
+  <data name="BufferDurationMsInfo" xml:space="preserve">
+    <value>Mængden af videodata, der skal bufferes før afspilning. Højere værdier giver jævnere afspilning, men øger forsinkelsen. Sæt til 0 for minimal buffering i lav latenstilstand.</value>
+  </data>
+  <data name="DefaultOverlayPosition" xml:space="preserve">
+    <value>Standard overlay-position</value>
+  </data>
+  <data name="DefaultProtocol" xml:space="preserve">
+    <value>Standard protokol</value>
+  </data>
+  <data name="DefaultPort" xml:space="preserve">
+    <value>Standard port</value>
+  </data>
+  <data name="DefaultCameraSettings" xml:space="preserve">
+    <value>Standard kameraindstillinger</value>
+  </data>
+  <data name="StreamingSettings" xml:space="preserve">
+    <value>Streaming indstillinger</value>
+  </data>
+  <data name="Overrides" xml:space="preserve">
+    <value>Tilsidesættelser</value>
+  </data>
+  <data name="UseDefaultSetting" xml:space="preserve">
+    <value>Brug standard</value>
+  </data>
+  <data name="DisplayOverrides" xml:space="preserve">
+    <value>Visnings tilsidesættelser</value>
+  </data>
+  <data name="ConnectionOverrides" xml:space="preserve">
+    <value>Forbindelses tilsidesættelser</value>
+  </data>
+  <data name="PerformanceOverrides" xml:space="preserve">
+    <value>Ydelses tilsidesættelser</value>
+  </data>
+  <data name="RecordingOverrides" xml:space="preserve">
+    <value>Optagelses tilsidesættelser</value>
+  </data>
+  <data name="OverrideSettingsInfo" xml:space="preserve">
+    <value>Tilsidesæt applikationsstandarder kun for dette kamera. Fjern markeringen "Brug standard" for at angive en kameraspecifik værdi.</value>
   </data>
 </root>

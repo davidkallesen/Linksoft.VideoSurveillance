@@ -1,9 +1,9 @@
 namespace Linksoft.Wpf.CameraWall.Models;
 
 /// <summary>
-/// Settings for camera display and grid layout.
+/// Settings for camera display and grid layout (application-level defaults).
 /// </summary>
-public class DisplaySettings
+public class CameraDisplayAppSettings
 {
     /// <summary>
     /// Gets or sets a value indicating whether to show camera title in overlay.
@@ -29,6 +29,11 @@ public class DisplaySettings
     /// Gets or sets the overlay opacity (0.0 to 1.0).
     /// </summary>
     public double OverlayOpacity { get; set; } = 0.7;
+
+    /// <summary>
+    /// Gets or sets the default overlay position for new cameras.
+    /// </summary>
+    public OverlayPosition OverlayPosition { get; set; } = OverlayPosition.TopLeft;
 
     /// <summary>
     /// Gets or sets a value indicating whether drag and drop reordering is allowed.

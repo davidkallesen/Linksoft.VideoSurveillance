@@ -11,9 +11,29 @@ public interface IApplicationSettingsService
     GeneralSettings General { get; }
 
     /// <summary>
-    /// Gets the current display settings.
+    /// Gets the current camera display settings.
     /// </summary>
-    DisplaySettings Display { get; }
+    CameraDisplayAppSettings CameraDisplay { get; }
+
+    /// <summary>
+    /// Gets the current connection settings.
+    /// </summary>
+    ConnectionAppSettings Connection { get; }
+
+    /// <summary>
+    /// Gets the current performance settings.
+    /// </summary>
+    PerformanceSettings Performance { get; }
+
+    /// <summary>
+    /// Gets the current recording settings.
+    /// </summary>
+    RecordingSettings Recording { get; }
+
+    /// <summary>
+    /// Gets the current advanced settings.
+    /// </summary>
+    AdvancedSettings Advanced { get; }
 
     /// <summary>
     /// Updates and saves the general settings.
@@ -22,10 +42,66 @@ public interface IApplicationSettingsService
     void SaveGeneral(GeneralSettings settings);
 
     /// <summary>
-    /// Updates and saves the display settings.
+    /// Updates and saves the camera display settings.
     /// </summary>
     /// <param name="settings">The new settings to save.</param>
-    void SaveDisplay(DisplaySettings settings);
+    void SaveCameraDisplay(CameraDisplayAppSettings settings);
+
+    /// <summary>
+    /// Updates and saves the connection settings.
+    /// </summary>
+    /// <param name="settings">The new settings to save.</param>
+    void SaveConnection(ConnectionAppSettings settings);
+
+    /// <summary>
+    /// Updates and saves the performance settings.
+    /// </summary>
+    /// <param name="settings">The new settings to save.</param>
+    void SavePerformance(PerformanceSettings settings);
+
+    /// <summary>
+    /// Updates and saves the recording settings.
+    /// </summary>
+    /// <param name="settings">The new settings to save.</param>
+    void SaveRecording(RecordingSettings settings);
+
+    /// <summary>
+    /// Updates and saves the advanced settings.
+    /// </summary>
+    /// <param name="settings">The new settings to save.</param>
+    void SaveAdvanced(AdvancedSettings settings);
+
+    /// <summary>
+    /// Applies default settings to a new camera configuration.
+    /// </summary>
+    /// <param name="camera">The camera configuration to apply defaults to.</param>
+    void ApplyDefaultsToCamera(CameraConfiguration camera);
+
+    /// <summary>
+    /// Gets the effective value for a camera setting, using the camera override if set, otherwise the app default.
+    /// </summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="camera">The camera configuration.</param>
+    /// <param name="appDefault">The application default value.</param>
+    /// <param name="overrideSelector">Function to select the override value from camera overrides.</param>
+    /// <returns>The effective value (override if set, otherwise app default).</returns>
+    T GetEffectiveValue<T>(
+        CameraConfiguration camera,
+        T appDefault,
+        Func<CameraOverrides?, T?> overrideSelector)
+        where T : struct;
+
+    /// <summary>
+    /// Gets the effective string value for a camera setting, using the camera override if set, otherwise the app default.
+    /// </summary>
+    /// <param name="camera">The camera configuration.</param>
+    /// <param name="appDefault">The application default value.</param>
+    /// <param name="overrideSelector">Function to select the override value from camera overrides.</param>
+    /// <returns>The effective value (override if set, otherwise app default).</returns>
+    string? GetEffectiveStringValue(
+        CameraConfiguration camera,
+        string? appDefault,
+        Func<CameraOverrides?, string?> overrideSelector);
 
     /// <summary>
     /// Reloads settings from storage.

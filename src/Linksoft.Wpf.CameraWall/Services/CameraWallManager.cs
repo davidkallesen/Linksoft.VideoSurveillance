@@ -104,7 +104,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             return;
         }
 
-        var display = settingsService.Display;
+        var display = settingsService.CameraDisplay;
         CameraGrid.ShowOverlayTitle = display.ShowOverlayTitle;
         CameraGrid.ShowOverlayDescription = display.ShowOverlayDescription;
         CameraGrid.ShowOverlayConnectionStatus = display.ShowOverlayConnectionStatus;
@@ -476,7 +476,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         ArgumentNullException.ThrowIfNull(e);
 
         // Auto-save layout if enabled
-        if (settingsService.Display.AutoSaveLayoutChanges)
+        if (settingsService.CameraDisplay.AutoSaveLayoutChanges)
         {
             SaveCurrentLayout();
         }

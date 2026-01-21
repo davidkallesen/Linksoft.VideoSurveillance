@@ -8,8 +8,8 @@
     xmlns:dialogs="clr-namespace:Linksoft.Wpf.CameraWall.Dialogs"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="{Binding Path=DialogTitle}"
-    Width="700"
-    Height="650"
+    Width="800"
+    Height="600"
     MinWidth="600"
     MinHeight="500"
     d:DataContext="{d:DesignInstance Type=dialogs:SettingsDialogViewModel,
@@ -129,6 +129,35 @@
                                                                     Key=OverlayOpacity}"
                                     Orientation="Vertical"
                                     SelectedKey="{Binding Path=SelectedOverlayOpacity, Mode=TwoWay}" />
+
+                                <atc:LabelComboBox
+                                    HideAreas="InformationAndValidation"
+                                    Items="{Binding Path=OverlayPositionItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=DefaultOverlayPosition}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedOverlayPosition, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!--  Grid Layout Group  -->
+                        <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=GridLayout}">
+                            <StackPanel Orientation="Vertical">
+                                <atc:LabelCheckBox
+                                    HideAreas="InformationAndValidation"
+                                    IsChecked="{Binding Path=AllowDragAndDropReorder, Mode=TwoWay}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=AllowDragAndDropReorder}"
+                                    LabelWidthNumber="250"
+                                    LabelWidthSizeDefinition="Pixel" />
+
+                                <atc:LabelCheckBox
+                                    HideAreas="InformationAndValidation"
+                                    IsChecked="{Binding Path=AutoSaveLayoutChanges, Mode=TwoWay}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=AutoSaveLayoutChanges}"
+                                    LabelWidthNumber="250"
+                                    LabelWidthSizeDefinition="Pixel" />
                             </StackPanel>
                         </GroupBox>
 
@@ -153,6 +182,27 @@
             <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Connection}">
                 <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
                     <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
+
+                        <!--  Default Camera Settings Group  -->
+                        <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=DefaultCameraSettings}">
+                            <StackPanel Orientation="Vertical">
+                                <atc:LabelComboBox
+                                    HideAreas="InformationAndValidation"
+                                    Items="{Binding Path=DefaultProtocolItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=DefaultProtocol}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedDefaultProtocol, Mode=TwoWay}" />
+
+                                <atc:LabelIntegerBox
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=DefaultPort}"
+                                    Maximum="65535"
+                                    Minimum="1"
+                                    Orientation="Vertical"
+                                    Value="{Binding Path=DefaultPort, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
 
                         <!--  Connection Settings Group  -->
                         <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=ConnectionSettings}">
@@ -245,6 +295,19 @@
                                                                     Key=HardwareAcceleration}"
                                     LabelWidthNumber="250"
                                     LabelWidthSizeDefinition="Pixel" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!--  Streaming Settings Group  -->
+                        <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=StreamingSettings}">
+                            <StackPanel Orientation="Vertical">
+                                <atc:LabelComboBox
+                                    HideAreas="InformationAndValidation"
+                                    Items="{Binding Path=RtspTransportItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=RtspTransport}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedRtspTransport, Mode=TwoWay}" />
 
                                 <atc:LabelCheckBox
                                     HideAreas="InformationAndValidation"
@@ -256,9 +319,17 @@
 
                                 <atc:LabelIntegerBox
                                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=MaxLatencyMs}"
+                                    Maximum="10000"
+                                    Minimum="0"
+                                    Orientation="Vertical"
+                                    Value="{Binding Path=MaxLatencyMs, Mode=TwoWay}" />
+
+                                <atc:LabelIntegerBox
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                     Key=BufferDurationMs}"
                                     Maximum="5000"
-                                    Minimum="100"
+                                    Minimum="0"
                                     Orientation="Vertical"
                                     Value="{Binding Path=BufferDurationMs, Mode=TwoWay}" />
                             </StackPanel>
@@ -268,14 +339,15 @@
             </TabItem>
 
             <!--  Recording Tab  -->
-            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Recording}" IsEnabled="False">
+            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Recording}">
                 <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
                     <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
 
                         <!--  Recording Settings Group  -->
                         <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=RecordingSettings}">
                             <StackPanel Orientation="Vertical">
-                                <atc:LabelFilePicker
+                                <atc:LabelDirectoryPicker
+                                    HideAreas="InformationAndValidation"
                                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                     Key=RecordingPath}"
                                     Orientation="Vertical"

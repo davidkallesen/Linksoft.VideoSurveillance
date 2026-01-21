@@ -223,15 +223,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Assigned camera: {0}.
-        /// </summary>
-        public static string AssignedCamera1 {
-            get {
-                return ResourceManager.GetString("AssignedCamera1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Assigned to Layout.
         /// </summary>
         public static string AssignedToLayout {
@@ -358,29 +349,11 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Check for updates on startup.
-        /// </summary>
-        public static string CheckForUpdatesOnStartup {
-            get {
-                return ResourceManager.GetString("CheckForUpdatesOnStartup", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Checking for updates....
         /// </summary>
         public static string CheckingForUpdates {
             get {
                 return ResourceManager.GetString("CheckingForUpdates", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Clear.
-        /// </summary>
-        public static string Clear {
-            get {
-                return ResourceManager.GetString("Clear", resourceCulture);
             }
         }
         
@@ -457,6 +430,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Connection Overrides.
+        /// </summary>
+        public static string ConnectionOverrides {
+            get {
+                return ResourceManager.GetString("ConnectionOverrides", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connection Settings.
         /// </summary>
         public static string ConnectionSettings {
@@ -516,6 +498,42 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string CurrentVersion {
             get {
                 return ResourceManager.GetString("CurrentVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Default Camera Settings.
+        /// </summary>
+        public static string DefaultCameraSettings {
+            get {
+                return ResourceManager.GetString("DefaultCameraSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Default Overlay Position.
+        /// </summary>
+        public static string DefaultOverlayPosition {
+            get {
+                return ResourceManager.GetString("DefaultOverlayPosition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Default Port.
+        /// </summary>
+        public static string DefaultPort {
+            get {
+                return ResourceManager.GetString("DefaultPort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Default Protocol.
+        /// </summary>
+        public static string DefaultProtocol {
+            get {
+                return ResourceManager.GetString("DefaultProtocol", resourceCulture);
             }
         }
         
@@ -601,6 +619,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Display Overrides.
+        /// </summary>
+        public static string DisplayOverrides {
+            get {
+                return ResourceManager.GetString("DisplayOverrides", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Download Latest.
         /// </summary>
         public static string DownloadLatest {
@@ -655,15 +682,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to End IP.
-        /// </summary>
-        public static string EndIp {
-            get {
-                return ResourceManager.GetString("EndIp", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Enter a name for the new layout:.
         /// </summary>
         public static string EnterLayoutName {
@@ -678,15 +696,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string EnterNewLayoutName {
             get {
                 return ResourceManager.GetString("EnterNewLayoutName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Entries.
-        /// </summary>
-        public static string Entries {
-            get {
-                return ResourceManager.GetString("Entries", resourceCulture);
             }
         }
         
@@ -718,29 +727,11 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Full Screen.
-        /// </summary>
-        public static string FullScreen {
-            get {
-                return ResourceManager.GetString("FullScreen", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Full screen: {0}.
         /// </summary>
         public static string FullScreenCamera1 {
             get {
                 return ResourceManager.GetString("FullScreenCamera1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Full screen view for {0} will be implemented..
-        /// </summary>
-        public static string FullScreenNotImplemented1 {
-            get {
-                return ResourceManager.GetString("FullScreenNotImplemented1", resourceCulture);
             }
         }
         
@@ -862,15 +853,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Language.
-        /// </summary>
-        public static string Language {
-            get {
-                return ResourceManager.GetString("Language", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Latest Version.
         /// </summary>
         public static string LatestVersion {
@@ -957,15 +939,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string LoadedLayout1 {
             get {
                 return ResourceManager.GetString("LoadedLayout1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Loading.
-        /// </summary>
-        public static string Loading {
-            get {
-                return ResourceManager.GetString("Loading", resourceCulture);
             }
         }
         
@@ -1132,15 +1105,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to All cameras are already in this layout..
-        /// </summary>
-        public static string NoCamerasAvailable {
-            get {
-                return ResourceManager.GetString("NoCamerasAvailable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to No cameras configured. Add a camera to get started..
         /// </summary>
         public static string NoCamerasConfigured {
@@ -1204,6 +1168,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Overrides.
+        /// </summary>
+        public static string Overrides {
+            get {
+                return ResourceManager.GetString("Overrides", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Override application defaults for this camera only. Uncheck &quot;Use default&quot; to set a camera-specific value..
+        /// </summary>
+        public static string OverrideSettingsInfo {
+            get {
+                return ResourceManager.GetString("OverrideSettingsInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Password.
         /// </summary>
         public static string Password {
@@ -1231,6 +1213,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Performance Overrides.
+        /// </summary>
+        public static string PerformanceOverrides {
+            get {
+                return ResourceManager.GetString("PerformanceOverrides", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Play notification sound.
         /// </summary>
         public static string PlayNotificationSound {
@@ -1254,15 +1245,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string PortRangeError {
             get {
                 return ResourceManager.GetString("PortRangeError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Ports.
-        /// </summary>
-        public static string Ports {
-            get {
-                return ResourceManager.GetString("Ports", resourceCulture);
             }
         }
         
@@ -1366,6 +1348,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Recording Overrides.
+        /// </summary>
+        public static string RecordingOverrides {
+            get {
+                return ResourceManager.GetString("RecordingOverrides", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Recording folder.
         /// </summary>
         public static string RecordingPath {
@@ -1443,24 +1434,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string SaveSnapshot {
             get {
                 return ResourceManager.GetString("SaveSnapshot", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Scan.
-        /// </summary>
-        public static string Scan {
-            get {
-                return ResourceManager.GetString("Scan", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select a camera to add to this layout:.
-        /// </summary>
-        public static string SelectCameraToAssign {
-            get {
-                return ResourceManager.GetString("SelectCameraToAssign", resourceCulture);
             }
         }
         
@@ -1582,24 +1555,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Show Only Reachable.
-        /// </summary>
-        public static string ShowOnlyReachable {
-            get {
-                return ResourceManager.GetString("ShowOnlyReachable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Show Only With Open Ports.
-        /// </summary>
-        public static string ShowOnlyWithOpenPorts {
-            get {
-                return ResourceManager.GetString("ShowOnlyWithOpenPorts", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Default snapshot folder.
         /// </summary>
         public static string SnapshotDirectory {
@@ -1614,15 +1569,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string SnapshotSettings {
             get {
                 return ResourceManager.GetString("SnapshotSettings", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Start IP.
-        /// </summary>
-        public static string StartIp {
-            get {
-                return ResourceManager.GetString("StartIp", resourceCulture);
             }
         }
         
@@ -1650,6 +1596,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string Startup {
             get {
                 return ResourceManager.GetString("Startup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Streaming Settings.
+        /// </summary>
+        public static string StreamingSettings {
+            get {
+                return ResourceManager.GetString("StreamingSettings", resourceCulture);
             }
         }
         
@@ -1708,33 +1663,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Accent Color.
-        /// </summary>
-        public static string ThemeAccent {
-            get {
-                return ResourceManager.GetString("ThemeAccent", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Theme.
-        /// </summary>
-        public static string ThemeBase {
-            get {
-                return ResourceManager.GetString("ThemeBase", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Time.
-        /// </summary>
-        public static string Time {
-            get {
-                return ResourceManager.GetString("Time", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Unable to check for updates. Please check your internet connection..
         /// </summary>
         public static string UnableToCheckForUpdates {
@@ -1758,6 +1686,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string UpdatedCamera1 {
             get {
                 return ResourceManager.GetString("UpdatedCamera1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use default.
+        /// </summary>
+        public static string UseDefaultSetting {
+            get {
+                return ResourceManager.GetString("UseDefaultSetting", resourceCulture);
             }
         }
         

@@ -8,6 +8,7 @@
     xmlns:dialogs="clr-namespace:Linksoft.Wpf.CameraWall.Dialogs"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:network="clr-namespace:Atc.Wpf.Network;assembly=Atc.Wpf.Network"
+    xmlns:valueConverters="clr-namespace:Atc.Wpf.ValueConverters;assembly=Atc.Wpf"
     Title="{Binding Path=DialogTitle}"
     Width="1200"
     Height="1000"
@@ -18,12 +19,11 @@
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
 
-    <atc:BusyOverlay IsBusy="{Binding Path=IsTesting}">
-        <atc:GridEx Margin="20" Rows="*,20,Auto,20,Auto,Auto,Auto">
-
-            <!--  Network Scanner  -->
+    <atc:NiceWindow.Resources>
+        <!--  Network Scanner Template - only instantiated when IsNew is true  -->
+        <DataTemplate x:Key="NetworkScannerTemplate">
             <atc:GroupBoxExpander
-                Grid.Row="0"
+                Margin="0,0,0,20"
                 Padding="0,20,0,0"
                 Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                              Key=NetworkScannerHeader}">
@@ -34,186 +34,499 @@
                     <!--  Scanner Results  -->
                     <Border
                         Grid.Row="2"
-                        MinHeight="300"
-                        BorderBrush="{DynamicResource AtcApps.Brushes.Control.Border}"
-                        BorderThickness="1">
+                        MinHeight="250"
+                        BorderBrush="{DynamicResource AtcApps.Brushes.Control.Border}">
                         <network:NetworkScannerView DataContext="{Binding Path=NetworkScanner}" />
                     </Border>
                 </atc:GridEx>
             </atc:GroupBoxExpander>
+        </DataTemplate>
 
-            <!--  Form Content - 4 Column Layout  -->
-            <atc:GroupBoxExpander Grid.Row="2" Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=CameraConfiguration}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <atc:GridEx Margin="10" Columns="*,20,*,20,*,20,*,20,*">
-                        <!--  Column 1: Basic Info  -->
-                        <StackPanel Grid.Column="0">
-                            <atc:LabelTextBox
-                                IsMandatory="True"
-                                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=DisplayName}"
-                                Orientation="Vertical"
-                                Text="{Binding Path=Camera.Display.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        <!--  Empty template for editing mode  -->
+        <DataTemplate x:Key="EmptyTemplate" />
+    </atc:NiceWindow.Resources>
 
-                            <atc:LabelTextBox
-                                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=Description}"
-                                Orientation="Vertical"
-                                Text="{Binding Path=Camera.Display.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
+    <atc:BusyOverlay IsBusy="{Binding Path=IsTesting}">
+        <atc:GridEx Rows="*,20,Auto">
 
-                        <!--  Column 2: Connection  -->
-                        <StackPanel Grid.Column="2">
-                            <atc:LabelTextBox
-                                IsMandatory="True"
+            <!--  Scrollable Content Area  -->
+            <ScrollViewer
+                Grid.Row="0"
+                Padding="0,0,20,0"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+
+                <StackPanel Margin="20">
+
+                    <!--  Network Scanner (only instantiated when adding new camera)  -->
+                    <ContentControl Content="{Binding}">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl">
+                                <Setter Property="ContentTemplate" Value="{StaticResource EmptyTemplate}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsNew}" Value="True">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource NetworkScannerTemplate}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
+
+                    <!--  Form Content - 3 Column Layout  -->
+                    <atc:GroupBoxExpander Margin="0,0,0,20" Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=CameraConfiguration}">
+                        <atc:GridEx
+                            Margin="10"
+                            Columns="*,20,*,20,*"
+                            Rows="Auto">
+
+                            <StackPanel Grid.Row="0" Grid.Column="0">
+                                <atc:LabelTextBox
+                                    IsMandatory="True"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=DisplayName}"
+                                    Text="{Binding Path=Camera.Display.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <atc:LabelTextBox LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Description}" Text="{Binding Path=Camera.Display.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <atc:LabelComboBox
+                                    Items="{Binding Path=OverlayPositionItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=OverlayPosition}"
+                                    SelectedKey="{Binding Path=SelectedOverlayPositionKey, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="0" Grid.Column="2">
+                                <atc:LabelComboBox
+                                    IsEnabled="{Binding Path=CanEditConnectionSettings}"
+                                    IsMandatory="True"
+                                    Items="{Binding Path=ProtocolItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=Protocol}"
+                                    SelectedKey="{Binding Path=SelectedProtocolKey, Mode=TwoWay}" />
+
+                                <atc:LabelTextBox
+                                    IsEnabled="{Binding Path=CanEditConnectionSettings}"
+                                    IsMandatory="True"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=IpAddress}"
+                                    Text="{Binding Path=Camera.Connection.IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    ValidationFormat="IPv4Address"
+                                    ValidationText="{Binding Path=IpAddressError}" />
+
+                                <atc:LabelIntegerBox
+                                    IsEnabled="{Binding Path=CanEditConnectionSettings}"
+                                    IsMandatory="True"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=Port}"
+                                    Maximum="65535"
+                                    Minimum="1"
+                                    Value="{Binding Path=Camera.Connection.Port, Mode=TwoWay}" />
+
+                                <atc:LabelTextBox LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Path}" Text="{Binding Path=Camera.Connection.Path, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="0" Grid.Column="4">
+                                <atc:LabelTextBox LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Username}" Text="{Binding Path=Camera.Authentication.UserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <atc:LabelPasswordBox LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Password}" Text="{Binding Path=Camera.Authentication.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                        </atc:GridEx>
+                    </atc:GroupBoxExpander>
+
+                    <!--  Advanced Settings  -->
+                    <atc:GroupBoxExpander Margin="0,0,0,20" Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=AdvancedSettings}">
+                        <atc:GridEx Margin="10" Columns="*,20,*,20,*,20,*">
+                            <atc:LabelCheckBox
+                                Grid.Column="0"
+                                HideAreas="All"
+                                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                      Key=UseLowLatencyModeInfo}"
+                                IsChecked="{Binding Path=Camera.Stream.UseLowLatencyMode, Mode=TwoWay}"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=IpAddress}"
-                                Orientation="Vertical"
-                                Text="{Binding Path=Camera.Connection.IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                ValidationFormat="IPv4Address"
-                                ValidationText="{Binding Path=IpAddressError}" />
+                                                                Key=UseLowLatencyMode}"
+                                LabelWidthNumber="180" />
 
                             <atc:LabelIntegerBox
-                                IsMandatory="True"
+                                Grid.Column="2"
+                                HideAreas="Asterisk"
+                                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                      Key=MaxLatencyMsInfo}"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=Port}"
-                                Maximum="65535"
-                                Minimum="1"
-                                Orientation="Vertical"
-                                Value="{Binding Path=Camera.Connection.Port, Mode=TwoWay}" />
-                        </StackPanel>
+                                                                Key=MaxLatencyMs}"
+                                Maximum="10000"
+                                Minimum="0"
+                                Value="{Binding Path=Camera.Stream.MaxLatencyMs, Mode=TwoWay}" />
 
-                        <!--  Column 4  -->
-                        <StackPanel Grid.Column="4">
                             <atc:LabelComboBox
-                                IsMandatory="True"
-                                Items="{Binding Path=ProtocolItems}"
+                                Grid.Column="4"
+                                HideAreas="All"
+                                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                      Key=RtspTransportInfo}"
+                                Items="{Binding Path=RtspTransportItems}"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=Protocol}"
-                                Orientation="Vertical"
-                                SelectedKey="{Binding Path=SelectedProtocolKey, Mode=TwoWay}" />
+                                                                Key=RtspTransport}"
+                                SelectedKey="{Binding Path=SelectedRtspTransportKey, Mode=TwoWay}" />
 
-                            <atc:LabelTextBox
+                            <atc:LabelIntegerBox
+                                Grid.Column="6"
+                                HideAreas="Asterisk"
+                                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                      Key=BufferDurationMsInfo}"
                                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=Path}"
-                                Orientation="Vertical"
-                                Text="{Binding Path=Camera.Connection.Path, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
+                                                                Key=BufferDurationMs}"
+                                Maximum="10000"
+                                Minimum="0"
+                                Value="{Binding Path=Camera.Stream.BufferDurationMs, Mode=TwoWay}" />
+                        </atc:GridEx>
+                    </atc:GroupBoxExpander>
 
-                        <!--  Column 4: Authentication & Display  -->
-                        <StackPanel Grid.Column="6">
-                            <atc:LabelTextBox
-                                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=Username}"
-                                Orientation="Vertical"
-                                Text="{Binding Path=Camera.Authentication.UserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <!--  Camera-Specific Overrides  -->
+                    <atc:GroupBoxExpander Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Overrides}">
+                        <atc:UniformSpacingPanel
+                            Margin="10"
+                            Orientation="Vertical"
+                            Spacing="20">
+                            <!--  Info text  -->
+                            <TextBlock
+                                FontStyle="Italic"
+                                Foreground="{DynamicResource AtcApps.Brushes.Text}"
+                                Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                           Key=OverrideSettingsInfo}"
+                                TextWrapping="Wrap" />
 
-                            <atc:LabelPasswordBox
-                                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=Password}"
-                                Orientation="Vertical"
-                                Text="{Binding Path=Camera.Authentication.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
+                            <!--  Display Overrides  -->
+                            <GroupBox
+                                atc:HeaderedControlHelper.HeaderBackground="Transparent"
+                                atc:HeaderedControlHelper.HeaderFontWeight="Bold"
+                                atc:HeaderedControlHelper.HeaderForeground="{DynamicResource AtcApps.Brushes.Text}"
+                                Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                             Key=DisplayOverrides}">
 
-                        <!--  Column 4: Authentication & Display  -->
-                        <StackPanel Grid.Column="8">
-                            <atc:LabelComboBox
-                                Items="{Binding Path=OverlayPositionItems}"
-                                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                Key=OverlayPosition}"
-                                Orientation="Vertical"
-                                SelectedKey="{Binding Path=SelectedOverlayPositionKey, Mode=TwoWay}" />
-                        </StackPanel>
-                    </atc:GridEx>
-                </ScrollViewer>
-            </atc:GroupBoxExpander>
+                                <atc:GridEx
+                                    Margin="10"
+                                    Columns="*,20,*,20,*"
+                                    Rows="Auto,16,Auto">
+                                    <!--  Row 0, Column 0  -->
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultShowOverlayTitle, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=OverrideShowOverlayTitle, Mode=TwoWay}"
+                                            IsEnabled="{Binding Path=UseDefaultShowOverlayTitle, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=ShowCameraOverlayTitle}"
+                                            LabelWidthNumber="220" />
+                                    </StackPanel>
+                                    <!--  Row 0, Column 2  -->
+                                    <StackPanel Grid.Row="0" Grid.Column="2">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultShowOverlayDescription, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=OverrideShowOverlayDescription, Mode=TwoWay}"
+                                            IsEnabled="{Binding Path=UseDefaultShowOverlayDescription, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=ShowCameraOverlayDescription}"
+                                            LabelWidthNumber="220" />
+                                    </StackPanel>
+                                    <!--  Row 0, Column 4  -->
+                                    <StackPanel Grid.Row="0" Grid.Column="4">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultShowOverlayTime, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=OverrideShowOverlayTime, Mode=TwoWay}"
+                                            IsEnabled="{Binding Path=UseDefaultShowOverlayTime, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=ShowCameraOverlayTime}"
+                                            LabelWidthNumber="220" />
+                                    </StackPanel>
+                                    <!--  Row 2, Column 0  -->
+                                    <StackPanel Grid.Row="2" Grid.Column="0">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultShowOverlayConnectionStatus, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=OverrideShowOverlayConnectionStatus, Mode=TwoWay}"
+                                            IsEnabled="{Binding Path=UseDefaultShowOverlayConnectionStatus, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=ShowCameraOverlayConnectionStatus}"
+                                            LabelWidthNumber="220" />
+                                    </StackPanel>
+                                    <!--  Row 2, Column 2  -->
+                                    <StackPanel Grid.Row="2" Grid.Column="2">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultOverlayOpacity, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelDecimalBox
+                                            HideAreas="All"
+                                            IsEnabled="{Binding Path=UseDefaultOverlayOpacity, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=OverlayOpacity}"
+                                            LabelWidthNumber="220"
+                                            Maximum="1.0"
+                                            Minimum="0.0"
+                                            Value="{Binding Path=OverrideOverlayOpacity, Mode=TwoWay}" />
+                                    </StackPanel>
+                                </atc:GridEx>
+                            </GroupBox>
 
-            <!--  Advanced Settings  -->
-            <atc:GroupBoxExpander Grid.Row="4" Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=AdvancedSettings}">
-                <atc:GridEx Margin="10" Columns="*,20,*,20,*,20,*">
-                    <atc:LabelCheckBox
-                        Grid.Column="0"
-                        HideAreas="Asterisk"
-                        InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                              Key=UseLowLatencyModeInfo}"
-                        IsChecked="{Binding Path=Camera.Stream.UseLowLatencyMode, Mode=TwoWay}"
-                        LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                        Key=UseLowLatencyMode}"
-                        Orientation="Vertical" />
+                            <!--  Connection Overrides  -->
+                            <GroupBox
+                                atc:HeaderedControlHelper.HeaderBackground="Transparent"
+                                atc:HeaderedControlHelper.HeaderFontWeight="Bold"
+                                atc:HeaderedControlHelper.HeaderForeground="{DynamicResource AtcApps.Brushes.Text}"
+                                Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                             Key=ConnectionOverrides}">
+                                <atc:GridEx
+                                    Margin="10"
+                                    Columns="*,20,*,20,*"
+                                    Rows="Auto,16,Auto">
+                                    <!--  Row 0, Column 0  -->
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultConnectionTimeout, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelIntegerBox
+                                            HideAreas="All"
+                                            IsEnabled="{Binding Path=UseDefaultConnectionTimeout, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=ConnectionTimeoutSeconds}"
+                                            LabelWidthNumber="220"
+                                            Maximum="300"
+                                            Minimum="1"
+                                            Value="{Binding Path=OverrideConnectionTimeout, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <!--  Row 0, Column 2  -->
+                                    <StackPanel Grid.Row="0" Grid.Column="2">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultReconnectDelay, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelIntegerBox
+                                            HideAreas="All"
+                                            IsEnabled="{Binding Path=UseDefaultReconnectDelay, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=ReconnectDelaySeconds}"
+                                            LabelWidthNumber="220"
+                                            Maximum="300"
+                                            Minimum="1"
+                                            Value="{Binding Path=OverrideReconnectDelay, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <!--  Row 0, Column 4  -->
+                                    <StackPanel Grid.Row="0" Grid.Column="4">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultMaxReconnectAttempts, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelIntegerBox
+                                            HideAreas="All"
+                                            IsEnabled="{Binding Path=UseDefaultMaxReconnectAttempts, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=MaxReconnectAttempts}"
+                                            LabelWidthNumber="220"
+                                            Maximum="100"
+                                            Minimum="0"
+                                            Value="{Binding Path=OverrideMaxReconnectAttempts, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <!--  Row 2, Column 0  -->
+                                    <StackPanel Grid.Row="2" Grid.Column="0">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultAutoReconnect, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=OverrideAutoReconnect, Mode=TwoWay}"
+                                            IsEnabled="{Binding Path=UseDefaultAutoReconnect, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=AutoReconnectOnFailure}"
+                                            LabelWidthNumber="220" />
+                                    </StackPanel>
+                                </atc:GridEx>
+                            </GroupBox>
 
-                    <atc:LabelIntegerBox
-                        Grid.Column="2"
-                        HideAreas="Asterisk"
-                        InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                              Key=MaxLatencyMsInfo}"
-                        LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                        Key=MaxLatencyMs}"
-                        Maximum="10000"
-                        Minimum="0"
-                        Orientation="Vertical"
-                        Value="{Binding Path=Camera.Stream.MaxLatencyMs, Mode=TwoWay}" />
+                            <!--  Performance Overrides  -->
+                            <GroupBox
+                                atc:HeaderedControlHelper.HeaderBackground="Transparent"
+                                atc:HeaderedControlHelper.HeaderFontWeight="Bold"
+                                atc:HeaderedControlHelper.HeaderForeground="{DynamicResource AtcApps.Brushes.Text}"
+                                Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                             Key=PerformanceOverrides}">
+                                <atc:GridEx Margin="10" Columns="*,20,*,20,*">
+                                    <!--  Column 0  -->
+                                    <StackPanel Grid.Column="0">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultVideoQuality, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelComboBox
+                                            HideAreas="All"
+                                            IsEnabled="{Binding Path=UseDefaultVideoQuality, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            Items="{Binding Path=VideoQualityItems}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=VideoQuality}"
+                                            LabelWidthNumber="220"
+                                            SelectedKey="{Binding Path=OverrideVideoQuality, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <!--  Column 2  -->
+                                    <StackPanel Grid.Column="2">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultHardwareAcceleration, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=OverrideHardwareAcceleration, Mode=TwoWay}"
+                                            IsEnabled="{Binding Path=UseDefaultHardwareAcceleration, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=HardwareAcceleration}"
+                                            LabelWidthNumber="220" />
+                                    </StackPanel>
+                                </atc:GridEx>
+                            </GroupBox>
 
-                    <atc:LabelComboBox
-                        Grid.Column="4"
-                        HideAreas="Asterisk"
-                        InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                              Key=RtspTransportInfo}"
-                        Items="{Binding Path=RtspTransportItems}"
-                        LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                        Key=RtspTransport}"
-                        Orientation="Vertical"
-                        SelectedKey="{Binding Path=SelectedRtspTransportKey, Mode=TwoWay}" />
+                            <!--  Recording Overrides  -->
+                            <GroupBox
+                                atc:HeaderedControlHelper.HeaderBackground="Transparent"
+                                atc:HeaderedControlHelper.HeaderFontWeight="Bold"
+                                atc:HeaderedControlHelper.HeaderForeground="{DynamicResource AtcApps.Brushes.Text}"
+                                Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                             Key=RecordingOverrides}">
+                                <atc:GridEx Margin="10" Columns="*,20,*,20,*">
+                                    <!--  Column 0  -->
+                                    <StackPanel Grid.Column="0">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultRecordingPath, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelTextBox
+                                            HideAreas="All"
+                                            IsEnabled="{Binding Path=UseDefaultRecordingPath, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=RecordingPath}"
+                                            LabelWidthNumber="220"
+                                            Text="{Binding Path=OverrideRecordingPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <!--  Column 2  -->
+                                    <StackPanel Grid.Column="2">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultRecordingFormat, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelComboBox
+                                            HideAreas="All"
+                                            IsEnabled="{Binding Path=UseDefaultRecordingFormat, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            Items="{Binding Path=RecordingFormatItems}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=RecordingFormat}"
+                                            LabelWidthNumber="220"
+                                            SelectedKey="{Binding Path=OverrideRecordingFormat, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <!--  Column 4  -->
+                                    <StackPanel Grid.Column="4">
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=UseDefaultRecordingOnMotion, Mode=TwoWay}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=UseDefaultSetting}"
+                                            LabelWidthNumber="220" />
+                                        <atc:LabelCheckBox
+                                            HideAreas="All"
+                                            IsChecked="{Binding Path=OverrideRecordingOnMotion, Mode=TwoWay}"
+                                            IsEnabled="{Binding Path=UseDefaultRecordingOnMotion, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                                            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                            Key=EnableRecordingOnMotion}"
+                                            LabelWidthNumber="220" />
+                                    </StackPanel>
+                                </atc:GridEx>
+                            </GroupBox>
+                        </atc:UniformSpacingPanel>
+                    </atc:GroupBoxExpander>
 
-                    <atc:LabelIntegerBox
-                        Grid.Column="6"
-                        HideAreas="Asterisk"
-                        InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                              Key=BufferDurationMsInfo}"
-                        LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                        Key=BufferDurationMs}"
-                        Maximum="10000"
-                        Minimum="0"
-                        Orientation="Vertical"
-                        Value="{Binding Path=Camera.Stream.BufferDurationMs, Mode=TwoWay}" />
-                </atc:GridEx>
-            </atc:GroupBoxExpander>
+                </StackPanel>
+            </ScrollViewer>
 
-            <!--  Test Result  -->
-            <atc:LabelTextInfo
-                Grid.Row="5"
-                HideAreas="All"
-                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                Key=TestResult}"
-                Text="{Binding Path=TestResult}" />
+            <!--  Test Result | Buttons (sticky at bottom)  -->
+            <atc:GridEx
+                Grid.Row="2"
+                Margin="20"
+                Columns="*,20,Auto,40">
+                <atc:LabelTextInfo
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    HideAreas="All"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=TestResult}"
+                    Text="{Binding Path=TestResult}" />
 
-            <!--  Buttons  -->
-            <atc:UniformSpacingPanel
-                Grid.Row="6"
-                Margin="0,16,0,0"
-                HorizontalAlignment="Right"
-                Orientation="Horizontal"
-                Spacing="8">
-                <Button
-                    MinWidth="80"
-                    Padding="16,8"
-                    Command="{Binding Path=TestConnectionCommand}"
-                    Content="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                  Key=Test}" />
-                <Button
-                    MinWidth="80"
-                    Padding="16,8"
-                    Command="{Binding Path=SaveCommand}"
-                    Content="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                  Key=Save}"
-                    IsDefault="True" />
-                <Button
-                    MinWidth="80"
-                    Padding="16,8"
-                    Command="{Binding Path=CancelCommand}"
-                    Content="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                  Key=Cancel}"
-                    IsCancel="True" />
-            </atc:UniformSpacingPanel>
+                <atc:UniformSpacingPanel
+                    Grid.Column="2"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <Button
+                        MinWidth="80"
+                        Padding="16,8"
+                        Command="{Binding Path=TestConnectionCommand}"
+                        Content="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=Test}" />
+                    <Button
+                        MinWidth="80"
+                        Padding="16,8"
+                        Command="{Binding Path=SaveCommand}"
+                        Content="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=Save}"
+                        IsDefault="True" />
+                    <Button
+                        MinWidth="80"
+                        Padding="16,8"
+                        Command="{Binding Path=CancelCommand}"
+                        Content="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=Cancel}"
+                        IsCancel="True" />
+                </atc:UniformSpacingPanel>
+            </atc:GridEx>
+
         </atc:GridEx>
     </atc:BusyOverlay>
+
 </atc:NiceWindow>

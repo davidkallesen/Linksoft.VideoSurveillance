@@ -17,6 +17,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
     private readonly string storagePath;
@@ -47,7 +48,19 @@ public class ApplicationSettingsService : IApplicationSettingsService
     public GeneralSettings General => settings.General;
 
     /// <inheritdoc/>
-    public DisplaySettings Display => settings.Display;
+    public CameraDisplayAppSettings CameraDisplay => settings.CameraDisplay;
+
+    /// <inheritdoc/>
+    public ConnectionAppSettings Connection => settings.Connection;
+
+    /// <inheritdoc/>
+    public PerformanceSettings Performance => settings.Performance;
+
+    /// <inheritdoc/>
+    public RecordingSettings Recording => settings.Recording;
+
+    /// <inheritdoc/>
+    public AdvancedSettings Advanced => settings.Advanced;
 
     /// <inheritdoc/>
     public void SaveGeneral(GeneralSettings settings)
@@ -58,11 +71,89 @@ public class ApplicationSettingsService : IApplicationSettingsService
     }
 
     /// <inheritdoc/>
-    public void SaveDisplay(DisplaySettings settings)
+    public void SaveCameraDisplay(CameraDisplayAppSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        this.settings.Display = settings;
+        this.settings.CameraDisplay = settings;
         Save();
+    }
+
+    /// <inheritdoc/>
+    public void SaveConnection(ConnectionAppSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        this.settings.Connection = settings;
+        Save();
+    }
+
+    /// <inheritdoc/>
+    public void SavePerformance(PerformanceSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        this.settings.Performance = settings;
+        Save();
+    }
+
+    /// <inheritdoc/>
+    public void SaveRecording(RecordingSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        this.settings.Recording = settings;
+        Save();
+    }
+
+    /// <inheritdoc/>
+    public void SaveAdvanced(AdvancedSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        this.settings.Advanced = settings;
+        Save();
+    }
+
+    /// <inheritdoc/>
+    public void ApplyDefaultsToCamera(CameraConfiguration camera)
+    {
+        ArgumentNullException.ThrowIfNull(camera);
+
+        // Apply connection defaults
+        camera.Connection.Protocol = Connection.DefaultProtocol;
+        camera.Connection.Port = Connection.DefaultPort;
+
+        // Apply display defaults
+        camera.Display.OverlayPosition = CameraDisplay.OverlayPosition;
+
+        // Apply performance/stream defaults
+        camera.Stream.UseLowLatencyMode = Performance.LowLatencyMode;
+        camera.Stream.MaxLatencyMs = Performance.MaxLatencyMs;
+        camera.Stream.RtspTransport = Performance.RtspTransport;
+        camera.Stream.BufferDurationMs = Performance.BufferDurationMs;
+    }
+
+    /// <inheritdoc/>
+    public T GetEffectiveValue<T>(
+        CameraConfiguration camera,
+        T appDefault,
+        Func<CameraOverrides?, T?> overrideSelector)
+        where T : struct
+    {
+        ArgumentNullException.ThrowIfNull(camera);
+        ArgumentNullException.ThrowIfNull(overrideSelector);
+
+        var overrideValue = overrideSelector(camera.Overrides);
+        return overrideValue ?? appDefault;
+    }
+
+    /// <inheritdoc/>
+    public string? GetEffectiveStringValue(
+        CameraConfiguration camera,
+        string? appDefault,
+        Func<CameraOverrides?, string?> overrideSelector)
+    {
+        ArgumentNullException.ThrowIfNull(camera);
+        ArgumentNullException.ThrowIfNull(overrideSelector);
+
+        var overrideValue = overrideSelector(camera.Overrides);
+        return overrideValue ?? appDefault;
     }
 
     /// <inheritdoc/>

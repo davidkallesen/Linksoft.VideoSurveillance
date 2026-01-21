@@ -22,6 +22,9 @@ public partial class CameraConfiguration : ObservableObject
     [ObservableProperty(AfterChangedCallback = nameof(OnStreamChanged))]
     private StreamSettings stream = new();
 
+    [ObservableProperty]
+    private CameraOverrides? overrides;
+
     [JsonIgnore]
     [ObservableProperty]
     private bool canSwapLeft;
@@ -79,6 +82,7 @@ public partial class CameraConfiguration : ObservableObject
             Authentication = Authentication.Clone(),
             Display = Display.Clone(),
             Stream = Stream.Clone(),
+            Overrides = Overrides?.Clone(),
             CanSwapLeft = CanSwapLeft,
             CanSwapRight = CanSwapRight,
         };
@@ -96,6 +100,17 @@ public partial class CameraConfiguration : ObservableObject
         Authentication.CopyFrom(source.Authentication);
         Display.CopyFrom(source.Display);
         Stream.CopyFrom(source.Stream);
+
+        // Handle Overrides: create/update or nullify based on source
+        if (source.Overrides is not null)
+        {
+            Overrides ??= new CameraOverrides();
+            Overrides.CopyFrom(source.Overrides);
+        }
+        else
+        {
+            Overrides = null;
+        }
     }
 
     /// <summary>
@@ -108,10 +123,15 @@ public partial class CameraConfiguration : ObservableObject
             return false;
         }
 
+        // Compare overrides: both null, or both have same values
+        var overridesEqual = (Overrides is null && other.Overrides is null) ||
+                             (Overrides?.ValueEquals(other.Overrides) == true);
+
         return Connection.ValueEquals(other.Connection) &&
                Authentication.ValueEquals(other.Authentication) &&
                Display.ValueEquals(other.Display) &&
-               Stream.ValueEquals(other.Stream);
+               Stream.ValueEquals(other.Stream) &&
+               overridesEqual;
     }
 
     private void OnConnectionChanged()

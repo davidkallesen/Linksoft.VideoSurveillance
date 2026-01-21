@@ -23,6 +23,13 @@ public class DialogService : IDialogService
         IReadOnlyCollection<string> existingIpAddresses)
     {
         var cameraConfig = camera ?? new CameraConfiguration { Display = { DisplayName = Translations.NewCamera } };
+
+        // Apply default settings to new cameras
+        if (isNew)
+        {
+            settingsService.ApplyDefaultsToCamera(cameraConfig);
+        }
+
         var viewModel = new CameraConfigurationDialogViewModel(cameraConfig, isNew, existingIpAddresses);
         var dialog = new CameraConfigurationDialog(viewModel)
         {

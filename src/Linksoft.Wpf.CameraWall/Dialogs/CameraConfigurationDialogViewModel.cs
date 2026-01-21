@@ -12,17 +12,8 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     private string? testResultInternal;
 
-    /// <summary>
-    /// Gets the test result, returning "Not tested" translation when null.
-    /// </summary>
-    public string TestResult
-    {
-        get => testResultInternal ?? Translations.NotTested;
-    }
+    public string TestResult => testResultInternal ?? Translations.NotTested;
 
-    /// <summary>
-    /// Clears the test result (resets to "Not tested").
-    /// </summary>
     private void ClearTestResult()
     {
         if (testResultInternal is not null)
@@ -32,9 +23,6 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
-    /// <summary>
-    /// Sets the test result value.
-    /// </summary>
     private void SetTestResult(string value)
     {
         if (testResultInternal != value)
@@ -77,9 +65,24 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             ? Translations.AddCamera
             : Translations.EditCamera;
 
-    public IDictionary<string, string> ProtocolItems { get; } = Enum
-        .GetValues<CameraProtocol>()
-        .ToDictionary(p => p.ToString(), p => p.ToString(), StringComparer.Ordinal);
+    /// <summary>
+    /// Gets a value indicating whether this is a new camera being added.
+    /// </summary>
+    public bool IsNew => isNew;
+
+    /// <summary>
+    /// Gets a value indicating whether an existing camera is being edited.
+    /// When editing, connection settings (IP, port, protocol) are read-only.
+    /// </summary>
+    public bool IsEditing => !isNew;
+
+    /// <summary>
+    /// Gets a value indicating whether connection settings can be modified.
+    /// Connection settings are only editable for new cameras.
+    /// </summary>
+    public bool CanEditConnectionSettings => isNew;
+
+    public IDictionary<string, string> ProtocolItems { get; } = Enum<CameraProtocol>.ToDictionaryWithStringKey();
 
     public string SelectedProtocolKey
     {
@@ -117,6 +120,21 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         ["udp"] = "UDP",
     };
 
+    public IDictionary<string, string> VideoQualityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Auto"] = "Auto",
+        ["High"] = "High",
+        ["Medium"] = "Medium",
+        ["Low"] = "Low",
+    };
+
+    public IDictionary<string, string> RecordingFormatItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["mp4"] = "MP4",
+        ["mkv"] = "MKV",
+        ["avi"] = "AVI",
+    };
+
     public string SelectedRtspTransportKey
     {
         get => Camera.Stream.RtspTransport;
@@ -125,6 +143,487 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             Camera.Stream.RtspTransport = value;
             RaisePropertyChanged();
         }
+    }
+
+    public bool UseDefaultShowOverlayTitle
+    {
+        get => Camera.Overrides?.ShowOverlayTitle is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ShowOverlayTitle = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ShowOverlayTitle = true; // Default value when enabling override
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideShowOverlayTitle));
+        }
+    }
+
+    public bool OverrideShowOverlayTitle
+    {
+        get => Camera.Overrides?.ShowOverlayTitle ?? true;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.ShowOverlayTitle = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultShowOverlayDescription
+    {
+        get => Camera.Overrides?.ShowOverlayDescription is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ShowOverlayDescription = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ShowOverlayDescription = true;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideShowOverlayDescription));
+        }
+    }
+
+    public bool OverrideShowOverlayDescription
+    {
+        get => Camera.Overrides?.ShowOverlayDescription ?? true;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.ShowOverlayDescription = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultShowOverlayTime
+    {
+        get => Camera.Overrides?.ShowOverlayTime is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ShowOverlayTime = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ShowOverlayTime = false;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideShowOverlayTime));
+        }
+    }
+
+    public bool OverrideShowOverlayTime
+    {
+        get => Camera.Overrides?.ShowOverlayTime ?? false;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.ShowOverlayTime = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultShowOverlayConnectionStatus
+    {
+        get => Camera.Overrides?.ShowOverlayConnectionStatus is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ShowOverlayConnectionStatus = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ShowOverlayConnectionStatus = true;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideShowOverlayConnectionStatus));
+        }
+    }
+
+    public bool OverrideShowOverlayConnectionStatus
+    {
+        get => Camera.Overrides?.ShowOverlayConnectionStatus ?? true;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.ShowOverlayConnectionStatus = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultOverlayOpacity
+    {
+        get => Camera.Overrides?.OverlayOpacity is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.OverlayOpacity = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.OverlayOpacity = 0.7;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideOverlayOpacity));
+        }
+    }
+
+    public decimal OverrideOverlayOpacity
+    {
+        get => (decimal)(Camera.Overrides?.OverlayOpacity ?? 0.7);
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.OverlayOpacity = (double)value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultConnectionTimeout
+    {
+        get => Camera.Overrides?.ConnectionTimeoutSeconds is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ConnectionTimeoutSeconds = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ConnectionTimeoutSeconds = 10;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideConnectionTimeout));
+        }
+    }
+
+    public int OverrideConnectionTimeout
+    {
+        get => Camera.Overrides?.ConnectionTimeoutSeconds ?? 10;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.ConnectionTimeoutSeconds = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultReconnectDelay
+    {
+        get => Camera.Overrides?.ReconnectDelaySeconds is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ReconnectDelaySeconds = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ReconnectDelaySeconds = 5;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideReconnectDelay));
+        }
+    }
+
+    public int OverrideReconnectDelay
+    {
+        get => Camera.Overrides?.ReconnectDelaySeconds ?? 5;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.ReconnectDelaySeconds = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultMaxReconnectAttempts
+    {
+        get => Camera.Overrides?.MaxReconnectAttempts is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.MaxReconnectAttempts = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.MaxReconnectAttempts = 3;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideMaxReconnectAttempts));
+        }
+    }
+
+    public int OverrideMaxReconnectAttempts
+    {
+        get => Camera.Overrides?.MaxReconnectAttempts ?? 3;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.MaxReconnectAttempts = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultAutoReconnect
+    {
+        get => Camera.Overrides?.AutoReconnectOnFailure is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.AutoReconnectOnFailure = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.AutoReconnectOnFailure = true;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideAutoReconnect));
+        }
+    }
+
+    public bool OverrideAutoReconnect
+    {
+        get => Camera.Overrides?.AutoReconnectOnFailure ?? true;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.AutoReconnectOnFailure = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultVideoQuality
+    {
+        get => Camera.Overrides?.VideoQuality is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.VideoQuality = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.VideoQuality = "Auto";
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideVideoQuality));
+        }
+    }
+
+    public string OverrideVideoQuality
+    {
+        get => Camera.Overrides?.VideoQuality ?? "Auto";
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.VideoQuality = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultHardwareAcceleration
+    {
+        get => Camera.Overrides?.HardwareAcceleration is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.HardwareAcceleration = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.HardwareAcceleration = true;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideHardwareAcceleration));
+        }
+    }
+
+    public bool OverrideHardwareAcceleration
+    {
+        get => Camera.Overrides?.HardwareAcceleration ?? true;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.HardwareAcceleration = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultRecordingPath
+    {
+        get => Camera.Overrides?.RecordingPath is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.RecordingPath = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.RecordingPath = string.Empty;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideRecordingPath));
+        }
+    }
+
+    public string OverrideRecordingPath
+    {
+        get => Camera.Overrides?.RecordingPath ?? string.Empty;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.RecordingPath = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultRecordingFormat
+    {
+        get => Camera.Overrides?.RecordingFormat is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.RecordingFormat = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.RecordingFormat = "mp4";
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideRecordingFormat));
+        }
+    }
+
+    public string OverrideRecordingFormat
+    {
+        get => Camera.Overrides?.RecordingFormat ?? "mp4";
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.RecordingFormat = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultRecordingOnMotion
+    {
+        get => Camera.Overrides?.EnableRecordingOnMotion is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.EnableRecordingOnMotion = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.EnableRecordingOnMotion = false;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideRecordingOnMotion));
+        }
+    }
+
+    public bool OverrideRecordingOnMotion
+    {
+        get => Camera.Overrides?.EnableRecordingOnMotion ?? false;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.EnableRecordingOnMotion = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    private void EnsureOverrides()
+    {
+        Camera.Overrides ??= new CameraOverrides();
     }
 
     public NetworkScannerViewModel NetworkScanner { get; } = CreateNetworkScanner();
@@ -242,8 +741,8 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         return !existingIpAddresses.Contains(Camera.Connection.IpAddress, StringComparer.OrdinalIgnoreCase);
     }
 
-    [RelayCommand("TestConnection", CanExecute = nameof(CanTestConnection))]
-    private async Task TestConnectionAsync()
+    [RelayCommand(CanExecute = nameof(CanTestConnection))]
+    private async Task TestConnection()
     {
         IsTesting = true;
         ClearTestResult();
