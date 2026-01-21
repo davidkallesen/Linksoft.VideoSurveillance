@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Disable all analyzers for WiX projects -->
+  <PropertyGroup>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+  </PropertyGroup>
+
+  <!-- Remove all analyzer package references inherited from root -->
+  <ItemGroup>
+    <PackageReference Remove="Atc.Analyzer" />
+    <PackageReference Remove="AsyncFixer" />
+    <PackageReference Remove="Asyncify" />
+    <PackageReference Remove="Meziantou.Analyzer" />
+    <PackageReference Remove="SecurityCodeScan.VS2019" />
+    <PackageReference Remove="StyleCop.Analyzers" />
+    <PackageReference Remove="SonarAnalyzer.CSharp" />
+  </ItemGroup>
+
+</Project>

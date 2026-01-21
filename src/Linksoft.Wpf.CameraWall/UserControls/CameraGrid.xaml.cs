@@ -37,6 +37,32 @@ public partial class CameraGrid
     [DependencyProperty]
     private string? snapshotDirectory;
 
+    [DependencyProperty(DefaultValue = true)]
+    private bool autoConnectOnLoad;
+
+    // Connection settings
+    [DependencyProperty(DefaultValue = 10)]
+    private int connectionTimeoutSeconds;
+
+    [DependencyProperty(DefaultValue = 5)]
+    private int reconnectDelaySeconds;
+
+    [DependencyProperty(DefaultValue = 3)]
+    private int maxReconnectAttempts;
+
+    [DependencyProperty(DefaultValue = true)]
+    private bool autoReconnectOnFailure;
+
+    // Notification settings
+    [DependencyProperty(DefaultValue = true)]
+    private bool showNotificationOnDisconnect;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool showNotificationOnReconnect;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool playNotificationSound;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraGrid"/> class.
     /// </summary>

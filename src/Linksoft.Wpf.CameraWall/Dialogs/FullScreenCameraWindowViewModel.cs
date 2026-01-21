@@ -25,13 +25,46 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
     [ObservableProperty]
     private bool isOverlayVisible = true;
 
-    public FullScreenCameraWindowViewModel(CameraConfiguration camera)
+    [ObservableProperty]
+    private bool showOverlayTitle = true;
+
+    [ObservableProperty]
+    private bool showOverlayDescription = true;
+
+    [ObservableProperty]
+    private bool showOverlayTime;
+
+    [ObservableProperty]
+    private bool showOverlayConnectionStatus = true;
+
+    [ObservableProperty]
+    private double overlayOpacity = 0.7;
+
+    [ObservableProperty]
+    private OverlayPosition overlayPosition = OverlayPosition.TopLeft;
+
+    public FullScreenCameraWindowViewModel(
+        CameraConfiguration camera,
+        bool showOverlayTitle,
+        bool showOverlayDescription,
+        bool showOverlayTime,
+        bool showOverlayConnectionStatus,
+        double overlayOpacity,
+        OverlayPosition overlayPosition)
     {
         ArgumentNullException.ThrowIfNull(camera);
 
         this.camera = camera;
         CameraName = camera.Display.DisplayName;
         CameraDescription = camera.Display.Description ?? string.Empty;
+
+        // Apply overlay settings (per-camera overrides merged with app defaults)
+        ShowOverlayTitle = showOverlayTitle;
+        ShowOverlayDescription = showOverlayDescription;
+        ShowOverlayTime = showOverlayTime;
+        ShowOverlayConnectionStatus = showOverlayConnectionStatus;
+        OverlayOpacity = overlayOpacity;
+        OverlayPosition = overlayPosition;
 
         InitializePlayer();
         StartOverlayHideTimer();

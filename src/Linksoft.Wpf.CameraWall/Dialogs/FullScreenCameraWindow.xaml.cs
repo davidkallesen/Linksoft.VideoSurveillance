@@ -10,6 +10,7 @@ public partial class FullScreenCameraWindow : IDisposable
     private const int VkEscape = 0x1B;
 
     private readonly FullScreenCameraWindowViewModel viewModel;
+    private DispatcherTimer? timeUpdateTimer;
     private Point lastMousePosition;
     private bool disposed;
 
@@ -30,6 +31,59 @@ public partial class FullScreenCameraWindow : IDisposable
 
         // Use ComponentDispatcher to capture keyboard at Win32 level (FlyleafHost uses HwndHost)
         ComponentDispatcher.ThreadFilterMessage += OnThreadFilterMessage;
+
+        // Start time update timer for overlay
+        StartTimeUpdateTimer();
+    }
+
+    private void StartTimeUpdateTimer()
+    {
+        // Update time display initially
+        UpdateTimeDisplay();
+
+        // Set overlay background with configured opacity and position
+        ApplyOverlayBackground();
+        ApplyOverlayPosition();
+
+        // Create timer to update time every second
+        timeUpdateTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1),
+        };
+        timeUpdateTimer.Tick += (_, _) => UpdateTimeDisplay();
+        timeUpdateTimer.Start();
+    }
+
+    private void UpdateTimeDisplay()
+    {
+        TimeDisplay.Text = DateTime.Now.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
+    }
+
+    private void ApplyOverlayBackground()
+    {
+        // Apply overlay opacity to the background color
+        var opacity = viewModel.OverlayOpacity;
+        var color = Color.FromArgb((byte)(opacity * 255), 0, 0, 0);
+        OverlayBorder.Background = new SolidColorBrush(color);
+    }
+
+    private void ApplyOverlayPosition()
+    {
+        var position = viewModel.OverlayPosition;
+
+        OverlayBorder.HorizontalAlignment = position switch
+        {
+            OverlayPosition.TopLeft or OverlayPosition.BottomLeft => HorizontalAlignment.Left,
+            OverlayPosition.TopRight or OverlayPosition.BottomRight => HorizontalAlignment.Right,
+            _ => HorizontalAlignment.Left,
+        };
+
+        OverlayBorder.VerticalAlignment = position switch
+        {
+            OverlayPosition.TopLeft or OverlayPosition.TopRight => VerticalAlignment.Top,
+            OverlayPosition.BottomLeft or OverlayPosition.BottomRight => VerticalAlignment.Bottom,
+            _ => VerticalAlignment.Top,
+        };
     }
 
     public void Dispose()
@@ -47,6 +101,8 @@ public partial class FullScreenCameraWindow : IDisposable
 
         if (disposing)
         {
+            timeUpdateTimer?.Stop();
+            timeUpdateTimer = null;
             ComponentDispatcher.ThreadFilterMessage -= OnThreadFilterMessage;
             InputManager.Current.PreProcessInput -= OnPreProcessInput;
             viewModel.CloseRequested -= OnCloseRequested;

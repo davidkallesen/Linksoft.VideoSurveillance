@@ -1,9 +1,9 @@
-namespace Linksoft.Wpf.CameraWall.Converters;
+namespace Linksoft.Wpf.CameraWall.ValueConverters;
 
 /// <summary>
 /// Converts ConnectionState to a color brush.
 /// </summary>
-public sealed class ConnectionStateToColorConverter : IValueConverter
+public sealed class ConnectionStateToColorValueConverter : IValueConverter
 {
     /// <inheritdoc />
     public object Convert(

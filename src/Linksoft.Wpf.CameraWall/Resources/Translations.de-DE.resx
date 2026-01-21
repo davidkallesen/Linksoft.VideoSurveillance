@@ -246,6 +246,12 @@
   <data name="CameraStateChanged2" xml:space="preserve">
     <value>{0}: {1}</value>
   </data>
+  <data name="CameraDisconnected1" xml:space="preserve">
+    <value>Kamera getrennt: {0}</value>
+  </data>
+  <data name="CameraConnected1" xml:space="preserve">
+    <value>Kamera verbunden: {0}</value>
+  </data>
   <data name="PositionChanged1" xml:space="preserve">
     <value>Position geändert: {0}</value>
   </data>

@@ -54,6 +54,32 @@ public partial class CameraTile : IDisposable
     [DependencyProperty]
     private string? snapshotDirectory;
 
+    [DependencyProperty(DefaultValue = true)]
+    private bool autoConnectOnLoad;
+
+    // Connection settings
+    [DependencyProperty(DefaultValue = 10)]
+    private int connectionTimeoutSeconds;
+
+    [DependencyProperty(DefaultValue = 5)]
+    private int reconnectDelaySeconds;
+
+    [DependencyProperty(DefaultValue = 3)]
+    private int maxReconnectAttempts;
+
+    [DependencyProperty(DefaultValue = true)]
+    private bool autoReconnectOnFailure;
+
+    // Notification settings
+    [DependencyProperty(DefaultValue = true)]
+    private bool showNotificationOnDisconnect;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool showNotificationOnReconnect;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool playNotificationSound;
+
     private bool disposed;
     private bool isReconnecting;
     private bool isSwapping;
@@ -62,6 +88,8 @@ public partial class CameraTile : IDisposable
     private ConnectionState previousState = ConnectionState.Disconnected;
     private CameraOverlay? cachedOverlay;
     private DispatcherTimer? reconnectTimer;
+    private DispatcherTimer? autoReconnectTimer;
+    private int currentReconnectAttempt;
 
     /// <summary>
     /// Occurs when a full screen request is made.
@@ -453,14 +481,23 @@ public partial class CameraTile : IDisposable
 
         UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
 
-        // Show connecting state immediately
-        UpdateConnectionState(ConnectionState.Connecting);
+        // Only auto-connect if enabled
+        if (AutoConnectOnLoad)
+        {
+            // Show connecting state immediately
+            UpdateConnectionState(ConnectionState.Connecting);
 
-        // Defer player open to allow UI to render first
-        // Player.Open() can block the UI thread, so we use BeginInvoke to let the render pass complete
-        _ = Dispatcher.BeginInvoke(
-            DispatcherPriority.Background,
-            PlayOnBackgroundThread);
+            // Defer player open to allow UI to render first
+            // Player.Open() can block the UI thread, so we use BeginInvoke to let the render pass complete
+            _ = Dispatcher.BeginInvoke(
+                DispatcherPriority.Background,
+                PlayOnBackgroundThread);
+        }
+        else
+        {
+            // Stay disconnected until user manually connects
+            UpdateConnectionState(ConnectionState.Disconnected);
+        }
     }
 
     private void PlayOnBackgroundThread()
@@ -655,6 +692,109 @@ public partial class CameraTile : IDisposable
                 this,
                 new CameraConnectionChangedEventArgs(Camera, previous, newState, errorMessage));
         }
+
+        // Handle notifications and auto-reconnect
+        HandleConnectionStateChange(previous, newState);
+    }
+
+    private void HandleConnectionStateChange(
+        ConnectionState previousState,
+        ConnectionState newState)
+    {
+        // Handle notifications
+        if (newState == ConnectionState.Disconnected || newState == ConnectionState.ConnectionFailed)
+        {
+            if (previousState == ConnectionState.Connected && ShowNotificationOnDisconnect)
+            {
+                ShowNotification(
+                    string.Format(CultureInfo.CurrentCulture, Translations.CameraDisconnected1, Camera?.Display.DisplayName ?? string.Empty));
+            }
+
+            // Try auto-reconnect on failure (but not on manual disconnect)
+            if (newState == ConnectionState.ConnectionFailed)
+            {
+                TryAutoReconnect();
+            }
+        }
+        else if (newState == ConnectionState.Connected)
+        {
+            // Reset reconnect attempts on successful connection
+            currentReconnectAttempt = 0;
+
+            if (previousState is ConnectionState.Disconnected or ConnectionState.ConnectionFailed or ConnectionState.Connecting
+                && ShowNotificationOnReconnect)
+            {
+                ShowNotification(
+                    string.Format(CultureInfo.CurrentCulture, Translations.CameraConnected1, Camera?.Display.DisplayName ?? string.Empty));
+            }
+        }
+    }
+
+    private void TryAutoReconnect()
+    {
+        if (!AutoReconnectOnFailure || Camera is null)
+        {
+            return;
+        }
+
+        if (currentReconnectAttempt >= MaxReconnectAttempts)
+        {
+            // Max attempts reached, stop trying
+            return;
+        }
+
+        currentReconnectAttempt++;
+
+        // Schedule auto-reconnect after delay
+        autoReconnectTimer?.Stop();
+        autoReconnectTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(ReconnectDelaySeconds),
+        };
+
+        autoReconnectTimer.Tick += (_, _) =>
+        {
+            autoReconnectTimer?.Stop();
+
+            // Only reconnect if still in failed state
+            if (ConnectionState == ConnectionState.ConnectionFailed && Camera is not null)
+            {
+                Reconnect();
+            }
+        };
+
+        autoReconnectTimer.Start();
+    }
+
+    private void ShowNotification(string message)
+    {
+        if (PlayNotificationSound)
+        {
+            PlaySystemNotificationSound();
+        }
+
+        // Show Windows toast notification
+        ShowToastNotification(message);
+    }
+
+    private static void PlaySystemNotificationSound()
+    {
+        try
+        {
+            SystemSounds.Exclamation.Play();
+        }
+        catch
+        {
+            // Ignore sound playback errors
+        }
+    }
+
+    private static void ShowToastNotification(string message)
+    {
+        // For now, we'll use a simple approach - the ConnectionStateChanged event
+        // can be handled by the parent to show notifications in a toast/snackbar control
+        // A full toast notification implementation would require additional infrastructure
+        System.Diagnostics.Debug.WriteLine($"Notification: {message}");
     }
 
     private void UpdateOverlayConnectionState(ConnectionState state)
@@ -747,7 +887,7 @@ public partial class CameraTile : IDisposable
         reconnectTimer?.Stop();
 
         var checkCount = 0;
-        const int maxChecks = 30; // Check for up to 15 seconds (30 * 500ms)
+        var maxChecks = ConnectionTimeoutSeconds * 2; // Check interval is 500ms, so multiply by 2
 
         reconnectTimer = new DispatcherTimer
         {

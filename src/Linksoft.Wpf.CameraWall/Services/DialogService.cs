@@ -177,7 +177,25 @@ public class DialogService : IDialogService
     {
         ArgumentNullException.ThrowIfNull(camera);
 
-        using var viewModel = new FullScreenCameraWindowViewModel(camera);
+        // Compute effective overlay settings (per-camera overrides → app defaults)
+        var display = settingsService.CameraDisplay;
+        var overrides = camera.Overrides;
+
+        var showOverlayTitle = overrides?.ShowOverlayTitle ?? display.ShowOverlayTitle;
+        var showOverlayDescription = overrides?.ShowOverlayDescription ?? display.ShowOverlayDescription;
+        var showOverlayTime = overrides?.ShowOverlayTime ?? display.ShowOverlayTime;
+        var showOverlayConnectionStatus = overrides?.ShowOverlayConnectionStatus ?? display.ShowOverlayConnectionStatus;
+        var overlayOpacity = overrides?.OverlayOpacity ?? display.OverlayOpacity;
+        var overlayPosition = camera.Display.OverlayPosition;
+
+        using var viewModel = new FullScreenCameraWindowViewModel(
+            camera,
+            showOverlayTitle,
+            showOverlayDescription,
+            showOverlayTime,
+            showOverlayConnectionStatus,
+            overlayOpacity,
+            overlayPosition);
         using var window = new FullScreenCameraWindow(viewModel);
         window.Owner = Application.Current.MainWindow;
 

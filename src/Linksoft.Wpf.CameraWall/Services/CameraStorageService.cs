@@ -14,7 +14,7 @@ public class CameraStorageService : ICameraStorageService
         Converters =
         {
             new JsonStringEnumConverter(),
-            new CameraConfigurationJsonConverter(),
+            new CameraConfigurationJsonValueConverter(),
         },
     };
 

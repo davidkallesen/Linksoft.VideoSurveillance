@@ -1,9 +1,9 @@
-namespace Linksoft.Wpf.CameraWall.Converters;
+namespace Linksoft.Wpf.CameraWall.ValueConverters;
 
 /// <summary>
 /// Converts a boolean to opacity (true = 1.0, false = 0.0).
 /// </summary>
-public sealed class BoolToOpacityConverter : IValueConverter
+public sealed class BoolToOpacityValueConverter : IValueConverter
 {
     /// <inheritdoc />
     public object Convert(

@@ -1,10 +1,10 @@
-namespace Linksoft.Wpf.CameraWall.Converters;
+namespace Linksoft.Wpf.CameraWall.ValueConverters;
 
 /// <summary>
 /// JSON converter for <see cref="CameraConfiguration"/> that supports migration from flat to nested structure.
 /// Reads both legacy flat format and new nested format, always writes new nested format.
 /// </summary>
-public sealed class CameraConfigurationJsonConverter : JsonConverter<CameraConfiguration>
+public sealed class CameraConfigurationJsonValueConverter : JsonConverter<CameraConfiguration>
 {
     /// <inheritdoc />
     public override CameraConfiguration? Read(

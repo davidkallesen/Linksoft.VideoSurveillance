@@ -3,4 +3,7 @@
     <Project Path="src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj" />
     <Project Path="src/Linksoft.Wpf.CameraWall.App/Linksoft.Wpf.CameraWall.App.csproj" />
   </Folder>
+  <!-- WiX installer excluded from VS solution due to SDK compatibility issues.
+       Build via command line: dotnet build setup/Linksoft.CameraWall.Installer/Linksoft.CameraWall.Installer.wixproj
+       GitHub Actions builds the installer automatically on release. -->
 </Solution>

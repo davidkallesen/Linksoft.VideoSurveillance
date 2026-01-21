@@ -1,9 +1,9 @@
-namespace Linksoft.Wpf.CameraWall.Converters;
+namespace Linksoft.Wpf.CameraWall.ValueConverters;
 
 /// <summary>
 /// Converts ConnectionState to localized text.
 /// </summary>
-public sealed class ConnectionStateToTextConverter : IValueConverter
+public sealed class ConnectionStateToTextValueConverter : IValueConverter
 {
     /// <inheritdoc />
     public object Convert(

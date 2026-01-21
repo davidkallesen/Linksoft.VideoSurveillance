@@ -295,6 +295,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Camera connected: {0}.
+        /// </summary>
+        public static string CameraConnected1 {
+            get {
+                return ResourceManager.GetString("CameraConnected1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Camera disconnected: {0}.
+        /// </summary>
+        public static string CameraDisconnected1 {
+            get {
+                return ResourceManager.GetString("CameraDisconnected1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Camera Display.
         /// </summary>
         public static string CameraDisplay {

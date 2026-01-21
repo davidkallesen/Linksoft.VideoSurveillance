@@ -51,4 +51,9 @@
     <PackageReference Include="SonarAnalyzer.CSharp" Version="10.18.0.131500" PrivateAssets="All" />
   </ItemGroup>
 
+  <!-- Version management -->
+  <ItemGroup Label="Versioning">
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.115" PrivateAssets="All" />
+  </ItemGroup>
+
 </Project>

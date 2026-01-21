@@ -7,6 +7,18 @@
     <PackageTags>wpf;camera;surveillance;video;rtsp;flyleaf;camerawall</PackageTags>
   </PropertyGroup>
 
+  <PropertyGroup Label="NuGet Package Metadata">
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/davidkallesen/Linksoft.CameraWall</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/davidkallesen/Linksoft.CameraWall.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Update="Resources\Translations.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>

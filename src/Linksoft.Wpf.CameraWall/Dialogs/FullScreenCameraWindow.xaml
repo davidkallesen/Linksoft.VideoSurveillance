@@ -36,25 +36,48 @@
             <Grid Background="Transparent">
                 <!--  Camera Info Overlay (Top-Left)  -->
                 <Border
+                    x:Name="OverlayBorder"
                     Margin="20"
                     Padding="12,8"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    Background="#99000000"
                     CornerRadius="4"
                     Opacity="{Binding Path=HostDataContext.IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}">
                     <StackPanel Orientation="Vertical">
+                        <!--  Camera Title  -->
                         <TextBlock
                             FontSize="16"
                             FontWeight="SemiBold"
                             Foreground="White"
-                            Text="{Binding Path=HostDataContext.CameraName}" />
+                            Text="{Binding Path=HostDataContext.CameraName}"
+                            Visibility="{Binding Path=HostDataContext.ShowOverlayTitle, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <!--  Camera Description (only shown if enabled AND not empty)  -->
                         <TextBlock
                             FontSize="12"
                             Foreground="#AAAAAA"
                             Text="{Binding Path=HostDataContext.CameraDescription}"
-                            Visibility="{Binding Path=HostDataContext.CameraDescription, Converter={x:Static valueConverters:StringNullOrEmptyToVisibilityCollapsedValueConverter.Instance}}" />
-                        <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                            Visibility="{Binding Path=HostDataContext.ShowOverlayDescription, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=HostDataContext.CameraDescription}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <!--  Current Time  -->
+                        <TextBlock
+                            x:Name="TimeDisplay"
+                            FontSize="12"
+                            Foreground="#AAAAAA"
+                            Visibility="{Binding Path=HostDataContext.ShowOverlayTime, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <!--  Connection Status  -->
+                        <StackPanel
+                            Margin="0,4,0,0"
+                            Orientation="Horizontal"
+                            Visibility="{Binding Path=HostDataContext.ShowOverlayConnectionStatus, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Ellipse
                                 Width="10"
                                 Height="10"

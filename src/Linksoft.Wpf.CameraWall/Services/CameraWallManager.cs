@@ -104,7 +104,14 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             return;
         }
 
+        var general = settingsService.General;
         var display = settingsService.CameraDisplay;
+        var connection = settingsService.Connection;
+
+        // General settings
+        CameraGrid.AutoConnectOnLoad = general.ConnectCamerasOnStartup;
+
+        // Display settings
         CameraGrid.ShowOverlayTitle = display.ShowOverlayTitle;
         CameraGrid.ShowOverlayDescription = display.ShowOverlayDescription;
         CameraGrid.ShowOverlayConnectionStatus = display.ShowOverlayConnectionStatus;
@@ -113,6 +120,17 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CameraGrid.AllowDragAndDropReorder = display.AllowDragAndDropReorder;
         CameraGrid.AutoSave = display.AutoSaveLayoutChanges;
         CameraGrid.SnapshotDirectory = display.SnapshotDirectory;
+
+        // Connection settings
+        CameraGrid.ConnectionTimeoutSeconds = connection.ConnectionTimeoutSeconds;
+        CameraGrid.ReconnectDelaySeconds = connection.ReconnectDelaySeconds;
+        CameraGrid.MaxReconnectAttempts = connection.MaxReconnectAttempts;
+        CameraGrid.AutoReconnectOnFailure = connection.AutoReconnectOnFailure;
+
+        // Notification settings
+        CameraGrid.ShowNotificationOnDisconnect = connection.ShowNotificationOnDisconnect;
+        CameraGrid.ShowNotificationOnReconnect = connection.ShowNotificationOnReconnect;
+        CameraGrid.PlayNotificationSound = connection.PlayNotificationSound;
     }
 
     /// <inheritdoc />
