@@ -1,11 +1,13 @@
 // ReSharper disable InvertIf
 namespace Linksoft.Wpf.CameraWall.Dialogs;
 
+[SuppressMessage("", "S2325:Make properties static", Justification = "XAML binding requires instance properties")]
 public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 {
     private readonly CameraConfiguration originalCamera;
     private readonly bool isNew;
     private readonly IReadOnlyCollection<string> existingIpAddresses;
+    private readonly IApplicationSettingsService settingsService;
 
     [ObservableProperty(AfterChangedCallback = nameof(OnIsTestingChanged))]
     private bool isTesting;
@@ -38,13 +40,16 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     public CameraConfigurationDialogViewModel(
         CameraConfiguration camera,
         bool isNew,
-        IReadOnlyCollection<string> existingIpAddresses)
+        IReadOnlyCollection<string> existingIpAddresses,
+        IApplicationSettingsService settingsService)
     {
         ArgumentNullException.ThrowIfNull(camera);
+        ArgumentNullException.ThrowIfNull(settingsService);
 
         originalCamera = camera;
         this.isNew = isNew;
         this.existingIpAddresses = existingIpAddresses ?? [];
+        this.settingsService = settingsService;
 
         // Create a clone for editing - changes only apply when Save is clicked
         Camera = camera.Clone();
@@ -97,9 +102,8 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
-    public IDictionary<string, string> OverlayPositionItems { get; } = Enum
-        .GetValues<OverlayPosition>()
-        .ToDictionary(p => p.ToString(), p => p.ToString(), StringComparer.Ordinal);
+    public IDictionary<string, string> OverlayPositionItems
+        => DropDownItemsFactory.OverlayPositionItems;
 
     public string SelectedOverlayPositionKey
     {
@@ -114,26 +118,17 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
-    public IDictionary<string, string> RtspTransportItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["tcp"] = "TCP",
-        ["udp"] = "UDP",
-    };
+    public IDictionary<string, string> RtspTransportItems
+        => DropDownItemsFactory.RtspTransportItems;
 
-    public IDictionary<string, string> VideoQualityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Auto"] = "Auto",
-        ["High"] = "High",
-        ["Medium"] = "Medium",
-        ["Low"] = "Low",
-    };
+    public IDictionary<string, string> VideoQualityItems
+        => DropDownItemsFactory.VideoQualityItems;
 
-    public IDictionary<string, string> RecordingFormatItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["mp4"] = "MP4",
-        ["mkv"] = "MKV",
-        ["avi"] = "AVI",
-    };
+    public IDictionary<string, string> RecordingFormatItems
+        => DropDownItemsFactory.RecordingFormatItems;
+
+    public IDictionary<string, string> OpacityItems
+        => DropDownItemsFactory.OverlayOpacityItems;
 
     public string SelectedRtspTransportKey
     {
@@ -160,7 +155,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowOverlayTitle = true; // Default value when enabling override
+                Camera.Overrides!.ShowOverlayTitle = settingsService.CameraDisplay.ShowOverlayTitle;
             }
 
             RaisePropertyChanged();
@@ -170,7 +165,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowOverlayTitle
     {
-        get => Camera.Overrides?.ShowOverlayTitle ?? true;
+        get => Camera.Overrides?.ShowOverlayTitle ?? settingsService.CameraDisplay.ShowOverlayTitle;
         set
         {
             EnsureOverrides();
@@ -194,7 +189,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowOverlayDescription = true;
+                Camera.Overrides!.ShowOverlayDescription = settingsService.CameraDisplay.ShowOverlayDescription;
             }
 
             RaisePropertyChanged();
@@ -204,7 +199,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowOverlayDescription
     {
-        get => Camera.Overrides?.ShowOverlayDescription ?? true;
+        get => Camera.Overrides?.ShowOverlayDescription ?? settingsService.CameraDisplay.ShowOverlayDescription;
         set
         {
             EnsureOverrides();
@@ -228,7 +223,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowOverlayTime = false;
+                Camera.Overrides!.ShowOverlayTime = settingsService.CameraDisplay.ShowOverlayTime;
             }
 
             RaisePropertyChanged();
@@ -238,7 +233,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowOverlayTime
     {
-        get => Camera.Overrides?.ShowOverlayTime ?? false;
+        get => Camera.Overrides?.ShowOverlayTime ?? settingsService.CameraDisplay.ShowOverlayTime;
         set
         {
             EnsureOverrides();
@@ -262,7 +257,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowOverlayConnectionStatus = true;
+                Camera.Overrides!.ShowOverlayConnectionStatus = settingsService.CameraDisplay.ShowOverlayConnectionStatus;
             }
 
             RaisePropertyChanged();
@@ -272,7 +267,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowOverlayConnectionStatus
     {
-        get => Camera.Overrides?.ShowOverlayConnectionStatus ?? true;
+        get => Camera.Overrides?.ShowOverlayConnectionStatus ?? settingsService.CameraDisplay.ShowOverlayConnectionStatus;
         set
         {
             EnsureOverrides();
@@ -296,7 +291,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.OverlayOpacity = 0.7;
+                Camera.Overrides!.OverlayOpacity = settingsService.CameraDisplay.OverlayOpacity;
             }
 
             RaisePropertyChanged();
@@ -304,14 +299,22 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
-    public decimal OverrideOverlayOpacity
+    public string OverrideOverlayOpacity
     {
-        get => (decimal)(Camera.Overrides?.OverlayOpacity ?? 0.7);
+        get
+        {
+            var opacity = Camera.Overrides?.OverlayOpacity ?? settingsService.CameraDisplay.OverlayOpacity;
+            return opacity.ToString("F1", CultureInfo.InvariantCulture);
+        }
+
         set
         {
-            EnsureOverrides();
-            Camera.Overrides!.OverlayOpacity = (double)value;
-            RaisePropertyChanged();
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var opacity))
+            {
+                EnsureOverrides();
+                Camera.Overrides!.OverlayOpacity = opacity;
+                RaisePropertyChanged();
+            }
         }
     }
 
@@ -330,7 +333,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ConnectionTimeoutSeconds = 10;
+                Camera.Overrides!.ConnectionTimeoutSeconds = settingsService.Connection.ConnectionTimeoutSeconds;
             }
 
             RaisePropertyChanged();
@@ -340,7 +343,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideConnectionTimeout
     {
-        get => Camera.Overrides?.ConnectionTimeoutSeconds ?? 10;
+        get => Camera.Overrides?.ConnectionTimeoutSeconds ?? settingsService.Connection.ConnectionTimeoutSeconds;
         set
         {
             EnsureOverrides();
@@ -364,7 +367,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ReconnectDelaySeconds = 5;
+                Camera.Overrides!.ReconnectDelaySeconds = settingsService.Connection.ReconnectDelaySeconds;
             }
 
             RaisePropertyChanged();
@@ -374,7 +377,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideReconnectDelay
     {
-        get => Camera.Overrides?.ReconnectDelaySeconds ?? 5;
+        get => Camera.Overrides?.ReconnectDelaySeconds ?? settingsService.Connection.ReconnectDelaySeconds;
         set
         {
             EnsureOverrides();
@@ -398,7 +401,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.MaxReconnectAttempts = 3;
+                Camera.Overrides!.MaxReconnectAttempts = settingsService.Connection.MaxReconnectAttempts;
             }
 
             RaisePropertyChanged();
@@ -408,7 +411,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideMaxReconnectAttempts
     {
-        get => Camera.Overrides?.MaxReconnectAttempts ?? 3;
+        get => Camera.Overrides?.MaxReconnectAttempts ?? settingsService.Connection.MaxReconnectAttempts;
         set
         {
             EnsureOverrides();
@@ -432,7 +435,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.AutoReconnectOnFailure = true;
+                Camera.Overrides!.AutoReconnectOnFailure = settingsService.Connection.AutoReconnectOnFailure;
             }
 
             RaisePropertyChanged();
@@ -442,7 +445,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideAutoReconnect
     {
-        get => Camera.Overrides?.AutoReconnectOnFailure ?? true;
+        get => Camera.Overrides?.AutoReconnectOnFailure ?? settingsService.Connection.AutoReconnectOnFailure;
         set
         {
             EnsureOverrides();
@@ -466,7 +469,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.VideoQuality = "Auto";
+                Camera.Overrides!.VideoQuality = settingsService.Performance.VideoQuality;
             }
 
             RaisePropertyChanged();
@@ -476,7 +479,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideVideoQuality
     {
-        get => Camera.Overrides?.VideoQuality ?? "Auto";
+        get => Camera.Overrides?.VideoQuality ?? settingsService.Performance.VideoQuality;
         set
         {
             EnsureOverrides();
@@ -500,7 +503,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.HardwareAcceleration = true;
+                Camera.Overrides!.HardwareAcceleration = settingsService.Performance.HardwareAcceleration;
             }
 
             RaisePropertyChanged();
@@ -510,7 +513,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideHardwareAcceleration
     {
-        get => Camera.Overrides?.HardwareAcceleration ?? true;
+        get => Camera.Overrides?.HardwareAcceleration ?? settingsService.Performance.HardwareAcceleration;
         set
         {
             EnsureOverrides();
@@ -534,7 +537,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.RecordingPath = string.Empty;
+                Camera.Overrides!.RecordingPath = settingsService.Recording.RecordingPath ?? string.Empty;
             }
 
             RaisePropertyChanged();
@@ -544,7 +547,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideRecordingPath
     {
-        get => Camera.Overrides?.RecordingPath ?? string.Empty;
+        get => Camera.Overrides?.RecordingPath ?? settingsService.Recording.RecordingPath ?? string.Empty;
         set
         {
             EnsureOverrides();
@@ -568,7 +571,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.RecordingFormat = "mp4";
+                Camera.Overrides!.RecordingFormat = settingsService.Recording.RecordingFormat;
             }
 
             RaisePropertyChanged();
@@ -578,7 +581,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideRecordingFormat
     {
-        get => Camera.Overrides?.RecordingFormat ?? "mp4";
+        get => Camera.Overrides?.RecordingFormat ?? settingsService.Recording.RecordingFormat;
         set
         {
             EnsureOverrides();
@@ -602,7 +605,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.EnableRecordingOnMotion = false;
+                Camera.Overrides!.EnableRecordingOnMotion = settingsService.Recording.EnableRecordingOnMotion;
             }
 
             RaisePropertyChanged();
@@ -612,7 +615,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideRecordingOnMotion
     {
-        get => Camera.Overrides?.EnableRecordingOnMotion ?? false;
+        get => Camera.Overrides?.EnableRecordingOnMotion ?? settingsService.Recording.EnableRecordingOnMotion;
         set
         {
             EnsureOverrides();

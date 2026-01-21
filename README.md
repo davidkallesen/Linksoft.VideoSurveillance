@@ -54,6 +54,7 @@ Linksoft.CameraWall/
 │   │   ├── Enums/                         # CameraProtocol, ConnectionState, OverlayPosition, SwapDirection
 │   │   ├── Events/                        # Connection, Position, Dialog events
 │   │   ├── Extensions/                    # CameraProtocolExtensions
+│   │   ├── Factories/                     # DropDownItemsFactory for centralized dropdown items
 │   │   ├── Helpers/                       # GridLayoutHelper, CameraUriHelper, AppHelper
 │   │   ├── Messages/                      # CameraAdd/Remove/Swap messages
 │   │   ├── Models/                        # CameraConfiguration, CameraLayout, GeneralSettings, DisplaySettings

@@ -30,7 +30,7 @@ public class DialogService : IDialogService
             settingsService.ApplyDefaultsToCamera(cameraConfig);
         }
 
-        var viewModel = new CameraConfigurationDialogViewModel(cameraConfig, isNew, existingIpAddresses);
+        var viewModel = new CameraConfigurationDialogViewModel(cameraConfig, isNew, existingIpAddresses, settingsService);
         var dialog = new CameraConfigurationDialog(viewModel)
         {
             Owner = Application.Current.MainWindow,

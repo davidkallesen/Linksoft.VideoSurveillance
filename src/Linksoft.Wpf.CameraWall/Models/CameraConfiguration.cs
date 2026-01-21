@@ -23,7 +23,7 @@ public partial class CameraConfiguration : ObservableObject
     private StreamSettings stream = new();
 
     [ObservableProperty]
-    private CameraOverrides? overrides;
+    private CameraOverrides overrides = new();
 
     [JsonIgnore]
     [ObservableProperty]
@@ -82,7 +82,7 @@ public partial class CameraConfiguration : ObservableObject
             Authentication = Authentication.Clone(),
             Display = Display.Clone(),
             Stream = Stream.Clone(),
-            Overrides = Overrides?.Clone(),
+            Overrides = Overrides.Clone(),
             CanSwapLeft = CanSwapLeft,
             CanSwapRight = CanSwapRight,
         };
@@ -101,16 +101,9 @@ public partial class CameraConfiguration : ObservableObject
         Display.CopyFrom(source.Display);
         Stream.CopyFrom(source.Stream);
 
-        // Handle Overrides: create/update or nullify based on source
-        if (source.Overrides is not null)
-        {
-            Overrides ??= new CameraOverrides();
-            Overrides.CopyFrom(source.Overrides);
-        }
-        else
-        {
-            Overrides = null;
-        }
+        // Replace Overrides object to trigger PropertyChanged notification
+        // (CameraOverrides doesn't implement INotifyPropertyChanged)
+        Overrides = source.Overrides.Clone();
     }
 
     /// <summary>

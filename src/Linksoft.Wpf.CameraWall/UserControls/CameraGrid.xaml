@@ -112,6 +112,19 @@
                                 <Binding Path="PlayNotificationSound" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.PlayNotificationSound>
+                        <!--  Performance settings with per-camera overrides  -->
+                        <local:CameraTile.VideoQuality>
+                            <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
+                                <Binding Path="Overrides.VideoQuality" />
+                                <Binding Path="VideoQuality" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                            </MultiBinding>
+                        </local:CameraTile.VideoQuality>
+                        <local:CameraTile.HardwareAcceleration>
+                            <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
+                                <Binding Path="Overrides.HardwareAcceleration" />
+                                <Binding Path="HardwareAcceleration" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                            </MultiBinding>
+                        </local:CameraTile.HardwareAcceleration>
                     </local:CameraTile>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

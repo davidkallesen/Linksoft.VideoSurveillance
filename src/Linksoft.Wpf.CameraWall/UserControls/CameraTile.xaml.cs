@@ -80,6 +80,13 @@ public partial class CameraTile : IDisposable
     [DependencyProperty(DefaultValue = false)]
     private bool playNotificationSound;
 
+    // Performance settings
+    [DependencyProperty(DefaultValue = "Auto", PropertyChangedCallback = nameof(OnPerformanceSettingChanged))]
+    private string videoQuality = "Auto";
+
+    [DependencyProperty(DefaultValue = true, PropertyChangedCallback = nameof(OnPerformanceSettingChanged))]
+    private bool hardwareAcceleration;
+
     private bool disposed;
     private bool isReconnecting;
     private bool isSwapping;
@@ -90,6 +97,10 @@ public partial class CameraTile : IDisposable
     private DispatcherTimer? reconnectTimer;
     private DispatcherTimer? autoReconnectTimer;
     private int currentReconnectAttempt;
+
+    // Track previous performance override values to detect changes that require reconnection
+    private string? previousOverrideVideoQuality;
+    private bool? previousOverrideHardwareAcceleration;
 
     /// <summary>
     /// Occurs when a full screen request is made.
@@ -383,6 +394,27 @@ public partial class CameraTile : IDisposable
         }
     }
 
+    private static void OnPerformanceSettingChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        // Performance settings require player recreation - recreate if currently connected
+        if (d is not CameraTile tile)
+        {
+            return;
+        }
+
+        // Use Dispatcher to ensure we're on the UI thread and to defer the recreation
+        // until after the binding updates have completed
+        _ = tile.Dispatcher.BeginInvoke(() =>
+        {
+            if (tile.ConnectionState == ConnectionState.Connected && tile.Camera is not null)
+            {
+                tile.RecreatePlayer();
+            }
+        });
+    }
+
     private void OnCameraPropertyChanged(
         object? sender,
         PropertyChangedEventArgs e)
@@ -407,31 +439,67 @@ public partial class CameraTile : IDisposable
                 case nameof(CameraConfiguration.Connection):
                 case nameof(CameraConfiguration.Authentication):
                 case nameof(CameraConfiguration.Stream):
-                    // Stream settings require player recreation to take effect
+                    // These settings require player recreation to take effect
                     RecreatePlayer();
+                    break;
+                case nameof(CameraConfiguration.Overrides):
+                    // Only reconnect if performance-related overrides changed
+                    // Display overrides (overlay settings) don't require reconnection
+                    HandleOverridesChanged();
                     break;
             }
         });
     }
 
-    private void RecreatePlayer()
+    private void HandleOverridesChanged()
+    {
+        var currentVideoQuality = Camera?.Overrides?.VideoQuality;
+        var currentHardwareAcceleration = Camera?.Overrides?.HardwareAcceleration;
+
+        var performanceChanged =
+            currentVideoQuality != previousOverrideVideoQuality ||
+            currentHardwareAcceleration != previousOverrideHardwareAcceleration;
+
+        // Update tracked values
+        previousOverrideVideoQuality = currentVideoQuality;
+        previousOverrideHardwareAcceleration = currentHardwareAcceleration;
+
+        if (performanceChanged)
+        {
+            // Performance settings changed - need to recreate player
+            RecreatePlayer();
+        }
+
+        // Display overrides are handled via bindings automatically
+        // No action needed here for overlay settings
+    }
+
+    /// <summary>
+    /// Recreates the player with current settings. Used when performance settings change.
+    /// </summary>
+    public void RecreatePlayer()
     {
         if (Camera is null)
         {
             return;
         }
 
-        // Cleanup existing player
-        if (Player is not null)
-        {
-            Player.PropertyChanged -= OnPlayerPropertyChanged;
-            Player.Dispose();
-            Player = null;
-        }
+        // Keep reference to old player
+        var oldPlayer = Player;
 
-        // Create new player with updated settings
-        Player = CreatePlayer(Camera);
-        Player.PropertyChanged += OnPlayerPropertyChanged;
+        // Create new player with updated settings FIRST
+        var newPlayer = CreatePlayer(Camera);
+        newPlayer.PropertyChanged += OnPlayerPropertyChanged;
+
+        // Swap to new player (without intermediate null state)
+        Player = newPlayer;
+
+        // Now cleanup old player
+        if (oldPlayer is not null)
+        {
+            oldPlayer.PropertyChanged -= OnPlayerPropertyChanged;
+            oldPlayer.Dispose();
+        }
 
         UpdateConnectionState(ConnectionState.Connecting);
 
@@ -470,8 +538,14 @@ public partial class CameraTile : IDisposable
         {
             CameraName = string.Empty;
             CameraDescription = string.Empty;
+            previousOverrideVideoQuality = null;
+            previousOverrideHardwareAcceleration = null;
             return;
         }
+
+        // Initialize tracked override values for change detection
+        previousOverrideVideoQuality = cameraConfig.Overrides?.VideoQuality;
+        previousOverrideHardwareAcceleration = cameraConfig.Overrides?.HardwareAcceleration;
 
         CameraName = cameraConfig.Display.DisplayName;
         CameraDescription = cameraConfig.Display.Description ?? string.Empty;
@@ -529,7 +603,7 @@ public partial class CameraTile : IDisposable
         });
     }
 
-    private static Player CreatePlayer(CameraConfiguration camera)
+    private Player CreatePlayer(CameraConfiguration camera)
     {
         var config = new Config
         {
@@ -541,6 +615,8 @@ public partial class CameraTile : IDisposable
             Video =
             {
                 BackColor = Colors.Black,
+                VideoAcceleration = HardwareAcceleration,
+                MaxVerticalResolutionCustom = DropDownItemsFactory.GetMaxResolutionFromQuality(VideoQuality),
             },
             Audio =
             {

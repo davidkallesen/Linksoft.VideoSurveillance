@@ -131,6 +131,20 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CameraGrid.ShowNotificationOnDisconnect = connection.ShowNotificationOnDisconnect;
         CameraGrid.ShowNotificationOnReconnect = connection.ShowNotificationOnReconnect;
         CameraGrid.PlayNotificationSound = connection.PlayNotificationSound;
+
+        // Performance settings
+        var performance = settingsService.Performance;
+        var videoQualityChanged = CameraGrid.VideoQuality != performance.VideoQuality;
+        var hwAccelChanged = CameraGrid.HardwareAcceleration != performance.HardwareAcceleration;
+
+        CameraGrid.VideoQuality = performance.VideoQuality;
+        CameraGrid.HardwareAcceleration = performance.HardwareAcceleration;
+
+        // Recreate players if performance settings changed
+        if (videoQualityChanged || hwAccelChanged)
+        {
+            CameraGrid.RecreateConnectedPlayers();
+        }
     }
 
     /// <inheritdoc />

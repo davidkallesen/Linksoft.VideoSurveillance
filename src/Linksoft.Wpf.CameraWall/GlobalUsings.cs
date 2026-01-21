@@ -47,6 +47,7 @@ global using FlyleafLib.MediaPlayer;
 global using Linksoft.Wpf.CameraWall.Dialogs;
 global using Linksoft.Wpf.CameraWall.Events;
 global using Linksoft.Wpf.CameraWall.Extensions;
+global using Linksoft.Wpf.CameraWall.Factories;
 global using Linksoft.Wpf.CameraWall.Helpers;
 global using Linksoft.Wpf.CameraWall.Messages;
 global using Linksoft.Wpf.CameraWall.Models;

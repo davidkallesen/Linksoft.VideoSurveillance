@@ -358,6 +358,30 @@ finally
 - `BoolToOpacityConverter` - Converts bool to opacity value (0.0-1.0)
 - `ConnectionStateToColorConverter` - Converts ConnectionState enum to brush color
 - `ConnectionStateToTextConverter` - Converts ConnectionState enum to localized text
+- `OverrideOrDefaultMultiValueConverter` - Returns override value if non-null, otherwise default value
+
+## Factories
+Use `DropDownItemsFactory` for centralized dropdown items and defaults:
+```csharp
+// Dropdown items for comboboxes
+public static IDictionary<string, string> VideoQualityItems { get; }
+public static IDictionary<string, string> RtspTransportItems { get; }
+public static IDictionary<string, string> RecordingFormatItems { get; }
+public static IDictionary<string, string> OverlayPositionItems { get; }
+public static IDictionary<string, string> OverlayOpacityItems { get; }  // 0%-100% in 10% increments
+public static IDictionary<string, string> ProtocolItems { get; }
+
+// Default values
+public const string DefaultVideoQuality = "Auto";
+public const string DefaultRtspTransport = "tcp";
+public const string DefaultRecordingFormat = "mp4";
+public const string DefaultOverlayPosition = "TopLeft";
+public const string DefaultOverlayOpacity = "0.7";
+public const string DefaultProtocol = "Rtsp";
+
+// Utility methods
+public static int GetMaxResolutionFromQuality(string videoQuality);
+```
 
 ## Build
 ```bash

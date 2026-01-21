@@ -63,6 +63,13 @@ public partial class CameraGrid
     [DependencyProperty(DefaultValue = false)]
     private bool playNotificationSound;
 
+    // Performance settings
+    [DependencyProperty(DefaultValue = "Auto")]
+    private string videoQuality = "Auto";
+
+    [DependencyProperty(DefaultValue = true)]
+    private bool hardwareAcceleration;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraGrid"/> class.
     /// </summary>
@@ -165,6 +172,27 @@ public partial class CameraGrid
 
         var sourceCamera = CameraTiles[sourceIndex];
         PerformSwap(sourceIndex, targetIndex, sourceCamera);
+    }
+
+    /// <summary>
+    /// Recreates players for all connected cameras with current settings.
+    /// Call this after performance settings change to apply new VideoQuality/HardwareAcceleration.
+    /// </summary>
+    public void RecreateConnectedPlayers()
+    {
+        if (CameraTiles is null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < CameraTiles.Count; i++)
+        {
+            var tile = GetCameraTileAt(i);
+            if (tile is { ConnectionState: ConnectionState.Connected })
+            {
+                tile.RecreatePlayer();
+            }
+        }
     }
 
     /// <summary>

@@ -152,7 +152,9 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Hardware Acceleration | GPU decoding (D3D11VA, DXVA2) | Planned |
+| Hardware Acceleration | GPU decoding (D3D11VA, DXVA2) | Done |
+| Video Quality Settings | Configurable resolution limits (Auto, 1080p, 720p, 480p, 360p) | Done |
+| Per-Camera Performance Overrides | Override VideoQuality/HardwareAcceleration per camera | Done |
 | Adaptive Quality | Auto-adjust based on system resources | Planned |
 | Memory Optimization | Efficient stream management | Planned |
 

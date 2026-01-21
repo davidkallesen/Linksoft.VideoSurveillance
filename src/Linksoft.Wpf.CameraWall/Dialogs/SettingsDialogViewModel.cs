@@ -4,6 +4,7 @@ namespace Linksoft.Wpf.CameraWall.Dialogs;
 /// View model for the settings dialog.
 /// </summary>
 [SuppressMessage("", "SA1124: Do not use regions", Justification = "OK")]
+[SuppressMessage("", "S2325:Make properties static", Justification = "XAML binding requires instance properties")]
 public partial class SettingsDialogViewModel : ViewModelDialogBase
 {
     private readonly IApplicationSettingsService settingsService;
@@ -57,27 +58,16 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private bool showCameraOverlayConnectionStatus = true;
 
     [ObservableProperty]
-    private string selectedOverlayOpacity = "0.7";
+    private string selectedOverlayOpacity = DropDownItemsFactory.DefaultOverlayOpacity;
 
-    public IDictionary<string, string> OverlayOpacityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["0.3"] = "30%",
-        ["0.5"] = "50%",
-        ["0.7"] = "70%",
-        ["0.9"] = "90%",
-        ["1.0"] = "100%",
-    };
+    public IDictionary<string, string> OverlayOpacityItems
+        => DropDownItemsFactory.OverlayOpacityItems;
 
     [ObservableProperty]
-    private string selectedOverlayPosition = "TopLeft";
+    private string selectedOverlayPosition = DropDownItemsFactory.DefaultOverlayPosition;
 
-    public IDictionary<string, string> OverlayPositionItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["TopLeft"] = "Top Left",
-        ["TopRight"] = "Top Right",
-        ["BottomLeft"] = "Bottom Left",
-        ["BottomRight"] = "Bottom Right",
-    };
+    public IDictionary<string, string> OverlayPositionItems
+        => DropDownItemsFactory.OverlayPositionItems;
 
     [ObservableProperty]
     private bool allowDragAndDropReorder = true;
@@ -93,13 +83,10 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     #region Connection Tab Settings
 
     [ObservableProperty]
-    private string selectedDefaultProtocol = "Rtsp";
+    private string selectedDefaultProtocol = DropDownItemsFactory.DefaultProtocol;
 
-    public IDictionary<string, string> DefaultProtocolItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Rtsp"] = "RTSP",
-        ["Http"] = "HTTP",
-    };
+    public IDictionary<string, string> DefaultProtocolItems
+        => DropDownItemsFactory.ProtocolItems;
 
     [ObservableProperty]
     private int defaultPort = 554;
@@ -130,16 +117,10 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     #region Performance Tab Settings
 
     [ObservableProperty]
-    private string selectedVideoQuality = "Auto";
+    private string selectedVideoQuality = DropDownItemsFactory.DefaultVideoQuality;
 
-    public IDictionary<string, string> VideoQualityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Auto"] = "Auto (Source Quality)",
-        ["1080p"] = "1080p",
-        ["720p"] = "720p",
-        ["480p"] = "480p",
-        ["360p"] = "360p",
-    };
+    public IDictionary<string, string> VideoQualityItems
+        => DropDownItemsFactory.VideoQualityItems;
 
     [ObservableProperty]
     private bool hardwareAcceleration = true;
@@ -151,13 +132,10 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private int bufferDurationMs = 500;
 
     [ObservableProperty]
-    private string selectedRtspTransport = "tcp";
+    private string selectedRtspTransport = DropDownItemsFactory.DefaultRtspTransport;
 
-    public IDictionary<string, string> RtspTransportItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["tcp"] = "TCP",
-        ["udp"] = "UDP",
-    };
+    public IDictionary<string, string> RtspTransportItems
+        => DropDownItemsFactory.RtspTransportItems;
 
     [ObservableProperty]
     private int maxLatencyMs = 500;
@@ -170,14 +148,10 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private DirectoryInfo? recordingPath;
 
     [ObservableProperty]
-    private string selectedRecordingFormat = "mp4";
+    private string selectedRecordingFormat = DropDownItemsFactory.DefaultRecordingFormat;
 
-    public IDictionary<string, string> RecordingFormatItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["mp4"] = "MP4 (H.264)",
-        ["mkv"] = "MKV (Matroska)",
-        ["avi"] = "AVI",
-    };
+    public IDictionary<string, string> RecordingFormatItems
+        => DropDownItemsFactory.RecordingFormatItems;
 
     [ObservableProperty]
     private bool enableRecordingOnMotion;

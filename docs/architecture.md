@@ -57,6 +57,8 @@ src/Linksoft.Wpf.CameraWall/
 │   └── DialogClosedEventArgs.cs
 ├── Extensions/
 │   └── CameraProtocolExtensions.cs  # Protocol-related extensions
+├── Factories/
+│   └── DropDownItemsFactory.cs      # Centralized dropdown items and defaults
 ├── Helpers/
 │   ├── AppHelper.cs                 # Splash screen and app helpers
 │   ├── CameraUriHelper.cs           # Build RTSP/HTTP URIs
