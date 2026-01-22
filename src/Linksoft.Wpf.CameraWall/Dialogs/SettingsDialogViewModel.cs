@@ -164,7 +164,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private bool enableDebugLogging;
 
     [ObservableProperty]
-    private FileInfo? logFilePath;
+    private DirectoryInfo? logFilePath;
 
     #endregion
 
@@ -272,9 +272,8 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SelectedOverlayPosition = cameraDisplay.OverlayPosition.ToString();
         AllowDragAndDropReorder = cameraDisplay.AllowDragAndDropReorder;
         AutoSaveLayoutChanges = cameraDisplay.AutoSaveLayoutChanges;
-        SnapshotDirectory = !string.IsNullOrEmpty(cameraDisplay.SnapshotDirectory)
-            ? new DirectoryInfo(cameraDisplay.SnapshotDirectory)
-            : null;
+        SnapshotDirectory = new DirectoryInfo(
+            cameraDisplay.SnapshotDirectory ?? ApplicationPaths.DefaultSnapshotsPath);
 
         // Load Connection Tab settings
         var connection = settingsService.Connection;
@@ -299,18 +298,16 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
 
         // Load Recording Tab settings
         var recording = settingsService.Recording;
-        RecordingPath = !string.IsNullOrEmpty(recording.RecordingPath)
-            ? new DirectoryInfo(recording.RecordingPath)
-            : null;
+        RecordingPath = new DirectoryInfo(
+            recording.RecordingPath ?? ApplicationPaths.DefaultRecordingsPath);
         SelectedRecordingFormat = recording.RecordingFormat;
         EnableRecordingOnMotion = recording.EnableRecordingOnMotion;
 
         // Load Advanced Tab settings
         var advanced = settingsService.Advanced;
         EnableDebugLogging = advanced.EnableDebugLogging;
-        LogFilePath = !string.IsNullOrEmpty(advanced.LogFilePath)
-            ? new FileInfo(advanced.LogFilePath)
-            : null;
+        LogFilePath = new DirectoryInfo(
+            advanced.LogFilePath ?? ApplicationPaths.DefaultLogsPath);
     }
 
     private void SaveGeneralSettings()

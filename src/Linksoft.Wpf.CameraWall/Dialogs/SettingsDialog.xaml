@@ -17,6 +17,7 @@
     ResizeMode="CanResize"
     ShowInTaskbar="False"
     WindowStartupLocation="CenterOwner"
+    WindowStyle="None"
     mc:Ignorable="d">
 
     <atc:NiceWindow.Resources>
@@ -391,7 +392,7 @@
                                     LabelWidthNumber="250"
                                     LabelWidthSizeDefinition="Pixel" />
 
-                                <atc:LabelFilePicker
+                                <atc:LabelDirectoryPicker
                                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                     Key=LogFilePath}"
                                     Orientation="Vertical"

@@ -20,6 +20,7 @@ The library contains all business logic. The App is a thin shell that:
 - **Atc.Wpf.NetworkControls** - `NetworkScannerView` for discovering cameras
 - **FlyleafLib** - Video player for RTSP/HTTP streams
 - **Fluent.Ribbon** - Ribbon UI (App only)
+- **Serilog** - Structured logging with file sink (App only)
 
 ## Library Services
 
@@ -382,6 +383,28 @@ public const string DefaultProtocol = "Rtsp";
 // Utility methods
 public static int GetMaxResolutionFromQuality(string videoQuality);
 ```
+
+## Helpers
+
+### ApplicationPaths
+Provides default application paths using `Environment.SpecialFolder.CommonApplicationData`:
+```csharp
+public static class ApplicationPaths
+{
+    public static string DefaultLogsPath { get; }       // {ProgramData}\Linksoft\CameraWall\logs
+    public static string DefaultSnapshotsPath { get; }  // {ProgramData}\Linksoft\CameraWall\snapshots
+    public static string DefaultRecordingsPath { get; } // {ProgramData}\Linksoft\CameraWall\recordings
+    public static string DefaultSettingsPath { get; }   // {ProgramData}\Linksoft\CameraWall\settings.json
+    public static string DefaultCameraDataPath { get; } // {ProgramData}\Linksoft\CameraWall\cameras.json
+}
+```
+
+## Debug Logging
+Debug logging is configured via Serilog in `App.xaml.cs`:
+- Controlled by `AdvancedSettings.EnableDebugLogging` and `AdvancedSettings.LogFilePath`
+- When enabled, logs to `{LogFilePath}\camera-wall-{date}.log`
+- Daily rolling with 7-day retention
+- Settings loaded early (before Host builder) to configure logging at startup
 
 ## Build
 ```bash

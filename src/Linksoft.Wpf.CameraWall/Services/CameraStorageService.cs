@@ -23,10 +23,10 @@ public class CameraStorageService : ICameraStorageService
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraStorageService"/> class.
-    /// Uses the default storage location: %ProgramData%\Linksoft\CameraWall\cameras.json.
+    /// Uses the default storage location from <see cref="ApplicationPaths.DefaultCameraDataPath"/>.
     /// </summary>
     public CameraStorageService()
-        : this(GetDefaultStoragePath())
+        : this(ApplicationPaths.DefaultCameraDataPath)
     {
     }
 
@@ -189,15 +189,4 @@ public class CameraStorageService : ICameraStorageService
             data = new CameraStorageData();
         }
     }
-
-    /// <summary>
-    /// Gets the default storage path for camera configurations.
-    /// </summary>
-    /// <returns>The default storage file path.</returns>
-    private static string GetDefaultStoragePath()
-        => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "Linksoft",
-            "CameraWall",
-            "cameras.json");
 }

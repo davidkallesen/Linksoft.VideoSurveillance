@@ -284,8 +284,8 @@ This section documents whether each setting is actually used at runtime (not jus
 
 | Setting | Runtime Status | Usage Location | Notes |
 |---------|---------------|----------------|-------|
-| EnableDebugLogging | ❌ | - | **Not implemented** - no logging framework integration |
-| LogFilePath | ❌ | - | **Not implemented** - no file logging exists |
+| EnableDebugLogging | ✅ | `App.xaml.cs` | Enables Serilog file logging when true |
+| LogFilePath | ✅ | `App.xaml.cs` | Directory for log files; defaults to `ApplicationPaths.DefaultLogsPath` |
 
 ### Per-Camera Override Runtime Status
 
@@ -318,8 +318,8 @@ This section documents whether each setting is actually used at runtime (not jus
 | Connection | 9 | 0 | 9 | **100%** |
 | Performance | 6 | 0 | 6 | **100%** |
 | Recording | 0 | 3 | 3 | 0% |
-| Advanced | 0 | 2 | 2 | 0% |
-| **Total** | **30** | **5** | **35** | **86%** |
+| Advanced | 2 | 0 | 2 | **100%** |
+| **Total** | **32** | **3** | **35** | **91%** |
 
 ---
 
@@ -402,11 +402,15 @@ This section documents whether each setting is actually used at runtime (not jus
   - Manual recording: Add record button to context menu, use FlyleafLib recording
   - Motion detection: Requires frame analysis (significantly complex)
 
-#### Debug Logging
-- **Effort:** Low
+#### Debug Logging ✅ IMPLEMENTED
+- **Status:** Implemented using Serilog
 - **Settings:** EnableDebugLogging, LogFilePath
-- **Location:** `App.xaml.cs` + logging framework (Serilog/NLog)
-- **Implementation:** Configure logging sink based on settings at startup
+- **Location:** `App.xaml.cs`
+- **Implementation:**
+  - Serilog configured with file sink at startup
+  - Settings loaded early (before Host builder) via `LoadAdvancedSettingsForLogging()`
+  - Daily rolling log files with 7-day retention
+  - Default path: `ApplicationPaths.DefaultLogsPath` (`%ProgramData%\Linksoft\CameraWall\logs`)
 
 ---
 
@@ -419,6 +423,7 @@ This section documents whether each setting is actually used at runtime (not jus
 - ✅ `Models/AdvancedSettings.cs`
 - ✅ `Models/CameraOverrides.cs` - Per-camera setting overrides
 - ✅ `Factories/DropDownItemsFactory.cs` - Centralized dropdown items and defaults
+- ✅ `Helpers/ApplicationPaths.cs` - Default paths for logs, snapshots, recordings, settings
 
 ### Build Infrastructure Files
 - ✅ `version.json` - NBGV configuration

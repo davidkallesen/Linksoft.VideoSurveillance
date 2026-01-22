@@ -47,6 +47,7 @@ public class CameraDisplayAppSettings
 
     /// <summary>
     /// Gets or sets the default directory for saving snapshots.
+    /// When null, defaults to <see cref="Helpers.ApplicationPaths.DefaultSnapshotsPath"/>.
     /// </summary>
     public string? SnapshotDirectory { get; set; }
 }

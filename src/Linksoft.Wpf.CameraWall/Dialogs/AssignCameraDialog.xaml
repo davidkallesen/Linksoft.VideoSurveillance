@@ -17,6 +17,7 @@
     ResizeMode="CanResize"
     ShowInTaskbar="False"
     WindowStartupLocation="CenterOwner"
+    WindowStyle="None"
     mc:Ignorable="d">
 
     <atc:GridEx Margin="16" Rows="Auto,*,Auto">

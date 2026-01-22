@@ -11,7 +11,8 @@ public class AdvancedSettings
     public bool EnableDebugLogging { get; set; }
 
     /// <summary>
-    /// Gets or sets the path to the log file.
+    /// Gets or sets the path to the log file directory.
+    /// When null, defaults to <see cref="Helpers.ApplicationPaths.DefaultLogsPath"/>.
     /// </summary>
     public string? LogFilePath { get; set; }
 }

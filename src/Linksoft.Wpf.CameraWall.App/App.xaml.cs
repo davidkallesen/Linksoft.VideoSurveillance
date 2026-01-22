@@ -8,15 +8,33 @@ public partial class CameraWallApp
 
     public CameraWallApp()
     {
+        // Load advanced settings early to configure logging before Host is built
+        var advancedSettings = LoadAdvancedSettingsForLogging();
+
+        // Configure Serilog based on settings
+        var loggerConfig = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Debug(formatProvider: CultureInfo.InvariantCulture);
+
+        if (advancedSettings.EnableDebugLogging)
+        {
+            var logPath = advancedSettings.LogFilePath ?? ApplicationPaths.DefaultLogsPath;
+            Directory.CreateDirectory(logPath);
+
+            var logFile = Path.Combine(logPath, "camera-wall-.log");
+            loggerConfig.WriteTo.File(
+                logFile,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}",
+                formatProvider: CultureInfo.InvariantCulture);
+        }
+
+        Log.Logger = loggerConfig.CreateLogger();
+
         host = Host
             .CreateDefaultBuilder()
-            .ConfigureLogging((_, logging) =>
-            {
-                logging
-                    .ClearProviders()
-                    .SetMinimumLevel(LogLevel.Trace)
-                    .AddDebug();
-            })
+            .UseSerilog()
             .ConfigureServices((_, services) =>
             {
                 // Library services (auto-registered via [Registration] attribute)
@@ -32,6 +50,44 @@ public partial class CameraWallApp
             .Services
             .GetService<ILoggerFactory>()!
             .CreateLogger<CameraWallApp>();
+    }
+
+    private static AdvancedSettings LoadAdvancedSettingsForLogging()
+    {
+        var settingsPath = ApplicationPaths.DefaultSettingsPath;
+
+        if (!File.Exists(settingsPath))
+        {
+            return new AdvancedSettings();
+        }
+
+        try
+        {
+            var json = File.ReadAllText(settingsPath);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new AdvancedSettings();
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() },
+            };
+
+            var settings = JsonSerializer.Deserialize<ApplicationSettings>(json, options);
+            return settings?.Advanced ?? new AdvancedSettings();
+        }
+        catch (JsonException)
+        {
+            // Invalid JSON content - use defaults
+            return new AdvancedSettings();
+        }
+        catch (IOException)
+        {
+            // File access error - use defaults
+            return new AdvancedSettings();
+        }
     }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -175,5 +231,7 @@ public partial class CameraWallApp
         host.Dispose();
 
         logger!.LogInformation("App closed");
+
+        await Log.CloseAndFlushAsync().ConfigureAwait(false);
     }
 }

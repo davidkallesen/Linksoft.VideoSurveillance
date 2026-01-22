@@ -7,6 +7,7 @@ public class RecordingSettings
 {
     /// <summary>
     /// Gets or sets the default recording path.
+    /// When null, defaults to <see cref="Helpers.ApplicationPaths.DefaultRecordingsPath"/>.
     /// </summary>
     public string? RecordingPath { get; set; }
 

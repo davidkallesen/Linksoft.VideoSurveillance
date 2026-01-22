@@ -3,16 +3,11 @@ namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
 /// JSON file-based implementation of <see cref="IApplicationSettingsService"/>.
-/// Settings are stored in %ProgramData%\Linksoft\CameraWall\settings.json.
+/// Settings are stored at <see cref="ApplicationPaths.DefaultSettingsPath"/>.
 /// </summary>
 [Registration(Lifetime.Singleton)]
 public class ApplicationSettingsService : IApplicationSettingsService
 {
-    /// <summary>
-    /// The settings file name.
-    /// </summary>
-    public const string SettingsFileName = "settings.json";
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
@@ -25,10 +20,10 @@ public class ApplicationSettingsService : IApplicationSettingsService
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ApplicationSettingsService"/> class.
-    /// Uses the default storage location: %ProgramData%\Linksoft\CameraWall\settings.json.
+    /// Uses the default storage location from <see cref="ApplicationPaths.DefaultSettingsPath"/>.
     /// </summary>
     public ApplicationSettingsService()
-        : this(GetDefaultStoragePath())
+        : this(ApplicationPaths.DefaultSettingsPath)
     {
     }
 
@@ -227,15 +222,4 @@ public class ApplicationSettingsService : IApplicationSettingsService
             System.Diagnostics.Debug.WriteLine($"Failed to create default settings file: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Gets the default storage path for application settings.
-    /// </summary>
-    /// <returns>The default storage file path in %ProgramData%\Linksoft\CameraWall.</returns>
-    private static string GetDefaultStoragePath()
-        => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "Linksoft",
-            "CameraWall",
-            SettingsFileName);
 }

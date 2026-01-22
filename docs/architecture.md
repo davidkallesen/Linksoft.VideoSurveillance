@@ -27,6 +27,7 @@ The library is designed to be a complete, self-contained package that other appl
 | UI Controls | Fluent.Ribbon, Atc.Wpf.Controls |
 | Theming | Atc.Wpf.Theming |
 | DI Container | Microsoft.Extensions.DependencyInjection |
+| Logging | Serilog (file sink) |
 | Network | Atc.Network |
 
 ## Project Structure
@@ -61,6 +62,7 @@ src/Linksoft.Wpf.CameraWall/
 │   └── DropDownItemsFactory.cs      # Centralized dropdown items and defaults
 ├── Helpers/
 │   ├── AppHelper.cs                 # Splash screen and app helpers
+│   ├── ApplicationPaths.cs          # Default paths for logs, snapshots, recordings
 │   ├── CameraUriHelper.cs           # Build RTSP/HTTP URIs
 │   └── GridLayoutHelper.cs          # Auto-calculate rows/columns
 ├── Messages/
@@ -386,10 +388,14 @@ public class DisplaySettings
 
 ### User Data Storage
 
-- Location: `%AppData%/Linksoft/CameraWall/`
+- Location: `%ProgramData%\Linksoft\CameraWall\` (via `ApplicationPaths` helper)
 - Files:
   - `cameras.json` - Camera configurations and layouts
-  - `settings.json` - Application settings (GeneralSettings, DisplaySettings)
+  - `settings.json` - Application settings (all 6 sections)
+- Directories:
+  - `logs/` - Debug log files (when enabled)
+  - `snapshots/` - Camera snapshots
+  - `recordings/` - Camera recordings
 
 ## Dependencies
 
@@ -413,6 +419,9 @@ public class DisplaySettings
 - Fluent.Ribbon - Ribbon UI
 - Microsoft.Extensions.Hosting - DI and hosting
 - Microsoft.Extensions.Configuration.Json - Configuration
+- Serilog.Extensions.Hosting - Serilog integration with host
+- Serilog.Sinks.File - File logging sink
+- Serilog.Sinks.Debug - Debug output sink
 
 ## Source Generators (Atc.SourceGenerators)
 

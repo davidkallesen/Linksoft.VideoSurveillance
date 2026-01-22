@@ -3,7 +3,9 @@ global using System.Collections.ObjectModel;
 global using System.ComponentModel;
 global using System.Diagnostics;
 global using System.Globalization;
+global using System.IO;
 global using System.Reflection;
+global using System.Text.Json;
 global using System.Windows;
 global using System.Windows.Input;
 global using System.Windows.Threading;
@@ -26,3 +28,5 @@ global using Linksoft.Wpf.CameraWall.UserControls;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
+
+global using Serilog;

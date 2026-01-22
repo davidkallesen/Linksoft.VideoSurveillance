@@ -17,6 +17,7 @@
     ResizeMode="CanResize"
     ShowInTaskbar="False"
     WindowStartupLocation="CenterOwner"
+    WindowStyle="None"
     mc:Ignorable="d">
 
     <atc:NiceWindow.Resources>
@@ -279,14 +280,15 @@
                                             LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                             Key=UseDefaultSetting}"
                                             LabelWidthNumber="220" />
-                                        <atc:LabelComboBox
+                                        <atc:LabelDecimalBox
                                             HideAreas="All"
                                             IsEnabled="{Binding Path=UseDefaultOverlayOpacity, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                                            Items="{Binding Path=OpacityItems}"
                                             LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                             Key=OverlayOpacity}"
                                             LabelWidthNumber="220"
-                                            SelectedKey="{Binding Path=OverrideOverlayOpacity, Mode=TwoWay}" />
+                                            Maximum="1.0"
+                                            Minimum="0.0"
+                                            Value="{Binding Path=OverrideOverlayOpacity, Mode=TwoWay}" />
                                     </StackPanel>
                                 </atc:GridEx>
                             </GroupBox>
