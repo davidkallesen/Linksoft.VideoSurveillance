@@ -8,6 +8,7 @@ namespace Linksoft.Wpf.CameraWall.UserControls;
 public partial class CameraOverlay
 {
     private DispatcherTimer? timeTimer;
+    private Storyboard? recordingBlinkAnimation;
 
     [DependencyProperty]
     private string title = string.Empty;
@@ -46,6 +47,18 @@ public partial class CameraOverlay
 
     [DependencyProperty(DefaultValue = 0.6)]
     private double overlayOpacity;
+
+    [DependencyProperty(DefaultValue = false, PropertyChangedCallback = nameof(OnIsRecordingChanged))]
+    private bool isRecording;
+
+    [DependencyProperty(PropertyChangedCallback = nameof(OnRecordingDurationChanged))]
+    private TimeSpan recordingDuration;
+
+    [DependencyProperty]
+    private string recordingDurationText = string.Empty;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool isMotionDetected;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraOverlay"/> class.
@@ -147,5 +160,47 @@ public partial class CameraOverlay
     private void UpdateCurrentTime()
     {
         CurrentTime = DateTime.Now.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
+    }
+
+    private static void OnIsRecordingChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraOverlay overlay && e.NewValue is bool isRecording)
+        {
+            overlay.UpdateRecordingAnimation(isRecording);
+        }
+    }
+
+    private static void OnRecordingDurationChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraOverlay overlay && e.NewValue is TimeSpan duration)
+        {
+            overlay.RecordingDurationText = duration.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
+        }
+    }
+
+    private void UpdateRecordingAnimation(bool isRecording)
+    {
+        if (isRecording)
+        {
+            // Start the blink animation
+            if (recordingBlinkAnimation is null && TryFindResource("RecordingBlinkAnimation") is Storyboard storyboard)
+            {
+                recordingBlinkAnimation = storyboard;
+            }
+
+            if (recordingBlinkAnimation is not null)
+            {
+                recordingBlinkAnimation.Begin(RecordingDot, isControllable: true);
+            }
+        }
+        else
+        {
+            // Stop the blink animation
+            recordingBlinkAnimation?.Stop(RecordingDot);
+        }
     }
 }

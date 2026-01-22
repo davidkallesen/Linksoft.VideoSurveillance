@@ -12,11 +12,17 @@ A professional WPF camera wall application for live monitoring of multiple RTSP/
 - **Connection State Indicators** - Visual indicators for Connected, Connecting, and Error states
 
 ### Camera Management
-- **Context Menu** - Edit, Delete, Full Screen, Swap Left/Right, Snapshot, Reconnect
+- **Context Menu** - Edit, Delete, Full Screen, Swap Left/Right, Snapshot, Reconnect, Start/Stop Recording
 - **Drag-and-Drop** - Reorder cameras by dragging tiles within the grid
 - **Network Scanner** - Auto-discover cameras on local network (integrated in Add Camera dialog)
 - **Test Connection** - Validate camera connectivity before saving (TCP for RTSP, HTTP GET for HTTP/HTTPS)
 - **Multiple Protocols** - RTSP, HTTP, and HTTPS support with configurable ports and paths
+
+### Recording
+- **Manual Recording** - Start/stop recording per camera via context menu
+- **Auto-Record on Connect** - Configurable global setting with per-camera overrides
+- **Recording Format** - Configurable format (MP4, MKV, AVI)
+- **Recording Indicator** - Visual indicator when recording is active
 
 ### Layout Management
 - **Named Layouts** - Create, save, and switch between named layouts
@@ -91,9 +97,14 @@ dotnet run --project src/Linksoft.Wpf.CameraWall.App
 
 ### User Data
 
-Camera configurations and layouts are stored in:
+Application data is stored in:
 ```
-%AppData%/Linksoft/CameraWall/cameras.json
+%ProgramData%/Linksoft/CameraWall/
+├── cameras.json      # Camera configurations and layouts
+├── settings.json     # Application settings
+├── logs/             # Debug log files (when enabled)
+├── snapshots/        # Camera snapshots
+└── recordings/       # Camera recordings
 ```
 
 ## Usage

@@ -64,13 +64,14 @@ This document outlines the implementation plan for restructuring the application
     "maxLatencyMs": 500
   },
   "recording": {
-    "recordingPath": null,
+    "recordingPath": "%ProgramData%\\Linksoft\\CameraWall\\recordings",
     "recordingFormat": "mp4",
-    "enableRecordingOnMotion": false
+    "enableRecordingOnMotion": false,
+    "enableRecordingOnConnect": false
   },
   "advanced": {
     "enableDebugLogging": false,
-    "logFilePath": null
+    "logPath": "%ProgramData%\\Linksoft\\CameraWall\\logs"
   }
 }
 ```
@@ -203,6 +204,7 @@ This document outlines the implementation plan for restructuring the application
 | Recording Path | ✅ | `Recording.RecordingPath` |
 | Recording Format | ✅ | `Recording.RecordingFormat` |
 | Record on Motion | ✅ | `Recording.EnableRecordingOnMotion` |
+| Record on Connect | ✅ | `Recording.EnableRecordingOnConnect` |
 
 ### Advanced Tab
 | Setting | UI Status | Bound Property |
@@ -276,16 +278,17 @@ This section documents whether each setting is actually used at runtime (not jus
 
 | Setting | Runtime Status | Usage Location | Notes |
 |---------|---------------|----------------|-------|
-| RecordingPath | ❌ | - | **Not implemented** - no recording functionality exists |
-| RecordingFormat | ❌ | - | **Not implemented** - no recording functionality exists |
-| EnableRecordingOnMotion | ❌ | - | **Not implemented** - no motion detection or recording exists |
+| RecordingPath | ✅ | `RecordingService.cs` | Used as base path for recording files; supports per-camera overrides |
+| RecordingFormat | ✅ | `RecordingService.cs` | Recording format (mp4, mkv, avi); supports per-camera overrides |
+| EnableRecordingOnMotion | ✅ | `CameraWallManager.cs`, `CameraTile.xaml.cs` | Triggers recording on motion detection; supports per-camera overrides |
+| EnableRecordingOnConnect | ✅ | `CameraWallManager.cs`, `CameraTile.xaml.cs` | Auto-starts recording when camera connects; supports per-camera overrides |
 
 ### Advanced Settings
 
 | Setting | Runtime Status | Usage Location | Notes |
 |---------|---------------|----------------|-------|
 | EnableDebugLogging | ✅ | `App.xaml.cs` | Enables Serilog file logging when true |
-| LogFilePath | ✅ | `App.xaml.cs` | Directory for log files; defaults to `ApplicationPaths.DefaultLogsPath` |
+| LogPath | ✅ | `App.xaml.cs` | Directory for log files; defaults to `ApplicationPaths.DefaultLogsPath` |
 
 ### Per-Camera Override Runtime Status
 
@@ -305,9 +308,10 @@ This section documents whether each setting is actually used at runtime (not jus
 | PlayNotificationSound | ✅ | Applied via `OverrideOrDefaultMultiConverter` in `CameraGrid.xaml` |
 | VideoQuality | ✅ | Applied via `OverrideOrDefaultMultiConverter` in `CameraGrid.xaml`; controls max resolution |
 | HardwareAcceleration | ✅ | Applied via `OverrideOrDefaultMultiConverter` in `CameraGrid.xaml`; enables/disables GPU decoding |
-| RecordingPath | ❌ | Stored but recording not implemented |
-| RecordingFormat | ❌ | Stored but recording not implemented |
-| EnableRecordingOnMotion | ❌ | Stored but recording/motion detection not implemented |
+| RecordingPath | ✅ | Used by RecordingService for per-camera recording location |
+| RecordingFormat | ✅ | Used by RecordingService for per-camera format |
+| EnableRecordingOnMotion | ✅ | Applied via `OverrideOrDefaultMultiConverter` in `CameraGrid.xaml` |
+| EnableRecordingOnConnect | ✅ | Applied via `OverrideOrDefaultMultiConverter` in `CameraGrid.xaml`; auto-starts recording on connect |
 
 ### Summary Statistics
 
@@ -317,9 +321,9 @@ This section documents whether each setting is actually used at runtime (not jus
 | Camera Display | 9 | 0 | 9 | **100%** |
 | Connection | 9 | 0 | 9 | **100%** |
 | Performance | 6 | 0 | 6 | **100%** |
-| Recording | 0 | 3 | 3 | 0% |
+| Recording | 4 | 0 | 4 | **100%** |
 | Advanced | 2 | 0 | 2 | **100%** |
-| **Total** | **32** | **3** | **35** | **91%** |
+| **Total** | **36** | **0** | **36** | **100%** |
 
 ---
 
@@ -392,15 +396,16 @@ This section documents whether each setting is actually used at runtime (not jus
 - ❌ Settings backup before major changes
 - ❌ Settings profiles for different use cases
 
-### Not Implemented Settings (Requires Development)
+### Recording System ✅ IMPLEMENTED
 
-#### Recording System
-- **Effort:** High
-- **Settings:** RecordingPath, RecordingFormat, EnableRecordingOnMotion
-- **Location:** New `IRecordingService` + FlyleafLib recording APIs
+- **Status:** Implemented using FlyleafLib recording APIs
+- **Settings:** RecordingPath, RecordingFormat, EnableRecordingOnMotion, EnableRecordingOnConnect
+- **Location:** `IRecordingService`, `RecordingService.cs`, `IMotionDetectionService`, `MotionDetectionService.cs`
 - **Implementation:**
-  - Manual recording: Add record button to context menu, use FlyleafLib recording
-  - Motion detection: Requires frame analysis (significantly complex)
+  - Manual recording: Context menu "Start Recording" / "Stop Recording"
+  - Auto-record on connect: Global setting with per-camera overrides
+  - Motion detection: Frame analysis with configurable sensitivity
+  - Recording indicator: Visual indicator on camera tile when recording
 
 #### Debug Logging ✅ IMPLEMENTED
 - **Status:** Implemented using Serilog
@@ -487,6 +492,7 @@ Per-camera overrides allow individual cameras to deviate from application-level 
 | **Recording** | RecordingPath | string? | Custom recording path |
 | | RecordingFormat | string? | Recording format (mp4, mkv, avi) |
 | | EnableRecordingOnMotion | bool? | Record on motion detection |
+| | EnableRecordingOnConnect | bool? | Auto-record when camera connects |
 
 ### Usage
 ```csharp

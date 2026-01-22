@@ -507,6 +507,9 @@
   <data name="EnableRecordingOnMotion" xml:space="preserve">
     <value>Aktiver optagelse ved bevægelsesregistrering</value>
   </data>
+  <data name="EnableRecordingOnConnect" xml:space="preserve">
+    <value>Start optagelse ved forbindelse</value>
+  </data>
   <data name="Advanced" xml:space="preserve">
     <value>Avanceret</value>
   </data>
@@ -516,8 +519,8 @@
   <data name="EnableDebugLogging" xml:space="preserve">
     <value>Aktiver fejlfindingslogning</value>
   </data>
-  <data name="LogFilePath" xml:space="preserve">
-    <value>Logfilmappe</value>
+  <data name="LogPath" xml:space="preserve">
+    <value>Logmappe</value>
   </data>
   <data name="SelectLogFolder" xml:space="preserve">
     <value>Vælg logmappe...</value>
@@ -585,8 +588,8 @@
   <data name="SnapshotSettings" xml:space="preserve">
     <value>Skærmbillede indstillinger</value>
   </data>
-  <data name="SnapshotDirectory" xml:space="preserve">
-    <value>Standard skærmbillede mappe</value>
+  <data name="SnapshotPath" xml:space="preserve">
+    <value>Skærmbillede mappe</value>
   </data>
   <data name="SelectSnapshotFolder" xml:space="preserve">
     <value>Vælg skærmbillede mappe...</value>
@@ -692,5 +695,44 @@
   </data>
   <data name="OverrideSettingsInfo" xml:space="preserve">
     <value>Tilsidesæt applikationsstandarder kun for dette kamera. Fjern markeringen "Brug standard" for at angive en kameraspecifik værdi.</value>
+  </data>
+  <data name="StartRecording" xml:space="preserve">
+    <value>Start optagelse</value>
+  </data>
+  <data name="StopRecording" xml:space="preserve">
+    <value>Stop optagelse</value>
+  </data>
+  <data name="RecordingStarted1" xml:space="preserve">
+    <value>Optagelse startet: {0}</value>
+  </data>
+  <data name="RecordingStopped1" xml:space="preserve">
+    <value>Optagelse stoppet: {0}</value>
+  </data>
+  <data name="RecordingFailed1" xml:space="preserve">
+    <value>Optagelse fejlede: {0}</value>
+  </data>
+  <data name="MotionDetected1" xml:space="preserve">
+    <value>Bevægelse registreret: {0}</value>
+  </data>
+  <data name="MotionDetectionSettings" xml:space="preserve">
+    <value>Bevægelsesregistrering indstillinger</value>
+  </data>
+  <data name="MotionSensitivity" xml:space="preserve">
+    <value>Bevægelsesfølsomhed</value>
+  </data>
+  <data name="PostMotionDuration" xml:space="preserve">
+    <value>Optagelse efter bevægelse (sekunder)</value>
+  </data>
+  <data name="AnalysisFrameRate" xml:space="preserve">
+    <value>Analyse billedfrekvens (FPS)</value>
+  </data>
+  <data name="MinimumChangePercent" xml:space="preserve">
+    <value>Minimum ændringsprocent</value>
+  </data>
+  <data name="CooldownSeconds" xml:space="preserve">
+    <value>Afkølingsperiode (sekunder)</value>
+  </data>
+  <data name="MotionOverrides" xml:space="preserve">
+    <value>Bevægelsesregistrering tilsidesættelser</value>
   </data>
 </root>

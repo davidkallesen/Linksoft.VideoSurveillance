@@ -1,4 +1,4 @@
-namespace Linksoft.Wpf.CameraWall.Helpers;
+namespace Linksoft.Wpf.CameraWall;
 
 /// <summary>
 /// Provides default application paths for data storage.

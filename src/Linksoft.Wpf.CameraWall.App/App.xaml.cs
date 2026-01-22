@@ -18,10 +18,9 @@ public partial class CameraWallApp
 
         if (advancedSettings.EnableDebugLogging)
         {
-            var logPath = advancedSettings.LogFilePath ?? ApplicationPaths.DefaultLogsPath;
-            Directory.CreateDirectory(logPath);
+            Directory.CreateDirectory(advancedSettings.LogPath);
 
-            var logFile = Path.Combine(logPath, "camera-wall-.log");
+            var logFile = Path.Combine(advancedSettings.LogPath, "camera-wall-.log");
             loggerConfig.WriteTo.File(
                 logFile,
                 rollingInterval: RollingInterval.Day,
@@ -223,6 +222,14 @@ public partial class CameraWallApp
         ExitEventArgs args)
     {
         logger!.LogInformation("App closing");
+
+        // Stop all active recordings to properly finalize recording files
+        var recordingService = host.Services.GetService<IRecordingService>();
+        if (recordingService is not null)
+        {
+            recordingService.StopAllRecordings();
+            logger!.LogInformation("All recordings stopped");
+        }
 
         await host
             .StopAsync()

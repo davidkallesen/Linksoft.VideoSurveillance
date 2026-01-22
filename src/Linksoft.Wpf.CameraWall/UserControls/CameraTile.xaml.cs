@@ -52,7 +52,7 @@ public partial class CameraTile : IDisposable
     private double overlayOpacity;
 
     [DependencyProperty]
-    private string? snapshotDirectory;
+    private string? snapshotPath;
 
     [DependencyProperty(DefaultValue = true)]
     private bool autoConnectOnLoad;
@@ -86,6 +86,27 @@ public partial class CameraTile : IDisposable
 
     [DependencyProperty(DefaultValue = true, PropertyChangedCallback = nameof(OnPerformanceSettingChanged))]
     private bool hardwareAcceleration;
+
+    // Recording settings
+    [DependencyProperty(DefaultValue = RecordingState.Idle, PropertyChangedCallback = nameof(OnRecordingStateChanged))]
+    private RecordingState recordingState;
+
+    [DependencyProperty]
+    private TimeSpan recordingDuration;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool isMotionDetected;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool enableRecordingOnMotion;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool enableRecordingOnConnect;
+
+    // Recording services
+    private IRecordingService? recordingService;
+    private IMotionDetectionService? motionDetectionService;
+    private DispatcherTimer? recordingDurationTimer;
 
     private bool disposed;
     private bool isReconnecting;
@@ -138,14 +159,55 @@ public partial class CameraTile : IDisposable
     public event EventHandler<CameraConfiguration>? CameraDropped;
 
     /// <summary>
+    /// Occurs when the recording state changes.
+    /// </summary>
+    public event EventHandler<RecordingStateChangedEventArgs>? RecordingStateChangedEvent;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="CameraTile"/> class.
     /// </summary>
     public CameraTile()
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
         VideoPlayer.OverlayCreated += OnOverlayCreated;
         VideoPlayer.SurfaceCreated += OnSurfaceCreated;
+    }
+
+    /// <summary>
+    /// Initializes the recording and motion detection services.
+    /// </summary>
+    /// <param name="recordingService">The recording service.</param>
+    /// <param name="motionDetectionService">The motion detection service.</param>
+    public void InitializeServices(
+        IRecordingService? recordingService,
+        IMotionDetectionService? motionDetectionService)
+    {
+        // Unsubscribe from previous services
+        if (this.recordingService is not null)
+        {
+            this.recordingService.RecordingStateChanged -= OnServiceRecordingStateChanged;
+        }
+
+        if (this.motionDetectionService is not null)
+        {
+            this.motionDetectionService.MotionDetected -= OnMotionDetected;
+        }
+
+        this.recordingService = recordingService;
+        this.motionDetectionService = motionDetectionService;
+
+        // Subscribe to new services
+        if (this.recordingService is not null)
+        {
+            this.recordingService.RecordingStateChanged += OnServiceRecordingStateChanged;
+        }
+
+        if (this.motionDetectionService is not null)
+        {
+            this.motionDetectionService.MotionDetected += OnMotionDetected;
+        }
     }
 
     /// <summary>
@@ -235,10 +297,41 @@ public partial class CameraTile : IDisposable
 
         if (disposing)
         {
+            // Fire disconnect event if camera was connected
+            if (Camera is not null && ConnectionState != ConnectionState.Disconnected)
+            {
+                var oldState = ConnectionState;
+                ConnectionState = ConnectionState.Disconnected;
+                ConnectionStateChanged?.Invoke(
+                    this,
+                    new CameraConnectionChangedEventArgs(Camera, oldState, ConnectionState.Disconnected));
+            }
+
             reconnectTimer?.Stop();
             reconnectTimer = null;
 
+            autoReconnectTimer?.Stop();
+            autoReconnectTimer = null;
+
+            recordingDurationTimer?.Stop();
+            recordingDurationTimer = null;
+
+            // Stop motion detection
+            StopMotionDetection();
+
+            // Unsubscribe from services
+            if (recordingService is not null)
+            {
+                recordingService.RecordingStateChanged -= OnServiceRecordingStateChanged;
+            }
+
+            if (motionDetectionService is not null)
+            {
+                motionDetectionService.MotionDetected -= OnMotionDetected;
+            }
+
             Loaded -= OnLoaded;
+            Unloaded -= OnUnloaded;
             VideoPlayer.OverlayCreated -= OnOverlayCreated;
             VideoPlayer.SurfaceCreated -= OnSurfaceCreated;
 
@@ -277,6 +370,13 @@ public partial class CameraTile : IDisposable
             CacheOverlayReference);
     }
 
+    private void OnUnloaded(
+        object sender,
+        RoutedEventArgs e)
+    {
+        Dispose();
+    }
+
     private void OnOverlayCreated(
         object? sender,
         EventArgs e)
@@ -313,6 +413,17 @@ public partial class CameraTile : IDisposable
         contextMenu.Items.Add(new MenuItem { Header = Translations.SwapRight, Command = SwapRightCommand });
         contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(new MenuItem { Header = Translations.TakeSnapshot, Command = SnapshotCommand });
+
+        // Recording menu items
+        if (RecordingState == RecordingState.Idle)
+        {
+            contextMenu.Items.Add(new MenuItem { Header = Translations.StartRecording, Command = StartRecordingCommand });
+        }
+        else
+        {
+            contextMenu.Items.Add(new MenuItem { Header = Translations.StopRecording, Command = StopRecordingCommand });
+        }
+
         contextMenu.Items.Add(new MenuItem { Header = Translations.Reconnect, Command = ReconnectCommand });
         contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(new MenuItem { Header = Translations.EditCamera, Command = EditCameraCommand });
@@ -803,6 +914,16 @@ public partial class CameraTile : IDisposable
                 ShowNotification(
                     string.Format(CultureInfo.CurrentCulture, Translations.CameraConnected1, Camera?.Display.DisplayName ?? string.Empty));
             }
+
+            // Auto-start recording on connect if enabled
+            if (EnableRecordingOnConnect &&
+                recordingService is not null &&
+                Player is not null &&
+                Camera is not null &&
+                RecordingState == RecordingState.Idle)
+            {
+                recordingService.StartRecording(Camera, Player);
+            }
         }
     }
 
@@ -1073,10 +1194,10 @@ public partial class CameraTile : IDisposable
             FileName = $"{Camera.Display.DisplayName}_{DateTime.Now:yyyyMMdd_HHmmss}",
         };
 
-        // Use configured snapshot directory as initial directory if available
-        if (!string.IsNullOrEmpty(SnapshotDirectory) && Directory.Exists(SnapshotDirectory))
+        // Use configured snapshot path as initial directory if available
+        if (!string.IsNullOrEmpty(SnapshotPath) && Directory.Exists(SnapshotPath))
         {
-            dialog.InitialDirectory = SnapshotDirectory;
+            dialog.InitialDirectory = SnapshotPath;
         }
 
         if (dialog.ShowDialog() == true)
@@ -1096,6 +1217,209 @@ public partial class CameraTile : IDisposable
     private void ExecuteReconnect()
     {
         Reconnect();
+    }
+
+    private bool CanExecuteStartRecording()
+        => Camera is not null &&
+           ConnectionState == ConnectionState.Connected &&
+           RecordingState == RecordingState.Idle &&
+           recordingService is not null;
+
+    [RelayCommand(CanExecute = nameof(CanExecuteStartRecording))]
+    private void StartRecording()
+    {
+        if (Camera is null || Player is null || recordingService is null)
+        {
+            return;
+        }
+
+        recordingService.StartRecording(Camera, Player);
+    }
+
+    private bool CanExecuteStopRecording()
+        => Camera is not null &&
+           RecordingState != RecordingState.Idle &&
+           recordingService is not null;
+
+    [RelayCommand(CanExecute = nameof(CanExecuteStopRecording))]
+    private void StopRecording()
+    {
+        if (Camera is null || recordingService is null)
+        {
+            return;
+        }
+
+        recordingService.StopRecording(Camera.Id);
+    }
+
+    private void OnServiceRecordingStateChanged(
+        object? sender,
+        RecordingStateChangedEventArgs e)
+    {
+        if (Camera is null || e.CameraId != Camera.Id)
+        {
+            return;
+        }
+
+        Dispatcher.Invoke(() =>
+        {
+            RecordingState = e.NewState;
+            UpdateRecordingDurationTimer();
+            UpdateOverlayRecordingState();
+
+            RecordingStateChangedEvent?.Invoke(this, e);
+            CommandManager.InvalidateRequerySuggested();
+        });
+    }
+
+    private void OnMotionDetected(
+        object? sender,
+        MotionDetectedEventArgs e)
+    {
+        if (Camera is null || e.CameraId != Camera.Id)
+        {
+            return;
+        }
+
+        Dispatcher.Invoke(() =>
+        {
+            IsMotionDetected = true;
+            UpdateOverlayMotionIndicator();
+
+            // Trigger motion recording if enabled
+            if (EnableRecordingOnMotion && recordingService is not null && Player is not null)
+            {
+                recordingService.TriggerMotionRecording(Camera, Player);
+            }
+
+            // Reset motion indicator after a short delay
+            var resetTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500),
+            };
+            resetTimer.Tick += (_, _) =>
+            {
+                resetTimer.Stop();
+                if (motionDetectionService is null || !motionDetectionService.IsMotionDetected(Camera?.Id ?? Guid.Empty))
+                {
+                    IsMotionDetected = false;
+                    UpdateOverlayMotionIndicator();
+                }
+            };
+            resetTimer.Start();
+        });
+    }
+
+    private static void OnRecordingStateChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraTile tile && e.NewValue is RecordingState)
+        {
+            tile.UpdateOverlayRecordingState();
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    private void UpdateRecordingDurationTimer()
+    {
+        if (RecordingState == RecordingState.Idle)
+        {
+            // Stop timer
+            recordingDurationTimer?.Stop();
+            recordingDurationTimer = null;
+            RecordingDuration = TimeSpan.Zero;
+        }
+        else if (recordingDurationTimer is null)
+        {
+            // Start timer
+            recordingDurationTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1),
+            };
+            recordingDurationTimer.Tick += (_, _) => UpdateRecordingDuration();
+            recordingDurationTimer.Start();
+            UpdateRecordingDuration();
+        }
+    }
+
+    private void UpdateRecordingDuration()
+    {
+        if (Camera is null || recordingService is null)
+        {
+            return;
+        }
+
+        var session = recordingService.GetSession(Camera.Id);
+        if (session is not null)
+        {
+            RecordingDuration = session.Duration;
+
+            // Update overlay with new duration
+            var overlay = GetCameraOverlay();
+            if (overlay is not null)
+            {
+                overlay.RecordingDuration = RecordingDuration;
+            }
+        }
+    }
+
+    private void UpdateOverlayRecordingState()
+    {
+        var overlay = GetCameraOverlay();
+        if (overlay is not null)
+        {
+            overlay.IsRecording = RecordingState != RecordingState.Idle;
+            overlay.RecordingDuration = RecordingDuration;
+        }
+    }
+
+    private void UpdateOverlayMotionIndicator()
+    {
+        var overlay = GetCameraOverlay();
+        if (overlay is not null)
+        {
+            overlay.IsMotionDetected = IsMotionDetected;
+        }
+    }
+
+    /// <summary>
+    /// Starts motion detection for this camera if enabled.
+    /// </summary>
+    public void StartMotionDetection()
+    {
+        if (Camera is null || Player is null || motionDetectionService is null || !EnableRecordingOnMotion)
+        {
+            return;
+        }
+
+        var settings = new MotionDetectionSettings();
+
+        // Apply overrides if present
+        if (Camera.Overrides?.MotionSensitivity.HasValue == true)
+        {
+            settings.Sensitivity = Camera.Overrides.MotionSensitivity.Value;
+        }
+
+        if (Camera.Overrides?.PostMotionDurationSeconds.HasValue == true)
+        {
+            settings.PostMotionDurationSeconds = Camera.Overrides.PostMotionDurationSeconds.Value;
+        }
+
+        motionDetectionService.StartDetection(Camera.Id, Player, settings);
+    }
+
+    /// <summary>
+    /// Stops motion detection for this camera.
+    /// </summary>
+    public void StopMotionDetection()
+    {
+        if (Camera is null || motionDetectionService is null)
+        {
+            return;
+        }
+
+        motionDetectionService.StopDetection(Camera.Id);
     }
 
     private void OnDragCaptureLayerMouseLeftButtonDown(

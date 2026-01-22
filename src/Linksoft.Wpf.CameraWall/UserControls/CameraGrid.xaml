@@ -34,7 +34,7 @@
                         DeleteCameraRequested="OnDeleteCameraRequested"
                         EditCameraRequested="OnEditCameraRequested"
                         FullScreenRequested="OnFullScreenRequested"
-                        SnapshotDirectory="{Binding Path=SnapshotDirectory, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
+                        SnapshotPath="{Binding Path=SnapshotPath, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
                         SwapLeftRequested="OnSwapLeftRequested"
                         SwapRightRequested="OnSwapRightRequested">
                         <!--  Per-camera overrides with fallback to app defaults  -->
@@ -125,6 +125,19 @@
                                 <Binding Path="HardwareAcceleration" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.HardwareAcceleration>
+                        <!--  Recording settings with per-camera overrides  -->
+                        <local:CameraTile.EnableRecordingOnMotion>
+                            <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
+                                <Binding Path="Overrides.EnableRecordingOnMotion" />
+                                <Binding Path="EnableRecordingOnMotion" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                            </MultiBinding>
+                        </local:CameraTile.EnableRecordingOnMotion>
+                        <local:CameraTile.EnableRecordingOnConnect>
+                            <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
+                                <Binding Path="Overrides.EnableRecordingOnConnect" />
+                                <Binding Path="EnableRecordingOnConnect" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                            </MultiBinding>
+                        </local:CameraTile.EnableRecordingOnConnect>
                     </local:CameraTile>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

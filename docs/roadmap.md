@@ -126,10 +126,12 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Manual Recording | Start/stop recording per camera | Planned |
-| Recording Format | MP4/MKV with H.264 passthrough | Planned |
+| Manual Recording | Start/stop recording per camera | Done |
+| Recording Format | MP4/MKV/AVI with H.264 passthrough | Done |
+| Auto-Record on Connect | Global setting with per-camera overrides | Done |
+| Recording Indicator | Visual indicator when recording active | Done |
+| Motion-Triggered Recording | Record on motion detection | Done |
 | Storage Management | Disk space monitoring, auto-cleanup | Planned |
-| Recording Indicator | Visual indicator when recording active | Planned |
 
 ### Display Modes
 
@@ -271,10 +273,11 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 - Auto-reconnection succeeds > 95% of the time (pending)
 - Keyboard navigation fully functional (pending)
 
-### Phase 3 (Advanced)
-- Recording maintains stream quality
-- Hardware acceleration reduces CPU by 50%+
-- Snapshots save in < 500ms
+### Phase 3 (Advanced) - Partially Achieved
+- Recording maintains stream quality ✓
+- Recording auto-starts on connect (configurable) ✓
+- Hardware acceleration reduces CPU by 50%+ ✓
+- Snapshots save in < 500ms ✓
 
 ### Phase 4 (Professional)
 - PTZ control responds in < 200ms

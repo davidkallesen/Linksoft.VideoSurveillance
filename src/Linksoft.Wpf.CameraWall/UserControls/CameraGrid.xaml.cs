@@ -35,7 +35,7 @@ public partial class CameraGrid
     private bool allowDragAndDropReorder;
 
     [DependencyProperty]
-    private string? snapshotDirectory;
+    private string? snapshotPath;
 
     [DependencyProperty(DefaultValue = true)]
     private bool autoConnectOnLoad;
@@ -69,6 +69,20 @@ public partial class CameraGrid
 
     [DependencyProperty(DefaultValue = true)]
     private bool hardwareAcceleration;
+
+    // Recording/Motion Detection services
+    [DependencyProperty(PropertyChangedCallback = nameof(OnRecordingServiceChanged))]
+    private IRecordingService? recordingService;
+
+    [DependencyProperty(PropertyChangedCallback = nameof(OnMotionDetectionServiceChanged))]
+    private IMotionDetectionService? motionDetectionService;
+
+    // Recording settings
+    [DependencyProperty(DefaultValue = false)]
+    private bool enableRecordingOnMotion;
+
+    [DependencyProperty(DefaultValue = false)]
+    private bool enableRecordingOnConnect;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraGrid"/> class.
@@ -362,6 +376,16 @@ public partial class CameraGrid
         UpdateGridLayout();
         UpdateEmptyState();
         UpdateSwapCapabilities();
+
+        // Initialize services for newly added tiles
+        // This is done on a deferred dispatcher call to ensure the visual tree is built
+        if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add ||
+            e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+        {
+            _ = Dispatcher.BeginInvoke(
+                            DispatcherPriority.Loaded,
+                            new Action(InitializeAllTileServices));
+        }
     }
 
     private void RegisterMessages()
@@ -478,5 +502,42 @@ public partial class CameraGrid
         }
 
         PerformSwap(sourceIndex, targetIndex, sourceCamera);
+    }
+
+    private static void OnRecordingServiceChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraGrid grid)
+        {
+            grid.InitializeAllTileServices();
+        }
+    }
+
+    private static void OnMotionDetectionServiceChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraGrid grid)
+        {
+            grid.InitializeAllTileServices();
+        }
+    }
+
+    /// <summary>
+    /// Initializes all camera tiles with the recording and motion detection services.
+    /// </summary>
+    private void InitializeAllTileServices()
+    {
+        if (CameraTiles is null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < CameraTiles.Count; i++)
+        {
+            var tile = GetCameraTileAt(i);
+            tile?.InitializeServices(RecordingService, MotionDetectionService);
+        }
     }
 }

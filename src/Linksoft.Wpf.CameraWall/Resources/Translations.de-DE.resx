@@ -507,6 +507,9 @@
   <data name="EnableRecordingOnMotion" xml:space="preserve">
     <value>Aufnahme bei Bewegungserkennung aktivieren</value>
   </data>
+  <data name="EnableRecordingOnConnect" xml:space="preserve">
+    <value>Aufnahme bei Verbindung starten</value>
+  </data>
   <data name="Advanced" xml:space="preserve">
     <value>Erweitert</value>
   </data>
@@ -516,8 +519,8 @@
   <data name="EnableDebugLogging" xml:space="preserve">
     <value>Debug-Protokollierung aktivieren</value>
   </data>
-  <data name="LogFilePath" xml:space="preserve">
-    <value>Protokolldatei-Ordner</value>
+  <data name="LogPath" xml:space="preserve">
+    <value>Protokollordner</value>
   </data>
   <data name="SelectLogFolder" xml:space="preserve">
     <value>Protokollordner auswählen...</value>
@@ -585,8 +588,8 @@
   <data name="SnapshotSettings" xml:space="preserve">
     <value>Schnappschuss-Einstellungen</value>
   </data>
-  <data name="SnapshotDirectory" xml:space="preserve">
-    <value>Standard-Schnappschuss-Ordner</value>
+  <data name="SnapshotPath" xml:space="preserve">
+    <value>Schnappschuss-Ordner</value>
   </data>
   <data name="SelectSnapshotFolder" xml:space="preserve">
     <value>Schnappschuss-Ordner auswählen...</value>
@@ -692,5 +695,44 @@
   </data>
   <data name="OverrideSettingsInfo" xml:space="preserve">
     <value>Überschreiben Sie die Anwendungsstandards nur für diese Kamera. Deaktivieren Sie "Standard verwenden", um einen kameraspezifischen Wert festzulegen.</value>
+  </data>
+  <data name="StartRecording" xml:space="preserve">
+    <value>Aufnahme starten</value>
+  </data>
+  <data name="StopRecording" xml:space="preserve">
+    <value>Aufnahme stoppen</value>
+  </data>
+  <data name="RecordingStarted1" xml:space="preserve">
+    <value>Aufnahme gestartet: {0}</value>
+  </data>
+  <data name="RecordingStopped1" xml:space="preserve">
+    <value>Aufnahme gestoppt: {0}</value>
+  </data>
+  <data name="RecordingFailed1" xml:space="preserve">
+    <value>Aufnahme fehlgeschlagen: {0}</value>
+  </data>
+  <data name="MotionDetected1" xml:space="preserve">
+    <value>Bewegung erkannt: {0}</value>
+  </data>
+  <data name="MotionDetectionSettings" xml:space="preserve">
+    <value>Bewegungserkennungs-Einstellungen</value>
+  </data>
+  <data name="MotionSensitivity" xml:space="preserve">
+    <value>Bewegungsempfindlichkeit</value>
+  </data>
+  <data name="PostMotionDuration" xml:space="preserve">
+    <value>Aufnahmedauer nach Bewegung (Sekunden)</value>
+  </data>
+  <data name="AnalysisFrameRate" xml:space="preserve">
+    <value>Analyse-Bildrate (FPS)</value>
+  </data>
+  <data name="MinimumChangePercent" xml:space="preserve">
+    <value>Minimale Änderungsprozent</value>
+  </data>
+  <data name="CooldownSeconds" xml:space="preserve">
+    <value>Abkühlungszeit (Sekunden)</value>
+  </data>
+  <data name="MotionOverrides" xml:space="preserve">
+    <value>Bewegungserkennung-Überschreibungen</value>
   </data>
 </root>

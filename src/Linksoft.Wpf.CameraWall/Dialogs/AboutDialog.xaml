@@ -13,6 +13,7 @@
     ShowInTaskbar="False"
     SizeToContent="Height"
     WindowStartupLocation="CenterOwner"
+    WindowStyle="ToolWindow"
     mc:Ignorable="d">
 
     <atc:GridEx Margin="24" Rows="Auto,Auto,Auto,Auto,Auto,Auto">

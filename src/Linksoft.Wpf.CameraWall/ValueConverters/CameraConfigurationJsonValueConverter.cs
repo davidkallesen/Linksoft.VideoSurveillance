@@ -385,6 +385,21 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
             overrides.EnableRecordingOnMotion = recordOnMotion;
         }
 
+        if (TryGetNullableBoolProperty(element, "enableRecordingOnConnect", "EnableRecordingOnConnect", out var recordOnConnect))
+        {
+            overrides.EnableRecordingOnConnect = recordOnConnect;
+        }
+
+        if (TryGetNullableInt32Property(element, "motionSensitivity", "MotionSensitivity", out var motionSensitivity))
+        {
+            overrides.MotionSensitivity = motionSensitivity;
+        }
+
+        if (TryGetNullableInt32Property(element, "postMotionDurationSeconds", "PostMotionDurationSeconds", out var postMotionDuration))
+        {
+            overrides.PostMotionDurationSeconds = postMotionDuration;
+        }
+
         return overrides;
     }
 
@@ -558,6 +573,21 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
         if (overrides.EnableRecordingOnMotion.HasValue)
         {
             writer.WriteBoolean("enableRecordingOnMotion", overrides.EnableRecordingOnMotion.Value);
+        }
+
+        if (overrides.EnableRecordingOnConnect.HasValue)
+        {
+            writer.WriteBoolean("enableRecordingOnConnect", overrides.EnableRecordingOnConnect.Value);
+        }
+
+        if (overrides.MotionSensitivity.HasValue)
+        {
+            writer.WriteNumber("motionSensitivity", overrides.MotionSensitivity.Value);
+        }
+
+        if (overrides.PostMotionDurationSeconds.HasValue)
+        {
+            writer.WriteNumber("postMotionDurationSeconds", overrides.PostMotionDurationSeconds.Value);
         }
 
         writer.WriteEndObject();

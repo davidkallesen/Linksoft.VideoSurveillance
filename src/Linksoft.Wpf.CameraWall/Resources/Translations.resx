@@ -507,6 +507,9 @@
   <data name="EnableRecordingOnMotion" xml:space="preserve">
     <value>Enable recording on motion detection</value>
   </data>
+  <data name="EnableRecordingOnConnect" xml:space="preserve">
+    <value>Start recording on connect</value>
+  </data>
   <data name="Advanced" xml:space="preserve">
     <value>Advanced</value>
   </data>
@@ -516,8 +519,8 @@
   <data name="EnableDebugLogging" xml:space="preserve">
     <value>Enable debug logging</value>
   </data>
-  <data name="LogFilePath" xml:space="preserve">
-    <value>Log file folder</value>
+  <data name="LogPath" xml:space="preserve">
+    <value>Log folder</value>
   </data>
   <data name="SelectLogFolder" xml:space="preserve">
     <value>Select log folder...</value>
@@ -585,8 +588,8 @@
   <data name="SnapshotSettings" xml:space="preserve">
     <value>Snapshot Settings</value>
   </data>
-  <data name="SnapshotDirectory" xml:space="preserve">
-    <value>Default snapshot folder</value>
+  <data name="SnapshotPath" xml:space="preserve">
+    <value>Snapshot folder</value>
   </data>
   <data name="SelectSnapshotFolder" xml:space="preserve">
     <value>Select snapshot folder...</value>
@@ -692,5 +695,44 @@
   </data>
   <data name="OverrideSettingsInfo" xml:space="preserve">
     <value>Override application defaults for this camera only. Uncheck "Use default" to set a camera-specific value.</value>
+  </data>
+  <data name="StartRecording" xml:space="preserve">
+    <value>Start Recording</value>
+  </data>
+  <data name="StopRecording" xml:space="preserve">
+    <value>Stop Recording</value>
+  </data>
+  <data name="RecordingStarted1" xml:space="preserve">
+    <value>Recording started: {0}</value>
+  </data>
+  <data name="RecordingStopped1" xml:space="preserve">
+    <value>Recording stopped: {0}</value>
+  </data>
+  <data name="RecordingFailed1" xml:space="preserve">
+    <value>Recording failed: {0}</value>
+  </data>
+  <data name="MotionDetected1" xml:space="preserve">
+    <value>Motion detected: {0}</value>
+  </data>
+  <data name="MotionDetectionSettings" xml:space="preserve">
+    <value>Motion Detection Settings</value>
+  </data>
+  <data name="MotionSensitivity" xml:space="preserve">
+    <value>Motion sensitivity</value>
+  </data>
+  <data name="PostMotionDuration" xml:space="preserve">
+    <value>Post-motion recording duration (seconds)</value>
+  </data>
+  <data name="AnalysisFrameRate" xml:space="preserve">
+    <value>Analysis frame rate (FPS)</value>
+  </data>
+  <data name="MinimumChangePercent" xml:space="preserve">
+    <value>Minimum change percentage</value>
+  </data>
+  <data name="CooldownSeconds" xml:space="preserve">
+    <value>Cooldown period (seconds)</value>
+  </data>
+  <data name="MotionOverrides" xml:space="preserve">
+    <value>Motion Detection Overrides</value>
   </data>
 </root>

@@ -78,6 +78,30 @@ public static class DropDownItemsFactory
     };
 
     /// <summary>
+    /// Gets the motion sensitivity options for dropdowns.
+    /// Keys are sensitivity values (0-100), values are display text.
+    /// </summary>
+    public static IDictionary<string, string> MotionSensitivityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["10"] = "Low (10)",
+        ["30"] = "Medium (30)",
+        ["50"] = "High (50)",
+        ["70"] = "Very High (70)",
+    };
+
+    /// <summary>
+    /// Gets the post-motion duration options for dropdowns (in seconds).
+    /// </summary>
+    public static IDictionary<string, string> PostMotionDurationItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["5"] = "5 seconds",
+        ["10"] = "10 seconds",
+        ["15"] = "15 seconds",
+        ["30"] = "30 seconds",
+        ["60"] = "1 minute",
+    };
+
+    /// <summary>
     /// Gets the default video quality value.
     /// </summary>
     public const string DefaultVideoQuality = "Auto";
@@ -106,6 +130,16 @@ public static class DropDownItemsFactory
     /// Gets the default camera protocol.
     /// </summary>
     public const string DefaultProtocol = "Rtsp";
+
+    /// <summary>
+    /// Gets the default motion sensitivity.
+    /// </summary>
+    public const int DefaultMotionSensitivity = 30;
+
+    /// <summary>
+    /// Gets the default post-motion duration in seconds.
+    /// </summary>
+    public const int DefaultPostMotionDuration = 10;
 
     /// <summary>
     /// Converts a video quality setting to the maximum vertical resolution in pixels.

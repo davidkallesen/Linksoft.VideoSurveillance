@@ -12,7 +12,6 @@ public class AdvancedSettings
 
     /// <summary>
     /// Gets or sets the path to the log file directory.
-    /// When null, defaults to <see cref="Helpers.ApplicationPaths.DefaultLogsPath"/>.
     /// </summary>
-    public string? LogFilePath { get; set; }
+    public string LogPath { get; set; } = ApplicationPaths.DefaultLogsPath;
 }

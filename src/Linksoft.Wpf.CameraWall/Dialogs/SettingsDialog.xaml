@@ -17,7 +17,7 @@
     ResizeMode="CanResize"
     ShowInTaskbar="False"
     WindowStartupLocation="CenterOwner"
-    WindowStyle="None"
+    WindowStyle="ToolWindow"
     mc:Ignorable="d">
 
     <atc:NiceWindow.Resources>
@@ -168,11 +168,11 @@
                                 <atc:LabelDirectoryPicker
                                     HideAreas="InformationAndValidation"
                                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                    Key=SnapshotDirectory}"
+                                                                    Key=SnapshotPath}"
                                     Orientation="Vertical"
                                     WatermarkText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                         Key=SelectSnapshotFolder}"
-                                    Value="{Binding Path=SnapshotDirectory, Mode=TwoWay}" />
+                                    Value="{Binding Path=SnapshotPath, Mode=TwoWay}" />
                             </StackPanel>
                         </GroupBox>
                     </atc:UniformSpacingPanel>
@@ -370,6 +370,51 @@
                                                                     Key=EnableRecordingOnMotion}"
                                     LabelWidthNumber="250"
                                     LabelWidthSizeDefinition="Pixel" />
+
+                                <atc:LabelCheckBox
+                                    HideAreas="InformationAndValidation"
+                                    IsChecked="{Binding Path=EnableRecordingOnConnect, Mode=TwoWay}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=EnableRecordingOnConnect}"
+                                    LabelWidthNumber="250"
+                                    LabelWidthSizeDefinition="Pixel" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!--  Motion Detection Settings Group  -->
+                        <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=MotionDetectionSettings}">
+                            <StackPanel Orientation="Vertical">
+                                <atc:LabelIntegerBox
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=MotionSensitivity}"
+                                    Maximum="100"
+                                    Minimum="0"
+                                    Orientation="Vertical"
+                                    Value="{Binding Path=MotionSensitivity, Mode=TwoWay}" />
+
+                                <atc:LabelIntegerBox
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=PostMotionDuration}"
+                                    Maximum="300"
+                                    Minimum="1"
+                                    Orientation="Vertical"
+                                    Value="{Binding Path=PostMotionDurationSeconds, Mode=TwoWay}" />
+
+                                <atc:LabelIntegerBox
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=AnalysisFrameRate}"
+                                    Maximum="10"
+                                    Minimum="1"
+                                    Orientation="Vertical"
+                                    Value="{Binding Path=AnalysisFrameRate, Mode=TwoWay}" />
+
+                                <atc:LabelIntegerBox
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=CooldownSeconds}"
+                                    Maximum="60"
+                                    Minimum="0"
+                                    Orientation="Vertical"
+                                    Value="{Binding Path=CooldownSeconds, Mode=TwoWay}" />
                             </StackPanel>
                         </GroupBox>
                     </atc:UniformSpacingPanel>
@@ -394,11 +439,11 @@
 
                                 <atc:LabelDirectoryPicker
                                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                                    Key=LogFilePath}"
+                                                                    Key=LogPath}"
                                     Orientation="Vertical"
                                     WatermarkText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                                         Key=SelectLogFolder}"
-                                    Value="{Binding Path=LogFilePath, Mode=TwoWay}" />
+                                    Value="{Binding Path=LogPath, Mode=TwoWay}" />
                             </StackPanel>
                         </GroupBox>
 

@@ -76,7 +76,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private bool autoSaveLayoutChanges = true;
 
     [ObservableProperty]
-    private DirectoryInfo? snapshotDirectory;
+    private DirectoryInfo? snapshotPath;
 
     #endregion
 
@@ -156,6 +156,22 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     [ObservableProperty]
     private bool enableRecordingOnMotion;
 
+    [ObservableProperty]
+    private bool enableRecordingOnConnect;
+
+    // Motion Detection Settings
+    [ObservableProperty]
+    private int motionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
+
+    [ObservableProperty]
+    private int postMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
+
+    [ObservableProperty]
+    private int analysisFrameRate = 2;
+
+    [ObservableProperty]
+    private int cooldownSeconds = 5;
+
     #endregion
 
     #region Advanced Tab Settings
@@ -164,7 +180,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private bool enableDebugLogging;
 
     [ObservableProperty]
-    private DirectoryInfo? logFilePath;
+    private DirectoryInfo? logPath;
 
     #endregion
 
@@ -212,7 +228,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SelectedOverlayPosition = "TopLeft";
         AllowDragAndDropReorder = true;
         AutoSaveLayoutChanges = true;
-        SnapshotDirectory = null;
+        SnapshotPath = new DirectoryInfo(ApplicationPaths.DefaultSnapshotsPath);
 
         // Connection Tab
         SelectedDefaultProtocol = "Rtsp";
@@ -234,13 +250,18 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         MaxLatencyMs = 500;
 
         // Recording Tab
-        RecordingPath = null;
+        RecordingPath = new DirectoryInfo(ApplicationPaths.DefaultRecordingsPath);
         SelectedRecordingFormat = "mp4";
         EnableRecordingOnMotion = false;
+        EnableRecordingOnConnect = false;
+        MotionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
+        PostMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
+        AnalysisFrameRate = 2;
+        CooldownSeconds = 5;
 
         // Advanced Tab
         EnableDebugLogging = false;
-        LogFilePath = null;
+        LogPath = new DirectoryInfo(ApplicationPaths.DefaultLogsPath);
     }
 
     #endregion
@@ -272,8 +293,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SelectedOverlayPosition = cameraDisplay.OverlayPosition.ToString();
         AllowDragAndDropReorder = cameraDisplay.AllowDragAndDropReorder;
         AutoSaveLayoutChanges = cameraDisplay.AutoSaveLayoutChanges;
-        SnapshotDirectory = new DirectoryInfo(
-            cameraDisplay.SnapshotDirectory ?? ApplicationPaths.DefaultSnapshotsPath);
+        SnapshotPath = new DirectoryInfo(cameraDisplay.SnapshotPath);
 
         // Load Connection Tab settings
         var connection = settingsService.Connection;
@@ -298,16 +318,21 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
 
         // Load Recording Tab settings
         var recording = settingsService.Recording;
-        RecordingPath = new DirectoryInfo(
-            recording.RecordingPath ?? ApplicationPaths.DefaultRecordingsPath);
+        RecordingPath = new DirectoryInfo(recording.RecordingPath);
         SelectedRecordingFormat = recording.RecordingFormat;
         EnableRecordingOnMotion = recording.EnableRecordingOnMotion;
+        EnableRecordingOnConnect = recording.EnableRecordingOnConnect;
+
+        // Motion Detection Settings
+        MotionSensitivity = recording.MotionDetection.Sensitivity;
+        PostMotionDurationSeconds = recording.MotionDetection.PostMotionDurationSeconds;
+        AnalysisFrameRate = recording.MotionDetection.AnalysisFrameRate;
+        CooldownSeconds = recording.MotionDetection.CooldownSeconds;
 
         // Load Advanced Tab settings
         var advanced = settingsService.Advanced;
         EnableDebugLogging = advanced.EnableDebugLogging;
-        LogFilePath = new DirectoryInfo(
-            advanced.LogFilePath ?? ApplicationPaths.DefaultLogsPath);
+        LogPath = new DirectoryInfo(advanced.LogPath);
     }
 
     private void SaveGeneralSettings()
@@ -348,7 +373,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
             OverlayPosition = overlayPosition,
             AllowDragAndDropReorder = AllowDragAndDropReorder,
             AutoSaveLayoutChanges = AutoSaveLayoutChanges,
-            SnapshotDirectory = SnapshotDirectory?.FullName,
+            SnapshotPath = SnapshotPath?.FullName ?? ApplicationPaths.DefaultSnapshotsPath,
         };
 
         settingsService.SaveCameraDisplay(settings);
@@ -393,9 +418,17 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     {
         var settings = new RecordingSettings
         {
-            RecordingPath = RecordingPath?.FullName,
+            RecordingPath = RecordingPath?.FullName ?? ApplicationPaths.DefaultRecordingsPath,
             RecordingFormat = SelectedRecordingFormat,
             EnableRecordingOnMotion = EnableRecordingOnMotion,
+            EnableRecordingOnConnect = EnableRecordingOnConnect,
+            MotionDetection = new MotionDetectionSettings
+            {
+                Sensitivity = MotionSensitivity,
+                PostMotionDurationSeconds = PostMotionDurationSeconds,
+                AnalysisFrameRate = AnalysisFrameRate,
+                CooldownSeconds = CooldownSeconds,
+            },
         };
 
         settingsService.SaveRecording(settings);
@@ -406,7 +439,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         var settings = new AdvancedSettings
         {
             EnableDebugLogging = EnableDebugLogging,
-            LogFilePath = LogFilePath?.FullName,
+            LogPath = LogPath?.FullName ?? ApplicationPaths.DefaultLogsPath,
         };
 
         settingsService.SaveAdvanced(settings);

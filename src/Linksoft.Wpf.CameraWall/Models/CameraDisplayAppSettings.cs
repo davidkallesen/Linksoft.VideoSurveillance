@@ -46,8 +46,7 @@ public class CameraDisplayAppSettings
     public bool AutoSaveLayoutChanges { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the default directory for saving snapshots.
-    /// When null, defaults to <see cref="Helpers.ApplicationPaths.DefaultSnapshotsPath"/>.
+    /// Gets or sets the default path for saving snapshots.
     /// </summary>
-    public string? SnapshotDirectory { get; set; }
+    public string SnapshotPath { get; set; } = ApplicationPaths.DefaultSnapshotsPath;
 }

@@ -545,13 +545,18 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
-    public string OverrideRecordingPath
+    public DirectoryInfo? OverrideRecordingPath
     {
-        get => Camera.Overrides?.RecordingPath ?? settingsService.Recording.RecordingPath ?? string.Empty;
+        get
+        {
+            var path = Camera.Overrides?.RecordingPath ?? settingsService.Recording.RecordingPath;
+            return string.IsNullOrEmpty(path) ? null : new DirectoryInfo(path);
+        }
+
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.RecordingPath = value;
+            Camera.Overrides!.RecordingPath = value?.FullName;
             RaisePropertyChanged();
         }
     }
@@ -620,6 +625,108 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         {
             EnsureOverrides();
             Camera.Overrides!.EnableRecordingOnMotion = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultMotionSensitivity
+    {
+        get => Camera.Overrides?.MotionSensitivity is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.MotionSensitivity = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.MotionSensitivity = settingsService.Recording.MotionDetection.Sensitivity;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideMotionSensitivity));
+        }
+    }
+
+    public int OverrideMotionSensitivity
+    {
+        get => Camera.Overrides?.MotionSensitivity ?? settingsService.Recording.MotionDetection.Sensitivity;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.MotionSensitivity = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultPostMotionDuration
+    {
+        get => Camera.Overrides?.PostMotionDurationSeconds is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.PostMotionDurationSeconds = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.PostMotionDurationSeconds = settingsService.Recording.MotionDetection.PostMotionDurationSeconds;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverridePostMotionDuration));
+        }
+    }
+
+    public int OverridePostMotionDuration
+    {
+        get => Camera.Overrides?.PostMotionDurationSeconds ?? settingsService.Recording.MotionDetection.PostMotionDurationSeconds;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.PostMotionDurationSeconds = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultRecordingOnConnect
+    {
+        get => Camera.Overrides?.EnableRecordingOnConnect is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.EnableRecordingOnConnect = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.EnableRecordingOnConnect = settingsService.Recording.EnableRecordingOnConnect;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideRecordingOnConnect));
+        }
+    }
+
+    public bool OverrideRecordingOnConnect
+    {
+        get => Camera.Overrides?.EnableRecordingOnConnect ?? settingsService.Recording.EnableRecordingOnConnect;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.EnableRecordingOnConnect = value;
             RaisePropertyChanged();
         }
     }

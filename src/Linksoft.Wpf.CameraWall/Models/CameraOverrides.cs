@@ -92,6 +92,21 @@ public class CameraOverrides
     public bool? EnableRecordingOnMotion { get; set; }
 
     /// <summary>
+    /// Gets or sets the motion detection sensitivity (0-100), or null to use application default.
+    /// </summary>
+    public int? MotionSensitivity { get; set; }
+
+    /// <summary>
+    /// Gets or sets the post-motion recording duration in seconds, or null to use application default.
+    /// </summary>
+    public int? PostMotionDurationSeconds { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to start recording on connect, or null to use application default.
+    /// </summary>
+    public bool? EnableRecordingOnConnect { get; set; }
+
+    /// <summary>
     /// Determines whether any override is set (non-null).
     /// </summary>
     /// <returns>True if at least one override is set; otherwise, false.</returns>
@@ -112,7 +127,10 @@ public class CameraOverrides
            OverlayOpacity.HasValue ||
            RecordingPath is not null ||
            RecordingFormat is not null ||
-           EnableRecordingOnMotion.HasValue;
+           EnableRecordingOnMotion.HasValue ||
+           MotionSensitivity.HasValue ||
+           PostMotionDurationSeconds.HasValue ||
+           EnableRecordingOnConnect.HasValue;
 
     /// <summary>
     /// Creates a deep copy of this camera overrides.
@@ -138,6 +156,9 @@ public class CameraOverrides
             RecordingPath = RecordingPath,
             RecordingFormat = RecordingFormat,
             EnableRecordingOnMotion = EnableRecordingOnMotion,
+            MotionSensitivity = MotionSensitivity,
+            PostMotionDurationSeconds = PostMotionDurationSeconds,
+            EnableRecordingOnConnect = EnableRecordingOnConnect,
         };
 
     /// <summary>
@@ -166,6 +187,9 @@ public class CameraOverrides
             RecordingPath = null;
             RecordingFormat = null;
             EnableRecordingOnMotion = null;
+            MotionSensitivity = null;
+            PostMotionDurationSeconds = null;
+            EnableRecordingOnConnect = null;
             return;
         }
 
@@ -186,6 +210,9 @@ public class CameraOverrides
         RecordingPath = source.RecordingPath;
         RecordingFormat = source.RecordingFormat;
         EnableRecordingOnMotion = source.EnableRecordingOnMotion;
+        MotionSensitivity = source.MotionSensitivity;
+        PostMotionDurationSeconds = source.PostMotionDurationSeconds;
+        EnableRecordingOnConnect = source.EnableRecordingOnConnect;
     }
 
     /// <summary>
@@ -216,7 +243,10 @@ public class CameraOverrides
                NullableDoubleEquals(OverlayOpacity, other.OverlayOpacity) &&
                RecordingPath == other.RecordingPath &&
                RecordingFormat == other.RecordingFormat &&
-               EnableRecordingOnMotion == other.EnableRecordingOnMotion;
+               EnableRecordingOnMotion == other.EnableRecordingOnMotion &&
+               MotionSensitivity == other.MotionSensitivity &&
+               PostMotionDurationSeconds == other.PostMotionDurationSeconds &&
+               EnableRecordingOnConnect == other.EnableRecordingOnConnect;
     }
 
     private static bool NullableDoubleEquals(

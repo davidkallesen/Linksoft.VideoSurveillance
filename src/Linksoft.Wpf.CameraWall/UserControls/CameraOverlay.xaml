@@ -9,6 +9,16 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <!-- Blinking animation for recording indicator -->
+        <Storyboard x:Key="RecordingBlinkAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetProperty="Opacity"
+                From="1.0"
+                To="0.3"
+                Duration="0:0:0.5"
+                AutoReverse="True" />
+        </Storyboard>
     </UserControl.Resources>
 
     <Grid>
@@ -19,6 +29,23 @@
                 VerticalAlignment="Top"
                 Opacity="{Binding Path=OverlayOpacity, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <StackPanel Orientation="Vertical">
+                <!-- Recording indicator -->
+                <StackPanel x:Name="RecordingIndicator"
+                            Orientation="Horizontal"
+                            Margin="0,0,0,2"
+                            Visibility="{Binding Path=IsRecording, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Ellipse x:Name="RecordingDot"
+                             Width="8"
+                             Height="8"
+                             Fill="Red"
+                             Margin="0,0,4,0" />
+                    <TextBlock x:Name="RecordingDurationTextBlock"
+                               Text="{Binding Path=RecordingDurationText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                               Foreground="Red"
+                               FontSize="10"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
                 <TextBlock x:Name="TitleTextBlock"
                            Text="{Binding Path=Title, RelativeSource={RelativeSource AncestorType=UserControl}}"
                            Foreground="White"
@@ -50,6 +77,14 @@
                              Height="8"
                              Fill="{Binding Path=StatusColor, RelativeSource={RelativeSource AncestorType=UserControl}}"
                              Margin="0,0,4,0" />
+
+                    <!-- Motion detection indicator -->
+                    <Ellipse x:Name="MotionIndicator"
+                             Width="6"
+                             Height="6"
+                             Fill="Orange"
+                             Margin="0,0,4,0"
+                             Visibility="{Binding Path=IsMotionDetected, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                     <TextBlock x:Name="StatusTextBlock"
                                Text="{Binding Path=StatusText, RelativeSource={RelativeSource AncestorType=UserControl}}"

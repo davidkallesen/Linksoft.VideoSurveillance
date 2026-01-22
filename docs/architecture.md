@@ -179,19 +179,42 @@ public interface IDialogService
 
 ### IApplicationSettingsService
 
-Abstraction for application settings (theme, language, display options).
+Abstraction for application settings (theme, language, display, recording options).
 
 ```csharp
 public interface IApplicationSettingsService
 {
     GeneralSettings General { get; }
-    DisplaySettings Display { get; }
-    void SaveGeneral();
-    void SaveDisplay();
+    CameraDisplayAppSettings CameraDisplay { get; }
+    ConnectionAppSettings Connection { get; }
+    PerformanceSettings Performance { get; }
+    RecordingSettings Recording { get; }
+    AdvancedSettings Advanced { get; }
     void Load();
     void Save();
 }
 ```
+
+### IRecordingService
+
+Service for managing camera recording sessions using FlyleafLib.
+
+```csharp
+public interface IRecordingService
+{
+    event EventHandler<RecordingStateChangedEventArgs>? RecordingStateChanged;
+    RecordingState GetRecordingState(Guid cameraId);
+    bool StartRecording(CameraConfiguration camera, Player player);
+    void StopRecording(Guid cameraId);
+    void StopAllRecordings();
+    bool IsRecording(Guid cameraId);
+    bool TriggerMotionRecording(CameraConfiguration camera, Player player);
+}
+```
+
+### IMotionDetectionService
+
+Service for detecting motion in camera frames.
 
 ### IGitHubReleaseService
 
@@ -371,18 +394,30 @@ public class GeneralSettings
 }
 ```
 
-**DisplaySettings:**
+**CameraDisplayAppSettings:**
 ```csharp
-public class DisplaySettings
+public class CameraDisplayAppSettings
 {
     public bool ShowOverlayTitle { get; set; } = true;
     public bool ShowOverlayDescription { get; set; } = true;
     public bool ShowOverlayTime { get; set; } = false;
     public bool ShowOverlayConnectionStatus { get; set; } = true;
     public double OverlayOpacity { get; set; } = 0.7;
+    public OverlayPosition OverlayPosition { get; set; } = OverlayPosition.TopLeft;
     public bool AllowDragAndDropReorder { get; set; } = true;
     public bool AutoSaveLayoutChanges { get; set; } = true;
-    public string? SnapshotDirectory { get; set; }
+    public string SnapshotPath { get; set; } = ApplicationPaths.DefaultSnapshotsPath;
+}
+```
+
+**RecordingSettings:**
+```csharp
+public class RecordingSettings
+{
+    public string RecordingPath { get; set; } = ApplicationPaths.DefaultRecordingsPath;
+    public string RecordingFormat { get; set; } = "mp4";
+    public bool EnableRecordingOnMotion { get; set; }
+    public bool EnableRecordingOnConnect { get; set; }
 }
 ```
 

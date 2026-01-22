@@ -7,12 +7,15 @@ namespace Linksoft.Wpf.CameraWall.Services;
 [Registration(Lifetime.Singleton)]
 public partial class CameraWallManager : ObservableObject, ICameraWallManager
 {
+    private readonly ILogger<CameraWallManager> logger;
     private readonly ICameraStorageService storageService;
     private readonly IDialogService dialogService;
     private readonly IApplicationSettingsService settingsService;
+    private readonly IRecordingService recordingService;
+    private readonly IMotionDetectionService motionDetectionService;
 
     [ObservableProperty(DependentPropertyNames = [nameof(CanCreateNewLayout)])]
-    private Linksoft.Wpf.CameraWall.UserControls.CameraGrid? cameraGrid;
+    private CameraGrid? cameraGrid;
 
     [ObservableProperty]
     private string statusText = Translations.Ready;
@@ -34,21 +37,33 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraWallManager"/> class.
     /// </summary>
+    /// <param name="logger">The logger.</param>
     /// <param name="storageService">The camera storage service.</param>
     /// <param name="dialogService">The dialog service.</param>
     /// <param name="settingsService">The application settings service.</param>
+    /// <param name="recordingService">The recording service.</param>
+    /// <param name="motionDetectionService">The motion detection service.</param>
     public CameraWallManager(
+        ILogger<CameraWallManager> logger,
         ICameraStorageService storageService,
         IDialogService dialogService,
-        IApplicationSettingsService settingsService)
+        IApplicationSettingsService settingsService,
+        IRecordingService recordingService,
+        IMotionDetectionService motionDetectionService)
     {
+        ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(storageService);
         ArgumentNullException.ThrowIfNull(dialogService);
         ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(recordingService);
+        ArgumentNullException.ThrowIfNull(motionDetectionService);
 
+        this.logger = logger;
         this.storageService = storageService;
         this.dialogService = dialogService;
         this.settingsService = settingsService;
+        this.recordingService = recordingService;
+        this.motionDetectionService = motionDetectionService;
 
         Layouts = new ObservableCollection<CameraLayout>(storageService.GetAllLayouts());
 
@@ -92,6 +107,11 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     public void Initialize(CameraGrid cameraGridControl)
     {
         CameraGrid = cameraGridControl;
+
+        // Inject recording and motion detection services
+        CameraGrid.RecordingService = recordingService;
+        CameraGrid.MotionDetectionService = motionDetectionService;
+
         ApplyDisplaySettings();
         LoadStartupCameras();
     }
@@ -119,7 +139,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CameraGrid.OverlayOpacity = display.OverlayOpacity;
         CameraGrid.AllowDragAndDropReorder = display.AllowDragAndDropReorder;
         CameraGrid.AutoSave = display.AutoSaveLayoutChanges;
-        CameraGrid.SnapshotDirectory = display.SnapshotDirectory;
+        CameraGrid.SnapshotPath = display.SnapshotPath;
 
         // Connection settings
         CameraGrid.ConnectionTimeoutSeconds = connection.ConnectionTimeoutSeconds;
@@ -139,6 +159,11 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
         CameraGrid.VideoQuality = performance.VideoQuality;
         CameraGrid.HardwareAcceleration = performance.HardwareAcceleration;
+
+        // Recording settings
+        var recording = settingsService.Recording;
+        CameraGrid.EnableRecordingOnMotion = recording.EnableRecordingOnMotion;
+        CameraGrid.EnableRecordingOnConnect = recording.EnableRecordingOnConnect;
 
         // Recreate players if performance settings changed
         if (videoQualityChanged || hwAccelChanged)
@@ -498,6 +523,12 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         ArgumentNullException.ThrowIfNull(e);
 
+        logger.LogInformation(
+            "Camera connection state changed: '{CameraName}' - '{OldState}' -> '{NewState}'",
+            e.Camera.Display.DisplayName,
+            e.PreviousState.ToString(),
+            e.NewState.ToString());
+
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.CameraStateChanged2, e.Camera.Display.DisplayName, e.NewState));
         UpdateConnectionCount();
     }
@@ -540,9 +571,37 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             return;
         }
 
-        var cameras = storageService.GetAllCameras();
-        CameraGrid.ApplyLayout(CurrentLayout, cameras);
+        var allCameras = storageService.GetAllCameras();
+        var cameraDict = allCameras.ToDictionary(c => c.Id);
+
+        CameraGrid.ApplyLayout(CurrentLayout, allCameras);
         CameraCount = CameraGrid.CameraTiles?.Count ?? 0;
+
+        logger.LogInformation(
+            "Layout changed to: '{LayoutName}' with {CameraCount} cameras",
+            CurrentLayout.Name,
+            CurrentLayout.Items.Count);
+
+        // Log cameras in the new layout
+        var recording = settingsService.Recording;
+        var camerasInLayout = CurrentLayout.Items
+            .Where(i => cameraDict.ContainsKey(i.CameraId))
+            .OrderBy(i => i.OrderNumber)
+            .Select(i => cameraDict[i.CameraId])
+            .ToList();
+
+        foreach (var camera in camerasInLayout)
+        {
+            var recordOnConnect = camera.Overrides?.EnableRecordingOnConnect ?? recording.EnableRecordingOnConnect;
+            var recordOnMotion = camera.Overrides?.EnableRecordingOnMotion ?? recording.EnableRecordingOnMotion;
+
+            logger.LogInformation(
+                "Camera: '{CameraName}' - RecordOnConnect: {RecordOnConnect}, RecordOnMotion: {RecordOnMotion}",
+                camera.Display.DisplayName,
+                recordOnConnect,
+                recordOnMotion);
+        }
+
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.LoadedLayout1, CurrentLayout.Name));
     }
 
@@ -569,11 +628,22 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         {
             SelectedStartupLayout = Layouts.FirstOrDefault(l => l.Id == storageService.StartupLayoutId.Value);
             CurrentLayout = SelectedStartupLayout;
+
+            if (SelectedStartupLayout is not null)
+            {
+                logger.LogInformation(
+                    "Loading startup layout: '{LayoutName}' with {CameraCount} cameras",
+                    SelectedStartupLayout.Name,
+                    SelectedStartupLayout.Items.Count);
+            }
         }
         else if (Layouts.Count > 0)
         {
             // If no startup layout is set, use the first layout
             CurrentLayout = Layouts[0];
+            logger.LogInformation(
+                "No startup layout configured, using first layout: '{LayoutName}'",
+                CurrentLayout.Name);
         }
     }
 
@@ -584,23 +654,56 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             return;
         }
 
-        var cameras = storageService.GetAllCameras();
+        var allCameras = storageService.GetAllCameras();
+        var cameraDict = allCameras.ToDictionary(c => c.Id);
 
+        // Determine which cameras to load based on layout
+        List<CameraConfiguration> camerasToLoad;
         if (SelectedStartupLayout is not null)
         {
-            CameraGrid.ApplyLayout(SelectedStartupLayout, cameras);
+            CameraGrid.ApplyLayout(SelectedStartupLayout, allCameras);
+
+            // Get cameras in layout order
+            camerasToLoad = SelectedStartupLayout.Items
+                .Where(i => cameraDict.ContainsKey(i.CameraId))
+                .OrderBy(i => i.OrderNumber)
+                .Select(i => cameraDict[i.CameraId])
+                .ToList();
         }
         else
         {
             // Load all cameras if no startup layout
-            foreach (var camera in cameras)
+            foreach (var camera in allCameras)
             {
                 Messenger.Default.Send(new CameraAddMessage(camera));
             }
+
+            camerasToLoad = allCameras.ToList();
         }
 
-        CameraCount = cameras.Count;
-        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.LoadedCameras1, cameras.Count));
+        CameraCount = camerasToLoad.Count;
+
+        // Log recording settings
+        var recording = settingsService.Recording;
+        logger.LogInformation(
+            "Recording settings - EnableRecordingOnConnect: {RecordOnConnect}, EnableRecordingOnMotion: {RecordOnMotion}",
+            recording.EnableRecordingOnConnect,
+            recording.EnableRecordingOnMotion);
+
+        // Log camera information for cameras in the current layout
+        foreach (var camera in camerasToLoad)
+        {
+            var recordOnConnect = camera.Overrides?.EnableRecordingOnConnect ?? recording.EnableRecordingOnConnect;
+            var recordOnMotion = camera.Overrides?.EnableRecordingOnMotion ?? recording.EnableRecordingOnMotion;
+
+            logger.LogInformation(
+                "Camera: '{CameraName}' - RecordOnConnect: {RecordOnConnect}, RecordOnMotion: {RecordOnMotion}",
+                camera.Display.DisplayName,
+                recordOnConnect,
+                recordOnMotion);
+        }
+
+        UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.LoadedCameras1, camerasToLoad.Count));
     }
 
     private void UpdateConnectionCount()

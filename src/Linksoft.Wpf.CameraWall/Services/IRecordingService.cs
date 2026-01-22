@@ -1,0 +1,82 @@
+namespace Linksoft.Wpf.CameraWall.Services;
+
+/// <summary>
+/// Service for managing camera recording sessions.
+/// </summary>
+public interface IRecordingService
+{
+    /// <summary>
+    /// Occurs when the recording state changes for a camera.
+    /// </summary>
+    event EventHandler<RecordingStateChangedEventArgs>? RecordingStateChanged;
+
+    /// <summary>
+    /// Gets the current recording state for a camera.
+    /// </summary>
+    /// <param name="cameraId">The camera ID.</param>
+    /// <returns>The current recording state.</returns>
+    RecordingState GetRecordingState(Guid cameraId);
+
+    /// <summary>
+    /// Gets the active recording session for a camera, if any.
+    /// </summary>
+    /// <param name="cameraId">The camera ID.</param>
+    /// <returns>The recording session, or null if not recording.</returns>
+    RecordingSession? GetSession(Guid cameraId);
+
+    /// <summary>
+    /// Starts a manual recording for a camera.
+    /// </summary>
+    /// <param name="camera">The camera configuration.</param>
+    /// <param name="player">The FlyleafLib player instance.</param>
+    /// <returns>True if recording started successfully; otherwise, false.</returns>
+    bool StartRecording(
+        CameraConfiguration camera,
+        Player player);
+
+    /// <summary>
+    /// Stops recording for a camera.
+    /// </summary>
+    /// <param name="cameraId">The camera ID.</param>
+    void StopRecording(Guid cameraId);
+
+    /// <summary>
+    /// Checks if a camera is currently recording.
+    /// </summary>
+    /// <param name="cameraId">The camera ID.</param>
+    /// <returns>True if recording; otherwise, false.</returns>
+    bool IsRecording(Guid cameraId);
+
+    /// <summary>
+    /// Triggers motion-based recording for a camera.
+    /// </summary>
+    /// <param name="camera">The camera configuration.</param>
+    /// <param name="player">The FlyleafLib player instance.</param>
+    /// <returns>True if recording started or was already in progress; otherwise, false.</returns>
+    bool TriggerMotionRecording(
+        CameraConfiguration camera,
+        FlyleafLib.MediaPlayer.Player player);
+
+    /// <summary>
+    /// Updates the last motion timestamp for an active motion recording.
+    /// This extends the post-motion recording period.
+    /// </summary>
+    /// <param name="cameraId">The camera ID.</param>
+    void UpdateMotionTimestamp(Guid cameraId);
+
+    /// <summary>
+    /// Generates a recording filename for a camera.
+    /// </summary>
+    /// <param name="camera">The camera configuration.</param>
+    /// <param name="format">The recording format (mp4, mkv, avi).</param>
+    /// <returns>The full path to the recording file.</returns>
+    string GenerateRecordingFilename(
+        CameraConfiguration camera,
+        string format);
+
+    /// <summary>
+    /// Stops all active recordings. Call this when the application is shutting down
+    /// to ensure all recording files are properly finalized.
+    /// </summary>
+    void StopAllRecordings();
+}
