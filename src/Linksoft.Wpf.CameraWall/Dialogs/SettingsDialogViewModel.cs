@@ -172,6 +172,63 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     [ObservableProperty]
     private int cooldownSeconds = 5;
 
+    // Recording Segmentation Settings
+    [ObservableProperty]
+    private bool enableHourlySegmentation = true;
+
+    [ObservableProperty]
+    private string selectedMaxRecordingDuration = DropDownItemsFactory.DefaultMaxRecordingDuration.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> MaxRecordingDurationItems
+        => DropDownItemsFactory.MaxRecordingDurationItems;
+
+    // Media Cleanup Settings
+    [ObservableProperty(DependentPropertyNames = [nameof(IsCleanupEnabled), nameof(IsSnapshotRetentionEnabled)])]
+    private string selectedCleanupSchedule = DropDownItemsFactory.DefaultMediaCleanupSchedule;
+
+    public IDictionary<string, string> CleanupScheduleItems
+        => DropDownItemsFactory.MediaCleanupScheduleItems;
+
+    [ObservableProperty]
+    private string selectedRecordingRetention = DropDownItemsFactory.DefaultRecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> RecordingRetentionItems
+        => DropDownItemsFactory.MediaRetentionPeriodItems;
+
+    [ObservableProperty(DependentPropertyNames = [nameof(IsSnapshotRetentionEnabled)])]
+    private bool includeSnapshotsInCleanup;
+
+    [ObservableProperty]
+    private string selectedSnapshotRetention = DropDownItemsFactory.DefaultSnapshotRetentionDays.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> SnapshotRetentionItems
+        => DropDownItemsFactory.MediaRetentionPeriodItems;
+
+    /// <summary>
+    /// Gets a value indicating whether cleanup is enabled (schedule is not Disabled).
+    /// </summary>
+    public bool IsCleanupEnabled
+        => !string.Equals(SelectedCleanupSchedule, "Disabled", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Gets a value indicating whether snapshot retention dropdown should be enabled.
+    /// </summary>
+    public bool IsSnapshotRetentionEnabled
+        => IsCleanupEnabled && IncludeSnapshotsInCleanup;
+
+    // Playback Overlay Settings
+    [ObservableProperty]
+    private bool showPlaybackFilename = true;
+
+    [ObservableProperty]
+    private string selectedPlaybackFilenameColor = "White";
+
+    [ObservableProperty]
+    private bool showPlaybackTimestamp = true;
+
+    [ObservableProperty]
+    private string selectedPlaybackTimestampColor = "White";
+
     #endregion
 
     #region Advanced Tab Settings
@@ -259,6 +316,22 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         AnalysisFrameRate = 2;
         CooldownSeconds = 5;
 
+        // Recording Segmentation
+        EnableHourlySegmentation = true;
+        SelectedMaxRecordingDuration = DropDownItemsFactory.DefaultMaxRecordingDuration.ToString(CultureInfo.InvariantCulture);
+
+        // Media Cleanup
+        SelectedCleanupSchedule = DropDownItemsFactory.DefaultMediaCleanupSchedule;
+        SelectedRecordingRetention = DropDownItemsFactory.DefaultRecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
+        IncludeSnapshotsInCleanup = false;
+        SelectedSnapshotRetention = DropDownItemsFactory.DefaultSnapshotRetentionDays.ToString(CultureInfo.InvariantCulture);
+
+        // Playback Overlay
+        ShowPlaybackFilename = true;
+        SelectedPlaybackFilenameColor = "White";
+        ShowPlaybackTimestamp = true;
+        SelectedPlaybackTimestampColor = "White";
+
         // Advanced Tab
         EnableDebugLogging = false;
         LogPath = new DirectoryInfo(ApplicationPaths.DefaultLogsPath);
@@ -328,6 +401,22 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         PostMotionDurationSeconds = recording.MotionDetection.PostMotionDurationSeconds;
         AnalysisFrameRate = recording.MotionDetection.AnalysisFrameRate;
         CooldownSeconds = recording.MotionDetection.CooldownSeconds;
+
+        // Recording Segmentation Settings
+        EnableHourlySegmentation = recording.EnableHourlySegmentation;
+        SelectedMaxRecordingDuration = recording.MaxRecordingDurationMinutes.ToString(CultureInfo.InvariantCulture);
+
+        // Media Cleanup Settings
+        SelectedCleanupSchedule = recording.Cleanup.Schedule.ToString();
+        SelectedRecordingRetention = recording.Cleanup.RecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
+        IncludeSnapshotsInCleanup = recording.Cleanup.IncludeSnapshots;
+        SelectedSnapshotRetention = recording.Cleanup.SnapshotRetentionDays.ToString(CultureInfo.InvariantCulture);
+
+        // Playback Overlay Settings
+        ShowPlaybackFilename = recording.PlaybackOverlay.ShowFilename;
+        SelectedPlaybackFilenameColor = recording.PlaybackOverlay.FilenameColor;
+        ShowPlaybackTimestamp = recording.PlaybackOverlay.ShowTimestamp;
+        SelectedPlaybackTimestampColor = recording.PlaybackOverlay.TimestampColor;
 
         // Load Advanced Tab settings
         var advanced = settingsService.Advanced;
@@ -416,6 +505,11 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
 
     private void SaveRecordingSettings()
     {
+        _ = Enum.TryParse<MediaCleanupSchedule>(SelectedCleanupSchedule, out var cleanupSchedule);
+        _ = int.TryParse(SelectedRecordingRetention, NumberStyles.Integer, CultureInfo.InvariantCulture, out var recordingRetention);
+        _ = int.TryParse(SelectedSnapshotRetention, NumberStyles.Integer, CultureInfo.InvariantCulture, out var snapshotRetention);
+        _ = int.TryParse(SelectedMaxRecordingDuration, NumberStyles.Integer, CultureInfo.InvariantCulture, out var maxRecordingDuration);
+
         var settings = new RecordingSettings
         {
             RecordingPath = RecordingPath?.FullName ?? ApplicationPaths.DefaultRecordingsPath,
@@ -428,6 +522,22 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
                 PostMotionDurationSeconds = PostMotionDurationSeconds,
                 AnalysisFrameRate = AnalysisFrameRate,
                 CooldownSeconds = CooldownSeconds,
+            },
+            EnableHourlySegmentation = EnableHourlySegmentation,
+            MaxRecordingDurationMinutes = maxRecordingDuration > 0 ? maxRecordingDuration : DropDownItemsFactory.DefaultMaxRecordingDuration,
+            Cleanup = new MediaCleanupSettings
+            {
+                Schedule = cleanupSchedule,
+                RecordingRetentionDays = recordingRetention > 0 ? recordingRetention : DropDownItemsFactory.DefaultRecordingRetentionDays,
+                IncludeSnapshots = IncludeSnapshotsInCleanup,
+                SnapshotRetentionDays = snapshotRetention > 0 ? snapshotRetention : DropDownItemsFactory.DefaultSnapshotRetentionDays,
+            },
+            PlaybackOverlay = new PlaybackOverlaySettings
+            {
+                ShowFilename = ShowPlaybackFilename,
+                FilenameColor = SelectedPlaybackFilenameColor,
+                ShowTimestamp = ShowPlaybackTimestamp,
+                TimestampColor = SelectedPlaybackTimestampColor,
             },
         };
 

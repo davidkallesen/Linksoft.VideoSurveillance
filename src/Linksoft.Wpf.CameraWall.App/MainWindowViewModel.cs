@@ -205,6 +205,10 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         => Manager.ShowSettingsDialog();
 
     [RelayCommand]
+    private void ShowRecordingsBrowser()
+        => Manager.ShowRecordingsBrowserDialog();
+
+    [RelayCommand]
     private static void Exit()
         => Application.Current.Shutdown();
 }

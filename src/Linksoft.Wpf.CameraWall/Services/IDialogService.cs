@@ -106,4 +106,9 @@ public interface IDialogService
         string layoutName,
         IReadOnlyCollection<CameraConfiguration> availableCameras,
         IReadOnlyCollection<CameraConfiguration> assignedCameras);
+
+    /// <summary>
+    /// Shows the recordings browser dialog.
+    /// </summary>
+    void ShowRecordingsBrowserDialog();
 }

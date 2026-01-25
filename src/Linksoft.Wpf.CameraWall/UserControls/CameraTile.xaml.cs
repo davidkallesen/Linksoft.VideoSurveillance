@@ -1195,9 +1195,25 @@ public partial class CameraTile : IDisposable
         };
 
         // Use configured snapshot path as initial directory if available
-        if (!string.IsNullOrEmpty(SnapshotPath) && Directory.Exists(SnapshotPath))
+        if (!string.IsNullOrEmpty(SnapshotPath))
         {
-            dialog.InitialDirectory = SnapshotPath;
+            // Create the directory if it doesn't exist
+            if (!Directory.Exists(SnapshotPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(SnapshotPath);
+                }
+                catch
+                {
+                    // If we can't create the directory, fall back to default behavior
+                }
+            }
+
+            if (Directory.Exists(SnapshotPath))
+            {
+                dialog.InitialDirectory = SnapshotPath;
+            }
         }
 
         if (dialog.ShowDialog() == true)

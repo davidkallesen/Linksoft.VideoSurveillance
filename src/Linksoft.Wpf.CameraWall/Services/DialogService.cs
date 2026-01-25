@@ -246,4 +246,15 @@ public class DialogService : IDialogService
 
         return null;
     }
+
+    /// <inheritdoc />
+    public void ShowRecordingsBrowserDialog()
+    {
+        var viewModel = new RecordingsBrowserDialogViewModel(settingsService);
+        using var dialog = new RecordingsBrowserDialog(viewModel)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+        dialog.ShowDialog();
+    }
 }

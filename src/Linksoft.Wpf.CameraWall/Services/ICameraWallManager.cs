@@ -167,6 +167,11 @@ public interface ICameraWallManager : INotifyPropertyChanged
     void ShowSettingsDialog();
 
     /// <summary>
+    /// Shows the recordings browser dialog.
+    /// </summary>
+    void ShowRecordingsBrowserDialog();
+
+    /// <summary>
     /// Applies the display settings to the camera wall.
     /// </summary>
     void ApplyDisplaySettings();

@@ -192,6 +192,14 @@ public partial class CameraWallApp
             mainWindow.WindowState = WindowState.Maximized;
         }
 
+        // Initialize media cleanup service (90%)
+        var cleanupService = host.Services.GetRequiredService<IMediaCleanupService>();
+        cleanupService.Initialize();
+
+        // Initialize recording segmentation service
+        var segmentationService = host.Services.GetRequiredService<IRecordingSegmentationService>();
+        segmentationService.Initialize();
+
         // Complete (100%)
         AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeComplete, 100);
 
@@ -230,6 +238,14 @@ public partial class CameraWallApp
             recordingService.StopAllRecordings();
             logger!.LogInformation("All recordings stopped");
         }
+
+        // Stop recording segmentation service
+        var segmentationService = host.Services.GetService<IRecordingSegmentationService>();
+        segmentationService?.StopService();
+
+        // Stop media cleanup service
+        var cleanupService = host.Services.GetService<IMediaCleanupService>();
+        cleanupService?.StopService();
 
         await host
             .StopAsync()

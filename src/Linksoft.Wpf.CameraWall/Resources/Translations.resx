@@ -735,4 +735,136 @@
   <data name="MotionOverrides" xml:space="preserve">
     <value>Motion Detection Overrides</value>
   </data>
+  <data name="BrowseRecordings" xml:space="preserve">
+    <value>Browse Recordings</value>
+  </data>
+  <data name="AllCameras" xml:space="preserve">
+    <value>All Cameras</value>
+  </data>
+  <data name="RecordingCamera" xml:space="preserve">
+    <value>Camera</value>
+  </data>
+  <data name="RecordingDateTime" xml:space="preserve">
+    <value>Date/Time</value>
+  </data>
+  <data name="RecordingSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Thumbnail" xml:space="preserve">
+    <value>Thumbnail</value>
+  </data>
+  <data name="ThumbnailPreviewTitle1" xml:space="preserve">
+    <value>Thumbnail - {0}</value>
+  </data>
+  <data name="FileName" xml:space="preserve">
+    <value>File Name</value>
+  </data>
+  <data name="PlayRecording" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="DeleteRecording" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="OpenRecordingsFolder" xml:space="preserve">
+    <value>Open Folder</value>
+  </data>
+  <data name="ConfirmDeleteRecording" xml:space="preserve">
+    <value>Delete this recording?</value>
+  </data>
+  <data name="NoRecordingsFound" xml:space="preserve">
+    <value>No recordings found</value>
+  </data>
+  <data name="RecordingsFound1" xml:space="preserve">
+    <value>{0} recording(s) found</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Play" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="PressEscToClose" xml:space="preserve">
+    <value>Press ESC to close</value>
+  </data>
+  <data name="ClickOutsideToClose" xml:space="preserve">
+    <value>Click outside to close</value>
+  </data>
+  <data name="Recordings" xml:space="preserve">
+    <value>Recordings</value>
+  </data>
+  <data name="MediaCleanup" xml:space="preserve">
+    <value>Media Cleanup</value>
+  </data>
+  <data name="CleanupSchedule" xml:space="preserve">
+    <value>Cleanup schedule</value>
+  </data>
+  <data name="RecordingRetention" xml:space="preserve">
+    <value>Recording retention</value>
+  </data>
+  <data name="SnapshotRetention" xml:space="preserve">
+    <value>Snapshot retention</value>
+  </data>
+  <data name="IncludeSnapshotsInCleanup" xml:space="preserve">
+    <value>Include snapshots in cleanup</value>
+  </data>
+  <data name="CleanupScheduleDisabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="CleanupScheduleOnStartup" xml:space="preserve">
+    <value>On Application Startup</value>
+  </data>
+  <data name="CleanupScheduleOnStartupAndPeriodically" xml:space="preserve">
+    <value>On Startup and Every 6 Hours</value>
+  </data>
+  <data name="RetentionPeriod7Days" xml:space="preserve">
+    <value>7 Days</value>
+  </data>
+  <data name="RetentionPeriod14Days" xml:space="preserve">
+    <value>14 Days</value>
+  </data>
+  <data name="RetentionPeriod30Days" xml:space="preserve">
+    <value>30 Days</value>
+  </data>
+  <data name="RetentionPeriod60Days" xml:space="preserve">
+    <value>60 Days</value>
+  </data>
+  <data name="RetentionPeriod90Days" xml:space="preserve">
+    <value>90 Days</value>
+  </data>
+  <data name="RetentionPeriod6Months" xml:space="preserve">
+    <value>6 Months</value>
+  </data>
+  <data name="RetentionPeriod1Year" xml:space="preserve">
+    <value>1 Year</value>
+  </data>
+  <data name="RecordingSegmentation" xml:space="preserve">
+    <value>Recording Segmentation</value>
+  </data>
+  <data name="EnableHourlySegmentation" xml:space="preserve">
+    <value>Enable hourly segmentation</value>
+  </data>
+  <data name="MaxRecordingDuration" xml:space="preserve">
+    <value>Maximum recording duration</value>
+  </data>
+  <data name="PlaybackOverlaySettings" xml:space="preserve">
+    <value>Playback Overlay Settings</value>
+  </data>
+  <data name="ShowPlaybackFilename" xml:space="preserve">
+    <value>Show filename</value>
+  </data>
+  <data name="PlaybackFilenameColor" xml:space="preserve">
+    <value>Filename color</value>
+  </data>
+  <data name="ShowPlaybackTimestamp" xml:space="preserve">
+    <value>Show timestamp</value>
+  </data>
+  <data name="PlaybackTimestampColor" xml:space="preserve">
+    <value>Timestamp color</value>
+  </data>
 </root>

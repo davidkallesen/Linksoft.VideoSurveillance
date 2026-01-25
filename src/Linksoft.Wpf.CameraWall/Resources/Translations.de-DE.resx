@@ -735,4 +735,118 @@
   <data name="MotionOverrides" xml:space="preserve">
     <value>Bewegungserkennung-Überschreibungen</value>
   </data>
+  <data name="BrowseRecordings" xml:space="preserve">
+    <value>Aufnahmen durchsuchen</value>
+  </data>
+  <data name="AllCameras" xml:space="preserve">
+    <value>Alle Kameras</value>
+  </data>
+  <data name="RecordingCamera" xml:space="preserve">
+    <value>Kamera</value>
+  </data>
+  <data name="RecordingDateTime" xml:space="preserve">
+    <value>Datum/Zeit</value>
+  </data>
+  <data name="RecordingSize" xml:space="preserve">
+    <value>Größe</value>
+  </data>
+  <data name="Thumbnail" xml:space="preserve">
+    <value>Vorschaubild</value>
+  </data>
+  <data name="ThumbnailPreviewTitle1" xml:space="preserve">
+    <value>Vorschaubild - {0}</value>
+  </data>
+  <data name="FileName" xml:space="preserve">
+    <value>Dateiname</value>
+  </data>
+  <data name="PlayRecording" xml:space="preserve">
+    <value>Abspielen</value>
+  </data>
+  <data name="DeleteRecording" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="OpenRecordingsFolder" xml:space="preserve">
+    <value>Ordner öffnen</value>
+  </data>
+  <data name="ConfirmDeleteRecording" xml:space="preserve">
+    <value>Diese Aufnahme löschen?</value>
+  </data>
+  <data name="NoRecordingsFound" xml:space="preserve">
+    <value>Keine Aufnahmen gefunden</value>
+  </data>
+  <data name="RecordingsFound1" xml:space="preserve">
+    <value>{0} Aufnahme(n) gefunden</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Aktualisieren</value>
+  </data>
+  <data name="Play" xml:space="preserve">
+    <value>Abspielen</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Stopp</value>
+  </data>
+  <data name="PressEscToClose" xml:space="preserve">
+    <value>ESC drücken zum Schließen</value>
+  </data>
+  <data name="Recordings" xml:space="preserve">
+    <value>Aufnahmen</value>
+  </data>
+  <data name="MediaCleanup" xml:space="preserve">
+    <value>Medienbereinigung</value>
+  </data>
+  <data name="CleanupSchedule" xml:space="preserve">
+    <value>Bereinigungsplan</value>
+  </data>
+  <data name="RecordingRetention" xml:space="preserve">
+    <value>Aufnahmen aufbewahren</value>
+  </data>
+  <data name="SnapshotRetention" xml:space="preserve">
+    <value>Schnappschüsse aufbewahren</value>
+  </data>
+  <data name="IncludeSnapshotsInCleanup" xml:space="preserve">
+    <value>Schnappschüsse in Bereinigung einbeziehen</value>
+  </data>
+  <data name="CleanupScheduleDisabled" xml:space="preserve">
+    <value>Deaktiviert</value>
+  </data>
+  <data name="CleanupScheduleOnStartup" xml:space="preserve">
+    <value>Beim Programmstart</value>
+  </data>
+  <data name="CleanupScheduleOnStartupAndPeriodically" xml:space="preserve">
+    <value>Beim Start und alle 6 Stunden</value>
+  </data>
+  <data name="RetentionPeriod7Days" xml:space="preserve">
+    <value>7 Tage</value>
+  </data>
+  <data name="RetentionPeriod14Days" xml:space="preserve">
+    <value>14 Tage</value>
+  </data>
+  <data name="RetentionPeriod30Days" xml:space="preserve">
+    <value>30 Tage</value>
+  </data>
+  <data name="RetentionPeriod60Days" xml:space="preserve">
+    <value>60 Tage</value>
+  </data>
+  <data name="RetentionPeriod90Days" xml:space="preserve">
+    <value>90 Tage</value>
+  </data>
+  <data name="RetentionPeriod6Months" xml:space="preserve">
+    <value>6 Monate</value>
+  </data>
+  <data name="RetentionPeriod1Year" xml:space="preserve">
+    <value>1 Jahr</value>
+  </data>
+  <data name="RecordingSegmentation" xml:space="preserve">
+    <value>Aufnahme-Segmentierung</value>
+  </data>
+  <data name="EnableHourlySegmentation" xml:space="preserve">
+    <value>Stündliche Segmentierung aktivieren</value>
+  </data>
+  <data name="MaxRecordingDuration" xml:space="preserve">
+    <value>Maximale Aufnahmedauer</value>
+  </data>
 </root>

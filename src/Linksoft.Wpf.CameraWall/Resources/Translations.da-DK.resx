@@ -735,4 +735,118 @@
   <data name="MotionOverrides" xml:space="preserve">
     <value>Bevægelsesregistrering tilsidesættelser</value>
   </data>
+  <data name="BrowseRecordings" xml:space="preserve">
+    <value>Gennemse optagelser</value>
+  </data>
+  <data name="AllCameras" xml:space="preserve">
+    <value>Alle kameraer</value>
+  </data>
+  <data name="RecordingCamera" xml:space="preserve">
+    <value>Kamera</value>
+  </data>
+  <data name="RecordingDateTime" xml:space="preserve">
+    <value>Dato/tid</value>
+  </data>
+  <data name="RecordingSize" xml:space="preserve">
+    <value>Størrelse</value>
+  </data>
+  <data name="Thumbnail" xml:space="preserve">
+    <value>Miniature</value>
+  </data>
+  <data name="ThumbnailPreviewTitle1" xml:space="preserve">
+    <value>Miniature - {0}</value>
+  </data>
+  <data name="FileName" xml:space="preserve">
+    <value>Filnavn</value>
+  </data>
+  <data name="PlayRecording" xml:space="preserve">
+    <value>Afspil</value>
+  </data>
+  <data name="DeleteRecording" xml:space="preserve">
+    <value>Slet</value>
+  </data>
+  <data name="OpenRecordingsFolder" xml:space="preserve">
+    <value>Åbn mappe</value>
+  </data>
+  <data name="ConfirmDeleteRecording" xml:space="preserve">
+    <value>Slet denne optagelse?</value>
+  </data>
+  <data name="NoRecordingsFound" xml:space="preserve">
+    <value>Ingen optagelser fundet</value>
+  </data>
+  <data name="RecordingsFound1" xml:space="preserve">
+    <value>{0} optagelse(r) fundet</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Opdater</value>
+  </data>
+  <data name="Play" xml:space="preserve">
+    <value>Afspil</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="PressEscToClose" xml:space="preserve">
+    <value>Tryk ESC for at lukke</value>
+  </data>
+  <data name="Recordings" xml:space="preserve">
+    <value>Optagelser</value>
+  </data>
+  <data name="MediaCleanup" xml:space="preserve">
+    <value>Medieoprydning</value>
+  </data>
+  <data name="CleanupSchedule" xml:space="preserve">
+    <value>Oprydningsplan</value>
+  </data>
+  <data name="RecordingRetention" xml:space="preserve">
+    <value>Optagelsesopbevaring</value>
+  </data>
+  <data name="SnapshotRetention" xml:space="preserve">
+    <value>Snapshotopbevaring</value>
+  </data>
+  <data name="IncludeSnapshotsInCleanup" xml:space="preserve">
+    <value>Inkluder snapshots i oprydning</value>
+  </data>
+  <data name="CleanupScheduleDisabled" xml:space="preserve">
+    <value>Deaktiveret</value>
+  </data>
+  <data name="CleanupScheduleOnStartup" xml:space="preserve">
+    <value>Ved programstart</value>
+  </data>
+  <data name="CleanupScheduleOnStartupAndPeriodically" xml:space="preserve">
+    <value>Ved start og hver 6. time</value>
+  </data>
+  <data name="RetentionPeriod7Days" xml:space="preserve">
+    <value>7 dage</value>
+  </data>
+  <data name="RetentionPeriod14Days" xml:space="preserve">
+    <value>14 dage</value>
+  </data>
+  <data name="RetentionPeriod30Days" xml:space="preserve">
+    <value>30 dage</value>
+  </data>
+  <data name="RetentionPeriod60Days" xml:space="preserve">
+    <value>60 dage</value>
+  </data>
+  <data name="RetentionPeriod90Days" xml:space="preserve">
+    <value>90 dage</value>
+  </data>
+  <data name="RetentionPeriod6Months" xml:space="preserve">
+    <value>6 måneder</value>
+  </data>
+  <data name="RetentionPeriod1Year" xml:space="preserve">
+    <value>1 år</value>
+  </data>
+  <data name="RecordingSegmentation" xml:space="preserve">
+    <value>Optagelsessegmentering</value>
+  </data>
+  <data name="EnableHourlySegmentation" xml:space="preserve">
+    <value>Aktiver segmentering pr. time</value>
+  </data>
+  <data name="MaxRecordingDuration" xml:space="preserve">
+    <value>Maksimal optagelsesvarighed</value>
+  </data>
 </root>

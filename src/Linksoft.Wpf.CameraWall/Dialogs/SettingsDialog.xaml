@@ -417,6 +417,107 @@
                                     Value="{Binding Path=CooldownSeconds, Mode=TwoWay}" />
                             </StackPanel>
                         </GroupBox>
+
+                        <!--  Recording Segmentation Settings Group  -->
+                        <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=RecordingSegmentation}">
+                            <StackPanel Orientation="Vertical">
+                                <atc:LabelCheckBox
+                                    HideAreas="InformationAndValidation"
+                                    IsChecked="{Binding Path=EnableHourlySegmentation, Mode=TwoWay}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=EnableHourlySegmentation}"
+                                    LabelWidthNumber="250"
+                                    LabelWidthSizeDefinition="Pixel" />
+
+                                <atc:LabelComboBox
+                                    HideAreas="InformationAndValidation"
+                                    IsEnabled="{Binding Path=EnableHourlySegmentation}"
+                                    Items="{Binding Path=MaxRecordingDurationItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=MaxRecordingDuration}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedMaxRecordingDuration, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!--  Media Cleanup Settings Group  -->
+                        <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=MediaCleanup}">
+                            <StackPanel Orientation="Vertical">
+                                <atc:LabelComboBox
+                                    HideAreas="InformationAndValidation"
+                                    Items="{Binding Path=CleanupScheduleItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=CleanupSchedule}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedCleanupSchedule, Mode=TwoWay}" />
+
+                                <atc:LabelComboBox
+                                    HideAreas="InformationAndValidation"
+                                    IsEnabled="{Binding Path=IsCleanupEnabled}"
+                                    Items="{Binding Path=RecordingRetentionItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=RecordingRetention}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedRecordingRetention, Mode=TwoWay}" />
+
+                                <atc:LabelCheckBox
+                                    HideAreas="InformationAndValidation"
+                                    IsChecked="{Binding Path=IncludeSnapshotsInCleanup, Mode=TwoWay}"
+                                    IsEnabled="{Binding Path=IsCleanupEnabled}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=IncludeSnapshotsInCleanup}"
+                                    LabelWidthNumber="250"
+                                    LabelWidthSizeDefinition="Pixel" />
+
+                                <atc:LabelComboBox
+                                    HideAreas="InformationAndValidation"
+                                    IsEnabled="{Binding Path=IsSnapshotRetentionEnabled}"
+                                    Items="{Binding Path=SnapshotRetentionItems}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=SnapshotRetention}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedSnapshotRetention, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!--  Playback Overlay Settings Group  -->
+                        <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=PlaybackOverlaySettings}">
+                            <StackPanel Orientation="Vertical">
+                                <atc:LabelCheckBox
+                                    HideAreas="InformationAndValidation"
+                                    IsChecked="{Binding Path=ShowPlaybackFilename, Mode=TwoWay}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=ShowPlaybackFilename}"
+                                    LabelWidthNumber="250"
+                                    LabelWidthSizeDefinition="Pixel" />
+
+                                <atc:LabelWellKnownColorSelector
+                                    HideAreas="InformationAndValidation"
+                                    IsEnabled="{Binding Path=ShowPlaybackFilename}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=PlaybackFilenameColor}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedPlaybackFilenameColor, Mode=TwoWay}"
+                                    UseOnlyBasicColors="True" />
+
+                                <atc:LabelCheckBox
+                                    HideAreas="InformationAndValidation"
+                                    IsChecked="{Binding Path=ShowPlaybackTimestamp, Mode=TwoWay}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=ShowPlaybackTimestamp}"
+                                    LabelWidthNumber="250"
+                                    LabelWidthSizeDefinition="Pixel" />
+
+                                <atc:LabelWellKnownColorSelector
+                                    HideAreas="InformationAndValidation"
+                                    IsEnabled="{Binding Path=ShowPlaybackTimestamp}"
+                                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                                    Key=PlaybackTimestampColor}"
+                                    Orientation="Vertical"
+                                    SelectedKey="{Binding Path=SelectedPlaybackTimestampColor, Mode=TwoWay}"
+                                    UseOnlyBasicColors="True" />
+                            </StackPanel>
+                        </GroupBox>
                     </atc:UniformSpacingPanel>
                 </ScrollViewer>
             </TabItem>

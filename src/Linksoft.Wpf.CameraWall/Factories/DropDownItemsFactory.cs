@@ -30,12 +30,12 @@ public static class DropDownItemsFactory
 
     /// <summary>
     /// Gets the recording format options for dropdowns.
+    /// Note: AVI removed as it doesn't properly support H.264/H.265 codecs used by modern IP cameras.
     /// </summary>
     public static IDictionary<string, string> RecordingFormatItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["mp4"] = "MP4 (H.264)",
         ["mkv"] = "MKV (Matroska)",
-        ["avi"] = "AVI",
     };
 
     /// <summary>
@@ -102,6 +102,43 @@ public static class DropDownItemsFactory
     };
 
     /// <summary>
+    /// Gets the media cleanup schedule options for dropdowns.
+    /// </summary>
+    public static IDictionary<string, string> MediaCleanupScheduleItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Disabled"] = "Disabled",
+        ["OnStartup"] = "On Application Startup",
+        ["OnStartupAndPeriodically"] = "On Startup and Every 6 Hours",
+    };
+
+    /// <summary>
+    /// Gets the media retention period options for dropdowns (in days).
+    /// </summary>
+    public static IDictionary<string, string> MediaRetentionPeriodItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["7"] = "7 Days",
+        ["14"] = "14 Days",
+        ["30"] = "30 Days",
+        ["60"] = "60 Days",
+        ["90"] = "90 Days",
+        ["180"] = "6 Months",
+        ["365"] = "1 Year",
+    };
+
+    /// <summary>
+    /// Gets the maximum recording duration options for dropdowns (in minutes).
+    /// </summary>
+    public static IDictionary<string, string> MaxRecordingDurationItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["15"] = "15 minutes",
+        ["30"] = "30 minutes",
+        ["60"] = "1 hour",
+        ["120"] = "2 hours",
+        ["180"] = "3 hours",
+        ["240"] = "4 hours",
+    };
+
+    /// <summary>
     /// Gets the default video quality value.
     /// </summary>
     public const string DefaultVideoQuality = "Auto";
@@ -140,6 +177,26 @@ public static class DropDownItemsFactory
     /// Gets the default post-motion duration in seconds.
     /// </summary>
     public const int DefaultPostMotionDuration = 10;
+
+    /// <summary>
+    /// Gets the default media cleanup schedule.
+    /// </summary>
+    public const string DefaultMediaCleanupSchedule = "Disabled";
+
+    /// <summary>
+    /// Gets the default recording retention period in days.
+    /// </summary>
+    public const int DefaultRecordingRetentionDays = 30;
+
+    /// <summary>
+    /// Gets the default snapshot retention period in days.
+    /// </summary>
+    public const int DefaultSnapshotRetentionDays = 7;
+
+    /// <summary>
+    /// Gets the default maximum recording duration in minutes.
+    /// </summary>
+    public const int DefaultMaxRecordingDuration = 60;
 
     /// <summary>
     /// Converts a video quality setting to the maximum vertical resolution in pixels.

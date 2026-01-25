@@ -23,6 +23,7 @@ global using System.Windows.Input;
 global using System.Windows.Interop;
 global using System.Windows.Media;
 global using System.Windows.Media.Animation;
+global using System.Windows.Media.Imaging;
 global using System.Windows.Threading;
 
 global using Atc;
@@ -37,7 +38,6 @@ global using Atc.Wpf.Forms;
 global using Atc.Wpf.Helpers;
 global using Atc.Wpf.Network;
 global using Atc.Wpf.Translation;
-global using Atc.XamlToolkit;
 global using Atc.XamlToolkit.Controls.Attributes;
 global using Atc.XamlToolkit.Messaging;
 global using Atc.XamlToolkit.Mvvm;

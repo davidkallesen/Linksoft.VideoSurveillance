@@ -564,6 +564,10 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         }
     }
 
+    /// <inheritdoc />
+    public void ShowRecordingsBrowserDialog()
+        => dialogService.ShowRecordingsBrowserDialog();
+
     private void OnCurrentLayoutChangedCallback()
     {
         if (CameraGrid is null || CurrentLayout is null)

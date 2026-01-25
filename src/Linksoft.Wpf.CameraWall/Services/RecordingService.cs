@@ -9,6 +9,8 @@ public class RecordingService : IRecordingService, IDisposable
 {
     private readonly ILogger<RecordingService> logger;
     private readonly IApplicationSettingsService settingsService;
+    private readonly IThumbnailGeneratorService thumbnailService;
+    private readonly ICameraStorageService cameraStorageService;
     private readonly ConcurrentDictionary<Guid, RecordingSession> sessions = new();
     private readonly ConcurrentDictionary<Guid, Player> players = new();
     private readonly ConcurrentDictionary<Guid, DispatcherTimer> postMotionTimers = new();
@@ -19,12 +21,18 @@ public class RecordingService : IRecordingService, IDisposable
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="settingsService">The application settings service.</param>
+    /// <param name="thumbnailService">The thumbnail generator service.</param>
+    /// <param name="cameraStorageService">The camera storage service.</param>
     public RecordingService(
         ILogger<RecordingService> logger,
-        IApplicationSettingsService settingsService)
+        IApplicationSettingsService settingsService,
+        IThumbnailGeneratorService thumbnailService,
+        ICameraStorageService cameraStorageService)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        this.thumbnailService = thumbnailService ?? throw new ArgumentNullException(nameof(thumbnailService));
+        this.cameraStorageService = cameraStorageService ?? throw new ArgumentNullException(nameof(cameraStorageService));
     }
 
     /// <inheritdoc/>
@@ -74,8 +82,8 @@ public class RecordingService : IRecordingService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            // Start FlyleafLib recording
-            player.StartRecording(ref filePath);
+            // Start FlyleafLib recording (useRecommendedExtension=false to use our format)
+            player.StartRecording(ref filePath, useRecommendedExtension: false);
 
             // Create session
             var session = new RecordingSession(camera.Id, filePath, isManualRecording: true);
@@ -96,6 +104,9 @@ public class RecordingService : IRecordingService, IDisposable
             // Raise event
             OnRecordingStateChanged(camera.Id, RecordingState.Idle, RecordingState.Recording, filePath);
 
+            // Start thumbnail capture
+            thumbnailService.StartCapture(camera.Id, player, filePath);
+
             return true;
         }
         catch (Exception ex)
@@ -108,6 +119,9 @@ public class RecordingService : IRecordingService, IDisposable
     /// <inheritdoc/>
     public void StopRecording(Guid cameraId)
     {
+        // Stop thumbnail capture first (generates thumbnail with captured frames)
+        thumbnailService.StopCapture(cameraId);
+
         if (!sessions.TryRemove(cameraId, out var session))
         {
             return;
@@ -119,7 +133,10 @@ public class RecordingService : IRecordingService, IDisposable
         StopPostMotionTimer(cameraId);
 
         // Stop FlyleafLib recording
+        // Note: Player is owned by CameraTile, not RecordingService - we just hold a reference for recording
+#pragma warning disable CA2000 // Player is owned and disposed by CameraTile
         if (players.TryRemove(cameraId, out var player))
+#pragma warning restore CA2000
         {
             try
             {
@@ -176,8 +193,8 @@ public class RecordingService : IRecordingService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            // Start FlyleafLib recording
-            player.StartRecording(ref filePath);
+            // Start FlyleafLib recording (useRecommendedExtension=false to use our format)
+            player.StartRecording(ref filePath, useRecommendedExtension: false);
 
             // Create session
             var session = new RecordingSession(camera.Id, filePath, isManualRecording: false)
@@ -204,6 +221,9 @@ public class RecordingService : IRecordingService, IDisposable
 
             // Raise event
             OnRecordingStateChanged(camera.Id, RecordingState.Idle, RecordingState.RecordingMotion, filePath);
+
+            // Start thumbnail capture
+            thumbnailService.StartCapture(camera.Id, player, filePath);
 
             return true;
         }
@@ -247,8 +267,8 @@ public class RecordingService : IRecordingService, IDisposable
         // Create camera subfolder
         var cameraFolder = Path.Combine(basePath, safeDisplayName);
 
-        // Generate filename without extension - FlyleafLib adds the extension via StartRecording(ref filePath)
-        var filename = $"{safeDisplayName}_{timestamp}";
+        // Generate filename with the specified format extension
+        var filename = $"{safeDisplayName}_{timestamp}.{format}";
 
         return Path.Combine(cameraFolder, filename);
     }
@@ -277,6 +297,112 @@ public class RecordingService : IRecordingService, IDisposable
 
         postMotionTimers.Clear();
     }
+
+    /// <inheritdoc/>
+    public bool SegmentRecording(Guid cameraId)
+    {
+        // Get the current session
+        if (!sessions.TryGetValue(cameraId, out var session))
+        {
+            logger.LogDebug("No active session for camera ID: {CameraId}, cannot segment", cameraId);
+            return false;
+        }
+
+        // Get the player
+        if (!players.TryGetValue(cameraId, out var player))
+        {
+            logger.LogWarning("No player found for camera ID: {CameraId}, cannot segment", cameraId);
+            return false;
+        }
+
+        // Get camera configuration
+        var camera = cameraStorageService.GetCameraById(cameraId);
+        if (camera is null)
+        {
+            logger.LogWarning("Camera not found for ID: {CameraId}, cannot segment", cameraId);
+            return false;
+        }
+
+        // Preserve recording type and motion state
+        var isManualRecording = session.IsManualRecording;
+        var lastMotionTime = session.LastMotionTime;
+        var oldState = session.State;
+        var oldFilePath = session.CurrentFilePath;
+
+        logger.LogInformation(
+            "Segmenting recording for camera: {CameraName}, old file: {OldFilePath}",
+            camera.Display.DisplayName,
+            oldFilePath);
+
+        try
+        {
+            // 1. Stop thumbnail capture for the old segment
+            thumbnailService.StopCapture(cameraId);
+
+            // 2. Stop FlyleafLib recording
+            player.StopRecording();
+
+            // 3. Remove old session
+            sessions.TryRemove(cameraId, out _);
+
+            // 4. Fire state changed event for old segment completion
+            OnRecordingStateChanged(cameraId, oldState, RecordingState.Idle, oldFilePath);
+
+            // 5. Generate new filename with current timestamp
+            var format = GetEffectiveRecordingFormat(camera);
+            var newFilePath = GenerateRecordingFilename(camera, format);
+
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(newFilePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // 6. Start new FlyleafLib recording (useRecommendedExtension=false to use our format)
+            player.StartRecording(ref newFilePath, useRecommendedExtension: false);
+
+            // 7. Create new session with preserved state
+            var newState = isManualRecording ? RecordingState.Recording : RecordingState.RecordingMotion;
+            var newSession = new RecordingSession(cameraId, newFilePath, isManualRecording)
+            {
+                LastMotionTime = lastMotionTime,
+                State = newState,
+            };
+
+            if (!sessions.TryAdd(cameraId, newSession))
+            {
+                player.StopRecording();
+                logger.LogError("Failed to add new session for camera ID: {CameraId}", cameraId);
+                return false;
+            }
+
+            // Keep player reference
+            players[cameraId] = player;
+
+            logger.LogInformation(
+                "Recording segmented for camera: {CameraName}, new file: {NewFilePath}",
+                camera.Display.DisplayName,
+                newFilePath);
+
+            // 8. Fire state changed events for new segment start
+            OnRecordingStateChanged(cameraId, RecordingState.Idle, newState, newFilePath);
+
+            // 9. Start thumbnail capture for new segment
+            thumbnailService.StartCapture(cameraId, player, newFilePath);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to segment recording for camera: {CameraName}", camera.Display.DisplayName);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public IReadOnlyList<RecordingSession> GetActiveSessions()
+        => sessions.Values.ToList();
 
     /// <summary>
     /// Disposes of the service resources.

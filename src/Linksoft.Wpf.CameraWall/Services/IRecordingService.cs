@@ -79,4 +79,18 @@ public interface IRecordingService
     /// to ensure all recording files are properly finalized.
     /// </summary>
     void StopAllRecordings();
+
+    /// <summary>
+    /// Segments an active recording by stopping the current recording and starting a new one
+    /// with a new filename. The recording type (manual or motion) is preserved.
+    /// </summary>
+    /// <param name="cameraId">The camera ID.</param>
+    /// <returns>True if segmentation was successful; otherwise, false.</returns>
+    bool SegmentRecording(Guid cameraId);
+
+    /// <summary>
+    /// Gets all active recording sessions.
+    /// </summary>
+    /// <returns>A read-only list of active recording sessions.</returns>
+    IReadOnlyList<RecordingSession> GetActiveSessions();
 }

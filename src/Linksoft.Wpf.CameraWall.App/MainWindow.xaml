@@ -167,7 +167,19 @@
             </fluent:RibbonTabItem>
 
             <!--  View Tab  -->
-            <fluent:RibbonTabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=View}" />
+            <fluent:RibbonTabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=View}">
+                <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Recordings}">
+                    <fluent:Button
+                        Command="{Binding Path=ShowRecordingsBrowserCommand}"
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=BrowseRecordings}"
+                        Size="Large">
+                        <fluent:Button.LargeIcon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Film" />
+                        </fluent:Button.LargeIcon>
+                    </fluent:Button>
+                </fluent:RibbonGroupBox>
+            </fluent:RibbonTabItem>
         </fluent:Ribbon>
 
         <!--  Camera Grid  -->

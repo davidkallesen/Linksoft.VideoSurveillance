@@ -142,6 +142,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to All Cameras.
+        /// </summary>
+        public static string AllCameras {
+            get {
+                return ResourceManager.GetString("AllCameras", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to All cameras reconnected.
         /// </summary>
         public static string AllCamerasReconnected {
@@ -268,6 +277,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Browse Recordings.
+        /// </summary>
+        public static string BrowseRecordings {
+            get {
+                return ResourceManager.GetString("BrowseRecordings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Buffer duration (ms).
         /// </summary>
         public static string BufferDurationMs {
@@ -385,6 +403,51 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cleanup schedule.
+        /// </summary>
+        public static string CleanupSchedule {
+            get {
+                return ResourceManager.GetString("CleanupSchedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Disabled.
+        /// </summary>
+        public static string CleanupScheduleDisabled {
+            get {
+                return ResourceManager.GetString("CleanupScheduleDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to On Application Startup.
+        /// </summary>
+        public static string CleanupScheduleOnStartup {
+            get {
+                return ResourceManager.GetString("CleanupScheduleOnStartup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to On Startup and Every 6 Hours.
+        /// </summary>
+        public static string CleanupScheduleOnStartupAndPeriodically {
+            get {
+                return ResourceManager.GetString("CleanupScheduleOnStartupAndPeriodically", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Click outside to close.
+        /// </summary>
+        public static string ClickOutsideToClose {
+            get {
+                return ResourceManager.GetString("ClickOutsideToClose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Close.
         /// </summary>
         public static string Close {
@@ -408,6 +471,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string ConfirmDeleteLayout1 {
             get {
                 return ResourceManager.GetString("ConfirmDeleteLayout1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Delete this recording?.
+        /// </summary>
+        public static string ConfirmDeleteRecording {
+            get {
+                return ResourceManager.GetString("ConfirmDeleteRecording", resourceCulture);
             }
         }
         
@@ -610,6 +682,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Delete.
+        /// </summary>
+        public static string DeleteRecording {
+            get {
+                return ResourceManager.GetString("DeleteRecording", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Description.
         /// </summary>
         public static string Description {
@@ -709,6 +790,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enable hourly segmentation.
+        /// </summary>
+        public static string EnableHourlySegmentation {
+            get {
+                return ResourceManager.GetString("EnableHourlySegmentation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Start recording on connect.
         /// </summary>
         public static string EnableRecordingOnConnect {
@@ -772,6 +862,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to File Name.
+        /// </summary>
+        public static string FileName {
+            get {
+                return ResourceManager.GetString("FileName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Full screen: {0}.
         /// </summary>
         public static string FullScreenCamera1 {
@@ -804,6 +903,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string HardwareAcceleration {
             get {
                 return ResourceManager.GetString("HardwareAcceleration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Include snapshots in cleanup.
+        /// </summary>
+        public static string IncludeSnapshotsInCleanup {
+            get {
+                return ResourceManager.GetString("IncludeSnapshotsInCleanup", resourceCulture);
             }
         }
         
@@ -1051,6 +1159,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Maximum recording duration.
+        /// </summary>
+        public static string MaxRecordingDuration {
+            get {
+                return ResourceManager.GetString("MaxRecordingDuration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Media Cleanup.
+        /// </summary>
+        public static string MediaCleanup {
+            get {
+                return ResourceManager.GetString("MediaCleanup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Minimum change percentage.
         /// </summary>
         public static string MinimumChangePercent {
@@ -1204,6 +1330,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No recordings found.
+        /// </summary>
+        public static string NoRecordingsFound {
+            get {
+                return ResourceManager.GetString("NoRecordingsFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Notifications.
         /// </summary>
         public static string Notifications {
@@ -1227,6 +1362,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string Ok {
             get {
                 return ResourceManager.GetString("Ok", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open Folder.
+        /// </summary>
+        public static string OpenRecordingsFolder {
+            get {
+                return ResourceManager.GetString("OpenRecordingsFolder", resourceCulture);
             }
         }
         
@@ -1294,6 +1438,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Pause.
+        /// </summary>
+        public static string Pause {
+            get {
+                return ResourceManager.GetString("Pause", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Performance.
         /// </summary>
         public static string Performance {
@@ -1312,11 +1465,56 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Play.
+        /// </summary>
+        public static string Play {
+            get {
+                return ResourceManager.GetString("Play", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Filename color.
+        /// </summary>
+        public static string PlaybackFilenameColor {
+            get {
+                return ResourceManager.GetString("PlaybackFilenameColor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Playback Overlay Settings.
+        /// </summary>
+        public static string PlaybackOverlaySettings {
+            get {
+                return ResourceManager.GetString("PlaybackOverlaySettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timestamp color.
+        /// </summary>
+        public static string PlaybackTimestampColor {
+            get {
+                return ResourceManager.GetString("PlaybackTimestampColor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Play notification sound.
         /// </summary>
         public static string PlayNotificationSound {
             get {
                 return ResourceManager.GetString("PlayNotificationSound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Play.
+        /// </summary>
+        public static string PlayRecording {
+            get {
+                return ResourceManager.GetString("PlayRecording", resourceCulture);
             }
         }
         
@@ -1353,6 +1551,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string PostMotionDuration {
             get {
                 return ResourceManager.GetString("PostMotionDuration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Press ESC to close.
+        /// </summary>
+        public static string PressEscToClose {
+            get {
+                return ResourceManager.GetString("PressEscToClose", resourceCulture);
             }
         }
         
@@ -1438,6 +1645,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Camera.
+        /// </summary>
+        public static string RecordingCamera {
+            get {
+                return ResourceManager.GetString("RecordingCamera", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Date/Time.
+        /// </summary>
+        public static string RecordingDateTime {
+            get {
+                return ResourceManager.GetString("RecordingDateTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Recording failed: {0}.
         /// </summary>
         public static string RecordingFailed1 {
@@ -1474,11 +1699,56 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Recording retention.
+        /// </summary>
+        public static string RecordingRetention {
+            get {
+                return ResourceManager.GetString("RecordingRetention", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recordings.
+        /// </summary>
+        public static string Recordings {
+            get {
+                return ResourceManager.GetString("Recordings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recording Segmentation.
+        /// </summary>
+        public static string RecordingSegmentation {
+            get {
+                return ResourceManager.GetString("RecordingSegmentation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Recording Settings.
         /// </summary>
         public static string RecordingSettings {
             get {
                 return ResourceManager.GetString("RecordingSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} recording(s) found.
+        /// </summary>
+        public static string RecordingsFound1 {
+            get {
+                return ResourceManager.GetString("RecordingsFound1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Size.
+        /// </summary>
+        public static string RecordingSize {
+            get {
+                return ResourceManager.GetString("RecordingSize", resourceCulture);
             }
         }
         
@@ -1497,6 +1767,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string RecordingStopped1 {
             get {
                 return ResourceManager.GetString("RecordingStopped1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Refresh.
+        /// </summary>
+        public static string Refresh {
+            get {
+                return ResourceManager.GetString("Refresh", resourceCulture);
             }
         }
         
@@ -1524,6 +1803,69 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string RestoreDefaults {
             get {
                 return ResourceManager.GetString("RestoreDefaults", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 14 Days.
+        /// </summary>
+        public static string RetentionPeriod14Days {
+            get {
+                return ResourceManager.GetString("RetentionPeriod14Days", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 Year.
+        /// </summary>
+        public static string RetentionPeriod1Year {
+            get {
+                return ResourceManager.GetString("RetentionPeriod1Year", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 30 Days.
+        /// </summary>
+        public static string RetentionPeriod30Days {
+            get {
+                return ResourceManager.GetString("RetentionPeriod30Days", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 60 Days.
+        /// </summary>
+        public static string RetentionPeriod60Days {
+            get {
+                return ResourceManager.GetString("RetentionPeriod60Days", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 6 Months.
+        /// </summary>
+        public static string RetentionPeriod6Months {
+            get {
+                return ResourceManager.GetString("RetentionPeriod6Months", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 7 Days.
+        /// </summary>
+        public static string RetentionPeriod7Days {
+            get {
+                return ResourceManager.GetString("RetentionPeriod7Days", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 90 Days.
+        /// </summary>
+        public static string RetentionPeriod90Days {
+            get {
+                return ResourceManager.GetString("RetentionPeriod90Days", resourceCulture);
             }
         }
         
@@ -1681,11 +2023,38 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show filename.
+        /// </summary>
+        public static string ShowPlaybackFilename {
+            get {
+                return ResourceManager.GetString("ShowPlaybackFilename", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show timestamp.
+        /// </summary>
+        public static string ShowPlaybackTimestamp {
+            get {
+                return ResourceManager.GetString("ShowPlaybackTimestamp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Snapshot folder.
         /// </summary>
         public static string SnapshotPath {
             get {
                 return ResourceManager.GetString("SnapshotPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Snapshot retention.
+        /// </summary>
+        public static string SnapshotRetention {
+            get {
+                return ResourceManager.GetString("SnapshotRetention", resourceCulture);
             }
         }
         
@@ -1731,6 +2100,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string Startup {
             get {
                 return ResourceManager.GetString("Startup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stop.
+        /// </summary>
+        public static string Stop {
+            get {
+                return ResourceManager.GetString("Stop", resourceCulture);
             }
         }
         
@@ -1803,6 +2181,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string TestResult {
             get {
                 return ResourceManager.GetString("TestResult", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Thumbnail.
+        /// </summary>
+        public static string Thumbnail {
+            get {
+                return ResourceManager.GetString("Thumbnail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Thumbnail - {0}.
+        /// </summary>
+        public static string ThumbnailPreviewTitle1 {
+            get {
+                return ResourceManager.GetString("ThumbnailPreviewTitle1", resourceCulture);
             }
         }
         
