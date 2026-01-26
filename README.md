@@ -316,17 +316,20 @@ Linksoft.CameraWall/
 │   ├── Linksoft.Wpf.CameraWall/          # 📦 Reusable WPF library (NuGet package)
 │   │   ├── Converters/                    # BoolToOpacity, ConnectionStateToColor/Text
 │   │   ├── Dialogs/                       # CameraConfigurationDialog, InputBox, SettingsDialog, etc.
+│   │   │   └── Parts/Settings/            # Extracted settings UserControls (17 files)
 │   │   ├── Enums/                         # CameraProtocol, ConnectionState, OverlayPosition, SwapDirection
 │   │   ├── Events/                        # Connection, Position, Dialog, Recording events
 │   │   ├── Extensions/                    # CameraProtocolExtensions
 │   │   ├── Factories/                     # DropDownItemsFactory for centralized dropdown items
 │   │   ├── Helpers/                       # GridLayoutHelper, CameraUriHelper, ApplicationPaths
 │   │   ├── Messages/                      # CameraAdd/Remove/Swap messages
-│   │   ├── Models/                        # CameraConfiguration, CameraLayout, Settings, RecordingSession
+│   │   ├── Models/                        # CameraConfiguration, CameraLayout, RecordingSession
+│   │   │   └── Settings/                  # Settings models (14 files)
 │   │   ├── Options/                       # CameraWallOptions
 │   │   ├── Services/                      # All service interfaces and implementations
 │   │   ├── UserControls/                  # CameraTile, CameraGrid, CameraOverlay
-│   │   └── ViewModels/                    # Dialog ViewModels
+│   │   ├── ViewModels/                    # Dialog ViewModels
+│   │   └── Windows/                       # FullScreenCameraWindow, FullScreenRecordingWindow
 │   │
 │   └── Linksoft.Wpf.CameraWall.App/      # 🚀 Thin shell WPF application
 │       ├── Configuration/                 # App-specific options

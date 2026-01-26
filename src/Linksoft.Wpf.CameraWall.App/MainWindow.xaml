@@ -82,6 +82,7 @@
                 <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=CurrentLayoutGroup}">
                     <fluent:ComboBox
                         Width="150"
+                        Margin="5,28"
                         DisplayMemberPath="Name"
                         Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                      Key=Layout}"

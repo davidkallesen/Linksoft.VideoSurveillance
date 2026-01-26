@@ -237,9 +237,13 @@ public static string ToScheme(this CameraProtocol protocol)
 ## Dialogs (in Library)
 - `CameraConfigurationDialog` - Add/Edit camera with integrated network scanner
 - `InputBox` - Simple text input dialog (for layout names)
-- `SettingsDialog` - Configure general and display settings
+- `SettingsDialog` - Configure general and display settings (uses extracted UserControls from `Dialogs/Parts/Settings/`)
 - `CheckForUpdatesDialog` - Check for and display available updates from GitHub
+- `RecordingsBrowserDialog` - Browse and play back recorded videos
+
+## Windows (in Library)
 - `FullScreenCameraWindow` - Display single camera in full screen mode
+- `FullScreenRecordingWindow` - Play back recorded video in full screen mode
 
 ## Naming Conventions
 - ViewModels: `{Name}ViewModel` (e.g., `CameraConfigurationDialogViewModel`)

@@ -44,9 +44,27 @@ src/Linksoft.Wpf.CameraWall/
 ├── Dialogs/
 │   ├── CameraConfigurationDialog.xaml/.cs  # Add/Edit camera dialog
 │   ├── CheckForUpdatesDialog.xaml/.cs      # GitHub update checker
-│   ├── FullScreenCameraWindow.xaml/.cs     # Full screen camera view
 │   ├── InputBox.xaml/.cs            # Simple text input dialog
-│   └── SettingsDialog.xaml/.cs      # Application settings dialog
+│   ├── RecordingsBrowserDialog.xaml/.cs    # Browse recordings dialog
+│   ├── SettingsDialog.xaml/.cs      # Application settings dialog
+│   └── Parts/Settings/              # Extracted settings UserControls
+│       ├── GeneralAppearanceSettings.xaml/.cs
+│       ├── GeneralStartupSettings.xaml/.cs
+│       ├── CameraDisplayOverlaySettings.xaml/.cs
+│       ├── CameraDisplayGridLayoutSettings.xaml/.cs
+│       ├── CameraDisplaySnapshotSettings.xaml/.cs
+│       ├── ConnectionDefaultCameraSettings.xaml/.cs
+│       ├── ConnectionConnectionSettings.xaml/.cs
+│       ├── ConnectionNotificationsSettings.xaml/.cs
+│       ├── PerformanceVideoSettings.xaml/.cs
+│       ├── PerformanceStreamingSettings.xaml/.cs
+│       ├── RecordingGeneralSettings.xaml/.cs
+│       ├── RecordingMotionDetectionSettings.xaml/.cs
+│       ├── RecordingSegmentationSettings.xaml/.cs
+│       ├── RecordingMediaCleanupSettings.xaml/.cs
+│       ├── RecordingPlaybackOverlaySettings.xaml/.cs
+│       ├── AdvancedLoggingSettings.xaml/.cs
+│       └── AdvancedMaintenanceSettings.xaml/.cs
 ├── Enums/
 │   ├── CameraProtocol.cs            # Rtsp, Http, Https
 │   ├── ConnectionState.cs           # Connected, Connecting, Error
@@ -74,8 +92,14 @@ src/Linksoft.Wpf.CameraWall/
 │   ├── CameraLayout.cs              # Named layout
 │   ├── CameraLayoutItem.cs          # Camera position in layout
 │   ├── CameraStorageData.cs         # Root persistence model
-│   ├── DisplaySettings.cs           # Display configuration
-│   └── GeneralSettings.cs           # General app settings
+│   └── Settings/                    # Settings models subfolder
+│       ├── GeneralSettings.cs       # Theme, language, startup
+│       ├── CameraDisplayAppSettings.cs  # Overlay, drag-drop, snapshots
+│       ├── ConnectionAppSettings.cs # Connection defaults
+│       ├── PerformanceSettings.cs   # Video quality, hardware accel
+│       ├── RecordingSettings.cs     # Recording path, format
+│       ├── AdvancedSettings.cs      # Debug logging
+│       └── ... (other settings models)
 ├── Options/
 │   └── CameraWallOptions.cs         # Library configuration options
 ├── Services/
@@ -92,12 +116,17 @@ src/Linksoft.Wpf.CameraWall/
 ├── UserControls/
 │   ├── CameraTile.xaml/.cs          # Single camera with overlay
 │   ├── CameraOverlay.xaml/.cs       # Title/status overlay
-│   └── CameraWall.xaml/.cs          # Multi-camera grid control
-└── ViewModels/
-    ├── CameraConfigurationDialogViewModel.cs
-    ├── CheckForUpdatesDialogViewModel.cs
+│   └── CameraGrid.xaml/.cs          # Multi-camera grid control
+├── ViewModels/
+│   ├── CameraConfigurationDialogViewModel.cs
+│   ├── CheckForUpdatesDialogViewModel.cs
+│   ├── RecordingsBrowserDialogViewModel.cs
+│   └── SettingsDialogViewModel.cs
+└── Windows/
+    ├── FullScreenCameraWindow.xaml/.cs         # Full screen camera view
     ├── FullScreenCameraWindowViewModel.cs
-    └── SettingsDialogViewModel.cs
+    ├── FullScreenRecordingWindow.xaml/.cs      # Full screen recording playback
+    └── FullScreenRecordingWindowViewModel.cs
 ```
 
 ### Linksoft.Wpf.CameraWall.App (Application)

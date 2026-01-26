@@ -39,13 +39,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Atc.Network" Version="1.0.235" />
-    <PackageReference Include="Atc.Wpf" Version="4.0.25" />
-    <PackageReference Include="Atc.Wpf.Components" Version="4.0.25" />
-    <PackageReference Include="Atc.Wpf.Controls" Version="4.0.25" />
-    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.0.25" />
-    <PackageReference Include="Atc.Wpf.Forms" Version="4.0.25" />
-    <PackageReference Include="Atc.Wpf.Network" Version="4.0.25" />
-    <PackageReference Include="Atc.Wpf.Theming" Version="4.0.25" />
+    <PackageReference Include="Atc.Wpf" Version="4.0.27" />
+    <PackageReference Include="Atc.Wpf.Components" Version="4.0.27" />
+    <PackageReference Include="Atc.Wpf.Controls" Version="4.0.27" />
+    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.0.27" />
+    <PackageReference Include="Atc.Wpf.Forms" Version="4.0.27" />
+    <PackageReference Include="Atc.Wpf.Network" Version="4.0.27" />
+    <PackageReference Include="Atc.Wpf.Theming" Version="4.0.27" />
     <PackageReference Include="Atc.XamlToolkit" Version="3.0.6" />
     <PackageReference Include="Atc.XamlToolkit.Wpf" Version="3.0.6" />
     <PackageReference Include="FlyleafLib" Version="3.10.2" />

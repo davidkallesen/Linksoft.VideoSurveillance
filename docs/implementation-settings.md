@@ -93,23 +93,23 @@ This document outlines the implementation plan for restructuring the application
 
 | Model | Status | Location | Notes |
 |-------|--------|----------|-------|
-| `GeneralSettings` | ✅ | `Models/GeneralSettings.cs` | Complete |
-| `CameraDisplayAppSettings` | ✅ | `Models/CameraDisplayAppSettings.cs` | Renamed from DisplaySettings, added overlayPosition |
-| `ConnectionAppSettings` | ✅ | `Models/ConnectionAppSettings.cs` | App-level connection defaults |
-| `PerformanceSettings` | ✅ | `Models/PerformanceSettings.cs` | Complete |
-| `RecordingSettings` | ✅ | `Models/RecordingSettings.cs` | Complete |
-| `AdvancedSettings` | ✅ | `Models/AdvancedSettings.cs` | Complete |
-| `ApplicationSettings` | ✅ | `Models/ApplicationSettings.cs` | All 6 sections included |
+| `GeneralSettings` | ✅ | `Models/Settings/GeneralSettings.cs` | Complete |
+| `CameraDisplayAppSettings` | ✅ | `Models/Settings/CameraDisplayAppSettings.cs` | Renamed from DisplaySettings, added overlayPosition |
+| `ConnectionAppSettings` | ✅ | `Models/Settings/ConnectionAppSettings.cs` | App-level connection defaults |
+| `PerformanceSettings` | ✅ | `Models/Settings/PerformanceSettings.cs` | Complete |
+| `RecordingSettings` | ✅ | `Models/Settings/RecordingSettings.cs` | Complete |
+| `AdvancedSettings` | ✅ | `Models/Settings/AdvancedSettings.cs` | Complete |
+| `ApplicationSettings` | ✅ | `Models/Settings/ApplicationSettings.cs` | All 6 sections included |
 
 ### Camera Models
 
 | Model | Status | Location | Notes |
 |-------|--------|----------|-------|
 | `CameraConfiguration` | ✅ | `Models/CameraConfiguration.cs` | Complete |
-| `ConnectionSettings` | ✅ | `Models/ConnectionSettings.cs` | Complete |
-| `AuthenticationSettings` | ✅ | `Models/AuthenticationSettings.cs` | Complete |
-| `CameraDisplaySettings` | ✅ | `Models/CameraDisplaySettings.cs` | Complete |
-| `StreamSettings` | ✅ | `Models/StreamSettings.cs` | Complete |
+| `ConnectionSettings` | ✅ | `Models/Settings/ConnectionSettings.cs` | Complete |
+| `AuthenticationSettings` | ✅ | `Models/Settings/AuthenticationSettings.cs` | Complete |
+| `CameraDisplaySettings` | ✅ | `Models/Settings/CameraDisplaySettings.cs` | Complete |
+| `StreamSettings` | ✅ | `Models/Settings/StreamSettings.cs` | Complete |
 | `CameraOverrides` | ✅ | `Models/CameraOverrides.cs` | Per-camera overrides with nullable properties, Clone(), CopyFrom(), ValueEquals() |
 
 ---
@@ -422,13 +422,18 @@ This section documents whether each setting is actually used at runtime (not jus
 ## File Changes Summary
 
 ### New Files Created
-- ✅ `Models/ConnectionAppSettings.cs`
-- ✅ `Models/PerformanceSettings.cs`
-- ✅ `Models/RecordingSettings.cs`
-- ✅ `Models/AdvancedSettings.cs`
+- ✅ `Models/Settings/ConnectionAppSettings.cs`
+- ✅ `Models/Settings/PerformanceSettings.cs`
+- ✅ `Models/Settings/RecordingSettings.cs`
+- ✅ `Models/Settings/AdvancedSettings.cs`
 - ✅ `Models/CameraOverrides.cs` - Per-camera setting overrides
 - ✅ `Factories/DropDownItemsFactory.cs` - Centralized dropdown items and defaults
 - ✅ `Helpers/ApplicationPaths.cs` - Default paths for logs, snapshots, recordings, settings
+- ✅ `Windows/FullScreenCameraWindow.xaml/.cs` - Moved from Dialogs/
+- ✅ `Windows/FullScreenCameraWindowViewModel.cs` - Moved from ViewModels/
+- ✅ `Windows/FullScreenRecordingWindow.xaml/.cs` - Moved from Dialogs/
+- ✅ `Windows/FullScreenRecordingWindowViewModel.cs` - Moved from ViewModels/
+- ✅ `Dialogs/Parts/Settings/*.xaml/.cs` - 17 extracted settings UserControls
 
 ### Build Infrastructure Files
 - ✅ `version.json` - NBGV configuration
@@ -444,8 +449,8 @@ This section documents whether each setting is actually used at runtime (not jus
 - ✅ `setup/Linksoft.CameraWall.Installer/License.rtf` - License for installer UI
 
 ### Modified Files
-- ✅ `Models/ApplicationSettings.cs` - Added all 6 sections
-- ✅ `Models/CameraDisplayAppSettings.cs` - Renamed from DisplaySettings, added OverlayPosition
+- ✅ `Models/Settings/ApplicationSettings.cs` - Added all 6 sections
+- ✅ `Models/Settings/CameraDisplayAppSettings.cs` - Renamed from DisplaySettings, added OverlayPosition
 - ✅ `Services/IApplicationSettingsService.cs` - Added new properties/methods
 - ✅ `Services/ApplicationSettingsService.cs` - Implemented new structure
 - ✅ `Services/CameraWallManager.cs` - Updated to use CameraDisplay
@@ -459,9 +464,9 @@ This section documents whether each setting is actually used at runtime (not jus
 - ✅ `Linksoft.CameraWall.slnx` - Added comment about WiX installer
 - ✅ `src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj` - Added NuGet package metadata
 - ✅ `src/Linksoft.Wpf.CameraWall.App/Linksoft.Wpf.CameraWall.App.csproj` - Added icon content for installer
-- ✅ `Dialogs/FullScreenCameraWindow.xaml` - Updated overlay bindings to respect per-camera settings
-- ✅ `Dialogs/FullScreenCameraWindow.xaml.cs` - Added time display timer and overlay background opacity
-- ✅ `Dialogs/FullScreenCameraWindowViewModel.cs` - Added overlay setting properties
+- ✅ `Windows/FullScreenCameraWindow.xaml` - Updated overlay bindings to respect per-camera settings
+- ✅ `Windows/FullScreenCameraWindow.xaml.cs` - Added time display timer and overlay background opacity
+- ✅ `Windows/FullScreenCameraWindowViewModel.cs` - Added overlay setting properties
 - ✅ `Themes/FullScreenStyles.xaml` - Added BooleanToVisibilityConverter
 
 ---

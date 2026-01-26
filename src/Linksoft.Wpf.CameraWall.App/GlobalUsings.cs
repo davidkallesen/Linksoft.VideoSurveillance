@@ -20,6 +20,7 @@ global using Atc.XamlToolkit.Mvvm;
 global using Linksoft.Wpf.CameraWall.Events;
 global using Linksoft.Wpf.CameraWall.Helpers;
 global using Linksoft.Wpf.CameraWall.Models;
+global using Linksoft.Wpf.CameraWall.Models.Settings;
 global using Linksoft.Wpf.CameraWall.Resources;
 global using Linksoft.Wpf.CameraWall.Services;
 global using Linksoft.Wpf.CameraWall.SplashScreens;
