@@ -1,0 +1,58 @@
+<UserControl
+    x:Class="Linksoft.Wpf.CameraWall.Dialogs.Parts.CameraConfigurations.PerformanceOverridesPart"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
+    xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dialogs="clr-namespace:Linksoft.Wpf.CameraWall.Dialogs"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:valueConverters="clr-namespace:Atc.Wpf.ValueConverters;assembly=Atc.Wpf"
+    d:DataContext="{d:DesignInstance Type=dialogs:CameraConfigurationDialogViewModel,
+                                     IsDesignTimeCreatable=False}"
+    d:DesignWidth="1100"
+    mc:Ignorable="d">
+
+    <GroupBox
+        atc:HeaderedControlHelper.HeaderBackground="Transparent"
+        atc:HeaderedControlHelper.HeaderFontWeight="Bold"
+        atc:HeaderedControlHelper.HeaderForeground="{DynamicResource AtcApps.Brushes.Text}"
+        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                     Key=PerformanceOverrides}">
+        <atc:GridEx Margin="10" Columns="*,20,*,20,*">
+            <!--  Column 0  -->
+            <StackPanel Grid.Column="0">
+                <atc:LabelCheckBox
+                    HideAreas="All"
+                    IsChecked="{Binding Path=UseDefaultVideoQuality, Mode=TwoWay}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=UseDefaultSetting}"
+                    LabelWidthNumber="220" />
+                <atc:LabelComboBox
+                    HideAreas="All"
+                    IsEnabled="{Binding Path=UseDefaultVideoQuality, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    Items="{Binding Path=VideoQualityItems}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=VideoQuality}"
+                    LabelWidthNumber="220"
+                    SelectedKey="{Binding Path=OverrideVideoQuality, Mode=TwoWay}" />
+            </StackPanel>
+            <!--  Column 2  -->
+            <StackPanel Grid.Column="2">
+                <atc:LabelCheckBox
+                    HideAreas="All"
+                    IsChecked="{Binding Path=UseDefaultHardwareAcceleration, Mode=TwoWay}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=UseDefaultSetting}"
+                    LabelWidthNumber="220" />
+                <atc:LabelCheckBox
+                    HideAreas="All"
+                    IsChecked="{Binding Path=OverrideHardwareAcceleration, Mode=TwoWay}"
+                    IsEnabled="{Binding Path=UseDefaultHardwareAcceleration, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=HardwareAcceleration}"
+                    LabelWidthNumber="220" />
+            </StackPanel>
+        </atc:GridEx>
+    </GroupBox>
+</UserControl>
