@@ -26,6 +26,11 @@ public class ApplicationSettings
     public PerformanceSettings Performance { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets the motion detection settings (sensitivity, bounding box display).
+    /// </summary>
+    public MotionDetectionSettings MotionDetection { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets the recording settings (path, format).
     /// </summary>
     public RecordingSettings Recording { get; set; } = new();

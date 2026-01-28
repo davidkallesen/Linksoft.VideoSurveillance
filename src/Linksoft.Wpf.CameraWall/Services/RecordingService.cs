@@ -104,8 +104,9 @@ public class RecordingService : IRecordingService, IDisposable
             // Raise event
             OnRecordingStateChanged(camera.Id, RecordingState.Idle, RecordingState.Recording, filePath);
 
-            // Start thumbnail capture
-            thumbnailService.StartCapture(camera.Id, player, filePath);
+            // Start thumbnail capture with configured tile count
+            var tileCount = GetEffectiveThumbnailTileCount(camera);
+            thumbnailService.StartCapture(camera.Id, player, filePath, tileCount);
 
             return true;
         }
@@ -222,8 +223,9 @@ public class RecordingService : IRecordingService, IDisposable
             // Raise event
             OnRecordingStateChanged(camera.Id, RecordingState.Idle, RecordingState.RecordingMotion, filePath);
 
-            // Start thumbnail capture
-            thumbnailService.StartCapture(camera.Id, player, filePath);
+            // Start thumbnail capture with configured tile count
+            var tileCount = GetEffectiveThumbnailTileCount(camera);
+            thumbnailService.StartCapture(camera.Id, player, filePath, tileCount);
 
             return true;
         }
@@ -388,8 +390,9 @@ public class RecordingService : IRecordingService, IDisposable
             // 8. Fire state changed events for new segment start
             OnRecordingStateChanged(cameraId, RecordingState.Idle, newState, newFilePath);
 
-            // 9. Start thumbnail capture for new segment
-            thumbnailService.StartCapture(cameraId, player, newFilePath);
+            // 9. Start thumbnail capture for new segment with configured tile count
+            var tileCount = GetEffectiveThumbnailTileCount(camera);
+            thumbnailService.StartCapture(cameraId, player, newFilePath, tileCount);
 
             return true;
         }
@@ -464,7 +467,18 @@ public class RecordingService : IRecordingService, IDisposable
             return overrideDuration.Value;
         }
 
-        return settingsService.Recording.MotionDetection?.PostMotionDurationSeconds ?? 10;
+        return settingsService.MotionDetection.PostMotionDurationSeconds;
+    }
+
+    private int GetEffectiveThumbnailTileCount(CameraConfiguration camera)
+    {
+        var overrideTileCount = camera.Overrides?.ThumbnailTileCount;
+        if (overrideTileCount.HasValue)
+        {
+            return overrideTileCount.Value;
+        }
+
+        return settingsService.Recording.ThumbnailTileCount;
     }
 
     private void StartPostMotionTimer(CameraConfiguration camera)
@@ -510,14 +524,21 @@ public class RecordingService : IRecordingService, IDisposable
         if (elapsed >= postMotionSeconds)
         {
             // Post-motion period elapsed, stop recording
+            logger.LogInformation(
+                "Post-motion period elapsed for camera ID: {CameraId}, stopping recording",
+                cameraId);
             StopRecording(cameraId);
         }
-        else if (session.State == RecordingState.RecordingMotion && elapsed >= 0)
+        else if (session.State == RecordingState.RecordingMotion && elapsed >= 1)
         {
-            // Motion stopped, transition to post-motion state
-            // This is triggered when no motion update has occurred for a bit
-            // The actual transition to PostMotion is handled by lack of UpdateMotionTimestamp calls
-            // For now, we just check if we need to stop
+            // Motion stopped (no update for 1+ second), transition to post-motion state
+            var oldState = session.State;
+            session.State = RecordingState.RecordingPostMotion;
+            logger.LogDebug(
+                "Transitioning to post-motion state for camera ID: {CameraId}, {Remaining:F0}s remaining",
+                cameraId,
+                postMotionSeconds - elapsed);
+            OnRecordingStateChanged(cameraId, oldState, RecordingState.RecordingPostMotion, session.CurrentFilePath);
         }
     }
 

@@ -110,17 +110,8 @@
                                         Width="80"
                                         Height="60"
                                         RenderOptions.BitmapScalingMode="HighQuality"
-                                        Stretch="Uniform">
-                                        <Image.Style>
-                                            <Style TargetType="Image">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Path=HasThumbnail}" Value="True">
-                                                        <Setter Property="Source" Value="{Binding Path=ThumbnailPath}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Image.Style>
-                                    </Image>
+                                        Source="{Binding Path=ThumbnailImage}"
+                                        Stretch="Uniform" />
                                 </Button>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -135,6 +126,11 @@
                         Binding="{Binding Path=FormattedRecordingTime}"
                         Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                      Key=RecordingDateTime}" />
+                    <DataGridTextColumn
+                        Width="80"
+                        Binding="{Binding Path=FormattedDuration}"
+                        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=RecordingDuration}" />
                     <DataGridTextColumn
                         Width="100"
                         Binding="{Binding Path=FormattedFileSize}"

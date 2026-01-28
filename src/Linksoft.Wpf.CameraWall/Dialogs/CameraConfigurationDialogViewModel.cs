@@ -644,7 +644,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.MotionSensitivity = settingsService.Recording.MotionDetection.Sensitivity;
+                Camera.Overrides!.MotionSensitivity = settingsService.MotionDetection.Sensitivity;
             }
 
             RaisePropertyChanged();
@@ -654,7 +654,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideMotionSensitivity
     {
-        get => Camera.Overrides?.MotionSensitivity ?? settingsService.Recording.MotionDetection.Sensitivity;
+        get => Camera.Overrides?.MotionSensitivity ?? settingsService.MotionDetection.Sensitivity;
         set
         {
             EnsureOverrides();
@@ -678,7 +678,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.PostMotionDurationSeconds = settingsService.Recording.MotionDetection.PostMotionDurationSeconds;
+                Camera.Overrides!.PostMotionDurationSeconds = settingsService.MotionDetection.PostMotionDurationSeconds;
             }
 
             RaisePropertyChanged();
@@ -688,7 +688,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverridePostMotionDuration
     {
-        get => Camera.Overrides?.PostMotionDurationSeconds ?? settingsService.Recording.MotionDetection.PostMotionDurationSeconds;
+        get => Camera.Overrides?.PostMotionDurationSeconds ?? settingsService.MotionDetection.PostMotionDurationSeconds;
         set
         {
             EnsureOverrides();
@@ -727,6 +727,390 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         {
             EnsureOverrides();
             Camera.Overrides!.EnableRecordingOnConnect = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    // Motion Detection Overrides
+    public bool UseDefaultMinimumChangePercent
+    {
+        get => Camera.Overrides?.MotionMinimumChangePercent is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.MotionMinimumChangePercent = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.MotionMinimumChangePercent = settingsService.MotionDetection.MinimumChangePercent;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideMinimumChangePercent));
+        }
+    }
+
+    public double OverrideMinimumChangePercent
+    {
+        get => Camera.Overrides?.MotionMinimumChangePercent ?? settingsService.MotionDetection.MinimumChangePercent;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.MotionMinimumChangePercent = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultAnalysisFrameRate
+    {
+        get => Camera.Overrides?.MotionAnalysisFrameRate is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.MotionAnalysisFrameRate = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.MotionAnalysisFrameRate = settingsService.MotionDetection.AnalysisFrameRate;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideAnalysisFrameRate));
+        }
+    }
+
+    public int OverrideAnalysisFrameRate
+    {
+        get => Camera.Overrides?.MotionAnalysisFrameRate ?? settingsService.MotionDetection.AnalysisFrameRate;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.MotionAnalysisFrameRate = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultCooldownSeconds
+    {
+        get => Camera.Overrides?.MotionCooldownSeconds is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.MotionCooldownSeconds = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.MotionCooldownSeconds = settingsService.MotionDetection.CooldownSeconds;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideCooldownSeconds));
+        }
+    }
+
+    public int OverrideCooldownSeconds
+    {
+        get => Camera.Overrides?.MotionCooldownSeconds ?? settingsService.MotionDetection.CooldownSeconds;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.MotionCooldownSeconds = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    // Bounding Box Overrides
+    public bool UseDefaultShowBoundingBoxInGrid
+    {
+        get => Camera.Overrides?.ShowBoundingBoxInGrid is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ShowBoundingBoxInGrid = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ShowBoundingBoxInGrid = settingsService.MotionDetection.BoundingBox.ShowInGrid;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideShowBoundingBoxInGrid));
+        }
+    }
+
+    public bool OverrideShowBoundingBoxInGrid
+    {
+        get => Camera.Overrides?.ShowBoundingBoxInGrid ?? settingsService.MotionDetection.BoundingBox.ShowInGrid;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.ShowBoundingBoxInGrid = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultShowBoundingBoxInFullScreen
+    {
+        get => Camera.Overrides?.ShowBoundingBoxInFullScreen is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ShowBoundingBoxInFullScreen = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ShowBoundingBoxInFullScreen = settingsService.MotionDetection.BoundingBox.ShowInFullScreen;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideShowBoundingBoxInFullScreen));
+        }
+    }
+
+    public bool OverrideShowBoundingBoxInFullScreen
+    {
+        get => Camera.Overrides?.ShowBoundingBoxInFullScreen ?? settingsService.MotionDetection.BoundingBox.ShowInFullScreen;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.ShowBoundingBoxInFullScreen = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultBoundingBoxColor
+    {
+        get => Camera.Overrides?.BoundingBoxColor is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.BoundingBoxColor = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.BoundingBoxColor = settingsService.MotionDetection.BoundingBox.Color;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideBoundingBoxColor));
+        }
+    }
+
+    public string OverrideBoundingBoxColor
+    {
+        get => Camera.Overrides?.BoundingBoxColor ?? settingsService.MotionDetection.BoundingBox.Color;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.BoundingBoxColor = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultBoundingBoxThickness
+    {
+        get => Camera.Overrides?.BoundingBoxThickness is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.BoundingBoxThickness = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.BoundingBoxThickness = settingsService.MotionDetection.BoundingBox.Thickness;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideBoundingBoxThickness));
+        }
+    }
+
+    public string OverrideBoundingBoxThickness
+    {
+        get => (Camera.Overrides?.BoundingBoxThickness ?? settingsService.MotionDetection.BoundingBox.Thickness).ToString(CultureInfo.InvariantCulture);
+        set
+        {
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var thickness))
+            {
+                EnsureOverrides();
+                Camera.Overrides!.BoundingBoxThickness = thickness;
+                RaisePropertyChanged();
+            }
+        }
+    }
+
+    public IDictionary<string, string> BoundingBoxThicknessItems
+        => DropDownItemsFactory.BoundingBoxThicknessItems;
+
+    public bool UseDefaultBoundingBoxMinArea
+    {
+        get => Camera.Overrides?.BoundingBoxMinArea is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.BoundingBoxMinArea = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.BoundingBoxMinArea = settingsService.MotionDetection.BoundingBox.MinArea;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideBoundingBoxMinArea));
+        }
+    }
+
+    public string OverrideBoundingBoxMinArea
+    {
+        get => (Camera.Overrides?.BoundingBoxMinArea ?? settingsService.MotionDetection.BoundingBox.MinArea).ToString(CultureInfo.InvariantCulture);
+        set
+        {
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minArea))
+            {
+                EnsureOverrides();
+                Camera.Overrides!.BoundingBoxMinArea = minArea;
+                RaisePropertyChanged();
+            }
+        }
+    }
+
+    public IDictionary<string, string> BoundingBoxMinAreaItems
+        => DropDownItemsFactory.BoundingBoxMinAreaItems;
+
+    public IDictionary<string, string> AnalysisResolutionItems
+        => DropDownItemsFactory.MotionAnalysisResolutionItems;
+
+    public IDictionary<string, string> ThumbnailTileCountItems
+        => DropDownItemsFactory.ThumbnailTileCountItems;
+
+    public bool UseDefaultThumbnailTileCount
+    {
+        get => Camera.Overrides?.ThumbnailTileCount is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.ThumbnailTileCount = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ThumbnailTileCount = settingsService.Recording.ThumbnailTileCount;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideThumbnailTileCount));
+        }
+    }
+
+    public string OverrideThumbnailTileCount
+    {
+        get => (Camera.Overrides?.ThumbnailTileCount ?? settingsService.Recording.ThumbnailTileCount).ToString(CultureInfo.InvariantCulture);
+        set
+        {
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var tileCount))
+            {
+                EnsureOverrides();
+                Camera.Overrides!.ThumbnailTileCount = tileCount;
+                RaisePropertyChanged();
+            }
+        }
+    }
+
+    public bool UseDefaultAnalysisResolution
+    {
+        get => Camera.Overrides?.MotionAnalysisWidth is null && Camera.Overrides?.MotionAnalysisHeight is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.MotionAnalysisWidth = null;
+                    Camera.Overrides.MotionAnalysisHeight = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                var (width, height) = DropDownItemsFactory.ParseAnalysisResolution(
+                    settingsService.MotionDetection.AnalysisWidth > 0 && settingsService.MotionDetection.AnalysisHeight > 0
+                        ? DropDownItemsFactory.FormatAnalysisResolution(
+                            settingsService.MotionDetection.AnalysisWidth,
+                            settingsService.MotionDetection.AnalysisHeight)
+                        : DropDownItemsFactory.DefaultMotionAnalysisResolution);
+                Camera.Overrides!.MotionAnalysisWidth = width;
+                Camera.Overrides!.MotionAnalysisHeight = height;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideAnalysisResolution));
+        }
+    }
+
+    public string OverrideAnalysisResolution
+    {
+        get
+        {
+            var width = Camera.Overrides?.MotionAnalysisWidth ?? settingsService.MotionDetection.AnalysisWidth;
+            var height = Camera.Overrides?.MotionAnalysisHeight ?? settingsService.MotionDetection.AnalysisHeight;
+            if (width > 0 && height > 0)
+            {
+                return DropDownItemsFactory.FormatAnalysisResolution(width, height);
+            }
+
+            return DropDownItemsFactory.DefaultMotionAnalysisResolution;
+        }
+
+        set
+        {
+            var (width, height) = DropDownItemsFactory.ParseAnalysisResolution(value);
+            EnsureOverrides();
+            Camera.Overrides!.MotionAnalysisWidth = width;
+            Camera.Overrides!.MotionAnalysisHeight = height;
             RaisePropertyChanged();
         }
     }

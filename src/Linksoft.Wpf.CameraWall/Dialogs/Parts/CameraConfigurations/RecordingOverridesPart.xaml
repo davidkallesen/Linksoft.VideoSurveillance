@@ -22,7 +22,7 @@
         <atc:GridEx
             Margin="10"
             Columns="*,20,*,20,*"
-            Rows="Auto,16,Auto,16,Auto">
+            Rows="Auto,16,Auto,16,Auto,16,Auto">
             <!--  Row 0, Column 0  -->
             <StackPanel Grid.Row="0" Grid.Column="0">
                 <atc:LabelCheckBox
@@ -125,6 +125,23 @@
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=EnableRecordingOnConnect}"
                     LabelWidthNumber="220" />
+            </StackPanel>
+            <!--  Row 4, Column 0 - Thumbnail Tile Count  -->
+            <StackPanel Grid.Row="4" Grid.Column="0">
+                <atc:LabelCheckBox
+                    HideAreas="All"
+                    IsChecked="{Binding Path=UseDefaultThumbnailTileCount, Mode=TwoWay}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=UseDefaultSetting}"
+                    LabelWidthNumber="220" />
+                <atc:LabelComboBox
+                    HideAreas="All"
+                    IsEnabled="{Binding Path=UseDefaultThumbnailTileCount, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    Items="{Binding Path=ThumbnailTileCountItems}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=ThumbnailTileCount}"
+                    LabelWidthNumber="220"
+                    SelectedKey="{Binding Path=OverrideThumbnailTileCount, Mode=TwoWay}" />
             </StackPanel>
         </atc:GridEx>
     </GroupBox>

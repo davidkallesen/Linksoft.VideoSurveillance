@@ -165,6 +165,23 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CameraGrid.EnableRecordingOnMotion = recording.EnableRecordingOnMotion;
         CameraGrid.EnableRecordingOnConnect = recording.EnableRecordingOnConnect;
 
+        // Motion detection settings
+        var motionDetection = settingsService.MotionDetection;
+        CameraGrid.MotionSensitivity = motionDetection.Sensitivity;
+        CameraGrid.MotionMinimumChangePercent = motionDetection.MinimumChangePercent;
+        CameraGrid.MotionAnalysisFrameRate = motionDetection.AnalysisFrameRate;
+        CameraGrid.MotionPostDurationSeconds = motionDetection.PostMotionDurationSeconds;
+        CameraGrid.MotionCooldownSeconds = motionDetection.CooldownSeconds;
+
+        // Bounding box settings
+        var boundingBox = motionDetection.BoundingBox;
+        CameraGrid.ShowBoundingBoxInGrid = boundingBox.ShowInGrid;
+        CameraGrid.BoundingBoxColor = boundingBox.Color;
+        CameraGrid.BoundingBoxThickness = boundingBox.Thickness;
+        CameraGrid.BoundingBoxSmoothing = boundingBox.Smoothing;
+        CameraGrid.MotionBoundingBoxMinArea = boundingBox.MinArea;
+        CameraGrid.MotionBoundingBoxPadding = boundingBox.Padding;
+
         // Recreate players if performance settings changed
         if (videoQualityChanged || hwAccelChanged)
         {
@@ -244,12 +261,14 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     }
 
     /// <inheritdoc />
-    public void ShowFullScreen(CameraConfiguration camera)
+    public void ShowFullScreen(
+        CameraConfiguration camera,
+        UserControls.CameraTile? sourceTile = null)
     {
         ArgumentNullException.ThrowIfNull(camera);
 
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.FullScreenCamera1, camera.Display.DisplayName));
-        dialogService.ShowFullScreenCamera(camera);
+        dialogService.ShowFullScreenCamera(camera, sourceTile);
     }
 
     /// <inheritdoc />

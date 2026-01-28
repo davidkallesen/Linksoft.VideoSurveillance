@@ -12,6 +12,7 @@ public partial class FullScreenCameraWindow : IDisposable
     private readonly FullScreenCameraWindowViewModel viewModel;
     private DispatcherTimer? timeUpdateTimer;
     private Point lastMousePosition;
+    private MotionBoundingBoxOverlay? cachedMotionOverlay;
     private bool disposed;
 
     public FullScreenCameraWindow(FullScreenCameraWindowViewModel viewModel)
@@ -24,6 +25,7 @@ public partial class FullScreenCameraWindow : IDisposable
         DataContext = viewModel;
 
         viewModel.CloseRequested += OnCloseRequested;
+        viewModel.PropertyChanged += OnViewModelPropertyChanged;
         Closed += OnWindowClosed;
 
         // Use InputManager to capture mouse input before FlyleafHost intercepts it
@@ -86,6 +88,70 @@ public partial class FullScreenCameraWindow : IDisposable
         };
     }
 
+    private void OnViewModelPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(FullScreenCameraWindowViewModel.CurrentBoundingBox))
+        {
+            UpdateMotionBoundingBox();
+        }
+    }
+
+    private void UpdateMotionBoundingBox()
+    {
+        var motionOverlay = GetMotionBoundingBoxOverlay();
+        if (motionOverlay is null)
+        {
+            return;
+        }
+
+        // Get the video container size for coordinate mapping
+        var containerSize = new Size(VideoPlayer.ActualWidth, VideoPlayer.ActualHeight);
+        if ((containerSize.Width <= 0 || containerSize.Height <= 0) &&
+            VideoPlayer.Overlay is not null)
+        {
+            // Try to get size from the overlay window
+            containerSize = new Size(VideoPlayer.Overlay.ActualWidth, VideoPlayer.Overlay.ActualHeight);
+        }
+
+        motionOverlay.UpdateBoundingBox(viewModel.CurrentBoundingBox, containerSize);
+    }
+
+    private MotionBoundingBoxOverlay? GetMotionBoundingBoxOverlay()
+    {
+        // Return cached reference if available
+        if (cachedMotionOverlay is not null)
+        {
+            return cachedMotionOverlay;
+        }
+
+        // Try to find MotionBoundingBoxOverlay in overlay window content
+        if (VideoPlayer.Overlay is null)
+        {
+            return null;
+        }
+
+        if (VideoPlayer.Overlay.Content is MotionBoundingBoxOverlay directOverlay)
+        {
+            cachedMotionOverlay = directOverlay;
+        }
+        else if (VideoPlayer.Overlay.Content is DependencyObject content)
+        {
+            // Search visual tree
+            cachedMotionOverlay = content
+                .FindChildren<MotionBoundingBoxOverlay>()
+                .FirstOrDefault();
+        }
+
+        // If still not found, try to find in overlay window itself
+        cachedMotionOverlay ??= VideoPlayer.Overlay
+            .FindChildren<MotionBoundingBoxOverlay>()
+            .FirstOrDefault();
+
+        return cachedMotionOverlay;
+    }
+
     public void Dispose()
     {
         Dispose(disposing: true);
@@ -106,6 +172,7 @@ public partial class FullScreenCameraWindow : IDisposable
             ComponentDispatcher.ThreadFilterMessage -= OnThreadFilterMessage;
             InputManager.Current.PreProcessInput -= OnPreProcessInput;
             viewModel.CloseRequested -= OnCloseRequested;
+            viewModel.PropertyChanged -= OnViewModelPropertyChanged;
             Closed -= OnWindowClosed;
             viewModel.Dispose();
         }

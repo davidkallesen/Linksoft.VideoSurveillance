@@ -60,6 +60,9 @@ public partial class CameraOverlay
     [DependencyProperty(DefaultValue = false)]
     private bool isMotionDetected;
 
+    [DependencyProperty(DefaultValue = false)]
+    private bool enableRecordingOnMotion;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraOverlay"/> class.
     /// </summary>
@@ -67,6 +70,7 @@ public partial class CameraOverlay
     {
         InitializeComponent();
         StatusText = Translations.Disconnected;
+        RecordingDurationText = TimeSpan.Zero.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
         Unloaded += OnUnloaded;
     }
 
@@ -120,16 +124,18 @@ public partial class CameraOverlay
         DependencyObject d,
         DependencyPropertyChangedEventArgs e)
     {
-        if (d is CameraOverlay overlay && e.NewValue is bool showTime)
+        if (d is not CameraOverlay overlay || e.NewValue is not bool showTime)
         {
-            if (showTime)
-            {
-                overlay.StartTimeTimer();
-            }
-            else
-            {
-                overlay.StopTimeTimer();
-            }
+            return;
+        }
+
+        if (showTime)
+        {
+            overlay.StartTimeTimer();
+        }
+        else
+        {
+            overlay.StopTimeTimer();
         }
     }
 
@@ -182,9 +188,9 @@ public partial class CameraOverlay
         }
     }
 
-    private void UpdateRecordingAnimation(bool isRecording)
+    private void UpdateRecordingAnimation(bool recording)
     {
-        if (isRecording)
+        if (recording)
         {
             // Start the blink animation
             if (recordingBlinkAnimation is null && TryFindResource("RecordingBlinkAnimation") is Storyboard storyboard)
@@ -192,10 +198,7 @@ public partial class CameraOverlay
                 recordingBlinkAnimation = storyboard;
             }
 
-            if (recordingBlinkAnimation is not null)
-            {
-                recordingBlinkAnimation.Begin(RecordingDot, isControllable: true);
-            }
+            recordingBlinkAnimation?.Begin(RecordingDot, isControllable: true);
         }
         else
         {

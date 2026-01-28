@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:fl="clr-namespace:FlyleafLib.Controls.WPF;assembly=FlyleafLib"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControls="clr-namespace:Linksoft.Wpf.CameraWall.UserControls"
     xmlns:valueConverters="clr-namespace:Atc.Wpf.ValueConverters;assembly=Atc.Wpf"
     xmlns:windows="clr-namespace:Linksoft.Wpf.CameraWall.Windows"
     Title="{Binding Path=CameraName}"
@@ -90,6 +91,17 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+
+                <!--  Motion Bounding Box Overlay  -->
+                <userControls:MotionBoundingBoxOverlay
+                    x:Name="MotionOverlay"
+                    AnalysisHeight="{Binding Path=HostDataContext.AnalysisHeight}"
+                    AnalysisWidth="{Binding Path=HostDataContext.AnalysisWidth}"
+                    BoxColor="{Binding Path=HostDataContext.BoundingBoxColor}"
+                    BoxThickness="{Binding Path=HostDataContext.BoundingBoxThickness}"
+                    IsHitTestVisible="False"
+                    IsOverlayEnabled="{Binding Path=HostDataContext.ShowBoundingBoxInFullScreen}"
+                    SmoothingFactor="{Binding Path=HostDataContext.BoundingBoxSmoothing}" />
 
                 <!--  Close Button (Top-Right)  -->
                 <Button

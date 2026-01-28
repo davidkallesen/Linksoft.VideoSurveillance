@@ -72,7 +72,10 @@ public interface ICameraWallManager : INotifyPropertyChanged
     /// Shows a camera in full screen.
     /// </summary>
     /// <param name="camera">The camera to show.</param>
-    void ShowFullScreen(CameraConfiguration camera);
+    /// <param name="sourceTile">Optional source tile for player lending (enables instant display without reconnection).</param>
+    void ShowFullScreen(
+        CameraConfiguration camera,
+        UserControls.CameraTile? sourceTile = null);
 
     /// <summary>
     /// Reconnects all cameras.

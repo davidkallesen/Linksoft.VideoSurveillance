@@ -30,6 +30,13 @@
                 Orientation="Vertical"
                 SelectedKey="{Binding Path=SelectedRecordingFormat, Mode=TwoWay}" />
 
+            <atc:LabelComboBox
+                Items="{Binding Path=ThumbnailTileCountItems}"
+                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                Key=ThumbnailTileCount}"
+                Orientation="Vertical"
+                SelectedKey="{Binding Path=SelectedThumbnailTileCount, Mode=TwoWay}" />
+
             <atc:LabelToggleSwitch
                 IsOn="{Binding Path=EnableRecordingOnMotion, Mode=TwoWay}"
                 LabelPosition="Right"

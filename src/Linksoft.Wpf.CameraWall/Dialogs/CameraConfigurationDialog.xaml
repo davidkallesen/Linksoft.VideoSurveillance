@@ -95,6 +95,9 @@
 
                             <!--  Recording Overrides  -->
                             <cameraConfigs:RecordingOverridesPart />
+
+                            <!--  Motion Detection Overrides  -->
+                            <cameraConfigs:MotionDetectionOverridesPart />
                         </atc:UniformSpacingPanel>
                     </atc:GroupBoxExpander>
 

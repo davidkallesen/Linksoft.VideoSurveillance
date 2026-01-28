@@ -138,6 +138,47 @@
                                 <Binding Path="EnableRecordingOnConnect" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.EnableRecordingOnConnect>
+                        <!--  Motion detection settings with per-camera overrides  -->
+                        <local:CameraTile.MotionSensitivity>
+                            <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
+                                <Binding Path="Overrides.MotionSensitivity" />
+                                <Binding Path="MotionSensitivity" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                            </MultiBinding>
+                        </local:CameraTile.MotionSensitivity>
+                        <local:CameraTile.MotionMinimumChangePercent>
+                            <Binding Path="MotionMinimumChangePercent" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.MotionMinimumChangePercent>
+                        <local:CameraTile.MotionAnalysisFrameRate>
+                            <Binding Path="MotionAnalysisFrameRate" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.MotionAnalysisFrameRate>
+                        <local:CameraTile.MotionPostDurationSeconds>
+                            <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
+                                <Binding Path="Overrides.PostMotionDurationSeconds" />
+                                <Binding Path="MotionPostDurationSeconds" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                            </MultiBinding>
+                        </local:CameraTile.MotionPostDurationSeconds>
+                        <local:CameraTile.MotionCooldownSeconds>
+                            <Binding Path="MotionCooldownSeconds" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.MotionCooldownSeconds>
+                        <local:CameraTile.MotionBoundingBoxMinArea>
+                            <Binding Path="MotionBoundingBoxMinArea" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.MotionBoundingBoxMinArea>
+                        <local:CameraTile.MotionBoundingBoxPadding>
+                            <Binding Path="MotionBoundingBoxPadding" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.MotionBoundingBoxPadding>
+                        <!--  Bounding box display settings  -->
+                        <local:CameraTile.ShowBoundingBoxInGrid>
+                            <Binding Path="ShowBoundingBoxInGrid" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.ShowBoundingBoxInGrid>
+                        <local:CameraTile.BoundingBoxColor>
+                            <Binding Path="BoundingBoxColor" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.BoundingBoxColor>
+                        <local:CameraTile.BoundingBoxThickness>
+                            <Binding Path="BoundingBoxThickness" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.BoundingBoxThickness>
+                        <local:CameraTile.BoundingBoxSmoothing>
+                            <Binding Path="BoundingBoxSmoothing" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                        </local:CameraTile.BoundingBoxSmoothing>
                     </local:CameraTile>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

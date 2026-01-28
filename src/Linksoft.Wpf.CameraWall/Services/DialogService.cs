@@ -8,13 +8,20 @@ namespace Linksoft.Wpf.CameraWall.Services;
 public class DialogService : IDialogService
 {
     private readonly IApplicationSettingsService settingsService;
+    private readonly IMotionDetectionService motionDetectionService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DialogService"/> class.
     /// </summary>
     /// <param name="settingsService">The application settings service.</param>
-    public DialogService(IApplicationSettingsService settingsService)
-        => this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+    /// <param name="motionDetectionService">The motion detection service.</param>
+    public DialogService(
+        IApplicationSettingsService settingsService,
+        IMotionDetectionService motionDetectionService)
+    {
+        this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        this.motionDetectionService = motionDetectionService ?? throw new ArgumentNullException(nameof(motionDetectionService));
+    }
 
     /// <inheritdoc />
     public CameraConfiguration? ShowCameraConfigurationDialog(
@@ -173,7 +180,9 @@ public class DialogService : IDialogService
     }
 
     /// <inheritdoc />
-    public void ShowFullScreenCamera(CameraConfiguration camera)
+    public void ShowFullScreenCamera(
+        CameraConfiguration camera,
+        UserControls.CameraTile? sourceTile = null)
     {
         ArgumentNullException.ThrowIfNull(camera);
 
@@ -188,18 +197,47 @@ public class DialogService : IDialogService
         var overlayOpacity = overrides?.OverlayOpacity ?? display.OverlayOpacity;
         var overlayPosition = camera.Display.OverlayPosition;
 
-        using var viewModel = new FullScreenCameraWindowViewModel(
-            camera,
-            showOverlayTitle,
-            showOverlayDescription,
-            showOverlayTime,
-            showOverlayConnectionStatus,
-            overlayOpacity,
-            overlayPosition);
-        using var window = new FullScreenCameraWindow(viewModel);
-        window.Owner = Application.Current.MainWindow;
+        // Compute effective bounding box settings (per-camera overrides → app defaults)
+        var motionDetection = settingsService.MotionDetection;
+        var showBoundingBoxInFullScreen = overrides?.ShowBoundingBoxInFullScreen ?? motionDetection.BoundingBox.ShowInFullScreen;
+        var boundingBoxColor = overrides?.BoundingBoxColor ?? motionDetection.BoundingBox.Color;
+        var boundingBoxThickness = overrides?.BoundingBoxThickness ?? motionDetection.BoundingBox.Thickness;
+        var boundingBoxSmoothing = overrides?.BoundingBoxSmoothing ?? motionDetection.BoundingBox.Smoothing;
 
-        window.ShowDialog();
+        // Borrow player from source tile for instant display (no reconnection delay)
+        var borrowedPlayer = sourceTile?.LendPlayer();
+
+        try
+        {
+            using var viewModel = new FullScreenCameraWindowViewModel(
+                camera,
+                showOverlayTitle,
+                showOverlayDescription,
+                showOverlayTime,
+                showOverlayConnectionStatus,
+                overlayOpacity,
+                overlayPosition,
+                showBoundingBoxInFullScreen,
+                boundingBoxColor,
+                boundingBoxThickness,
+                boundingBoxSmoothing,
+                motionDetectionService,
+                borrowedPlayer);
+            using var window = new FullScreenCameraWindow(viewModel);
+            window.Owner = Application.Current.MainWindow;
+
+            window.ShowDialog();
+        }
+        finally
+        {
+            // Return the borrowed player to the source tile
+            if (sourceTile is not null && borrowedPlayer is not null)
+            {
+                // Disable audio when returning to grid view
+                borrowedPlayer.Config.Audio.Enabled = false;
+                sourceTile.ReturnPlayer(borrowedPlayer);
+            }
+        }
     }
 
     /// <inheritdoc />

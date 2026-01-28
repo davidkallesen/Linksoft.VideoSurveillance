@@ -187,6 +187,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Analysis resolution.
+        /// </summary>
+        public static string AnalysisResolution {
+            get {
+                return ResourceManager.GetString("AnalysisResolution", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Application Appearance.
         /// </summary>
         public static string ApplicationAppearance {
@@ -273,6 +282,42 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string AvailableCameras {
             get {
                 return ResourceManager.GetString("AvailableCameras", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Bounding box color.
+        /// </summary>
+        public static string BoundingBoxColor {
+            get {
+                return ResourceManager.GetString("BoundingBoxColor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Bounding Box Display.
+        /// </summary>
+        public static string BoundingBoxDisplay {
+            get {
+                return ResourceManager.GetString("BoundingBoxDisplay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Min. detection size.
+        /// </summary>
+        public static string BoundingBoxMinArea {
+            get {
+                return ResourceManager.GetString("BoundingBoxMinArea", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Bounding box thickness.
+        /// </summary>
+        public static string BoundingBoxThickness {
+            get {
+                return ResourceManager.GetString("BoundingBoxThickness", resourceCulture);
             }
         }
         
@@ -1186,11 +1231,29 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Motion.
+        /// </summary>
+        public static string Motion {
+            get {
+                return ResourceManager.GetString("Motion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Motion detected: {0}.
         /// </summary>
         public static string MotionDetected1 {
             get {
                 return ResourceManager.GetString("MotionDetected1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Motion Detection.
+        /// </summary>
+        public static string MotionDetection {
+            get {
+                return ResourceManager.GetString("MotionDetection", resourceCulture);
             }
         }
         
@@ -1663,6 +1726,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Duration.
+        /// </summary>
+        public static string RecordingDuration {
+            get {
+                return ResourceManager.GetString("RecordingDuration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Recording failed: {0}.
         /// </summary>
         public static string RecordingFailed1 {
@@ -1960,6 +2032,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show bounding boxes in full screen.
+        /// </summary>
+        public static string ShowBoundingBoxInFullScreen {
+            get {
+                return ResourceManager.GetString("ShowBoundingBoxInFullScreen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show bounding boxes in grid view.
+        /// </summary>
+        public static string ShowBoundingBoxInGrid {
+            get {
+                return ResourceManager.GetString("ShowBoundingBoxInGrid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Show connection status.
         /// </summary>
         public static string ShowCameraOverlayConnectionStatus {
@@ -2199,6 +2289,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string ThumbnailPreviewTitle1 {
             get {
                 return ResourceManager.GetString("ThumbnailPreviewTitle1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Thumbnail tiles.
+        /// </summary>
+        public static string ThumbnailTileCount {
+            get {
+                return ResourceManager.GetString("ThumbnailTileCount", resourceCulture);
             }
         }
         

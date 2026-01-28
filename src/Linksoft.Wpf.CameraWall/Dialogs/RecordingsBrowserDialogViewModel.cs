@@ -222,6 +222,7 @@ public partial class RecordingsBrowserDialogViewModel : ViewModelDialogBase
                 {
                     var info = new FileInfo(file);
                     var timestamp = ParseRecordingTimestamp(info.Name);
+                    var duration = GetVideoDuration(file);
 
                     entries.Add(new RecordingEntry
                     {
@@ -229,6 +230,7 @@ public partial class RecordingsBrowserDialogViewModel : ViewModelDialogBase
                         CameraName = cameraName,
                         RecordingTime = timestamp ?? info.CreationTime,
                         FileSizeBytes = info.Length,
+                        Duration = duration,
                     });
                 }
             }
@@ -323,5 +325,37 @@ public partial class RecordingsBrowserDialogViewModel : ViewModelDialogBase
         }
 
         return null;
+    }
+
+    private static TimeSpan GetVideoDuration(string filePath)
+    {
+        try
+        {
+            var config = new FlyleafLib.Config();
+            var demuxer = new FlyleafLib.MediaFramework.MediaDemuxer.Demuxer(config.Demuxer);
+
+            try
+            {
+                // Open the file just for probing metadata
+                demuxer.Open(filePath);
+
+                // Get duration in ticks (100-nanosecond intervals)
+                var durationTicks = demuxer.Duration;
+                if (durationTicks > 0)
+                {
+                    return TimeSpan.FromTicks(durationTicks);
+                }
+            }
+            finally
+            {
+                demuxer.Stop();
+            }
+        }
+        catch
+        {
+            // If we can't read the duration, return zero
+        }
+
+        return TimeSpan.Zero;
     }
 }

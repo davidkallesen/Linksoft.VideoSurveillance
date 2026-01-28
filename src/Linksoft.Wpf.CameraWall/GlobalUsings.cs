@@ -57,6 +57,7 @@ global using Linksoft.Wpf.CameraWall.Models;
 global using Linksoft.Wpf.CameraWall.Models.Settings;
 global using Linksoft.Wpf.CameraWall.Resources;
 global using Linksoft.Wpf.CameraWall.Services;
+global using Linksoft.Wpf.CameraWall.Services.Internal;
 global using Linksoft.Wpf.CameraWall.UserControls;
 global using Linksoft.Wpf.CameraWall.ValueConverters;
 global using Linksoft.Wpf.CameraWall.Windows;

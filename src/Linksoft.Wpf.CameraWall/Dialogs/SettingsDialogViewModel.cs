@@ -142,6 +142,49 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
 
     #endregion
 
+    #region Motion Detection Tab Settings
+
+    [ObservableProperty]
+    private int motionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
+
+    [ObservableProperty]
+    private int postMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
+
+    [ObservableProperty]
+    private int analysisFrameRate = 2;
+
+    [ObservableProperty]
+    private string selectedAnalysisResolution = DropDownItemsFactory.DefaultMotionAnalysisResolution;
+
+    public IDictionary<string, string> AnalysisResolutionItems
+        => DropDownItemsFactory.MotionAnalysisResolutionItems;
+
+    [ObservableProperty]
+    private int cooldownSeconds = 5;
+
+    [ObservableProperty]
+    private bool showBoundingBoxInGrid;
+
+    [ObservableProperty]
+    private bool showBoundingBoxInFullScreen;
+
+    [ObservableProperty]
+    private string selectedBoundingBoxColor = DropDownItemsFactory.DefaultBoundingBoxColor;
+
+    [ObservableProperty]
+    private string selectedBoundingBoxThickness = DropDownItemsFactory.DefaultBoundingBoxThickness.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> BoundingBoxThicknessItems
+        => DropDownItemsFactory.BoundingBoxThicknessItems;
+
+    [ObservableProperty]
+    private string selectedBoundingBoxMinArea = DropDownItemsFactory.DefaultBoundingBoxMinArea.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> BoundingBoxMinAreaItems
+        => DropDownItemsFactory.BoundingBoxMinAreaItems;
+
+    #endregion
+
     #region Recording Tab Settings
 
     [ObservableProperty]
@@ -159,19 +202,6 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     [ObservableProperty]
     private bool enableRecordingOnConnect;
 
-    // Motion Detection Settings
-    [ObservableProperty]
-    private int motionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
-
-    [ObservableProperty]
-    private int postMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
-
-    [ObservableProperty]
-    private int analysisFrameRate = 2;
-
-    [ObservableProperty]
-    private int cooldownSeconds = 5;
-
     // Recording Segmentation Settings
     [ObservableProperty]
     private bool enableHourlySegmentation = true;
@@ -181,6 +211,13 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
 
     public IDictionary<string, string> MaxRecordingDurationItems
         => DropDownItemsFactory.MaxRecordingDurationItems;
+
+    // Thumbnail Settings
+    [ObservableProperty]
+    private string selectedThumbnailTileCount = DropDownItemsFactory.DefaultThumbnailTileCount.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> ThumbnailTileCountItems
+        => DropDownItemsFactory.ThumbnailTileCountItems;
 
     // Media Cleanup Settings
     [ObservableProperty(DependentPropertyNames = [nameof(IsCleanupEnabled), nameof(IsSnapshotRetentionEnabled)])]
@@ -250,6 +287,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SaveCameraDisplaySettings();
         SaveConnectionSettings();
         SavePerformanceSettings();
+        SaveMotionDetectionSettings();
         SaveRecordingSettings();
         SaveAdvancedSettings();
         CloseRequested?.Invoke(this, new DialogClosedEventArgs(dialogResult: true));
@@ -306,19 +344,30 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SelectedRtspTransport = "tcp";
         MaxLatencyMs = 500;
 
+        // Motion Detection Tab
+        MotionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
+        PostMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
+        AnalysisFrameRate = 30;
+        SelectedAnalysisResolution = DropDownItemsFactory.DefaultMotionAnalysisResolution;
+        CooldownSeconds = 5;
+        ShowBoundingBoxInGrid = false;
+        ShowBoundingBoxInFullScreen = false;
+        SelectedBoundingBoxColor = DropDownItemsFactory.DefaultBoundingBoxColor;
+        SelectedBoundingBoxThickness = DropDownItemsFactory.DefaultBoundingBoxThickness.ToString(CultureInfo.InvariantCulture);
+        SelectedBoundingBoxMinArea = DropDownItemsFactory.DefaultBoundingBoxMinArea.ToString(CultureInfo.InvariantCulture);
+
         // Recording Tab
         RecordingPath = new DirectoryInfo(ApplicationPaths.DefaultRecordingsPath);
         SelectedRecordingFormat = "mp4";
         EnableRecordingOnMotion = false;
         EnableRecordingOnConnect = false;
-        MotionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
-        PostMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
-        AnalysisFrameRate = 2;
-        CooldownSeconds = 5;
 
         // Recording Segmentation
         EnableHourlySegmentation = true;
         SelectedMaxRecordingDuration = DropDownItemsFactory.DefaultMaxRecordingDuration.ToString(CultureInfo.InvariantCulture);
+
+        // Thumbnail Settings
+        SelectedThumbnailTileCount = DropDownItemsFactory.DefaultThumbnailTileCount.ToString(CultureInfo.InvariantCulture);
 
         // Media Cleanup
         SelectedCleanupSchedule = DropDownItemsFactory.DefaultMediaCleanupSchedule;
@@ -389,6 +438,19 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SelectedRtspTransport = performance.RtspTransport;
         MaxLatencyMs = performance.MaxLatencyMs;
 
+        // Load Motion Detection Tab settings
+        var motionDetection = settingsService.MotionDetection;
+        MotionSensitivity = motionDetection.Sensitivity;
+        PostMotionDurationSeconds = motionDetection.PostMotionDurationSeconds;
+        AnalysisFrameRate = motionDetection.AnalysisFrameRate;
+        SelectedAnalysisResolution = DropDownItemsFactory.FormatAnalysisResolution(motionDetection.AnalysisWidth, motionDetection.AnalysisHeight);
+        CooldownSeconds = motionDetection.CooldownSeconds;
+        ShowBoundingBoxInGrid = motionDetection.BoundingBox.ShowInGrid;
+        ShowBoundingBoxInFullScreen = motionDetection.BoundingBox.ShowInFullScreen;
+        SelectedBoundingBoxColor = motionDetection.BoundingBox.Color;
+        SelectedBoundingBoxThickness = motionDetection.BoundingBox.Thickness.ToString(CultureInfo.InvariantCulture);
+        SelectedBoundingBoxMinArea = motionDetection.BoundingBox.MinArea.ToString(CultureInfo.InvariantCulture);
+
         // Load Recording Tab settings
         var recording = settingsService.Recording;
         RecordingPath = new DirectoryInfo(recording.RecordingPath);
@@ -396,15 +458,12 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         EnableRecordingOnMotion = recording.EnableRecordingOnMotion;
         EnableRecordingOnConnect = recording.EnableRecordingOnConnect;
 
-        // Motion Detection Settings
-        MotionSensitivity = recording.MotionDetection.Sensitivity;
-        PostMotionDurationSeconds = recording.MotionDetection.PostMotionDurationSeconds;
-        AnalysisFrameRate = recording.MotionDetection.AnalysisFrameRate;
-        CooldownSeconds = recording.MotionDetection.CooldownSeconds;
-
         // Recording Segmentation Settings
         EnableHourlySegmentation = recording.EnableHourlySegmentation;
         SelectedMaxRecordingDuration = recording.MaxRecordingDurationMinutes.ToString(CultureInfo.InvariantCulture);
+
+        // Thumbnail Settings
+        SelectedThumbnailTileCount = recording.ThumbnailTileCount.ToString(CultureInfo.InvariantCulture);
 
         // Media Cleanup Settings
         SelectedCleanupSchedule = recording.Cleanup.Schedule.ToString();
@@ -503,12 +562,37 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         settingsService.SavePerformance(settings);
     }
 
+    private void SaveMotionDetectionSettings()
+    {
+        var (analysisWidth, analysisHeight) = DropDownItemsFactory.ParseAnalysisResolution(SelectedAnalysisResolution);
+        var settings = new MotionDetectionSettings
+        {
+            Sensitivity = MotionSensitivity,
+            PostMotionDurationSeconds = PostMotionDurationSeconds,
+            AnalysisFrameRate = AnalysisFrameRate,
+            AnalysisWidth = analysisWidth,
+            AnalysisHeight = analysisHeight,
+            CooldownSeconds = CooldownSeconds,
+            BoundingBox = new BoundingBoxSettings
+            {
+                ShowInGrid = ShowBoundingBoxInGrid,
+                ShowInFullScreen = ShowBoundingBoxInFullScreen,
+                Color = SelectedBoundingBoxColor,
+                Thickness = int.TryParse(SelectedBoundingBoxThickness, NumberStyles.Integer, CultureInfo.InvariantCulture, out var thickness) ? thickness : DropDownItemsFactory.DefaultBoundingBoxThickness,
+                MinArea = int.TryParse(SelectedBoundingBoxMinArea, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minArea) ? minArea : DropDownItemsFactory.DefaultBoundingBoxMinArea,
+            },
+        };
+
+        settingsService.SaveMotionDetection(settings);
+    }
+
     private void SaveRecordingSettings()
     {
         _ = Enum.TryParse<MediaCleanupSchedule>(SelectedCleanupSchedule, out var cleanupSchedule);
         _ = int.TryParse(SelectedRecordingRetention, NumberStyles.Integer, CultureInfo.InvariantCulture, out var recordingRetention);
         _ = int.TryParse(SelectedSnapshotRetention, NumberStyles.Integer, CultureInfo.InvariantCulture, out var snapshotRetention);
         _ = int.TryParse(SelectedMaxRecordingDuration, NumberStyles.Integer, CultureInfo.InvariantCulture, out var maxRecordingDuration);
+        _ = int.TryParse(SelectedThumbnailTileCount, NumberStyles.Integer, CultureInfo.InvariantCulture, out var thumbnailTileCount);
 
         var settings = new RecordingSettings
         {
@@ -516,15 +600,9 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
             RecordingFormat = SelectedRecordingFormat,
             EnableRecordingOnMotion = EnableRecordingOnMotion,
             EnableRecordingOnConnect = EnableRecordingOnConnect,
-            MotionDetection = new MotionDetectionSettings
-            {
-                Sensitivity = MotionSensitivity,
-                PostMotionDurationSeconds = PostMotionDurationSeconds,
-                AnalysisFrameRate = AnalysisFrameRate,
-                CooldownSeconds = CooldownSeconds,
-            },
             EnableHourlySegmentation = EnableHourlySegmentation,
             MaxRecordingDurationMinutes = maxRecordingDuration > 0 ? maxRecordingDuration : DropDownItemsFactory.DefaultMaxRecordingDuration,
+            ThumbnailTileCount = thumbnailTileCount == 1 || thumbnailTileCount == 4 ? thumbnailTileCount : DropDownItemsFactory.DefaultThumbnailTileCount,
             Cleanup = new MediaCleanupSettings
             {
                 Schedule = cleanupSchedule,

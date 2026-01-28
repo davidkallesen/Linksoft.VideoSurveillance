@@ -12,12 +12,33 @@
     Background="Black"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
+
     <atc:GridEx>
+        <!--  Placeholder when player is lent to fullscreen window  -->
+        <Border
+            x:Name="PlayerLentPlaceholder"
+            Background="#2D2D2D"
+            Visibility="{Binding IsPlayerLent, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+                <TextBlock
+                    FontSize="14"
+                    Foreground="#AAAAAA"
+                    Text="Viewing in Full Screen"
+                    TextAlignment="Center" />
+            </StackPanel>
+        </Border>
+
         <!--  Video Player with Overlay Content  -->
         <fl:FlyleafHost
             x:Name="VideoPlayer"
             DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
             KeyBindings="None"
+            ToggleFullScreenOnDoubleClick="None"
             PanMoveOnCtrl="Overlay"
             PanZoomOnCtrlWheel="Overlay"
             Player="{Binding Player}">
@@ -41,6 +62,11 @@
                     Margin="8"
                     HorizontalAlignment="{Binding HostDataContext.OverlayHorizontalAlignment}"
                     VerticalAlignment="{Binding HostDataContext.OverlayVerticalAlignment}"
+                    IsHitTestVisible="False" />
+
+                <!--  Motion Bounding Box Overlay  -->
+                <local:MotionBoundingBoxOverlay
+                    x:Name="MotionOverlay"
                     IsHitTestVisible="False" />
 
                 <!--  Selection Border  -->

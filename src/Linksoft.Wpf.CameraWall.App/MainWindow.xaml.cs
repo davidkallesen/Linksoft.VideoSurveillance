@@ -57,9 +57,9 @@ public partial class MainWindow : Fluent.IRibbonWindow
 
     private void CameraGrid_FullScreenRequested(
         object? sender,
-        CameraConfiguration e)
+        FullScreenRequestedEventArgs e)
     {
-        viewModel.ShowFullScreen(e);
+        viewModel.ShowFullScreen(e.Camera, e.SourceTile);
     }
 
     private void CameraGrid_ConnectionStateChanged(

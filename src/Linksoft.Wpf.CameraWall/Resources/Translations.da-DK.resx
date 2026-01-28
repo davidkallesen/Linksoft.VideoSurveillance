@@ -711,8 +711,14 @@
   <data name="RecordingFailed1" xml:space="preserve">
     <value>Optagelse fejlede: {0}</value>
   </data>
+  <data name="Motion" xml:space="preserve">
+    <value>Bevægelse</value>
+  </data>
   <data name="MotionDetected1" xml:space="preserve">
     <value>Bevægelse registreret: {0}</value>
+  </data>
+  <data name="MotionDetection" xml:space="preserve">
+    <value>Bevægelsesregistrering</value>
   </data>
   <data name="MotionDetectionSettings" xml:space="preserve">
     <value>Bevægelsesregistrering indstillinger</value>
@@ -749,6 +755,9 @@
   </data>
   <data name="RecordingSize" xml:space="preserve">
     <value>Størrelse</value>
+  </data>
+  <data name="RecordingDuration" xml:space="preserve">
+    <value>Varighed</value>
   </data>
   <data name="Thumbnail" xml:space="preserve">
     <value>Miniature</value>
@@ -848,5 +857,8 @@
   </data>
   <data name="MaxRecordingDuration" xml:space="preserve">
     <value>Maksimal optagelsesvarighed</value>
+  </data>
+  <data name="ThumbnailTileCount" xml:space="preserve">
+    <value>Miniature fliser</value>
   </data>
 </root>

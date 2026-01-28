@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="Linksoft.Wpf.CameraWall.Dialogs.Parts.Settings.RecordingMotionDetectionSettings"
+    x:Class="Linksoft.Wpf.CameraWall.Dialogs.Parts.Settings.MotionDetectionAnalysisSettings"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
@@ -34,10 +34,17 @@
             <atc:LabelIntegerBox
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=AnalysisFrameRate}"
-                Maximum="10"
+                Maximum="30"
                 Minimum="1"
                 Orientation="Vertical"
                 Value="{Binding Path=AnalysisFrameRate, Mode=TwoWay}" />
+
+            <atc:LabelComboBox
+                Items="{Binding Path=AnalysisResolutionItems}"
+                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                Key=AnalysisResolution}"
+                Orientation="Vertical"
+                SelectedKey="{Binding Path=SelectedAnalysisResolution, Mode=TwoWay}" />
 
             <atc:LabelIntegerBox
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,

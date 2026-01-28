@@ -3,14 +3,22 @@ namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
 /// Service for detecting motion in camera video streams using frame differencing.
+/// Uses a staggered scheduler to analyze cameras in sequence, preventing CPU spikes.
 /// </summary>
 [Registration(Lifetime.Singleton)]
 public class MotionDetectionService : IMotionDetectionService, IDisposable
 {
-    private const int AnalysisWidth = 320;
-    private const int AnalysisHeight = 240;
+    private const int DefaultAnalysisWidth = 800;
+    private const int DefaultAnalysisHeight = 600;
+    private const int DefaultTargetFps = 2; // Target analysis FPS per camera
+    private const int MinSchedulerIntervalMs = 50; // Minimum 50ms between analyses
+    private const int MaxSchedulerIntervalMs = 500; // Maximum 500ms between analyses
 
     private readonly ConcurrentDictionary<Guid, MotionDetectionContext> contexts = new();
+    private readonly List<Guid> scheduledCameras = [];
+    private readonly Lock schedulerLock = new();
+    private DispatcherTimer? schedulerTimer;
+    private int currentCameraIndex;
     private bool disposed;
 
     /// <inheritdoc/>
@@ -19,7 +27,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
     /// <inheritdoc/>
     public void StartDetection(
         Guid cameraId,
-        FlyleafLib.MediaPlayer.Player player,
+        Player player,
         MotionDetectionSettings? settings = null)
     {
         ArgumentNullException.ThrowIfNull(player);
@@ -34,10 +42,12 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
             return;
         }
 
-        // Start the analysis timer
-        context.Timer.Tick += (_, _) => AnalyzeFrame(cameraId);
-        context.Timer.Interval = TimeSpan.FromMilliseconds(1000.0 / context.Settings.AnalysisFrameRate);
-        context.Timer.Start();
+        // Add to scheduler
+        lock (schedulerLock)
+        {
+            scheduledCameras.Add(cameraId);
+            UpdateSchedulerInterval();
+        }
     }
 
     /// <inheritdoc/>
@@ -46,6 +56,13 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         if (contexts.TryRemove(cameraId, out var context))
         {
             context.Dispose();
+        }
+
+        // Remove from scheduler
+        lock (schedulerLock)
+        {
+            scheduledCameras.Remove(cameraId);
+            UpdateSchedulerInterval();
         }
     }
 
@@ -62,6 +79,25 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         }
 
         return false;
+    }
+
+    /// <inheritdoc/>
+    public Rect? GetLastBoundingBox(Guid cameraId)
+        => contexts.TryGetValue(cameraId, out var context)
+            ? context.LastBoundingBox
+            : null;
+
+    /// <inheritdoc/>
+    public (int Width, int Height) GetAnalysisResolution(Guid cameraId)
+    {
+        if (contexts.TryGetValue(cameraId, out var context))
+        {
+            var width = context.Settings.AnalysisWidth > 0 ? context.Settings.AnalysisWidth : DefaultAnalysisWidth;
+            var height = context.Settings.AnalysisHeight > 0 ? context.Settings.AnalysisHeight : DefaultAnalysisHeight;
+            return (width, height);
+        }
+
+        return (DefaultAnalysisWidth, DefaultAnalysisHeight);
     }
 
     /// <summary>
@@ -82,6 +118,14 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
 
         if (disposing)
         {
+            // Stop scheduler
+            lock (schedulerLock)
+            {
+                schedulerTimer?.Stop();
+                schedulerTimer = null;
+                scheduledCameras.Clear();
+            }
+
             foreach (var cameraId in contexts.Keys.ToList())
             {
                 StopDetection(cameraId);
@@ -89,6 +133,68 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         }
 
         disposed = true;
+    }
+
+    /// <summary>
+    /// Updates the scheduler interval based on the number of cameras.
+    /// Spreads analysis evenly across time to prevent CPU spikes.
+    /// </summary>
+    private void UpdateSchedulerInterval()
+    {
+        // Must be called within schedulerLock
+        if (scheduledCameras.Count == 0)
+        {
+            schedulerTimer?.Stop();
+            schedulerTimer = null;
+            return;
+        }
+
+        // Calculate interval: total analyses per second = cameras * targetFps
+        // Interval = 1000ms / totalAnalysesPerSecond
+        // Example: 8 cameras * 2 fps = 16 analyses/sec = 62.5ms interval
+        var totalAnalysesPerSecond = scheduledCameras.Count * DefaultTargetFps;
+        var intervalMs = Math.Max(MinSchedulerIntervalMs, Math.Min(MaxSchedulerIntervalMs, 1000.0 / totalAnalysesPerSecond));
+
+        if (schedulerTimer is null)
+        {
+            schedulerTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(intervalMs),
+            };
+
+            schedulerTimer.Tick += OnSchedulerTick;
+            schedulerTimer.Start();
+        }
+        else
+        {
+            schedulerTimer.Interval = TimeSpan.FromMilliseconds(intervalMs);
+        }
+    }
+
+    /// <summary>
+    /// Scheduler tick handler - analyzes the next camera in sequence.
+    /// </summary>
+    private void OnSchedulerTick(
+        object? sender,
+        EventArgs e)
+    {
+        Guid cameraId;
+
+        lock (schedulerLock)
+        {
+            if (scheduledCameras.Count == 0)
+            {
+                return;
+            }
+
+            // Get next camera in round-robin fashion
+            currentCameraIndex %= scheduledCameras.Count;
+            cameraId = scheduledCameras[currentCameraIndex];
+            currentCameraIndex++;
+        }
+
+        // Analyze frame outside the lock
+        AnalyzeFrame(cameraId);
     }
 
     private void AnalyzeFrame(Guid cameraId)
@@ -100,42 +206,66 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
 
         try
         {
-            // TODO: Implement frame capture from FlyleafLib Player
-            // FlyleafLib's Player.TakeSnapshotToFile() saves to a file, not memory.
-            // Options for implementation:
-            // 1. Use temp file approach: TakeSnapshotToFile to temp, read back, delete
-            // 2. Use FlyleafLib's renderer API if available in future versions
-            // 3. Hook into the video frame pipeline directly
-
-            // For now, use temp file approach for frame capture
+            // Use temp file approach for frame capture (FlyleafLib's TakeSnapshotToFile)
             var tempFile = Path.Combine(Path.GetTempPath(), $"motion_{cameraId:N}.png");
 
             try
             {
                 context.Player.TakeSnapshotToFile(tempFile);
 
+                // Wait a bit for the file to be fully written (FlyleafLib writes async)
+                var maxWaitMs = 500;
+                var waitedMs = 0;
+                while (waitedMs < maxWaitMs)
+                {
+                    if (File.Exists(tempFile))
+                    {
+                        var fileInfo = new FileInfo(tempFile);
+                        if (fileInfo.Length > 0)
+                        {
+                            break;
+                        }
+                    }
+
+                    Thread.Sleep(10);
+                    waitedMs += 10;
+                }
+
                 if (!File.Exists(tempFile))
+                {
+                    return;
+                }
+
+                var finalFileInfo = new FileInfo(tempFile);
+                if (finalFileInfo.Length == 0)
                 {
                     return;
                 }
 
                 using var bitmap = new System.Drawing.Bitmap(tempFile);
 
+                // Get analysis resolution from settings (or use defaults)
+                var analysisWidth = context.Settings.AnalysisWidth > 0 ? context.Settings.AnalysisWidth : DefaultAnalysisWidth;
+                var analysisHeight = context.Settings.AnalysisHeight > 0 ? context.Settings.AnalysisHeight : DefaultAnalysisHeight;
+
                 // Convert to grayscale and downscale for analysis
-                var currentFrame = ConvertToGrayscale(bitmap, AnalysisWidth, AnalysisHeight);
+                var currentFrame = ConvertToGrayscale(bitmap, analysisWidth, analysisHeight);
 
                 // Compare with previous frame
                 if (context.PreviousFrame is not null)
                 {
-                    var changePercent = CalculateFrameDifference(
+                    var (changePercent, boundingBox) = CalculateFrameDifferenceWithBoundingBox(
                         context.PreviousFrame,
                         currentFrame,
-                        context.Settings.Sensitivity);
+                        context.Settings,
+                        analysisWidth,
+                        analysisHeight);
 
                     var wasMotionDetected = context.IsMotionDetected;
                     var minimumChange = context.Settings.MinimumChangePercent;
+                    var isMotionActive = changePercent >= minimumChange;
 
-                    if (changePercent >= minimumChange)
+                    if (isMotionActive)
                     {
                         // Check cooldown
                         var cooldownElapsed = context.LastMotionTime is null ||
@@ -145,16 +275,39 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
                         {
                             context.IsMotionDetected = true;
                             context.LastMotionTime = DateTime.UtcNow;
+                            context.LastBoundingBox = boundingBox;
 
-                            // Raise event
+                            // Raise event with bounding box data
                             MotionDetected?.Invoke(
                                 this,
-                                new MotionDetectedEventArgs(cameraId, changePercent));
+                                new MotionDetectedEventArgs(
+                                    cameraId,
+                                    changePercent,
+                                    isMotionActive: true,
+                                    boundingBox,
+                                    analysisWidth,
+                                    analysisHeight));
                         }
                     }
                     else
                     {
+                        // Motion stopped
+                        if (wasMotionDetected)
+                        {
+                            // Raise event indicating motion stopped
+                            MotionDetected?.Invoke(
+                                this,
+                                new MotionDetectedEventArgs(
+                                    cameraId,
+                                    changePercent,
+                                    isMotionActive: false,
+                                    boundingBox: null,
+                                    analysisWidth,
+                                    analysisHeight));
+                        }
+
                         context.IsMotionDetected = false;
+                        context.LastBoundingBox = null;
                     }
                 }
 
@@ -177,9 +330,9 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            System.Diagnostics.Debug.WriteLine($"Motion detection error for camera {cameraId}: {ex.Message}");
+            // Silently ignore frame analysis errors - next frame will be analyzed
         }
     }
 
@@ -188,88 +341,241 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         int targetWidth,
         int targetHeight)
     {
-        // Resize and convert to grayscale using safe code
+        // Resize and convert to grayscale using LockBits for performance
         using var resized = new System.Drawing.Bitmap(bitmap, new System.Drawing.Size(targetWidth, targetHeight));
 
         var grayscale = new byte[targetWidth * targetHeight];
+        var rect = new System.Drawing.Rectangle(0, 0, targetWidth, targetHeight);
 
-        for (var y = 0; y < targetHeight; y++)
+        // Lock bits for fast pixel access
+        var bitmapData = resized.LockBits(
+            rect,
+            System.Drawing.Imaging.ImageLockMode.ReadOnly,
+            System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+
+        try
         {
-            for (var x = 0; x < targetWidth; x++)
-            {
-                var pixel = resized.GetPixel(x, y);
+            var stride = bitmapData.Stride;
+            var scan0 = bitmapData.Scan0;
 
-                // Standard grayscale conversion using luminosity method
-                grayscale[(y * targetWidth) + x] = (byte)((0.299 * pixel.R) + (0.587 * pixel.G) + (0.114 * pixel.B));
+            // Use unsafe code for maximum performance
+            unsafe
+            {
+                var ptr = (byte*)scan0.ToPointer();
+
+                for (var y = 0; y < targetHeight; y++)
+                {
+                    var row = ptr + (y * stride);
+                    for (var x = 0; x < targetWidth; x++)
+                    {
+                        // BGR format (24bpp)
+                        var b = row[x * 3];
+                        var g = row[(x * 3) + 1];
+                        var r = row[(x * 3) + 2];
+
+                        // Standard grayscale conversion using luminosity method
+                        // Using integer math for speed: (77*R + 150*G + 29*B) >> 8 ≈ 0.299*R + 0.587*G + 0.114*B
+                        grayscale[(y * targetWidth) + x] = (byte)(((77 * r) + (150 * g) + (29 * b)) >> 8);
+                    }
+                }
             }
+        }
+        finally
+        {
+            resized.UnlockBits(bitmapData);
         }
 
         return grayscale;
     }
 
-    private static double CalculateFrameDifference(
+    private static (double ChangePercent, Rect? BoundingBox) CalculateFrameDifferenceWithBoundingBox(
         byte[] previous,
         byte[] current,
-        int sensitivity)
+        MotionDetectionSettings settings,
+        int analysisWidth,
+        int analysisHeight)
     {
         if (previous.Length != current.Length)
         {
-            return 0;
+            return (0, null);
         }
 
         // Threshold based on sensitivity (0-100)
-        // Lower sensitivity = higher threshold (less sensitive to changes)
-        // Higher sensitivity = lower threshold (more sensitive to changes)
-        var threshold = (int)((100 - sensitivity) * 2.55); // 0-255 range
+        // Map sensitivity to a practical threshold range (15-35)
+        // Higher sensitivity (100) = lower threshold (15) - detects subtle changes
+        // Lower sensitivity (0) = higher threshold (35) - requires larger changes
+        var threshold = (int)(35 - (settings.Sensitivity * 0.2)); // Range: 15-35
 
-        var changedPixels = 0;
+        // Use a grid-based approach to filter out scattered noise
+        // Divide frame into cells and only consider cells with significant motion
+        const int cellSize = 20; // Each cell is 20x20 pixels
+        var gridWidth = (analysisWidth + cellSize - 1) / cellSize;
+        var gridHeight = (analysisHeight + cellSize - 1) / cellSize;
+        var cellChangeCounts = new int[gridWidth * gridHeight];
+        var isActiveCell = new bool[gridWidth * gridHeight];
 
-        for (var i = 0; i < previous.Length; i++)
+        var totalChangedPixels = 0;
+
+        // Count changed pixels per cell
+        for (var y = 0; y < analysisHeight; y++)
         {
-            var diff = Math.Abs(current[i] - previous[i]);
-            if (diff > threshold)
+            for (var x = 0; x < analysisWidth; x++)
             {
-                changedPixels++;
+                var i = (y * analysisWidth) + x;
+                var diff = Math.Abs(current[i] - previous[i]);
+
+                if (diff <= threshold)
+                {
+                    continue;
+                }
+
+                totalChangedPixels++;
+
+                // Determine which cell this pixel belongs to
+                var cellX = x / cellSize;
+                var cellY = y / cellSize;
+                var cellIndex = (cellY * gridWidth) + cellX;
+                cellChangeCounts[cellIndex]++;
             }
         }
 
-        return (double)changedPixels / previous.Length * 100.0;
+        var changePercent = (double)totalChangedPixels / previous.Length * 100.0;
+
+        // Minimum changed pixels per cell to consider it as having motion (not just noise)
+        // At 20x20 = 400 pixels per cell, require at least 8% (32 pixels) to count as motion
+        var minChangedPerCell = Math.Max(8, (cellSize * cellSize) / 12);
+
+        // Mark active cells
+        for (var i = 0; i < cellChangeCounts.Length; i++)
+        {
+            isActiveCell[i] = cellChangeCounts[i] >= minChangedPerCell;
+        }
+
+        // Find connected components (clusters) of active cells using flood fill
+        var visited = new bool[gridWidth * gridHeight];
+        var largestCluster = new List<(int X, int Y)>();
+
+        for (var cellY = 0; cellY < gridHeight; cellY++)
+        {
+            for (var cellX = 0; cellX < gridWidth; cellX++)
+            {
+                var cellIndex = (cellY * gridWidth) + cellX;
+                if (!isActiveCell[cellIndex] || visited[cellIndex])
+                {
+                    continue;
+                }
+
+                // Found an unvisited active cell - flood fill to find the cluster
+                var cluster = FloodFillCluster(
+                    cellX,
+                    cellY,
+                    gridWidth,
+                    gridHeight,
+                    isActiveCell,
+                    visited);
+
+                if (cluster.Count > largestCluster.Count)
+                {
+                    largestCluster = cluster;
+                }
+            }
+        }
+
+        // Create bounding box around the largest cluster only
+        Rect? boundingBox = null;
+        if (largestCluster.Count == 0)
+        {
+            return (changePercent, boundingBox);
+        }
+
+        // Find bounds of the largest cluster
+        var minCellX = largestCluster.Min(c => c.X);
+        var maxCellX = largestCluster.Max(c => c.X);
+        var minCellY = largestCluster.Min(c => c.Y);
+        var maxCellY = largestCluster.Max(c => c.Y);
+
+        // Convert cell coordinates back to pixel coordinates
+        var pixelMinX = minCellX * cellSize;
+        var pixelMinY = minCellY * cellSize;
+        var pixelMaxX = Math.Min(analysisWidth - 1, ((maxCellX + 1) * cellSize) - 1);
+        var pixelMaxY = Math.Min(analysisHeight - 1, ((maxCellY + 1) * cellSize) - 1);
+
+        var width = pixelMaxX - pixelMinX + 1;
+        var height = pixelMaxY - pixelMinY + 1;
+        var area = width * height;
+
+        // Only create bounding box if area exceeds minimum
+        if (area < settings.BoundingBox.MinArea)
+        {
+            return (changePercent, boundingBox);
+        }
+
+        // Add padding
+        var padding = settings.BoundingBox.Padding;
+        var paddedX = Math.Max(0, pixelMinX - padding);
+        var paddedY = Math.Max(0, pixelMinY - padding);
+        var paddedWidth = Math.Min(analysisWidth - paddedX, width + (2 * padding));
+        var paddedHeight = Math.Min(analysisHeight - paddedY, height + (2 * padding));
+
+        boundingBox = new Rect(paddedX, paddedY, paddedWidth, paddedHeight);
+
+        return (changePercent, boundingBox);
     }
 
     /// <summary>
-    /// Internal context for tracking motion detection state per camera.
+    /// Flood fill to find all connected active cells starting from a seed cell.
+    /// Uses 8-connectivity (includes diagonal neighbors).
     /// </summary>
-    private sealed class MotionDetectionContext : IDisposable
+    private static List<(int X, int Y)> FloodFillCluster(
+        int startX,
+        int startY,
+        int gridWidth,
+        int gridHeight,
+        bool[] isActiveCell,
+        bool[] visited)
     {
-        public MotionDetectionContext(
-            Guid cameraId,
-            FlyleafLib.MediaPlayer.Player player,
-            MotionDetectionSettings settings)
+        var cluster = new List<(int X, int Y)>();
+        var stack = new Stack<(int X, int Y)>();
+        stack.Push((startX, startY));
+
+        // 8-connectivity offsets (including diagonals)
+        int[] dx = [-1, 0, 1, -1, 1, -1, 0, 1];
+        int[] dy = [-1, -1, -1, 0, 0, 1, 1, 1];
+
+        while (stack.Count > 0)
         {
-            CameraId = cameraId;
-            Player = player;
-            Settings = settings;
-            Timer = new DispatcherTimer();
+            var (x, y) = stack.Pop();
+            var index = (y * gridWidth) + x;
+
+            if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight)
+            {
+                continue;
+            }
+
+            if (visited[index] || !isActiveCell[index])
+            {
+                continue;
+            }
+
+            visited[index] = true;
+            cluster.Add((x, y));
+
+            // Add all 8 neighbors
+            for (var i = 0; i < 8; i++)
+            {
+                var nx = x + dx[i];
+                var ny = y + dy[i];
+                if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight)
+                {
+                    var neighborIndex = (ny * gridWidth) + nx;
+                    if (!visited[neighborIndex] && isActiveCell[neighborIndex])
+                    {
+                        stack.Push((nx, ny));
+                    }
+                }
+            }
         }
 
-        public Guid CameraId { get; }
-
-        public FlyleafLib.MediaPlayer.Player Player { get; }
-
-        public MotionDetectionSettings Settings { get; }
-
-        public DispatcherTimer Timer { get; }
-
-        public byte[]? PreviousFrame { get; set; }
-
-        public bool IsMotionDetected { get; set; }
-
-        public DateTime? LastMotionTime { get; set; }
-
-        public void Dispose()
-        {
-            Timer.Stop();
-            PreviousFrame = null;
-        }
+        return cluster;
     }
 }

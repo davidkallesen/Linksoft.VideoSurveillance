@@ -26,6 +26,11 @@ public interface IApplicationSettingsService
     PerformanceSettings Performance { get; }
 
     /// <summary>
+    /// Gets the current motion detection settings.
+    /// </summary>
+    MotionDetectionSettings MotionDetection { get; }
+
+    /// <summary>
     /// Gets the current recording settings.
     /// </summary>
     RecordingSettings Recording { get; }
@@ -58,6 +63,12 @@ public interface IApplicationSettingsService
     /// </summary>
     /// <param name="settings">The new settings to save.</param>
     void SavePerformance(PerformanceSettings settings);
+
+    /// <summary>
+    /// Updates and saves the motion detection settings.
+    /// </summary>
+    /// <param name="settings">The new settings to save.</param>
+    void SaveMotionDetection(MotionDetectionSettings settings);
 
     /// <summary>
     /// Updates and saves the recording settings.

@@ -400,6 +400,68 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
             overrides.PostMotionDurationSeconds = postMotionDuration;
         }
 
+        // Motion detection overrides
+        if (TryGetNullableDoubleProperty(element, "motionMinimumChangePercent", "MotionMinimumChangePercent", out var minChangePercent))
+        {
+            overrides.MotionMinimumChangePercent = minChangePercent;
+        }
+
+        if (TryGetNullableInt32Property(element, "motionAnalysisFrameRate", "MotionAnalysisFrameRate", out var analysisFrameRate))
+        {
+            overrides.MotionAnalysisFrameRate = analysisFrameRate;
+        }
+
+        if (TryGetNullableInt32Property(element, "motionAnalysisWidth", "MotionAnalysisWidth", out var analysisWidth))
+        {
+            overrides.MotionAnalysisWidth = analysisWidth;
+        }
+
+        if (TryGetNullableInt32Property(element, "motionAnalysisHeight", "MotionAnalysisHeight", out var analysisHeight))
+        {
+            overrides.MotionAnalysisHeight = analysisHeight;
+        }
+
+        if (TryGetNullableInt32Property(element, "motionCooldownSeconds", "MotionCooldownSeconds", out var cooldownSeconds))
+        {
+            overrides.MotionCooldownSeconds = cooldownSeconds;
+        }
+
+        // Bounding box overrides
+        if (TryGetNullableBoolProperty(element, "showBoundingBoxInGrid", "ShowBoundingBoxInGrid", out var showBoundingBoxInGrid))
+        {
+            overrides.ShowBoundingBoxInGrid = showBoundingBoxInGrid;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showBoundingBoxInFullScreen", "ShowBoundingBoxInFullScreen", out var showBoundingBoxInFullScreen))
+        {
+            overrides.ShowBoundingBoxInFullScreen = showBoundingBoxInFullScreen;
+        }
+
+        if (TryGetStringProperty(element, "boundingBoxColor", "BoundingBoxColor", out var boundingBoxColor))
+        {
+            overrides.BoundingBoxColor = boundingBoxColor;
+        }
+
+        if (TryGetNullableInt32Property(element, "boundingBoxThickness", "BoundingBoxThickness", out var boundingBoxThickness))
+        {
+            overrides.BoundingBoxThickness = boundingBoxThickness;
+        }
+
+        if (TryGetNullableDoubleProperty(element, "boundingBoxSmoothing", "BoundingBoxSmoothing", out var boundingBoxSmoothing))
+        {
+            overrides.BoundingBoxSmoothing = boundingBoxSmoothing;
+        }
+
+        if (TryGetNullableInt32Property(element, "boundingBoxMinArea", "BoundingBoxMinArea", out var boundingBoxMinArea))
+        {
+            overrides.BoundingBoxMinArea = boundingBoxMinArea;
+        }
+
+        if (TryGetNullableInt32Property(element, "boundingBoxPadding", "BoundingBoxPadding", out var boundingBoxPadding))
+        {
+            overrides.BoundingBoxPadding = boundingBoxPadding;
+        }
+
         return overrides;
     }
 
@@ -588,6 +650,68 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
         if (overrides.PostMotionDurationSeconds.HasValue)
         {
             writer.WriteNumber("postMotionDurationSeconds", overrides.PostMotionDurationSeconds.Value);
+        }
+
+        // Motion detection overrides
+        if (overrides.MotionMinimumChangePercent.HasValue)
+        {
+            writer.WriteNumber("motionMinimumChangePercent", overrides.MotionMinimumChangePercent.Value);
+        }
+
+        if (overrides.MotionAnalysisFrameRate.HasValue)
+        {
+            writer.WriteNumber("motionAnalysisFrameRate", overrides.MotionAnalysisFrameRate.Value);
+        }
+
+        if (overrides.MotionAnalysisWidth.HasValue)
+        {
+            writer.WriteNumber("motionAnalysisWidth", overrides.MotionAnalysisWidth.Value);
+        }
+
+        if (overrides.MotionAnalysisHeight.HasValue)
+        {
+            writer.WriteNumber("motionAnalysisHeight", overrides.MotionAnalysisHeight.Value);
+        }
+
+        if (overrides.MotionCooldownSeconds.HasValue)
+        {
+            writer.WriteNumber("motionCooldownSeconds", overrides.MotionCooldownSeconds.Value);
+        }
+
+        // Bounding box overrides
+        if (overrides.ShowBoundingBoxInGrid.HasValue)
+        {
+            writer.WriteBoolean("showBoundingBoxInGrid", overrides.ShowBoundingBoxInGrid.Value);
+        }
+
+        if (overrides.ShowBoundingBoxInFullScreen.HasValue)
+        {
+            writer.WriteBoolean("showBoundingBoxInFullScreen", overrides.ShowBoundingBoxInFullScreen.Value);
+        }
+
+        if (overrides.BoundingBoxColor is not null)
+        {
+            writer.WriteString("boundingBoxColor", overrides.BoundingBoxColor);
+        }
+
+        if (overrides.BoundingBoxThickness.HasValue)
+        {
+            writer.WriteNumber("boundingBoxThickness", overrides.BoundingBoxThickness.Value);
+        }
+
+        if (overrides.BoundingBoxSmoothing.HasValue)
+        {
+            writer.WriteNumber("boundingBoxSmoothing", overrides.BoundingBoxSmoothing.Value);
+        }
+
+        if (overrides.BoundingBoxMinArea.HasValue)
+        {
+            writer.WriteNumber("boundingBoxMinArea", overrides.BoundingBoxMinArea.Value);
+        }
+
+        if (overrides.BoundingBoxPadding.HasValue)
+        {
+            writer.WriteNumber("boundingBoxPadding", overrides.BoundingBoxPadding.Value);
         }
 
         writer.WriteEndObject();

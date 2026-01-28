@@ -3,9 +3,9 @@ namespace Linksoft.Wpf.CameraWall.Dialogs.Parts.Settings;
 /// <summary>
 /// Motion detection settings (sensitivity, post-motion, frame rate, cooldown).
 /// </summary>
-public partial class RecordingMotionDetectionSettings
+public partial class MotionDetectionAnalysisSettings
 {
-    public RecordingMotionDetectionSettings()
+    public MotionDetectionAnalysisSettings()
     {
         InitializeComponent();
     }

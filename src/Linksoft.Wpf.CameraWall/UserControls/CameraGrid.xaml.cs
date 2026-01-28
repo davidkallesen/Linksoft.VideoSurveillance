@@ -84,6 +84,41 @@ public partial class CameraGrid
     [DependencyProperty(DefaultValue = false)]
     private bool enableRecordingOnConnect;
 
+    // Motion detection settings
+    [DependencyProperty(DefaultValue = 30)]
+    private int motionSensitivity;
+
+    [DependencyProperty(DefaultValue = 2.0)]
+    private double motionMinimumChangePercent;
+
+    [DependencyProperty(DefaultValue = 2)]
+    private int motionAnalysisFrameRate;
+
+    [DependencyProperty(DefaultValue = 10)]
+    private int motionPostDurationSeconds;
+
+    [DependencyProperty(DefaultValue = 5)]
+    private int motionCooldownSeconds;
+
+    [DependencyProperty(DefaultValue = 100)]
+    private int motionBoundingBoxMinArea;
+
+    [DependencyProperty(DefaultValue = 4)]
+    private int motionBoundingBoxPadding;
+
+    // Bounding box display settings
+    [DependencyProperty(DefaultValue = false)]
+    private bool showBoundingBoxInGrid;
+
+    [DependencyProperty(DefaultValue = "Red")]
+    private string boundingBoxColor = "Red";
+
+    [DependencyProperty(DefaultValue = 2)]
+    private int boundingBoxThickness;
+
+    [DependencyProperty(DefaultValue = 0.3)]
+    private double boundingBoxSmoothing;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CameraGrid"/> class.
     /// </summary>
@@ -98,7 +133,7 @@ public partial class CameraGrid
     /// <summary>
     /// Occurs when a full screen request is made for a camera.
     /// </summary>
-    public event EventHandler<CameraConfiguration>? FullScreenRequested;
+    public event EventHandler<FullScreenRequestedEventArgs>? FullScreenRequested;
 
     /// <summary>
     /// Occurs when a camera's connection state changes.
@@ -438,7 +473,7 @@ public partial class CameraGrid
 
     private void OnFullScreenRequested(
         object? sender,
-        CameraConfiguration e)
+        FullScreenRequestedEventArgs e)
     {
         FullScreenRequested?.Invoke(this, e);
     }

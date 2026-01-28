@@ -5,16 +5,13 @@ using Drawing2D = System.Drawing.Drawing2D;
 using DrawingImaging = System.Drawing.Imaging;
 
 /// <summary>
-/// Service for generating recording thumbnails by capturing frames and creating a 2x2 grid.
+/// Service for generating recording thumbnails by capturing frames and creating a grid layout.
 /// </summary>
 [Registration(Lifetime.Singleton)]
 public class ThumbnailGeneratorService : IThumbnailGeneratorService
 {
     private const int FrameWidth = 320;
     private const int FrameHeight = 240;
-    private const int GridWidth = 640;
-    private const int GridHeight = 480;
-    private const int TotalFrames = 4;
 
     private readonly ILogger<ThumbnailGeneratorService> logger;
     private readonly ConcurrentDictionary<Guid, ThumbnailCaptureContext> captures = new();
@@ -32,15 +29,22 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
     public void StartCapture(
         Guid cameraId,
         Player player,
-        string videoFilePath)
+        string videoFilePath,
+        int tileCount = 4)
     {
         ArgumentNullException.ThrowIfNull(player);
+
+        // Validate tile count (must be 1 or 4)
+        if (tileCount != 1 && tileCount != 4)
+        {
+            tileCount = 4;
+        }
 
         // Stop any existing capture for this camera
         StopCapture(cameraId);
 
         var thumbnailPath = Path.ChangeExtension(videoFilePath, ".png");
-        var context = new ThumbnailCaptureContext(player, thumbnailPath);
+        var context = new ThumbnailCaptureContext(player, thumbnailPath, tileCount);
 
         if (!captures.TryAdd(cameraId, context))
         {
@@ -48,14 +52,22 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
         }
 
         logger.LogDebug(
-            "Starting thumbnail capture for camera {CameraId}, output: {ThumbnailPath}",
+            "Starting thumbnail capture for camera {CameraId}, output: {ThumbnailPath}, tiles: {TileCount}",
             cameraId,
-            thumbnailPath);
+            thumbnailPath,
+            tileCount);
 
         // Capture first frame immediately
         CaptureFrame(cameraId, context);
 
-        // Set up timer for remaining frames
+        // For single tile, we only need one frame - stop immediately
+        if (tileCount == 1)
+        {
+            StopCapture(cameraId);
+            return;
+        }
+
+        // Set up timer for remaining frames (only for 4-tile mode)
         context.Timer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(1),
@@ -113,7 +125,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
         CaptureFrame(cameraId, context);
 
         // Check if we have all frames
-        if (context.CapturedFrames.Count >= TotalFrames)
+        if (context.CapturedFrames.Count >= context.TileCount)
         {
             StopCapture(cameraId);
         }
@@ -183,9 +195,15 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
 
         try
         {
+            // Determine thumbnail dimensions based on tile count
+            // 1 tile = 320x240 (single frame), 4 tiles = 640x480 (2x2 grid)
+            var (thumbnailWidth, thumbnailHeight) = context.TileCount == 1
+                ? (FrameWidth, FrameHeight)
+                : (FrameWidth * 2, FrameHeight * 2);
+
             using var thumbnail = new Drawing.Bitmap(
-                GridWidth,
-                GridHeight,
+                thumbnailWidth,
+                thumbnailHeight,
                 DrawingImaging.PixelFormat.Format24bppRgb);
             using var graphics = Drawing.Graphics.FromImage(thumbnail);
 
@@ -197,33 +215,46 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
             graphics.SmoothingMode = Drawing2D.SmoothingMode.HighQuality;
             graphics.PixelOffsetMode = Drawing2D.PixelOffsetMode.HighQuality;
 
-            // Draw frames in 2x2 grid
-            // Position mapping:
-            // [0] Top-Left (0,0)     [1] Top-Right (320,0)
-            // [2] Bottom-Left (0,240) [3] Bottom-Right (320,240)
-            var positions = new[]
+            if (context.TileCount == 1)
             {
-                (X: 0, Y: 0),
-                (X: FrameWidth, Y: 0),
-                (X: 0, Y: FrameHeight),
-                (X: FrameWidth, Y: FrameHeight),
-            };
-
-            for (var i = 0; i < TotalFrames; i++)
-            {
-                var frame = i < context.CapturedFrames.Count ? context.CapturedFrames[i] : null;
-
+                // Single tile: draw first frame scaled to fit
+                var frame = context.CapturedFrames.FirstOrDefault();
                 if (frame is not null)
                 {
-                    var destRect = new Drawing.Rectangle(
-                        positions[i].X,
-                        positions[i].Y,
-                        FrameWidth,
-                        FrameHeight);
+                    var destRect = new Drawing.Rectangle(0, 0, FrameWidth, FrameHeight);
                     graphics.DrawImage(frame, destRect);
                 }
+            }
+            else
+            {
+                // Draw frames in 2x2 grid
+                // Position mapping:
+                // [0] Top-Left (0,0)     [1] Top-Right (320,0)
+                // [2] Bottom-Left (0,240) [3] Bottom-Right (320,240)
+                var positions = new[]
+                {
+                    (X: 0, Y: 0),
+                    (X: FrameWidth, Y: 0),
+                    (X: 0, Y: FrameHeight),
+                    (X: FrameWidth, Y: FrameHeight),
+                };
 
-                // Missing frames stay black (already filled)
+                for (var i = 0; i < context.TileCount; i++)
+                {
+                    var frame = i < context.CapturedFrames.Count ? context.CapturedFrames[i] : null;
+
+                    if (frame is not null)
+                    {
+                        var destRect = new Drawing.Rectangle(
+                            positions[i].X,
+                            positions[i].Y,
+                            FrameWidth,
+                            FrameHeight);
+                        graphics.DrawImage(frame, destRect);
+                    }
+
+                    // Missing frames stay black (already filled)
+                }
             }
 
             // Ensure directory exists
@@ -237,10 +268,11 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
             thumbnail.Save(context.ThumbnailPath, DrawingImaging.ImageFormat.Png);
 
             logger.LogInformation(
-                "Generated thumbnail for camera {CameraId} with {FrameCount}/{TotalFrames} frames: {ThumbnailPath}",
+                "Generated thumbnail for camera {CameraId} with {FrameCount}/{TotalFrames} frames ({TileCount} tiles): {ThumbnailPath}",
                 cameraId,
                 context.CapturedFrames.Count(f => f is not null),
-                TotalFrames,
+                context.TileCount,
+                context.TileCount,
                 context.ThumbnailPath);
         }
         catch (Exception ex)
@@ -256,15 +288,19 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
     {
         public ThumbnailCaptureContext(
             Player player,
-            string thumbnailPath)
+            string thumbnailPath,
+            int tileCount = 4)
         {
             Player = player;
             ThumbnailPath = thumbnailPath;
+            TileCount = tileCount;
         }
 
         public Player Player { get; }
 
         public string ThumbnailPath { get; }
+
+        public int TileCount { get; }
 
         public List<Drawing.Bitmap?> CapturedFrames { get; } = [];
 

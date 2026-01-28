@@ -26,11 +26,6 @@ public class RecordingSettings
     public bool EnableRecordingOnConnect { get; set; }
 
     /// <summary>
-    /// Gets or sets the motion detection settings.
-    /// </summary>
-    public MotionDetectionSettings MotionDetection { get; set; } = new();
-
-    /// <summary>
     /// Gets or sets the media cleanup settings.
     /// </summary>
     public MediaCleanupSettings Cleanup { get; set; } = new();
@@ -51,4 +46,10 @@ public class RecordingSettings
     /// This acts as a failsafe to ensure recordings don't exceed the specified duration.
     /// </summary>
     public int MaxRecordingDurationMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Gets or sets the number of tiles in the recording thumbnail (1 or 4).
+    /// 1 = single image (320x240), 4 = 2x2 grid (640x480).
+    /// </summary>
+    public int ThumbnailTileCount { get; set; } = 4;
 }

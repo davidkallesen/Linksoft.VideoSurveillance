@@ -711,8 +711,14 @@
   <data name="RecordingFailed1" xml:space="preserve">
     <value>Recording failed: {0}</value>
   </data>
+  <data name="Motion" xml:space="preserve">
+    <value>Motion</value>
+  </data>
   <data name="MotionDetected1" xml:space="preserve">
     <value>Motion detected: {0}</value>
+  </data>
+  <data name="MotionDetection" xml:space="preserve">
+    <value>Motion Detection</value>
   </data>
   <data name="MotionDetectionSettings" xml:space="preserve">
     <value>Motion Detection Settings</value>
@@ -726,6 +732,9 @@
   <data name="AnalysisFrameRate" xml:space="preserve">
     <value>Analysis frame rate (FPS)</value>
   </data>
+  <data name="AnalysisResolution" xml:space="preserve">
+    <value>Analysis resolution</value>
+  </data>
   <data name="MinimumChangePercent" xml:space="preserve">
     <value>Minimum change percentage</value>
   </data>
@@ -734,6 +743,24 @@
   </data>
   <data name="MotionOverrides" xml:space="preserve">
     <value>Motion Detection Overrides</value>
+  </data>
+  <data name="BoundingBoxDisplay" xml:space="preserve">
+    <value>Bounding Box Display</value>
+  </data>
+  <data name="ShowBoundingBoxInGrid" xml:space="preserve">
+    <value>Show bounding boxes in grid view</value>
+  </data>
+  <data name="ShowBoundingBoxInFullScreen" xml:space="preserve">
+    <value>Show bounding boxes in full screen</value>
+  </data>
+  <data name="BoundingBoxColor" xml:space="preserve">
+    <value>Bounding box color</value>
+  </data>
+  <data name="BoundingBoxThickness" xml:space="preserve">
+    <value>Bounding box thickness</value>
+  </data>
+  <data name="BoundingBoxMinArea" xml:space="preserve">
+    <value>Min. detection size</value>
   </data>
   <data name="BrowseRecordings" xml:space="preserve">
     <value>Browse Recordings</value>
@@ -749,6 +776,9 @@
   </data>
   <data name="RecordingSize" xml:space="preserve">
     <value>Size</value>
+  </data>
+  <data name="RecordingDuration" xml:space="preserve">
+    <value>Duration</value>
   </data>
   <data name="Thumbnail" xml:space="preserve">
     <value>Thumbnail</value>
@@ -866,5 +896,8 @@
   </data>
   <data name="PlaybackTimestampColor" xml:space="preserve">
     <value>Timestamp color</value>
+  </data>
+  <data name="ThumbnailTileCount" xml:space="preserve">
+    <value>Thumbnail tiles</value>
   </data>
 </root>

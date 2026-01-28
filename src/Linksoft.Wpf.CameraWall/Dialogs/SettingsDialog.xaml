@@ -74,12 +74,21 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!--  Motion Detection Tab  -->
+            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=MotionDetection}">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
+                        <settings:MotionDetectionAnalysisSettings />
+                        <settings:MotionDetectionBoundingBoxSettings />
+                    </atc:UniformSpacingPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!--  Recording Tab  -->
             <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Recording}">
                 <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
                     <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
                         <settings:RecordingGeneralSettings />
-                        <settings:RecordingMotionDetectionSettings />
                         <settings:RecordingSegmentationSettings />
                         <settings:RecordingMediaCleanupSettings />
                         <settings:RecordingPlaybackOverlaySettings />

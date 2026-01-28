@@ -31,9 +31,19 @@ public class RecordingEntry
     public long FileSizeBytes { get; init; }
 
     /// <summary>
+    /// Gets or sets the duration of the recording.
+    /// </summary>
+    public TimeSpan Duration { get; set; }
+
+    /// <summary>
     /// Gets the formatted file size string.
     /// </summary>
     public string FormattedFileSize => FormatFileSize(FileSizeBytes);
+
+    /// <summary>
+    /// Gets the formatted duration string.
+    /// </summary>
+    public string FormattedDuration => FormatDuration(Duration);
 
     /// <summary>
     /// Gets the formatted recording time string.
@@ -51,6 +61,37 @@ public class RecordingEntry
     /// </summary>
     public bool HasThumbnail => File.Exists(ThumbnailPath);
 
+    /// <summary>
+    /// Gets the thumbnail image, or null if the thumbnail doesn't exist.
+    /// This property safely loads the image and handles missing files gracefully.
+    /// </summary>
+    public BitmapImage? ThumbnailImage
+    {
+        get
+        {
+            var path = ThumbnailPath;
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            try
+            {
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.UriSource = new Uri(path, UriKind.Absolute);
+                image.EndInit();
+                image.Freeze();
+                return image;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
     private static string FormatFileSize(long bytes)
     {
         const long kb = 1024;
@@ -64,5 +105,15 @@ public class RecordingEntry
             >= kb => $"{bytes / (double)kb:F2} KB",
             _ => $"{bytes} B",
         };
+    }
+
+    private static string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalHours >= 1)
+        {
+            return duration.ToString(@"h\:mm\:ss", CultureInfo.InvariantCulture);
+        }
+
+        return duration.ToString(@"m\:ss", CultureInfo.InvariantCulture);
     }
 }

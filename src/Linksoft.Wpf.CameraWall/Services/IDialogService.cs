@@ -87,7 +87,10 @@ public interface IDialogService
     /// Shows a camera in fullscreen mode.
     /// </summary>
     /// <param name="camera">The camera to display.</param>
-    void ShowFullScreenCamera(CameraConfiguration camera);
+    /// <param name="sourceTile">Optional source tile for player lending (enables instant display without reconnection).</param>
+    void ShowFullScreenCamera(
+        CameraConfiguration camera,
+        UserControls.CameraTile? sourceTile = null);
 
     /// <summary>
     /// Shows the settings dialog.

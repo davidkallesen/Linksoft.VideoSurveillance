@@ -107,6 +107,73 @@ public class CameraOverrides
     public bool? EnableRecordingOnConnect { get; set; }
 
     /// <summary>
+    /// Gets or sets the minimum percentage of pixels that must change to trigger motion, or null to use application default.
+    /// </summary>
+    public double? MotionMinimumChangePercent { get; set; }
+
+    /// <summary>
+    /// Gets or sets the frame rate at which to analyze for motion (frames per second), or null to use application default.
+    /// </summary>
+    public int? MotionAnalysisFrameRate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the width of the analysis frame in pixels, or null to use application default.
+    /// Higher values improve small object detection but increase CPU usage.
+    /// </summary>
+    public int? MotionAnalysisWidth { get; set; }
+
+    /// <summary>
+    /// Gets or sets the height of the analysis frame in pixels, or null to use application default.
+    /// Higher values improve small object detection but increase CPU usage.
+    /// </summary>
+    public int? MotionAnalysisHeight { get; set; }
+
+    /// <summary>
+    /// Gets or sets the cooldown period in seconds before motion can trigger a new recording, or null to use application default.
+    /// </summary>
+    public int? MotionCooldownSeconds { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to show motion bounding boxes in the main grid view, or null to use application default.
+    /// </summary>
+    public bool? ShowBoundingBoxInGrid { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to show motion bounding boxes in full screen mode, or null to use application default.
+    /// </summary>
+    public bool? ShowBoundingBoxInFullScreen { get; set; }
+
+    /// <summary>
+    /// Gets or sets the bounding box border color (well-known color name), or null to use application default.
+    /// </summary>
+    public string? BoundingBoxColor { get; set; }
+
+    /// <summary>
+    /// Gets or sets the bounding box border thickness in pixels, or null to use application default.
+    /// </summary>
+    public int? BoundingBoxThickness { get; set; }
+
+    /// <summary>
+    /// Gets or sets the smoothing factor for bounding box position (0.0-1.0), or null to use application default.
+    /// </summary>
+    public double? BoundingBoxSmoothing { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum bounding box area in pixels to display, or null to use application default.
+    /// </summary>
+    public int? BoundingBoxMinArea { get; set; }
+
+    /// <summary>
+    /// Gets or sets the bounding box padding in pixels, or null to use application default.
+    /// </summary>
+    public int? BoundingBoxPadding { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of tiles in the recording thumbnail (1 or 4), or null to use application default.
+    /// </summary>
+    public int? ThumbnailTileCount { get; set; }
+
+    /// <summary>
     /// Determines whether any override is set (non-null).
     /// </summary>
     /// <returns>True if at least one override is set; otherwise, false.</returns>
@@ -130,7 +197,20 @@ public class CameraOverrides
            EnableRecordingOnMotion.HasValue ||
            MotionSensitivity.HasValue ||
            PostMotionDurationSeconds.HasValue ||
-           EnableRecordingOnConnect.HasValue;
+           EnableRecordingOnConnect.HasValue ||
+           MotionMinimumChangePercent.HasValue ||
+           MotionAnalysisFrameRate.HasValue ||
+           MotionAnalysisWidth.HasValue ||
+           MotionAnalysisHeight.HasValue ||
+           MotionCooldownSeconds.HasValue ||
+           ShowBoundingBoxInGrid.HasValue ||
+           ShowBoundingBoxInFullScreen.HasValue ||
+           BoundingBoxColor is not null ||
+           BoundingBoxThickness.HasValue ||
+           BoundingBoxSmoothing.HasValue ||
+           BoundingBoxMinArea.HasValue ||
+           BoundingBoxPadding.HasValue ||
+           ThumbnailTileCount.HasValue;
 
     /// <summary>
     /// Creates a deep copy of this camera overrides.
@@ -159,6 +239,19 @@ public class CameraOverrides
             MotionSensitivity = MotionSensitivity,
             PostMotionDurationSeconds = PostMotionDurationSeconds,
             EnableRecordingOnConnect = EnableRecordingOnConnect,
+            MotionMinimumChangePercent = MotionMinimumChangePercent,
+            MotionAnalysisFrameRate = MotionAnalysisFrameRate,
+            MotionAnalysisWidth = MotionAnalysisWidth,
+            MotionAnalysisHeight = MotionAnalysisHeight,
+            MotionCooldownSeconds = MotionCooldownSeconds,
+            ShowBoundingBoxInGrid = ShowBoundingBoxInGrid,
+            ShowBoundingBoxInFullScreen = ShowBoundingBoxInFullScreen,
+            BoundingBoxColor = BoundingBoxColor,
+            BoundingBoxThickness = BoundingBoxThickness,
+            BoundingBoxSmoothing = BoundingBoxSmoothing,
+            BoundingBoxMinArea = BoundingBoxMinArea,
+            BoundingBoxPadding = BoundingBoxPadding,
+            ThumbnailTileCount = ThumbnailTileCount,
         };
 
     /// <summary>
@@ -190,6 +283,19 @@ public class CameraOverrides
             MotionSensitivity = null;
             PostMotionDurationSeconds = null;
             EnableRecordingOnConnect = null;
+            MotionMinimumChangePercent = null;
+            MotionAnalysisFrameRate = null;
+            MotionAnalysisWidth = null;
+            MotionAnalysisHeight = null;
+            MotionCooldownSeconds = null;
+            ShowBoundingBoxInGrid = null;
+            ShowBoundingBoxInFullScreen = null;
+            BoundingBoxColor = null;
+            BoundingBoxThickness = null;
+            BoundingBoxSmoothing = null;
+            BoundingBoxMinArea = null;
+            BoundingBoxPadding = null;
+            ThumbnailTileCount = null;
             return;
         }
 
@@ -213,6 +319,19 @@ public class CameraOverrides
         MotionSensitivity = source.MotionSensitivity;
         PostMotionDurationSeconds = source.PostMotionDurationSeconds;
         EnableRecordingOnConnect = source.EnableRecordingOnConnect;
+        MotionMinimumChangePercent = source.MotionMinimumChangePercent;
+        MotionAnalysisFrameRate = source.MotionAnalysisFrameRate;
+        MotionAnalysisWidth = source.MotionAnalysisWidth;
+        MotionAnalysisHeight = source.MotionAnalysisHeight;
+        MotionCooldownSeconds = source.MotionCooldownSeconds;
+        ShowBoundingBoxInGrid = source.ShowBoundingBoxInGrid;
+        ShowBoundingBoxInFullScreen = source.ShowBoundingBoxInFullScreen;
+        BoundingBoxColor = source.BoundingBoxColor;
+        BoundingBoxThickness = source.BoundingBoxThickness;
+        BoundingBoxSmoothing = source.BoundingBoxSmoothing;
+        BoundingBoxMinArea = source.BoundingBoxMinArea;
+        BoundingBoxPadding = source.BoundingBoxPadding;
+        ThumbnailTileCount = source.ThumbnailTileCount;
     }
 
     /// <summary>
@@ -246,7 +365,20 @@ public class CameraOverrides
                EnableRecordingOnMotion == other.EnableRecordingOnMotion &&
                MotionSensitivity == other.MotionSensitivity &&
                PostMotionDurationSeconds == other.PostMotionDurationSeconds &&
-               EnableRecordingOnConnect == other.EnableRecordingOnConnect;
+               EnableRecordingOnConnect == other.EnableRecordingOnConnect &&
+               NullableDoubleEquals(MotionMinimumChangePercent, other.MotionMinimumChangePercent) &&
+               MotionAnalysisFrameRate == other.MotionAnalysisFrameRate &&
+               MotionAnalysisWidth == other.MotionAnalysisWidth &&
+               MotionAnalysisHeight == other.MotionAnalysisHeight &&
+               MotionCooldownSeconds == other.MotionCooldownSeconds &&
+               ShowBoundingBoxInGrid == other.ShowBoundingBoxInGrid &&
+               ShowBoundingBoxInFullScreen == other.ShowBoundingBoxInFullScreen &&
+               BoundingBoxColor == other.BoundingBoxColor &&
+               BoundingBoxThickness == other.BoundingBoxThickness &&
+               NullableDoubleEquals(BoundingBoxSmoothing, other.BoundingBoxSmoothing) &&
+               BoundingBoxMinArea == other.BoundingBoxMinArea &&
+               BoundingBoxPadding == other.BoundingBoxPadding &&
+               ThumbnailTileCount == other.ThumbnailTileCount;
     }
 
     private static bool NullableDoubleEquals(

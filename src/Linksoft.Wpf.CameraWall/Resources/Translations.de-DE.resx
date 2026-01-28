@@ -711,8 +711,14 @@
   <data name="RecordingFailed1" xml:space="preserve">
     <value>Aufnahme fehlgeschlagen: {0}</value>
   </data>
+  <data name="Motion" xml:space="preserve">
+    <value>Bewegung</value>
+  </data>
   <data name="MotionDetected1" xml:space="preserve">
     <value>Bewegung erkannt: {0}</value>
+  </data>
+  <data name="MotionDetection" xml:space="preserve">
+    <value>Bewegungserkennung</value>
   </data>
   <data name="MotionDetectionSettings" xml:space="preserve">
     <value>Bewegungserkennungs-Einstellungen</value>
@@ -749,6 +755,9 @@
   </data>
   <data name="RecordingSize" xml:space="preserve">
     <value>Größe</value>
+  </data>
+  <data name="RecordingDuration" xml:space="preserve">
+    <value>Dauer</value>
   </data>
   <data name="Thumbnail" xml:space="preserve">
     <value>Vorschaubild</value>
@@ -848,5 +857,8 @@
   </data>
   <data name="MaxRecordingDuration" xml:space="preserve">
     <value>Maximale Aufnahmedauer</value>
+  </data>
+  <data name="ThumbnailTileCount" xml:space="preserve">
+    <value>Miniaturansicht-Kacheln</value>
   </data>
 </root>

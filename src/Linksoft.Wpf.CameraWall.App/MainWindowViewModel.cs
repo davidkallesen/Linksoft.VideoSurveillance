@@ -84,8 +84,11 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     /// Shows a camera in full screen.
     /// </summary>
     /// <param name="camera">The camera to show.</param>
-    public void ShowFullScreen(CameraConfiguration camera)
-        => Manager.ShowFullScreen(camera);
+    /// <param name="sourceTile">Optional source tile for player lending.</param>
+    public void ShowFullScreen(
+        CameraConfiguration camera,
+        CameraTile? sourceTile = null)
+        => Manager.ShowFullScreen(camera, sourceTile);
 
     /// <summary>
     /// Handles connection state changes.

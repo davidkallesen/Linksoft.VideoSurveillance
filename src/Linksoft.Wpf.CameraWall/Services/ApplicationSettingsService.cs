@@ -52,6 +52,9 @@ public class ApplicationSettingsService : IApplicationSettingsService
     public PerformanceSettings Performance => settings.Performance;
 
     /// <inheritdoc/>
+    public MotionDetectionSettings MotionDetection => settings.MotionDetection;
+
+    /// <inheritdoc/>
     public RecordingSettings Recording => settings.Recording;
 
     /// <inheritdoc/>
@@ -86,6 +89,14 @@ public class ApplicationSettingsService : IApplicationSettingsService
     {
         ArgumentNullException.ThrowIfNull(settings);
         this.settings.Performance = settings;
+        Save();
+    }
+
+    /// <inheritdoc/>
+    public void SaveMotionDetection(MotionDetectionSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        this.settings.MotionDetection = settings;
         Save();
     }
 

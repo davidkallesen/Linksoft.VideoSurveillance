@@ -7,6 +7,8 @@ namespace Linksoft.Wpf.CameraWall.Windows;
 public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBase, IDisposable
 {
     private readonly CameraConfiguration camera;
+    private readonly IMotionDetectionService? motionDetectionService;
+    private readonly bool ownsPlayer;
     private DispatcherTimer? overlayHideTimer;
     private bool disposed;
 
@@ -43,6 +45,28 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
     [ObservableProperty]
     private OverlayPosition overlayPosition = OverlayPosition.TopLeft;
 
+    // Bounding box settings
+    [ObservableProperty]
+    private bool showBoundingBoxInFullScreen;
+
+    [ObservableProperty]
+    private string boundingBoxColor = "Red";
+
+    [ObservableProperty]
+    private int boundingBoxThickness = 2;
+
+    [ObservableProperty]
+    private double boundingBoxSmoothing = 0.3;
+
+    [ObservableProperty]
+    private Rect? currentBoundingBox;
+
+    [ObservableProperty]
+    private int analysisWidth = 320;
+
+    [ObservableProperty]
+    private int analysisHeight = 240;
+
     public FullScreenCameraWindowViewModel(
         CameraConfiguration camera,
         bool showOverlayTitle,
@@ -50,11 +74,18 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         bool showOverlayTime,
         bool showOverlayConnectionStatus,
         double overlayOpacity,
-        OverlayPosition overlayPosition)
+        OverlayPosition overlayPosition,
+        bool showBoundingBoxInFullScreen = false,
+        string boundingBoxColor = "Red",
+        int boundingBoxThickness = 2,
+        double boundingBoxSmoothing = 0.3,
+        IMotionDetectionService? motionDetectionService = null,
+        Player? existingPlayer = null)
     {
         ArgumentNullException.ThrowIfNull(camera);
 
         this.camera = camera;
+        this.motionDetectionService = motionDetectionService;
         CameraName = camera.Display.DisplayName;
         CameraDescription = camera.Display.Description ?? string.Empty;
 
@@ -66,7 +97,48 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         OverlayOpacity = overlayOpacity;
         OverlayPosition = overlayPosition;
 
-        InitializePlayer();
+        // Apply bounding box settings
+        ShowBoundingBoxInFullScreen = showBoundingBoxInFullScreen;
+        BoundingBoxColor = boundingBoxColor;
+        BoundingBoxThickness = boundingBoxThickness;
+        BoundingBoxSmoothing = boundingBoxSmoothing;
+
+        // Get analysis resolution from motion detection service
+        if (motionDetectionService is not null)
+        {
+            var (width, height) = motionDetectionService.GetAnalysisResolution(camera.Id);
+            AnalysisWidth = width;
+            AnalysisHeight = height;
+            motionDetectionService.MotionDetected += OnMotionDetected;
+        }
+
+        // Use existing player (borrowed from CameraTile) or create a new one
+        if (existingPlayer is not null)
+        {
+            Player = existingPlayer;
+            Player.PropertyChanged += OnPlayerPropertyChanged;
+
+            // Enable audio for fullscreen playback
+            existingPlayer.Config.Audio.Enabled = true;
+
+            // Update connection state based on current player status
+            ConnectionState = existingPlayer.Status switch
+            {
+                Status.Playing or Status.Paused => ConnectionState.Connected,
+                Status.Opening => ConnectionState.Connecting,
+                Status.Stopped or Status.Ended => ConnectionState.Disconnected,
+                Status.Failed => ConnectionState.ConnectionFailed,
+                _ => ConnectionState.Disconnected,
+            };
+
+            ownsPlayer = false;
+        }
+        else
+        {
+            InitializePlayer();
+            ownsPlayer = true;
+        }
+
         StartOverlayHideTimer();
     }
 
@@ -157,6 +229,30 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         };
     }
 
+    private void OnMotionDetected(
+        object? sender,
+        MotionDetectedEventArgs e)
+    {
+        // Only handle events for this camera
+        if (e.CameraId != camera.Id)
+        {
+            return;
+        }
+
+        // Update bounding box on UI thread
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (e.IsMotionActive && e.BoundingBox.HasValue)
+            {
+                CurrentBoundingBox = e.BoundingBox;
+            }
+            else
+            {
+                CurrentBoundingBox = null;
+            }
+        });
+    }
+
     private void StartOverlayHideTimer()
     {
         overlayHideTimer = new DispatcherTimer
@@ -185,10 +281,22 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
             overlayHideTimer?.Stop();
             overlayHideTimer = null;
 
+            if (motionDetectionService is not null)
+            {
+                motionDetectionService.MotionDetected -= OnMotionDetected;
+            }
+
             if (Player is not null)
             {
                 Player.PropertyChanged -= OnPlayerPropertyChanged;
-                Player.Dispose();
+
+                // Only dispose the player if we own it (created it ourselves)
+                // If it was borrowed from CameraTile, it will be returned and reused
+                if (ownsPlayer)
+                {
+                    Player.Dispose();
+                }
+
                 Player = null;
             }
         }
