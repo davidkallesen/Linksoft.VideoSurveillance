@@ -13,6 +13,12 @@ public partial class RecordingsBrowserDialogViewModel : ViewModelDialogBase
     [ObservableProperty(AfterChangedCallback = nameof(OnSelectedCameraFilterChanged))]
     private string selectedCameraFilter = AllCamerasKey;
 
+    [ObservableProperty(AfterChangedCallback = nameof(OnSelectedDayFilterChanged))]
+    private string selectedDayFilter = DropDownItemsFactory.DefaultDayFilter;
+
+    [ObservableProperty(AfterChangedCallback = nameof(OnSelectedTimeFilterChanged))]
+    private string selectedTimeFilter = DropDownItemsFactory.DefaultTimeFilter;
+
     [ObservableProperty(AfterChangedCallback = nameof(OnSelectedRecordingChanged))]
     private RecordingEntry? selectedRecording;
 
@@ -63,19 +69,40 @@ public partial class RecordingsBrowserDialogViewModel : ViewModelDialogBase
     public ObservableCollection<KeyValuePair<string, string>> CameraFilters { get; } = [];
 
     /// <summary>
-    /// Gets the filtered recordings based on the selected camera filter.
+    /// Gets the day filter items for the dropdown.
+    /// </summary>
+    public IDictionary<string, string> DayFilterItems
+        => DropDownItemsFactory.DayFilterItems;
+
+    /// <summary>
+    /// Gets the time filter items for the dropdown.
+    /// </summary>
+    public IDictionary<string, string> TimeFilterItems
+        => DropDownItemsFactory.TimeFilterItems;
+
+    /// <summary>
+    /// Gets the filtered recordings based on the selected filters.
     /// </summary>
     public IEnumerable<RecordingEntry> FilteredRecordings
     {
         get
         {
-            if (string.IsNullOrEmpty(SelectedCameraFilter) || SelectedCameraFilter == AllCamerasKey)
+            var result = Recordings.AsEnumerable();
+
+            // Camera filter
+            if (!string.IsNullOrEmpty(SelectedCameraFilter) && SelectedCameraFilter != AllCamerasKey)
             {
-                return Recordings;
+                result = result.Where(r =>
+                    string.Equals(r.CameraName, SelectedCameraFilter, StringComparison.OrdinalIgnoreCase));
             }
 
-            return Recordings.Where(r =>
-                string.Equals(r.CameraName, SelectedCameraFilter, StringComparison.OrdinalIgnoreCase));
+            // Day filter
+            result = ApplyDayFilter(result);
+
+            // Time filter
+            result = ApplyTimeFilter(result);
+
+            return result;
         }
     }
 
@@ -182,8 +209,18 @@ public partial class RecordingsBrowserDialogViewModel : ViewModelDialogBase
     }
 
     private void OnSelectedCameraFilterChanged()
+        => OnFilterChanged();
+
+    private void OnSelectedDayFilterChanged()
+        => OnFilterChanged();
+
+    private void OnSelectedTimeFilterChanged()
+        => OnFilterChanged();
+
+    private void OnFilterChanged()
     {
         OnPropertyChanged(nameof(FilteredRecordings));
+        UpdateStatusMessage();
     }
 
     private void OnSelectedRecordingChanged()
@@ -357,5 +394,48 @@ public partial class RecordingsBrowserDialogViewModel : ViewModelDialogBase
         }
 
         return TimeSpan.Zero;
+    }
+
+    private IEnumerable<RecordingEntry> ApplyDayFilter(
+        IEnumerable<RecordingEntry> recordings)
+    {
+        var today = DateTime.Today;
+
+        return SelectedDayFilter switch
+        {
+            "_ALL_" => recordings,
+            "TODAY" => recordings.Where(r => r.RecordingTime.Date == today),
+            "YESTERDAY" => recordings.Where(r => r.RecordingTime.Date == today.AddDays(-1)),
+            "LAST7" => recordings.Where(r => r.RecordingTime.Date >= today.AddDays(-6)),
+            "LAST30" => recordings.Where(r => r.RecordingTime.Date >= today.AddDays(-29)),
+            "THISWEEK" => recordings.Where(r => IsThisWeek(r.RecordingTime, today)),
+            "THISMONTH" => recordings.Where(r =>
+                r.RecordingTime.Year == today.Year && r.RecordingTime.Month == today.Month),
+            _ => recordings,
+        };
+    }
+
+    private IEnumerable<RecordingEntry> ApplyTimeFilter(
+        IEnumerable<RecordingEntry> recordings)
+        => SelectedTimeFilter switch
+        {
+            "_ALL_" => recordings,
+            "0_6" => recordings.Where(r => r.RecordingTime.Hour >= 0 && r.RecordingTime.Hour < 6),
+            "6_12" => recordings.Where(r => r.RecordingTime.Hour >= 6 && r.RecordingTime.Hour < 12),
+            "12_18" => recordings.Where(r => r.RecordingTime.Hour >= 12 && r.RecordingTime.Hour < 18),
+            "18_24" => recordings.Where(r => r.RecordingTime.Hour >= 18 && r.RecordingTime.Hour < 24),
+            _ => recordings,
+        };
+
+    private static bool IsThisWeek(
+        DateTime date,
+        DateTime today)
+    {
+        // Get Monday of the current week (using Monday as start of week)
+        var daysSinceMonday = ((int)today.DayOfWeek - 1 + 7) % 7;
+        var monday = today.AddDays(-daysSinceMonday);
+        var sunday = monday.AddDays(6);
+
+        return date.Date >= monday && date.Date <= sunday;
     }
 }

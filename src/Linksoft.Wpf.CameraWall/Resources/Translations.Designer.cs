@@ -655,6 +655,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Day.
+        /// </summary>
+        public static string Day {
+            get {
+                return ResourceManager.GetString("Day", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Default Camera Settings.
         /// </summary>
         public static string DefaultCameraSettings {
@@ -912,6 +921,105 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string FileName {
             get {
                 return ResourceManager.GetString("FileName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 12:00 - 18:00 (Afternoon).
+        /// </summary>
+        public static string FilterAfternoon {
+            get {
+                return ResourceManager.GetString("FilterAfternoon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All.
+        /// </summary>
+        public static string FilterAll {
+            get {
+                return ResourceManager.GetString("FilterAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 18:00 - 24:00 (Evening).
+        /// </summary>
+        public static string FilterEvening {
+            get {
+                return ResourceManager.GetString("FilterEvening", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last 30 Days.
+        /// </summary>
+        public static string FilterLast30Days {
+            get {
+                return ResourceManager.GetString("FilterLast30Days", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last 7 Days.
+        /// </summary>
+        public static string FilterLast7Days {
+            get {
+                return ResourceManager.GetString("FilterLast7Days", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 06:00 - 12:00 (Morning).
+        /// </summary>
+        public static string FilterMorning {
+            get {
+                return ResourceManager.GetString("FilterMorning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 00:00 - 06:00 (Night).
+        /// </summary>
+        public static string FilterNight {
+            get {
+                return ResourceManager.GetString("FilterNight", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This Month.
+        /// </summary>
+        public static string FilterThisMonth {
+            get {
+                return ResourceManager.GetString("FilterThisMonth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This Week.
+        /// </summary>
+        public static string FilterThisWeek {
+            get {
+                return ResourceManager.GetString("FilterThisWeek", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Today.
+        /// </summary>
+        public static string FilterToday {
+            get {
+                return ResourceManager.GetString("FilterToday", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yesterday.
+        /// </summary>
+        public static string FilterYesterday {
+            get {
+                return ResourceManager.GetString("FilterYesterday", resourceCulture);
             }
         }
         
@@ -2298,6 +2406,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string ThumbnailTileCount {
             get {
                 return ResourceManager.GetString("ThumbnailTileCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Time.
+        /// </summary>
+        public static string Time {
+            get {
+                return ResourceManager.GetString("Time", resourceCulture);
             }
         }
         

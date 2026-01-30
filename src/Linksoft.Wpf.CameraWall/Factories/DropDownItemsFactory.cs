@@ -190,6 +190,36 @@ public static class DropDownItemsFactory
     };
 
     /// <summary>
+    /// Gets the day filter options for recordings browser.
+    /// Keys are filter identifiers, values are display text.
+    /// </summary>
+    public static IDictionary<string, string> DayFilterItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [DefaultDayFilter] = Translations.FilterAll,
+            ["TODAY"] = Translations.FilterToday,
+            ["YESTERDAY"] = Translations.FilterYesterday,
+            ["LAST7"] = Translations.FilterLast7Days,
+            ["LAST30"] = Translations.FilterLast30Days,
+            ["THISWEEK"] = Translations.FilterThisWeek,
+            ["THISMONTH"] = Translations.FilterThisMonth,
+        };
+
+    /// <summary>
+    /// Gets the time filter options for recordings browser.
+    /// Keys are filter identifiers, values are display text with time ranges.
+    /// </summary>
+    public static IDictionary<string, string> TimeFilterItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [DefaultTimeFilter] = Translations.FilterAll,
+            ["0_6"] = Translations.FilterNight,
+            ["6_12"] = Translations.FilterMorning,
+            ["12_18"] = Translations.FilterAfternoon,
+            ["18_24"] = Translations.FilterEvening,
+        };
+
+    /// <summary>
     /// Gets the default video quality value.
     /// </summary>
     public const string DefaultVideoQuality = "Auto";
@@ -274,6 +304,16 @@ public static class DropDownItemsFactory
     /// Gets the default thumbnail tile count (4 = 2x2 grid).
     /// </summary>
     public const int DefaultThumbnailTileCount = 4;
+
+    /// <summary>
+    /// Gets the default day filter value (all days).
+    /// </summary>
+    public const string DefaultDayFilter = "_ALL_";
+
+    /// <summary>
+    /// Gets the default time filter value (all times).
+    /// </summary>
+    public const string DefaultTimeFilter = "_ALL_";
 
     /// <summary>
     /// Converts a video quality setting to the maximum vertical resolution in pixels.

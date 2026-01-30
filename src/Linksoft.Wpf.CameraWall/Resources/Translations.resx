@@ -900,4 +900,43 @@
   <data name="ThumbnailTileCount" xml:space="preserve">
     <value>Thumbnail tiles</value>
   </data>
+  <data name="Day" xml:space="preserve">
+    <value>Day</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="FilterAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="FilterToday" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="FilterYesterday" xml:space="preserve">
+    <value>Yesterday</value>
+  </data>
+  <data name="FilterLast7Days" xml:space="preserve">
+    <value>Last 7 Days</value>
+  </data>
+  <data name="FilterLast30Days" xml:space="preserve">
+    <value>Last 30 Days</value>
+  </data>
+  <data name="FilterThisWeek" xml:space="preserve">
+    <value>This Week</value>
+  </data>
+  <data name="FilterThisMonth" xml:space="preserve">
+    <value>This Month</value>
+  </data>
+  <data name="FilterNight" xml:space="preserve">
+    <value>00:00 - 06:00 (Night)</value>
+  </data>
+  <data name="FilterMorning" xml:space="preserve">
+    <value>06:00 - 12:00 (Morning)</value>
+  </data>
+  <data name="FilterAfternoon" xml:space="preserve">
+    <value>12:00 - 18:00 (Afternoon)</value>
+  </data>
+  <data name="FilterEvening" xml:space="preserve">
+    <value>18:00 - 24:00 (Evening)</value>
+  </data>
 </root>

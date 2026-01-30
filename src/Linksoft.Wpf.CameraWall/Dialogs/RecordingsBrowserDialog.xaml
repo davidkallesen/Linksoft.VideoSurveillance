@@ -28,7 +28,7 @@
             <atc:GridEx
                 Grid.Row="0"
                 Margin="0,0,0,16"
-                Columns="Auto,200,*,Auto">
+                Columns="Auto,180,Auto,140,Auto,140,*,Auto">
                 <TextBlock
                     Grid.Column="0"
                     Margin="0,0,8,0"
@@ -41,8 +41,32 @@
                     ItemsSource="{Binding Path=CameraFilters}"
                     SelectedValue="{Binding Path=SelectedCameraFilter}"
                     SelectedValuePath="Key" />
-                <Button
+                <TextBlock
+                    Grid.Column="2"
+                    Margin="16,0,8,0"
+                    VerticalAlignment="Center"
+                    Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                               Key=Day}" />
+                <ComboBox
                     Grid.Column="3"
+                    DisplayMemberPath="Value"
+                    ItemsSource="{Binding Path=DayFilterItems}"
+                    SelectedValue="{Binding Path=SelectedDayFilter}"
+                    SelectedValuePath="Key" />
+                <TextBlock
+                    Grid.Column="4"
+                    Margin="16,0,8,0"
+                    VerticalAlignment="Center"
+                    Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                               Key=Time}" />
+                <ComboBox
+                    Grid.Column="5"
+                    DisplayMemberPath="Value"
+                    ItemsSource="{Binding Path=TimeFilterItems}"
+                    SelectedValue="{Binding Path=SelectedTimeFilter}"
+                    SelectedValuePath="Key" />
+                <Button
+                    Grid.Column="7"
                     Padding="16,6"
                     Command="{Binding Path=RefreshCommand}"
                     Content="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
