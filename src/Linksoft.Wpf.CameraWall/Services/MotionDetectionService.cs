@@ -82,10 +82,10 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
     }
 
     /// <inheritdoc/>
-    public Rect? GetLastBoundingBox(Guid cameraId)
+    public IReadOnlyList<Rect> GetLastBoundingBoxes(Guid cameraId)
         => contexts.TryGetValue(cameraId, out var context)
-            ? context.LastBoundingBox
-            : null;
+            ? context.LastBoundingBoxes
+            : [];
 
     /// <inheritdoc/>
     public (int Width, int Height) GetAnalysisResolution(Guid cameraId)
@@ -254,7 +254,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
                 // Compare with previous frame
                 if (context.PreviousFrame is not null)
                 {
-                    var (changePercent, boundingBox) = CalculateFrameDifferenceWithBoundingBox(
+                    var (changePercent, boundingBoxes) = CalculateFrameDifferenceWithBoundingBoxes(
                         context.PreviousFrame,
                         currentFrame,
                         context.Settings,
@@ -275,7 +275,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
                         {
                             context.IsMotionDetected = true;
                             context.LastMotionTime = DateTime.UtcNow;
-                            context.LastBoundingBox = boundingBox;
+                            context.LastBoundingBoxes = boundingBoxes;
 
                             // Raise event with bounding box data
                             MotionDetected?.Invoke(
@@ -284,7 +284,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
                                     cameraId,
                                     changePercent,
                                     isMotionActive: true,
-                                    boundingBox,
+                                    boundingBoxes,
                                     analysisWidth,
                                     analysisHeight));
                         }
@@ -301,13 +301,13 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
                                     cameraId,
                                     changePercent,
                                     isMotionActive: false,
-                                    boundingBox: null,
+                                    boundingBoxes: null,
                                     analysisWidth,
                                     analysisHeight));
                         }
 
                         context.IsMotionDetected = false;
-                        context.LastBoundingBox = null;
+                        context.LastBoundingBoxes = [];
                     }
                 }
 
@@ -388,7 +388,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         return grayscale;
     }
 
-    private static (double ChangePercent, Rect? BoundingBox) CalculateFrameDifferenceWithBoundingBox(
+    private static (double ChangePercent, IReadOnlyList<Rect> BoundingBoxes) CalculateFrameDifferenceWithBoundingBoxes(
         byte[] previous,
         byte[] current,
         MotionDetectionSettings settings,
@@ -397,7 +397,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
     {
         if (previous.Length != current.Length)
         {
-            return (0, null);
+            return (0, []);
         }
 
         // Threshold based on sensitivity (0-100)
@@ -451,9 +451,9 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
             isActiveCell[i] = cellChangeCounts[i] >= minChangedPerCell;
         }
 
-        // Find connected components (clusters) of active cells using flood fill
+        // Find all connected components (clusters) of active cells using flood fill
         var visited = new bool[gridWidth * gridHeight];
-        var largestCluster = new List<(int X, int Y)>();
+        var allClusters = new List<List<(int X, int Y)>>();
 
         for (var cellY = 0; cellY < gridHeight; cellY++)
         {
@@ -474,52 +474,54 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
                     isActiveCell,
                     visited);
 
-                if (cluster.Count > largestCluster.Count)
+                if (cluster.Count > 0)
                 {
-                    largestCluster = cluster;
+                    allClusters.Add(cluster);
                 }
             }
         }
 
-        // Create bounding box around the largest cluster only
-        Rect? boundingBox = null;
-        if (largestCluster.Count == 0)
+        // Create bounding boxes for all clusters that meet the minimum area requirement
+        var boundingBoxes = new List<Rect>();
+
+        foreach (var cluster in allClusters)
         {
-            return (changePercent, boundingBox);
+            // Find bounds of the cluster
+            var minCellX = cluster.Min(c => c.X);
+            var maxCellX = cluster.Max(c => c.X);
+            var minCellY = cluster.Min(c => c.Y);
+            var maxCellY = cluster.Max(c => c.Y);
+
+            // Convert cell coordinates back to pixel coordinates
+            var pixelMinX = minCellX * cellSize;
+            var pixelMinY = minCellY * cellSize;
+            var pixelMaxX = Math.Min(analysisWidth - 1, ((maxCellX + 1) * cellSize) - 1);
+            var pixelMaxY = Math.Min(analysisHeight - 1, ((maxCellY + 1) * cellSize) - 1);
+
+            var width = pixelMaxX - pixelMinX + 1;
+            var height = pixelMaxY - pixelMinY + 1;
+            var area = width * height;
+
+            // Only create bounding box if area exceeds minimum
+            if (area < settings.BoundingBox.MinArea)
+            {
+                continue;
+            }
+
+            // Add padding
+            var padding = settings.BoundingBox.Padding;
+            var paddedX = Math.Max(0, pixelMinX - padding);
+            var paddedY = Math.Max(0, pixelMinY - padding);
+            var paddedWidth = Math.Min(analysisWidth - paddedX, width + (2 * padding));
+            var paddedHeight = Math.Min(analysisHeight - paddedY, height + (2 * padding));
+
+            boundingBoxes.Add(new Rect(paddedX, paddedY, paddedWidth, paddedHeight));
         }
 
-        // Find bounds of the largest cluster
-        var minCellX = largestCluster.Min(c => c.X);
-        var maxCellX = largestCluster.Max(c => c.X);
-        var minCellY = largestCluster.Min(c => c.Y);
-        var maxCellY = largestCluster.Max(c => c.Y);
+        // Sort by area (largest first) for consistent ordering
+        boundingBoxes.Sort((a, b) => (b.Width * b.Height).CompareTo(a.Width * a.Height));
 
-        // Convert cell coordinates back to pixel coordinates
-        var pixelMinX = minCellX * cellSize;
-        var pixelMinY = minCellY * cellSize;
-        var pixelMaxX = Math.Min(analysisWidth - 1, ((maxCellX + 1) * cellSize) - 1);
-        var pixelMaxY = Math.Min(analysisHeight - 1, ((maxCellY + 1) * cellSize) - 1);
-
-        var width = pixelMaxX - pixelMinX + 1;
-        var height = pixelMaxY - pixelMinY + 1;
-        var area = width * height;
-
-        // Only create bounding box if area exceeds minimum
-        if (area < settings.BoundingBox.MinArea)
-        {
-            return (changePercent, boundingBox);
-        }
-
-        // Add padding
-        var padding = settings.BoundingBox.Padding;
-        var paddedX = Math.Max(0, pixelMinX - padding);
-        var paddedY = Math.Max(0, pixelMinY - padding);
-        var paddedWidth = Math.Min(analysisWidth - paddedX, width + (2 * padding));
-        var paddedHeight = Math.Min(analysisHeight - paddedY, height + (2 * padding));
-
-        boundingBox = new Rect(paddedX, paddedY, paddedWidth, paddedHeight);
-
-        return (changePercent, boundingBox);
+        return (changePercent, boundingBoxes);
     }
 
     /// <summary>

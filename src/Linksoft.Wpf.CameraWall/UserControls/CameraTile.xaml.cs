@@ -1702,7 +1702,7 @@ public partial class CameraTile : IDisposable
 
         System.Diagnostics.Debug.WriteLine(
             $"[MotionDetection] Motion event for '{Camera.Display.DisplayName}' - " +
-            $"IsActive={e.IsMotionActive}, HasBoundingBox={e.BoundingBox.HasValue}, " +
+            $"IsActive={e.IsMotionActive}, BoundingBoxCount={e.BoundingBoxes.Count}, " +
             $"ChangePercentage={e.ChangePercentage:F2}%");
 
         Dispatcher.Invoke(() =>
@@ -1713,15 +1713,15 @@ public partial class CameraTile : IDisposable
             UpdateOverlayMotionIndicator();
 
             // Update bounding box overlay
-            if (e.IsMotionActive && e.BoundingBox.HasValue)
+            if (e.IsMotionActive && e.HasBoundingBoxes)
             {
                 System.Diagnostics.Debug.WriteLine(
-                    $"[MotionDetection] Updating bounding box: {e.BoundingBox.Value}, AnalysisRes={e.AnalysisWidth}x{e.AnalysisHeight}");
-                UpdateMotionBoundingBox(e.BoundingBox, e.AnalysisWidth, e.AnalysisHeight);
+                    $"[MotionDetection] Updating {e.BoundingBoxes.Count} bounding boxes, AnalysisRes={e.AnalysisWidth}x{e.AnalysisHeight}");
+                UpdateMotionBoundingBoxes(e.BoundingBoxes, e.AnalysisWidth, e.AnalysisHeight);
             }
             else
             {
-                UpdateMotionBoundingBox(boundingBox: null, e.AnalysisWidth, e.AnalysisHeight);
+                UpdateMotionBoundingBoxes(boundingBoxes: null, e.AnalysisWidth, e.AnalysisHeight);
             }
 
             // Trigger motion recording if enabled and motion is active (use effective value for override)
@@ -1745,7 +1745,7 @@ public partial class CameraTile : IDisposable
                     {
                         IsMotionDetected = false;
                         UpdateOverlayMotionIndicator();
-                        UpdateMotionBoundingBox(boundingBox: null);
+                        UpdateMotionBoundingBoxes(boundingBoxes: null);
                     }
                 };
                 resetTimer.Start();
@@ -1882,15 +1882,15 @@ public partial class CameraTile : IDisposable
         return cachedMotionOverlay;
     }
 
-    private void UpdateMotionBoundingBox(
-        Rect? boundingBox,
+    private void UpdateMotionBoundingBoxes(
+        IReadOnlyList<Rect>? boundingBoxes,
         int analysisWidth = 320,
         int analysisHeight = 240)
     {
         var motionOverlay = GetMotionBoundingBoxOverlay();
         if (motionOverlay is null)
         {
-            System.Diagnostics.Debug.WriteLine("[MotionDetection] UpdateMotionBoundingBox - overlay not found!");
+            System.Diagnostics.Debug.WriteLine("[MotionDetection] UpdateMotionBoundingBoxes - overlay not found!");
             return;
         }
 
@@ -1909,10 +1909,10 @@ public partial class CameraTile : IDisposable
         }
 
         System.Diagnostics.Debug.WriteLine(
-            $"[MotionDetection] UpdateMotionBoundingBox - overlay.IsOverlayEnabled={motionOverlay.IsOverlayEnabled}, " +
-            $"containerSize={containerSize.Width}x{containerSize.Height}, analysisRes={analysisWidth}x{analysisHeight}, boundingBox={boundingBox}");
+            $"[MotionDetection] UpdateMotionBoundingBoxes - overlay.IsOverlayEnabled={motionOverlay.IsOverlayEnabled}, " +
+            $"containerSize={containerSize.Width}x{containerSize.Height}, analysisRes={analysisWidth}x{analysisHeight}, boxCount={boundingBoxes?.Count ?? 0}");
 
-        motionOverlay.UpdateBoundingBox(boundingBox, containerSize);
+        motionOverlay.UpdateBoundingBoxes(boundingBoxes, containerSize);
     }
 
     /// <summary>

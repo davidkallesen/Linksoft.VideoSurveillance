@@ -59,7 +59,7 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
     private double boundingBoxSmoothing = 0.3;
 
     [ObservableProperty]
-    private Rect? currentBoundingBox;
+    private IReadOnlyList<Rect> currentBoundingBoxes = [];
 
     [ObservableProperty]
     private int analysisWidth = 320;
@@ -239,16 +239,16 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
             return;
         }
 
-        // Update bounding box on UI thread
+        // Update bounding boxes on UI thread
         Application.Current?.Dispatcher.Invoke(() =>
         {
-            if (e.IsMotionActive && e.BoundingBox.HasValue)
+            if (e.IsMotionActive && e.HasBoundingBoxes)
             {
-                CurrentBoundingBox = e.BoundingBox;
+                CurrentBoundingBoxes = e.BoundingBoxes;
             }
             else
             {
-                CurrentBoundingBox = null;
+                CurrentBoundingBoxes = [];
             }
         });
     }

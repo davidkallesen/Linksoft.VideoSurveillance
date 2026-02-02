@@ -42,11 +42,11 @@ public interface IMotionDetectionService
     bool IsMotionDetected(Guid cameraId);
 
     /// <summary>
-    /// Gets the last detected bounding box for a camera.
+    /// Gets the last detected bounding boxes for a camera.
     /// </summary>
     /// <param name="cameraId">The camera ID.</param>
-    /// <returns>The bounding box in analysis coordinates, or null if no motion detected.</returns>
-    Rect? GetLastBoundingBox(Guid cameraId);
+    /// <returns>The bounding boxes in analysis coordinates. Empty if no motion detected.</returns>
+    IReadOnlyList<Rect> GetLastBoundingBoxes(Guid cameraId);
 
     /// <summary>
     /// Gets the analysis resolution used for motion detection for a specific camera.

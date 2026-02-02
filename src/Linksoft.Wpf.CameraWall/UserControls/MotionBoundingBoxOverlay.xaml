@@ -9,10 +9,6 @@
     IsHitTestVisible="False"
     mc:Ignorable="d">
 
-    <Canvas x:Name="OverlayCanvas">
-        <Rectangle
-            x:Name="BoundingBoxRect"
-            Fill="Transparent"
-            Visibility="Collapsed" />
-    </Canvas>
+    <!--  Canvas for dynamically created bounding box rectangles  -->
+    <Canvas x:Name="OverlayCanvas" />
 </UserControl>

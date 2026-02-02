@@ -92,13 +92,13 @@ public partial class FullScreenCameraWindow : IDisposable
         object? sender,
         PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(FullScreenCameraWindowViewModel.CurrentBoundingBox))
+        if (e.PropertyName == nameof(FullScreenCameraWindowViewModel.CurrentBoundingBoxes))
         {
-            UpdateMotionBoundingBox();
+            UpdateMotionBoundingBoxes();
         }
     }
 
-    private void UpdateMotionBoundingBox()
+    private void UpdateMotionBoundingBoxes()
     {
         var motionOverlay = GetMotionBoundingBoxOverlay();
         if (motionOverlay is null)
@@ -115,7 +115,7 @@ public partial class FullScreenCameraWindow : IDisposable
             containerSize = new Size(VideoPlayer.Overlay.ActualWidth, VideoPlayer.Overlay.ActualHeight);
         }
 
-        motionOverlay.UpdateBoundingBox(viewModel.CurrentBoundingBox, containerSize);
+        motionOverlay.UpdateBoundingBoxes(viewModel.CurrentBoundingBoxes, containerSize);
     }
 
     private MotionBoundingBoxOverlay? GetMotionBoundingBoxOverlay()

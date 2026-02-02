@@ -27,11 +27,11 @@ internal sealed class MotionDetectionContext : IDisposable
 
     public DateTime? LastMotionTime { get; set; }
 
-    public Rect? LastBoundingBox { get; set; }
+    public IReadOnlyList<Rect> LastBoundingBoxes { get; set; } = [];
 
     public void Dispose()
     {
         PreviousFrame = null;
-        LastBoundingBox = null;
+        LastBoundingBoxes = [];
     }
 }
