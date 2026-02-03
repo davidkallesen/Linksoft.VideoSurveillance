@@ -23,12 +23,7 @@ public class ConnectionAppSettings
     /// <summary>
     /// Gets or sets the delay between reconnection attempts in seconds.
     /// </summary>
-    public int ReconnectDelaySeconds { get; set; } = 5;
-
-    /// <summary>
-    /// Gets or sets the maximum number of reconnection attempts.
-    /// </summary>
-    public int MaxReconnectAttempts { get; set; } = 3;
+    public int ReconnectDelaySeconds { get; set; } = 10;
 
     /// <summary>
     /// Gets or sets a value indicating whether to automatically reconnect on failure.

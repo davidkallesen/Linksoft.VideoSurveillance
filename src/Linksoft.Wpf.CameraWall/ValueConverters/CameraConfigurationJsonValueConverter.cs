@@ -307,11 +307,6 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
             overrides.ReconnectDelaySeconds = reconnectDelay;
         }
 
-        if (TryGetNullableInt32Property(element, "maxReconnectAttempts", "MaxReconnectAttempts", out var maxReconnectAttempts))
-        {
-            overrides.MaxReconnectAttempts = maxReconnectAttempts;
-        }
-
         if (TryGetNullableBoolProperty(element, "autoReconnectOnFailure", "AutoReconnectOnFailure", out var autoReconnect))
         {
             overrides.AutoReconnectOnFailure = autoReconnect;
@@ -557,11 +552,6 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
         if (overrides.ReconnectDelaySeconds.HasValue)
         {
             writer.WriteNumber("reconnectDelaySeconds", overrides.ReconnectDelaySeconds.Value);
-        }
-
-        if (overrides.MaxReconnectAttempts.HasValue)
-        {
-            writer.WriteNumber("maxReconnectAttempts", overrides.MaxReconnectAttempts.Value);
         }
 
         if (overrides.AutoReconnectOnFailure.HasValue)

@@ -81,12 +81,6 @@
                                 <Binding Path="ReconnectDelaySeconds" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ReconnectDelaySeconds>
-                        <local:CameraTile.MaxReconnectAttempts>
-                            <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.MaxReconnectAttempts" />
-                                <Binding Path="MaxReconnectAttempts" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
-                            </MultiBinding>
-                        </local:CameraTile.MaxReconnectAttempts>
                         <local:CameraTile.AutoReconnectOnFailure>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
                                 <Binding Path="Overrides.AutoReconnectOnFailure" />

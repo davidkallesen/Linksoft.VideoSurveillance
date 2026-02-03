@@ -64,11 +64,8 @@ public partial class CameraTile : IDisposable
     [DependencyProperty(DefaultValue = 10)]
     private int connectionTimeoutSeconds;
 
-    [DependencyProperty(DefaultValue = 5)]
+    [DependencyProperty(DefaultValue = 10)]
     private int reconnectDelaySeconds;
-
-    [DependencyProperty(DefaultValue = 3)]
-    private int maxReconnectAttempts;
 
     [DependencyProperty(DefaultValue = true)]
     private bool autoReconnectOnFailure;
@@ -156,7 +153,12 @@ public partial class CameraTile : IDisposable
     private MotionBoundingBoxOverlay? cachedMotionOverlay;
     private DispatcherTimer? reconnectTimer;
     private DispatcherTimer? autoReconnectTimer;
-    private int currentReconnectAttempt;
+    private int reconnectCheckCount;
+
+    // Stream health monitoring
+    private DispatcherTimer? streamHealthTimer;
+    private long lastFramesDisplayed;
+    private int staleStreamCheckCount;
 
     // Track previous performance override values to detect changes that require reconnection
     private string? previousOverrideVideoQuality;
@@ -261,6 +263,18 @@ public partial class CameraTile : IDisposable
     /// </summary>
     private int GetEffectiveMotionCooldownSeconds()
         => Camera?.Overrides?.MotionCooldownSeconds ?? MotionCooldownSeconds;
+
+    /// <summary>
+    /// Gets the effective AutoReconnectOnFailure value, considering camera override.
+    /// </summary>
+    private bool GetEffectiveAutoReconnectOnFailure()
+        => Camera?.Overrides?.AutoReconnectOnFailure ?? AutoReconnectOnFailure;
+
+    /// <summary>
+    /// Gets the effective ReconnectDelaySeconds value, considering camera override.
+    /// </summary>
+    private int GetEffectiveReconnectDelaySeconds()
+        => Camera?.Overrides?.ReconnectDelaySeconds ?? ReconnectDelaySeconds;
 
     /// <summary>
     /// Gets the effective motion analysis resolution, considering camera override.
@@ -511,11 +525,18 @@ public partial class CameraTile : IDisposable
                     new CameraConnectionChangedEventArgs(Camera, oldState, ConnectionState.Disconnected));
             }
 
-            reconnectTimer?.Stop();
-            reconnectTimer = null;
+            if (reconnectTimer is not null)
+            {
+                reconnectTimer.Stop();
+                reconnectTimer.Tick -= OnReconnectTimerTick;
+                reconnectTimer = null;
+            }
 
             autoReconnectTimer?.Stop();
             autoReconnectTimer = null;
+
+            // Stop stream health monitoring
+            StopStreamHealthCheck();
 
             recordingDurationTimer?.Stop();
             recordingDurationTimer = null;
@@ -944,11 +965,13 @@ public partial class CameraTile : IDisposable
             oldPlayer.Dispose();
         }
 
+        // Use the reconnect flow for the new player (includes timeout handling)
+        isReconnecting = true;
         UpdateConnectionState(ConnectionState.Connecting);
 
         _ = Dispatcher.BeginInvoke(
             DispatcherPriority.Background,
-            PlayOnBackgroundThread);
+            ReconnectPlayer);
     }
 
     private void OnCameraChangedInternal(CameraConfiguration? cameraConfig)
@@ -1027,49 +1050,15 @@ public partial class CameraTile : IDisposable
         // Only auto-connect if enabled
         if (AutoConnectOnLoad)
         {
-            // Show connecting state immediately
-            UpdateConnectionState(ConnectionState.Connecting);
-
-            // Defer player open to allow UI to render first
-            // Player.Open() can block the UI thread, so we use BeginInvoke to let the render pass complete
-            _ = Dispatcher.BeginInvoke(
-                DispatcherPriority.Background,
-                PlayOnBackgroundThread);
+            // Use the same reconnect flow for initial connection
+            // This ensures consistent timeout and retry behavior
+            Reconnect();
         }
         else
         {
             // Stay disconnected until user manually connects
             UpdateConnectionState(ConnectionState.Disconnected);
         }
-    }
-
-    private void PlayOnBackgroundThread()
-    {
-        if (Camera is null || Player is null)
-        {
-            return;
-        }
-
-        // Capture references for background thread
-        var capturedPlayer = Player;
-        var capturedCamera = Camera;
-
-        // Run blocking player operations on background thread to keep UI responsive
-        _ = Task.Run(() =>
-        {
-            try
-            {
-                var uri = capturedCamera.BuildUri();
-                capturedPlayer.Open(uri.ToString());
-            }
-            catch (Exception ex)
-            {
-                _ = Dispatcher.BeginInvoke(() =>
-                {
-                    UpdateConnectionState(ConnectionState.ConnectionFailed, ex.Message);
-                });
-            }
-        });
     }
 
     private Player CreatePlayer(CameraConfiguration camera)
@@ -1080,6 +1069,7 @@ public partial class CameraTile : IDisposable
             {
                 AutoPlay = true,
                 MaxLatency = camera.Stream.MaxLatencyMs * 10000L,
+                Stats = true, // Enable stats for stream health monitoring (FPSCurrent, FramesDisplayed, etc.)
             },
             Video =
             {
@@ -1131,7 +1121,8 @@ public partial class CameraTile : IDisposable
                     break;
                 case Status.Stopped:
                 case Status.Ended:
-                    // Skip Disconnected state during reconnection (player stops briefly before reopening)
+                    // Skip Disconnected state during reconnection
+                    // (player stops briefly before reopening)
                     if (!reconnecting)
                     {
                         UpdateConnectionState(ConnectionState.Disconnected);
@@ -1291,6 +1282,9 @@ public partial class CameraTile : IDisposable
                     string.Format(CultureInfo.CurrentCulture, Translations.CameraDisconnected1, Camera?.Display.DisplayName ?? string.Empty));
             }
 
+            // Stop stream health monitoring
+            StopStreamHealthCheck();
+
             // Stop motion detection when disconnected
             StopMotionDetection();
 
@@ -1302,15 +1296,15 @@ public partial class CameraTile : IDisposable
         }
         else if (newState == ConnectionState.Connected)
         {
-            // Reset reconnect attempts on successful connection
-            currentReconnectAttempt = 0;
-
             if (previousState is ConnectionState.Disconnected or ConnectionState.ConnectionFailed or ConnectionState.Connecting
                 && ShowNotificationOnReconnect)
             {
                 ShowNotification(
                     string.Format(CultureInfo.CurrentCulture, Translations.CameraConnected1, Camera?.Display.DisplayName ?? string.Empty));
             }
+
+            // Start stream health monitoring to detect if stream goes offline
+            StartStreamHealthCheck();
 
             // Auto-start recording on connect if enabled
             if (EnableRecordingOnConnect &&
@@ -1332,24 +1326,21 @@ public partial class CameraTile : IDisposable
 
     private void TryAutoReconnect()
     {
-        if (!AutoReconnectOnFailure || Camera is null)
+        // Use effective value to respect per-camera override
+        if (!GetEffectiveAutoReconnectOnFailure() || Camera is null)
         {
+            isReconnecting = false; // Clear flag since we won't reconnect
             return;
         }
 
-        if (currentReconnectAttempt >= MaxReconnectAttempts)
-        {
-            // Max attempts reached, stop trying
-            return;
-        }
+        // When AutoReconnectOnFailure is true, retry forever with configured delay
+        var delaySeconds = GetEffectiveReconnectDelaySeconds();
 
-        currentReconnectAttempt++;
-
-        // Schedule auto-reconnect after delay
+        // Schedule auto-reconnect after delay (use effective value for per-camera override)
         autoReconnectTimer?.Stop();
         autoReconnectTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(ReconnectDelaySeconds),
+            Interval = TimeSpan.FromSeconds(delaySeconds),
         };
 
         autoReconnectTimer.Tick += (_, _) =>
@@ -1364,6 +1355,119 @@ public partial class CameraTile : IDisposable
         };
 
         autoReconnectTimer.Start();
+    }
+
+    private void StartStreamHealthCheck()
+    {
+        StopStreamHealthCheck();
+
+        if (Player is null)
+        {
+            return;
+        }
+
+        // Initialize tracking - use -1 to skip first check
+        // This gives the stream time to establish
+        lastFramesDisplayed = -1;
+        staleStreamCheckCount = 0;
+
+        // Check stream health every 5 seconds
+        streamHealthTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(5),
+        };
+        streamHealthTimer.Tick += OnStreamHealthTimerTick;
+        streamHealthTimer.Start();
+    }
+
+    private void StopStreamHealthCheck()
+    {
+        if (streamHealthTimer is not null)
+        {
+            streamHealthTimer.Stop();
+            streamHealthTimer.Tick -= OnStreamHealthTimerTick;
+            streamHealthTimer = null;
+        }
+
+        staleStreamCheckCount = 0;
+        lastFramesDisplayed = -1;
+    }
+
+    private void OnStreamHealthTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        // Don't check during reconnection
+        if (Player?.Video is null || ConnectionState != ConnectionState.Connected || isReconnecting)
+        {
+            StopStreamHealthCheck();
+            return;
+        }
+
+        var playerStatus = Player.Status;
+        var currentFps = Player.Video.FPSCurrent;
+        var currentFrames = (long)Player.Video.FramesDisplayed;
+
+        // Only check if player is in a state where we expect video
+        // Both Playing and Paused can have a frozen stream
+        if (playerStatus != Status.Playing && playerStatus != Status.Paused)
+        {
+            return;
+        }
+
+        // First check - skip to allow stream to establish
+        if (lastFramesDisplayed < 0)
+        {
+            lastFramesDisplayed = currentFrames;
+            return;
+        }
+
+        // Detect stale stream using two indicators:
+        // 1. FPS is very low (< 1) - indicates no/few frames being decoded
+        // 2. FramesDisplayed not advancing - DWM not presenting new frames
+        // Both must be true to avoid false positives
+        var fpsIsLow = currentFps < 1.0;
+        var framesNotAdvancing = currentFrames == lastFramesDisplayed;
+
+        // Stream is stale if FPS is low AND frames aren't advancing
+        var isStale = fpsIsLow && framesNotAdvancing;
+
+        if (isStale)
+        {
+            staleStreamCheckCount++;
+
+            // If stale for 3 consecutive checks (15 seconds), trigger reconnect
+            if (staleStreamCheckCount >= 3)
+            {
+                StopStreamHealthCheck();
+
+                // Set reconnecting flag to prevent OnPlayerPropertyChanged from
+                // changing state when we stop the player. Keep it true until
+                // the auto-reconnect timer fires to ignore all FlyleafLib status changes.
+                isReconnecting = true;
+
+                // Stop the player to prevent FlyleafLib from auto-recovering
+                try
+                {
+                    Player?.Stop();
+                }
+                catch
+                {
+                    // Ignore stop errors
+                }
+
+                // Update state to ConnectionFailed (keep isReconnecting = true)
+                // The flag will be managed by TryAutoReconnect/Reconnect
+                UpdateConnectionState(ConnectionState.ConnectionFailed, "Stream stopped responding");
+            }
+        }
+        else
+        {
+            // Stream is healthy - reset counter
+            staleStreamCheckCount = 0;
+        }
+
+        lastFramesDisplayed = currentFrames;
     }
 
     private void ShowNotification(string message)
@@ -1452,21 +1556,28 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        // Capture references for background thread
+        // Capture references
         var capturedPlayer = Player;
         var capturedCamera = Camera;
+
+        // Stop the player on the UI thread (FlyleafLib requires this)
+        try
+        {
+            capturedPlayer.Stop();
+        }
+        catch
+        {
+            // Ignore Stop() errors - we'll try to Open() anyway
+        }
 
         // Start status check timer before background operation
         StartReconnectStatusCheck();
 
-        // Run blocking player operations on background thread to keep UI responsive
+        // Run Open on background thread to keep UI responsive
         _ = Task.Run(() =>
         {
             try
             {
-                // Stop the player first to ensure proper status transitions on reopen
-                capturedPlayer.Stop();
-
                 var uri = capturedCamera.BuildUri();
                 capturedPlayer.Open(uri.ToString());
             }
@@ -1486,42 +1597,49 @@ public partial class CameraTile : IDisposable
         // Stop any existing timer
         reconnectTimer?.Stop();
 
-        var checkCount = 0;
-        var maxChecks = ConnectionTimeoutSeconds * 2; // Check interval is 500ms, so multiply by 2
+        // Reset check count (use instance field to avoid closure issues)
+        reconnectCheckCount = 0;
 
-        reconnectTimer = new DispatcherTimer
+        // Create timer on UI thread
+        reconnectTimer = new DispatcherTimer(DispatcherPriority.Normal)
         {
             Interval = TimeSpan.FromMilliseconds(500),
         };
 
-        reconnectTimer.Tick += (_, _) =>
-        {
-            checkCount++;
-
-            if (!isReconnecting)
-            {
-                // Already handled by Status property change
-                reconnectTimer?.Stop();
-                return;
-            }
-
-            if (Player?.Status == Status.Playing)
-            {
-                isReconnecting = false;
-                UpdateConnectionState(ConnectionState.Connected);
-                reconnectTimer?.Stop();
-                return;
-            }
-
-            if (Player?.Status == Status.Failed || checkCount >= maxChecks)
-            {
-                isReconnecting = false;
-                UpdateConnectionState(ConnectionState.ConnectionFailed, Translations.ConnectionTimedOut);
-                reconnectTimer?.Stop();
-            }
-        };
-
+        reconnectTimer.Tick += OnReconnectTimerTick;
         reconnectTimer.Start();
+    }
+
+    private void OnReconnectTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        reconnectCheckCount++;
+
+        // Calculate max checks (at least 10 seconds)
+        var maxChecks = Math.Max(ConnectionTimeoutSeconds * 2, 20);
+
+        if (!isReconnecting)
+        {
+            // Already handled by Status property change
+            reconnectTimer?.Stop();
+            return;
+        }
+
+        if (Player?.Status == Status.Playing)
+        {
+            isReconnecting = false;
+            reconnectTimer?.Stop();
+            UpdateConnectionState(ConnectionState.Connected);
+            return;
+        }
+
+        if (Player?.Status == Status.Failed || reconnectCheckCount >= maxChecks)
+        {
+            isReconnecting = false;
+            reconnectTimer?.Stop();
+            UpdateConnectionState(ConnectionState.ConnectionFailed, Translations.ConnectionTimedOut);
+        }
     }
 
     private bool CanExecuteCameraCommand()

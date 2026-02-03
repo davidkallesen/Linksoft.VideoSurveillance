@@ -31,14 +31,6 @@
                 Orientation="Vertical"
                 Value="{Binding Path=ReconnectDelaySeconds, Mode=TwoWay}" />
 
-            <atc:LabelIntegerBox
-                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                Key=MaxReconnectAttempts}"
-                Maximum="10"
-                Minimum="0"
-                Orientation="Vertical"
-                Value="{Binding Path=MaxReconnectAttempts, Mode=TwoWay}" />
-
             <atc:LabelToggleSwitch
                 IsOn="{Binding Path=AutoReconnectOnFailure, Mode=TwoWay}"
                 LabelPosition="Right"

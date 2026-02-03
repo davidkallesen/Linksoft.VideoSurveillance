@@ -386,40 +386,6 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
-    public bool UseDefaultMaxReconnectAttempts
-    {
-        get => Camera.Overrides?.MaxReconnectAttempts is null;
-        set
-        {
-            if (value)
-            {
-                if (Camera.Overrides is not null)
-                {
-                    Camera.Overrides.MaxReconnectAttempts = null;
-                }
-            }
-            else
-            {
-                EnsureOverrides();
-                Camera.Overrides!.MaxReconnectAttempts = settingsService.Connection.MaxReconnectAttempts;
-            }
-
-            RaisePropertyChanged();
-            RaisePropertyChanged(nameof(OverrideMaxReconnectAttempts));
-        }
-    }
-
-    public int OverrideMaxReconnectAttempts
-    {
-        get => Camera.Overrides?.MaxReconnectAttempts ?? settingsService.Connection.MaxReconnectAttempts;
-        set
-        {
-            EnsureOverrides();
-            Camera.Overrides!.MaxReconnectAttempts = value;
-            RaisePropertyChanged();
-        }
-    }
-
     public bool UseDefaultAutoReconnect
     {
         get => Camera.Overrides?.AutoReconnectOnFailure is null;

@@ -44,11 +44,8 @@ public partial class CameraGrid
     [DependencyProperty(DefaultValue = 10)]
     private int connectionTimeoutSeconds;
 
-    [DependencyProperty(DefaultValue = 5)]
+    [DependencyProperty(DefaultValue = 10)]
     private int reconnectDelaySeconds;
-
-    [DependencyProperty(DefaultValue = 3)]
-    private int maxReconnectAttempts;
 
     [DependencyProperty(DefaultValue = true)]
     private bool autoReconnectOnFailure;

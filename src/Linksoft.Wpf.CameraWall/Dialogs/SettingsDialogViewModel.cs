@@ -95,10 +95,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private int connectionTimeoutSeconds = 10;
 
     [ObservableProperty]
-    private int reconnectDelaySeconds = 5;
-
-    [ObservableProperty]
-    private int maxReconnectAttempts = 3;
+    private int reconnectDelaySeconds = 10;
 
     [ObservableProperty]
     private bool autoReconnectOnFailure = true;
@@ -329,8 +326,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SelectedDefaultProtocol = "Rtsp";
         DefaultPort = 554;
         ConnectionTimeoutSeconds = 10;
-        ReconnectDelaySeconds = 5;
-        MaxReconnectAttempts = 3;
+        ReconnectDelaySeconds = 10;
         AutoReconnectOnFailure = true;
         ShowNotificationOnDisconnect = true;
         ShowNotificationOnReconnect = false;
@@ -423,7 +419,6 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         DefaultPort = connection.DefaultPort;
         ConnectionTimeoutSeconds = connection.ConnectionTimeoutSeconds;
         ReconnectDelaySeconds = connection.ReconnectDelaySeconds;
-        MaxReconnectAttempts = connection.MaxReconnectAttempts;
         AutoReconnectOnFailure = connection.AutoReconnectOnFailure;
         ShowNotificationOnDisconnect = connection.ShowNotificationOnDisconnect;
         ShowNotificationOnReconnect = connection.ShowNotificationOnReconnect;
@@ -537,7 +532,6 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
             DefaultPort = DefaultPort,
             ConnectionTimeoutSeconds = ConnectionTimeoutSeconds,
             ReconnectDelaySeconds = ReconnectDelaySeconds,
-            MaxReconnectAttempts = MaxReconnectAttempts,
             AutoReconnectOnFailure = AutoReconnectOnFailure,
             ShowNotificationOnDisconnect = ShowNotificationOnDisconnect,
             ShowNotificationOnReconnect = ShowNotificationOnReconnect,

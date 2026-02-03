@@ -17,11 +17,6 @@ public class CameraOverrides
     public int? ReconnectDelaySeconds { get; set; }
 
     /// <summary>
-    /// Gets or sets the maximum number of reconnection attempts, or null to use application default.
-    /// </summary>
-    public int? MaxReconnectAttempts { get; set; }
-
-    /// <summary>
     /// Gets or sets whether to automatically reconnect on failure, or null to use application default.
     /// </summary>
     public bool? AutoReconnectOnFailure { get; set; }
@@ -180,7 +175,6 @@ public class CameraOverrides
     public bool HasAnyOverride()
         => ConnectionTimeoutSeconds.HasValue ||
            ReconnectDelaySeconds.HasValue ||
-           MaxReconnectAttempts.HasValue ||
            AutoReconnectOnFailure.HasValue ||
            ShowNotificationOnDisconnect.HasValue ||
            ShowNotificationOnReconnect.HasValue ||
@@ -221,7 +215,6 @@ public class CameraOverrides
         {
             ConnectionTimeoutSeconds = ConnectionTimeoutSeconds,
             ReconnectDelaySeconds = ReconnectDelaySeconds,
-            MaxReconnectAttempts = MaxReconnectAttempts,
             AutoReconnectOnFailure = AutoReconnectOnFailure,
             ShowNotificationOnDisconnect = ShowNotificationOnDisconnect,
             ShowNotificationOnReconnect = ShowNotificationOnReconnect,
@@ -265,7 +258,6 @@ public class CameraOverrides
             // Reset all overrides to null (use defaults)
             ConnectionTimeoutSeconds = null;
             ReconnectDelaySeconds = null;
-            MaxReconnectAttempts = null;
             AutoReconnectOnFailure = null;
             ShowNotificationOnDisconnect = null;
             ShowNotificationOnReconnect = null;
@@ -301,7 +293,6 @@ public class CameraOverrides
 
         ConnectionTimeoutSeconds = source.ConnectionTimeoutSeconds;
         ReconnectDelaySeconds = source.ReconnectDelaySeconds;
-        MaxReconnectAttempts = source.MaxReconnectAttempts;
         AutoReconnectOnFailure = source.AutoReconnectOnFailure;
         ShowNotificationOnDisconnect = source.ShowNotificationOnDisconnect;
         ShowNotificationOnReconnect = source.ShowNotificationOnReconnect;
@@ -348,7 +339,6 @@ public class CameraOverrides
 
         return ConnectionTimeoutSeconds == other.ConnectionTimeoutSeconds &&
                ReconnectDelaySeconds == other.ReconnectDelaySeconds &&
-               MaxReconnectAttempts == other.MaxReconnectAttempts &&
                AutoReconnectOnFailure == other.AutoReconnectOnFailure &&
                ShowNotificationOnDisconnect == other.ShowNotificationOnDisconnect &&
                ShowNotificationOnReconnect == other.ShowNotificationOnReconnect &&

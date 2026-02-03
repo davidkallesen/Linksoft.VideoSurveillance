@@ -11,7 +11,7 @@ This document outlines the implementation plan for restructuring the application
 
 ### Settings Storage
 - **Location:** `%ProgramData%\Linksoft\CameraWall\settings.json`
-- **Structure:** 6 sections matching SettingsDialog tabs
+- **Structure:** 7 sections matching SettingsDialog tabs
 
 ### Camera Storage
 - **Location:** `%ProgramData%\Linksoft\CameraWall\cameras.json`
@@ -63,11 +63,44 @@ This document outlines the implementation plan for restructuring the application
     "rtspTransport": "tcp",
     "maxLatencyMs": 500
   },
+  "motionDetection": {
+    "sensitivity": 30,
+    "minimumChangePercent": 0.5,
+    "analysisFrameRate": 30,
+    "analysisWidth": 800,
+    "analysisHeight": 600,
+    "postMotionDurationSeconds": 10,
+    "cooldownSeconds": 5,
+    "boundingBox": {
+      "showInGrid": false,
+      "showInFullScreen": false,
+      "color": "Red",
+      "thickness": 2,
+      "minArea": 10,
+      "padding": 4,
+      "smoothing": 0.3
+    }
+  },
   "recording": {
     "recordingPath": "%ProgramData%\\Linksoft\\CameraWall\\recordings",
     "recordingFormat": "mp4",
     "enableRecordingOnMotion": false,
-    "enableRecordingOnConnect": false
+    "enableRecordingOnConnect": false,
+    "enableHourlySegmentation": true,
+    "maxRecordingDurationMinutes": 60,
+    "thumbnailTileCount": 4,
+    "cleanup": {
+      "schedule": "Disabled",
+      "recordingRetentionDays": 30,
+      "includeSnapshots": false,
+      "snapshotRetentionDays": 7
+    },
+    "playbackOverlay": {
+      "showFilename": true,
+      "filenameColor": "White",
+      "showTimestamp": true,
+      "timestampColor": "White"
+    }
   },
   "advanced": {
     "enableDebugLogging": false,
@@ -97,9 +130,19 @@ This document outlines the implementation plan for restructuring the application
 | `CameraDisplayAppSettings` | ✅ | `Models/Settings/CameraDisplayAppSettings.cs` | Renamed from DisplaySettings, added overlayPosition |
 | `ConnectionAppSettings` | ✅ | `Models/Settings/ConnectionAppSettings.cs` | App-level connection defaults |
 | `PerformanceSettings` | ✅ | `Models/Settings/PerformanceSettings.cs` | Complete |
-| `RecordingSettings` | ✅ | `Models/Settings/RecordingSettings.cs` | Complete |
+| `MotionDetectionSettings` | ✅ | `Models/Settings/MotionDetectionSettings.cs` | Analysis parameters, post-motion duration, cooldown |
+| `BoundingBoxSettings` | ✅ | `Models/Settings/BoundingBoxSettings.cs` | Nested in MotionDetectionSettings for visual display options |
+| `RecordingSettings` | ✅ | `Models/Settings/RecordingSettings.cs` | Extended with segmentation, cleanup, and playback overlay |
+| `MediaCleanupSettings` | ✅ | `Models/Settings/MediaCleanupSettings.cs` | Nested in RecordingSettings for automatic cleanup |
+| `PlaybackOverlaySettings` | ✅ | `Models/Settings/PlaybackOverlaySettings.cs` | Nested in RecordingSettings for playback display |
 | `AdvancedSettings` | ✅ | `Models/Settings/AdvancedSettings.cs` | Complete |
-| `ApplicationSettings` | ✅ | `Models/Settings/ApplicationSettings.cs` | All 6 sections included |
+| `ApplicationSettings` | ✅ | `Models/Settings/ApplicationSettings.cs` | All 7 sections included |
+
+### Enums
+
+| Enum | Status | Location | Notes |
+|------|--------|----------|-------|
+| `MediaCleanupSchedule` | ✅ | `Enums/MediaCleanupSchedule.cs` | Disabled, OnStartup, OnStartupAndPeriodically |
 
 ### Camera Models
 
@@ -124,15 +167,19 @@ This document outlines the implementation plan for restructuring the application
 | `CameraDisplay` | ✅ | Renamed from Display |
 | `Connection` | ✅ | Complete |
 | `Performance` | ✅ | Complete |
-| `Recording` | ✅ | Complete |
+| `MotionDetection` | ✅ | Motion detection analysis and bounding box settings |
+| `Recording` | ✅ | Extended with cleanup and playback overlay |
 | `Advanced` | ✅ | Complete |
 | `SaveGeneral()` | ✅ | Complete |
 | `SaveCameraDisplay()` | ✅ | Renamed from SaveDisplay |
 | `SaveConnection()` | ✅ | Complete |
 | `SavePerformance()` | ✅ | Complete |
+| `SaveMotionDetection()` | ✅ | Complete |
 | `SaveRecording()` | ✅ | Complete |
 | `SaveAdvanced()` | ✅ | Complete |
 | `ApplyDefaultsToCamera()` | ✅ | Applies defaults to new cameras |
+| `GetEffectiveValue<T>()` | ✅ | Gets camera override or app default for value types |
+| `GetEffectiveStringValue()` | ✅ | Gets camera override or app default for strings |
 | `Load()` | ✅ | Complete |
 | `Save()` | ✅ | Complete |
 
@@ -198,13 +245,62 @@ This document outlines the implementation plan for restructuring the application
 | RTSP Transport | ✅ | `Performance.RtspTransport` |
 | Max Latency | ✅ | `Performance.MaxLatencyMs` |
 
+### Motion Detection Tab
+
+**Analysis Settings Group**
+| Setting | UI Status | Bound Property |
+|---------|--------|----------------|
+| Sensitivity | ✅ | `MotionDetection.Sensitivity` |
+| Minimum Change Percent | ✅ | `MotionDetection.MinimumChangePercent` |
+| Analysis Frame Rate | ✅ | `MotionDetection.AnalysisFrameRate` |
+| Analysis Width | ✅ | `MotionDetection.AnalysisWidth` |
+| Analysis Height | ✅ | `MotionDetection.AnalysisHeight` |
+| Post Motion Duration | ✅ | `MotionDetection.PostMotionDurationSeconds` |
+| Cooldown | ✅ | `MotionDetection.CooldownSeconds` |
+
+**Bounding Box Settings Group**
+| Setting | UI Status | Bound Property |
+|---------|--------|----------------|
+| Show in Grid | ✅ | `MotionDetection.BoundingBox.ShowInGrid` |
+| Show in Full Screen | ✅ | `MotionDetection.BoundingBox.ShowInFullScreen` |
+| Color | ✅ | `MotionDetection.BoundingBox.Color` |
+| Thickness | ✅ | `MotionDetection.BoundingBox.Thickness` |
+| Min Area | ✅ | `MotionDetection.BoundingBox.MinArea` |
+| Padding | ✅ | `MotionDetection.BoundingBox.Padding` |
+| Smoothing | ✅ | `MotionDetection.BoundingBox.Smoothing` |
+
 ### Recording Tab
+
+**General Settings Group**
 | Setting | UI Status | Bound Property |
 |---------|--------|----------------|
 | Recording Path | ✅ | `Recording.RecordingPath` |
 | Recording Format | ✅ | `Recording.RecordingFormat` |
 | Record on Motion | ✅ | `Recording.EnableRecordingOnMotion` |
 | Record on Connect | ✅ | `Recording.EnableRecordingOnConnect` |
+
+**Segmentation Settings Group**
+| Setting | UI Status | Bound Property |
+|---------|--------|----------------|
+| Enable Hourly Segmentation | ✅ | `Recording.EnableHourlySegmentation` |
+| Max Recording Duration | ✅ | `Recording.MaxRecordingDurationMinutes` |
+| Thumbnail Tile Count | ✅ | `Recording.ThumbnailTileCount` |
+
+**Media Cleanup Settings Group**
+| Setting | UI Status | Bound Property |
+|---------|--------|----------------|
+| Cleanup Schedule | ✅ | `Recording.Cleanup.Schedule` |
+| Recording Retention Days | ✅ | `Recording.Cleanup.RecordingRetentionDays` |
+| Include Snapshots | ✅ | `Recording.Cleanup.IncludeSnapshots` |
+| Snapshot Retention Days | ✅ | `Recording.Cleanup.SnapshotRetentionDays` |
+
+**Playback Overlay Settings Group**
+| Setting | UI Status | Bound Property |
+|---------|--------|----------------|
+| Show Filename | ✅ | `Recording.PlaybackOverlay.ShowFilename` |
+| Filename Color | ✅ | `Recording.PlaybackOverlay.FilenameColor` |
+| Show Timestamp | ✅ | `Recording.PlaybackOverlay.ShowTimestamp` |
+| Timestamp Color | ✅ | `Recording.PlaybackOverlay.TimestampColor` |
 
 ### Advanced Tab
 | Setting | UI Status | Bound Property |
@@ -274,6 +370,25 @@ This section documents whether each setting is actually used at runtime (not jus
 | RtspTransport | ✅ | `ApplicationSettingsService.cs`, `CameraTile.xaml.cs` | Used in demuxer format options (tcp/udp) |
 | MaxLatencyMs | ✅ | `ApplicationSettingsService.cs`, `CameraTile.xaml.cs` | Used in Player config's MaxLatency property |
 
+### Motion Detection Settings
+
+| Setting | Runtime Status | Usage Location | Notes |
+|---------|---------------|----------------|-------|
+| Sensitivity | ✅ | `MotionDetectionService.cs` | Threshold for motion detection triggering |
+| MinimumChangePercent | ✅ | `MotionDetectionService.cs` | Minimum pixel change to register motion |
+| AnalysisFrameRate | ✅ | `MotionDetectionService.cs` | Frame analysis frequency |
+| AnalysisWidth | ✅ | `MotionDetectionService.cs` | Analysis resolution width |
+| AnalysisHeight | ✅ | `MotionDetectionService.cs` | Analysis resolution height |
+| PostMotionDurationSeconds | ✅ | `MotionDetectionService.cs`, `RecordingService.cs` | Continue recording after motion stops |
+| CooldownSeconds | ✅ | `MotionDetectionService.cs` | Cooldown before new motion trigger |
+| BoundingBox.ShowInGrid | ✅ | `CameraTile.xaml.cs` | Display bounding boxes in main grid |
+| BoundingBox.ShowInFullScreen | ✅ | `FullScreenCameraWindow.xaml.cs` | Display bounding boxes in full screen |
+| BoundingBox.Color | ✅ | `CameraTile.xaml.cs`, `FullScreenCameraWindow.xaml.cs` | Bounding box border color |
+| BoundingBox.Thickness | ✅ | `CameraTile.xaml.cs`, `FullScreenCameraWindow.xaml.cs` | Bounding box border thickness |
+| BoundingBox.MinArea | ✅ | `MotionDetectionService.cs` | Minimum area to display |
+| BoundingBox.Padding | ✅ | `MotionDetectionService.cs` | Padding around detected area |
+| BoundingBox.Smoothing | ✅ | `MotionDetectionService.cs` | Position smoothing factor |
+
 ### Recording Settings
 
 | Setting | Runtime Status | Usage Location | Notes |
@@ -282,6 +397,17 @@ This section documents whether each setting is actually used at runtime (not jus
 | RecordingFormat | ✅ | `RecordingService.cs` | Recording format (mp4, mkv, avi); supports per-camera overrides |
 | EnableRecordingOnMotion | ✅ | `CameraWallManager.cs`, `CameraTile.xaml.cs` | Triggers recording on motion detection; supports per-camera overrides |
 | EnableRecordingOnConnect | ✅ | `CameraWallManager.cs`, `CameraTile.xaml.cs` | Auto-starts recording when camera connects; supports per-camera overrides |
+| EnableHourlySegmentation | ✅ | `RecordingService.cs` | Splits recordings at hour boundaries |
+| MaxRecordingDurationMinutes | ✅ | `RecordingService.cs` | Maximum segment length before auto-split |
+| ThumbnailTileCount | ✅ | `RecordingService.cs` | 1=single image, 4=2x2 grid thumbnail |
+| Cleanup.Schedule | ✅ | `MediaCleanupService.cs` | When to run automatic cleanup |
+| Cleanup.RecordingRetentionDays | ✅ | `MediaCleanupService.cs` | Days to keep recordings |
+| Cleanup.IncludeSnapshots | ✅ | `MediaCleanupService.cs` | Include snapshots in cleanup |
+| Cleanup.SnapshotRetentionDays | ✅ | `MediaCleanupService.cs` | Days to keep snapshots |
+| PlaybackOverlay.ShowFilename | ✅ | `FullScreenRecordingWindow.xaml.cs` | Show filename in playback |
+| PlaybackOverlay.FilenameColor | ✅ | `FullScreenRecordingWindow.xaml.cs` | Filename text color |
+| PlaybackOverlay.ShowTimestamp | ✅ | `FullScreenRecordingWindow.xaml.cs` | Show timestamp in playback |
+| PlaybackOverlay.TimestampColor | ✅ | `FullScreenRecordingWindow.xaml.cs` | Timestamp text color |
 
 ### Advanced Settings
 
@@ -321,9 +447,10 @@ This section documents whether each setting is actually used at runtime (not jus
 | Camera Display | 9 | 0 | 9 | **100%** |
 | Connection | 9 | 0 | 9 | **100%** |
 | Performance | 6 | 0 | 6 | **100%** |
-| Recording | 4 | 0 | 4 | **100%** |
+| Motion Detection | 14 | 0 | 14 | **100%** |
+| Recording | 15 | 0 | 15 | **100%** |
 | Advanced | 2 | 0 | 2 | **100%** |
-| **Total** | **36** | **0** | **36** | **100%** |
+| **Total** | **61** | **0** | **61** | **100%** |
 
 ---
 
@@ -363,6 +490,7 @@ This section documents whether each setting is actually used at runtime (not jus
 - ✅ Update `ApplicationSettingsService` implementation
 - ✅ Add `ApplyDefaultsToCamera()` method
 - ✅ Add individual Save methods for each section
+- ✅ Add `GetEffectiveValue<T>()` and `GetEffectiveStringValue()` methods
 
 ### Phase 3: SettingsDialog Updates ✅
 - ✅ Update SettingsDialogViewModel to use new settings structure
@@ -379,6 +507,21 @@ This section documents whether each setting is actually used at runtime (not jus
 ### Phase 5: Runtime Integration ✅
 - ✅ CameraWallManager uses CameraDisplay settings
 - ✅ Display settings applied to CameraGrid on initialization
+
+### Phase 6: Motion Detection Settings ✅
+- ✅ Create `MotionDetectionSettings` model
+- ✅ Create `BoundingBoxSettings` model (nested)
+- ✅ Add Motion Detection tab to SettingsDialog
+- ✅ Implement analysis settings UI
+- ✅ Implement bounding box display settings UI
+- ✅ Add `SaveMotionDetection()` method to service
+
+### Phase 7: Extended Recording Settings ✅
+- ✅ Create `MediaCleanupSettings` model (nested)
+- ✅ Create `PlaybackOverlaySettings` model (nested)
+- ✅ Add segmentation settings to Recording tab
+- ✅ Add media cleanup settings to Recording tab
+- ✅ Add playback overlay settings to Recording tab
 
 ---
 
@@ -399,13 +542,25 @@ This section documents whether each setting is actually used at runtime (not jus
 ### Recording System ✅ IMPLEMENTED
 
 - **Status:** Implemented using FlyleafLib recording APIs
-- **Settings:** RecordingPath, RecordingFormat, EnableRecordingOnMotion, EnableRecordingOnConnect
+- **Settings:** RecordingPath, RecordingFormat, EnableRecordingOnMotion, EnableRecordingOnConnect, EnableHourlySegmentation, MaxRecordingDurationMinutes, ThumbnailTileCount
 - **Location:** `IRecordingService`, `RecordingService.cs`, `IMotionDetectionService`, `MotionDetectionService.cs`
 - **Implementation:**
   - Manual recording: Context menu "Start Recording" / "Stop Recording"
   - Auto-record on connect: Global setting with per-camera overrides
   - Motion detection: Frame analysis with configurable sensitivity
   - Recording indicator: Visual indicator on camera tile when recording
+  - Hourly segmentation: Automatic splits at hour boundaries
+  - Thumbnail generation: Single or 2x2 grid thumbnails
+
+### Media Cleanup ✅ IMPLEMENTED
+
+- **Status:** Implemented with automatic cleanup service
+- **Settings:** Schedule, RecordingRetentionDays, IncludeSnapshots, SnapshotRetentionDays
+- **Location:** `IMediaCleanupService`, `MediaCleanupService.cs`
+- **Implementation:**
+  - Schedule options: Disabled, OnStartup, OnStartupAndPeriodically (6 hours)
+  - Configurable retention periods for recordings and snapshots
+  - Safe deletion with age verification
 
 #### Debug Logging ✅ IMPLEMENTED
 - **Status:** Implemented using Serilog
@@ -426,14 +581,36 @@ This section documents whether each setting is actually used at runtime (not jus
 - ✅ `Models/Settings/PerformanceSettings.cs`
 - ✅ `Models/Settings/RecordingSettings.cs`
 - ✅ `Models/Settings/AdvancedSettings.cs`
+- ✅ `Models/Settings/MotionDetectionSettings.cs` - Motion detection analysis parameters
+- ✅ `Models/Settings/BoundingBoxSettings.cs` - Bounding box display options
+- ✅ `Models/Settings/MediaCleanupSettings.cs` - Automatic cleanup configuration
+- ✅ `Models/Settings/PlaybackOverlaySettings.cs` - Playback overlay display options
 - ✅ `Models/CameraOverrides.cs` - Per-camera setting overrides
+- ✅ `Enums/MediaCleanupSchedule.cs` - Cleanup schedule options
 - ✅ `Factories/DropDownItemsFactory.cs` - Centralized dropdown items and defaults
 - ✅ `Helpers/ApplicationPaths.cs` - Default paths for logs, snapshots, recordings, settings
 - ✅ `Windows/FullScreenCameraWindow.xaml/.cs` - Moved from Dialogs/
 - ✅ `Windows/FullScreenCameraWindowViewModel.cs` - Moved from ViewModels/
 - ✅ `Windows/FullScreenRecordingWindow.xaml/.cs` - Moved from Dialogs/
 - ✅ `Windows/FullScreenRecordingWindowViewModel.cs` - Moved from ViewModels/
-- ✅ `Dialogs/Parts/Settings/*.xaml/.cs` - 17 extracted settings UserControls
+- ✅ `Dialogs/Parts/Settings/GeneralAppearanceSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/GeneralStartupSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/CameraDisplayOverlaySettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/CameraDisplayGridLayoutSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/CameraDisplaySnapshotSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/ConnectionDefaultCameraSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/ConnectionConnectionSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/ConnectionNotificationsSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/PerformanceVideoSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/PerformanceStreamingSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/MotionDetectionAnalysisSettings.xaml/.cs` - Analysis parameters UI
+- ✅ `Dialogs/Parts/Settings/MotionDetectionBoundingBoxSettings.xaml/.cs` - Bounding box UI
+- ✅ `Dialogs/Parts/Settings/RecordingGeneralSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/RecordingSegmentationSettings.xaml/.cs` - Segmentation settings UI
+- ✅ `Dialogs/Parts/Settings/RecordingMediaCleanupSettings.xaml/.cs` - Media cleanup UI
+- ✅ `Dialogs/Parts/Settings/RecordingPlaybackOverlaySettings.xaml/.cs` - Playback overlay UI
+- ✅ `Dialogs/Parts/Settings/AdvancedLoggingSettings.xaml/.cs`
+- ✅ `Dialogs/Parts/Settings/AdvancedMaintenanceSettings.xaml/.cs`
 
 ### Build Infrastructure Files
 - ✅ `version.json` - NBGV configuration
@@ -449,14 +626,14 @@ This section documents whether each setting is actually used at runtime (not jus
 - ✅ `setup/Linksoft.CameraWall.Installer/License.rtf` - License for installer UI
 
 ### Modified Files
-- ✅ `Models/Settings/ApplicationSettings.cs` - Added all 6 sections
+- ✅ `Models/Settings/ApplicationSettings.cs` - Added all 7 sections (including MotionDetection)
 - ✅ `Models/Settings/CameraDisplayAppSettings.cs` - Renamed from DisplaySettings, added OverlayPosition
-- ✅ `Services/IApplicationSettingsService.cs` - Added new properties/methods
+- ✅ `Services/IApplicationSettingsService.cs` - Added new properties/methods including MotionDetection
 - ✅ `Services/ApplicationSettingsService.cs` - Implemented new structure
 - ✅ `Services/CameraWallManager.cs` - Updated to use CameraDisplay
 - ✅ `Services/DialogService.cs` - Apply defaults to new cameras
 - ✅ `Dialogs/SettingsDialogViewModel.cs` - Use new settings structure
-- ✅ `Dialogs/SettingsDialog.xaml` - Added all settings UI including Grid Layout group
+- ✅ `Dialogs/SettingsDialog.xaml` - Added all settings UI including Motion Detection tab
 - ✅ `Resources/Translations.resx` - Added new translation keys
 - ✅ `Resources/Translations.da-DK.resx` - Added Danish translations
 - ✅ `Resources/Translations.de-DE.resx` - Added German translations
@@ -595,7 +772,7 @@ When camera overrides are changed in CameraConfigurationDialog:
 | **Display Overrides** | ❌ No | ShowOverlayTitle, ShowOverlayDescription, ShowOverlayTime, ShowOverlayConnectionStatus, OverlayOpacity - handled via bindings |
 | **Performance Overrides** | ✅ Yes | VideoQuality, HardwareAcceleration - require player recreation |
 | **Connection Overrides** | ✅ Yes | Handled via existing Connection/Stream change detection |
-| **Recording Overrides** | ❌ No | Recording not implemented |
+| **Recording Overrides** | ❌ No | Applied on next recording start |
 
 ---
 

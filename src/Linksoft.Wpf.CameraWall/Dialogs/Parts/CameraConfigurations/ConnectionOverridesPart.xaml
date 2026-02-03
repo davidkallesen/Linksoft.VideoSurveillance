@@ -22,7 +22,7 @@
         <atc:GridEx
             Margin="10"
             Columns="*,20,*,20,*"
-            Rows="Auto,16,Auto">
+            Rows="Auto">
             <!--  Row 0, Column 0  -->
             <StackPanel Grid.Row="0" Grid.Column="0">
                 <atc:LabelCheckBox
@@ -61,24 +61,6 @@
             </StackPanel>
             <!--  Row 0, Column 4  -->
             <StackPanel Grid.Row="0" Grid.Column="4">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultMaxReconnectAttempts, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
-                <atc:LabelIntegerBox
-                    HideAreas="All"
-                    IsEnabled="{Binding Path=UseDefaultMaxReconnectAttempts, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=MaxReconnectAttempts}"
-                    LabelWidthNumber="220"
-                    Maximum="100"
-                    Minimum="0"
-                    Value="{Binding Path=OverrideMaxReconnectAttempts, Mode=TwoWay}" />
-            </StackPanel>
-            <!--  Row 2, Column 0  -->
-            <StackPanel Grid.Row="2" Grid.Column="0">
                 <atc:LabelCheckBox
                     HideAreas="All"
                     IsChecked="{Binding Path=UseDefaultAutoReconnect, Mode=TwoWay}"

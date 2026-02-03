@@ -144,7 +144,6 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         // Connection settings
         CameraGrid.ConnectionTimeoutSeconds = connection.ConnectionTimeoutSeconds;
         CameraGrid.ReconnectDelaySeconds = connection.ReconnectDelaySeconds;
-        CameraGrid.MaxReconnectAttempts = connection.MaxReconnectAttempts;
         CameraGrid.AutoReconnectOnFailure = connection.AutoReconnectOnFailure;
 
         // Notification settings
