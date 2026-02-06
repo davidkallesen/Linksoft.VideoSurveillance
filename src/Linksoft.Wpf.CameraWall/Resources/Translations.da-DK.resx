@@ -861,4 +861,112 @@
   <data name="ThumbnailTileCount" xml:space="preserve">
     <value>Miniature fliser</value>
   </data>
+  <data name="OverrideToggleMaster" xml:space="preserve">
+    <value>Master</value>
+  </data>
+  <data name="OverrideToggleLocal" xml:space="preserve">
+    <value>Lokal</value>
+  </data>
+  <data name="AnalysisResolution" xml:space="preserve">
+    <value>Analyseopløsning</value>
+  </data>
+  <data name="BoundingBoxDisplay" xml:space="preserve">
+    <value>Afgrænsningsboks visning</value>
+  </data>
+  <data name="ShowBoundingBoxInGrid" xml:space="preserve">
+    <value>Vis afgrænsningsbokse i gittervisning</value>
+  </data>
+  <data name="ShowBoundingBoxInFullScreen" xml:space="preserve">
+    <value>Vis afgrænsningsbokse i fuldskærm</value>
+  </data>
+  <data name="BoundingBoxColor" xml:space="preserve">
+    <value>Afgrænsningsboks farve</value>
+  </data>
+  <data name="BoundingBoxThickness" xml:space="preserve">
+    <value>Afgrænsningsboks tykkelse</value>
+  </data>
+  <data name="BoundingBoxMinArea" xml:space="preserve">
+    <value>Min. detektionsstørrelse</value>
+  </data>
+  <data name="ClickOutsideToClose" xml:space="preserve">
+    <value>Klik udenfor for at lukke</value>
+  </data>
+  <data name="PlaybackOverlaySettings" xml:space="preserve">
+    <value>Afspilning overlay indstillinger</value>
+  </data>
+  <data name="ShowPlaybackFilename" xml:space="preserve">
+    <value>Vis filnavn</value>
+  </data>
+  <data name="PlaybackFilenameColor" xml:space="preserve">
+    <value>Filnavn farve</value>
+  </data>
+  <data name="ShowPlaybackTimestamp" xml:space="preserve">
+    <value>Vis tidsstempel</value>
+  </data>
+  <data name="PlaybackTimestampColor" xml:space="preserve">
+    <value>Tidsstempel farve</value>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>Dag</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Tid</value>
+  </data>
+  <data name="FilterAll" xml:space="preserve">
+    <value>Alle</value>
+  </data>
+  <data name="FilterToday" xml:space="preserve">
+    <value>I dag</value>
+  </data>
+  <data name="FilterYesterday" xml:space="preserve">
+    <value>I går</value>
+  </data>
+  <data name="FilterLast7Days" xml:space="preserve">
+    <value>Sidste 7 dage</value>
+  </data>
+  <data name="FilterLast30Days" xml:space="preserve">
+    <value>Sidste 30 dage</value>
+  </data>
+  <data name="FilterThisWeek" xml:space="preserve">
+    <value>Denne uge</value>
+  </data>
+  <data name="FilterThisMonth" xml:space="preserve">
+    <value>Denne måned</value>
+  </data>
+  <data name="FilterNight" xml:space="preserve">
+    <value>00:00 - 06:00 (Nat)</value>
+  </data>
+  <data name="FilterMorning" xml:space="preserve">
+    <value>06:00 - 12:00 (Morgen)</value>
+  </data>
+  <data name="FilterAfternoon" xml:space="preserve">
+    <value>12:00 - 18:00 (Eftermiddag)</value>
+  </data>
+  <data name="FilterEvening" xml:space="preserve">
+    <value>18:00 - 24:00 (Aften)</value>
+  </data>
+  <data name="EnableTimelapse" xml:space="preserve">
+    <value>Aktivér timelapse-optagelse</value>
+  </data>
+  <data name="TimelapseInterval" xml:space="preserve">
+    <value>Optagelsesinterval</value>
+  </data>
+  <data name="TimelapseSettings" xml:space="preserve">
+    <value>Timelapse indstillinger</value>
+  </data>
+  <data name="Capture" xml:space="preserve">
+    <value>Optagelse</value>
+  </data>
+  <data name="Storage" xml:space="preserve">
+    <value>Lagring</value>
+  </data>
+  <data name="Timelapse" xml:space="preserve">
+    <value>Timelapse</value>
+  </data>
+  <data name="CaptureOverrides" xml:space="preserve">
+    <value>Optagelsestilsidesættelser</value>
+  </data>
+  <data name="TimelapseOverrides" xml:space="preserve">
+    <value>Timelapse tilsidesættelser</value>
+  </data>
 </root>

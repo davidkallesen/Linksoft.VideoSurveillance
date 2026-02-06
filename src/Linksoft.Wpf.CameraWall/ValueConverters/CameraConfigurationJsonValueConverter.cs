@@ -296,168 +296,449 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
     {
         var overrides = new CameraOverrides();
 
-        // Connection overrides
+        // Detect nested vs legacy flat format by checking for sub-objects
+        var hasNestedFormat =
+            (element.TryGetProperty("connection", out var connEl) || element.TryGetProperty("Connection", out connEl)) &&
+            connEl.ValueKind == JsonValueKind.Object;
+
+        if (hasNestedFormat)
+        {
+            ReadNestedOverrides(element, overrides);
+        }
+        else
+        {
+            ReadLegacyFlatOverrides(element, overrides);
+        }
+
+        return overrides;
+    }
+
+    private static void ReadNestedOverrides(
+        JsonElement element,
+        CameraOverrides overrides)
+    {
+        // Connection sub-object
+        if ((element.TryGetProperty("connection", out var connEl) || element.TryGetProperty("Connection", out connEl)) &&
+            connEl.ValueKind == JsonValueKind.Object)
+        {
+            ReadConnectionOverrides(connEl, overrides.Connection);
+        }
+
+        // CameraDisplay sub-object
+        if ((element.TryGetProperty("cameraDisplay", out var dispEl) || element.TryGetProperty("CameraDisplay", out dispEl)) &&
+            dispEl.ValueKind == JsonValueKind.Object)
+        {
+            ReadCameraDisplayOverrides(dispEl, overrides.CameraDisplay);
+        }
+
+        // Performance sub-object
+        if ((element.TryGetProperty("performance", out var perfEl) || element.TryGetProperty("Performance", out perfEl)) &&
+            perfEl.ValueKind == JsonValueKind.Object)
+        {
+            ReadPerformanceOverrides(perfEl, overrides.Performance);
+        }
+
+        // Recording sub-object
+        if ((element.TryGetProperty("recording", out var recEl) || element.TryGetProperty("Recording", out recEl)) &&
+            recEl.ValueKind == JsonValueKind.Object)
+        {
+            ReadRecordingOverrides(recEl, overrides.Recording);
+        }
+
+        // MotionDetection sub-object
+        if ((element.TryGetProperty("motionDetection", out var motionEl) || element.TryGetProperty("MotionDetection", out motionEl)) &&
+            motionEl.ValueKind == JsonValueKind.Object)
+        {
+            ReadMotionDetectionOverrides(motionEl, overrides.MotionDetection);
+        }
+    }
+
+    private static void ReadConnectionOverrides(
+        JsonElement element,
+        ConnectionOverrides target)
+    {
         if (TryGetNullableInt32Property(element, "connectionTimeoutSeconds", "ConnectionTimeoutSeconds", out var connectionTimeout))
         {
-            overrides.ConnectionTimeoutSeconds = connectionTimeout;
+            target.ConnectionTimeoutSeconds = connectionTimeout;
         }
 
         if (TryGetNullableInt32Property(element, "reconnectDelaySeconds", "ReconnectDelaySeconds", out var reconnectDelay))
         {
-            overrides.ReconnectDelaySeconds = reconnectDelay;
+            target.ReconnectDelaySeconds = reconnectDelay;
         }
 
         if (TryGetNullableBoolProperty(element, "autoReconnectOnFailure", "AutoReconnectOnFailure", out var autoReconnect))
         {
-            overrides.AutoReconnectOnFailure = autoReconnect;
+            target.AutoReconnectOnFailure = autoReconnect;
         }
 
         if (TryGetNullableBoolProperty(element, "showNotificationOnDisconnect", "ShowNotificationOnDisconnect", out var notifyDisconnect))
         {
-            overrides.ShowNotificationOnDisconnect = notifyDisconnect;
+            target.ShowNotificationOnDisconnect = notifyDisconnect;
         }
 
         if (TryGetNullableBoolProperty(element, "showNotificationOnReconnect", "ShowNotificationOnReconnect", out var notifyReconnect))
         {
-            overrides.ShowNotificationOnReconnect = notifyReconnect;
+            target.ShowNotificationOnReconnect = notifyReconnect;
         }
 
         if (TryGetNullableBoolProperty(element, "playNotificationSound", "PlayNotificationSound", out var playSound))
         {
-            overrides.PlayNotificationSound = playSound;
+            target.PlayNotificationSound = playSound;
+        }
+    }
+
+    private static void ReadCameraDisplayOverrides(
+        JsonElement element,
+        CameraDisplayOverrides target)
+    {
+        if (TryGetNullableBoolProperty(element, "showOverlayTitle", "ShowOverlayTitle", out var showTitle))
+        {
+            target.ShowOverlayTitle = showTitle;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showOverlayDescription", "ShowOverlayDescription", out var showDescription))
+        {
+            target.ShowOverlayDescription = showDescription;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showOverlayTime", "ShowOverlayTime", out var showTime))
+        {
+            target.ShowOverlayTime = showTime;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showOverlayConnectionStatus", "ShowOverlayConnectionStatus", out var showStatus))
+        {
+            target.ShowOverlayConnectionStatus = showStatus;
+        }
+
+        if (TryGetNullableDoubleProperty(element, "overlayOpacity", "OverlayOpacity", out var opacity))
+        {
+            target.OverlayOpacity = opacity;
+        }
+    }
+
+    private static void ReadPerformanceOverrides(
+        JsonElement element,
+        PerformanceOverrides target)
+    {
+        if (TryGetStringProperty(element, "videoQuality", "VideoQuality", out var videoQuality))
+        {
+            target.VideoQuality = videoQuality;
+        }
+
+        if (TryGetNullableBoolProperty(element, "hardwareAcceleration", "HardwareAcceleration", out var hardwareAccel))
+        {
+            target.HardwareAcceleration = hardwareAccel;
+        }
+    }
+
+    private static void ReadRecordingOverrides(
+        JsonElement element,
+        RecordingOverrides target)
+    {
+        if (TryGetStringProperty(element, "recordingPath", "RecordingPath", out var recordingPath))
+        {
+            target.RecordingPath = recordingPath;
+        }
+
+        if (TryGetStringProperty(element, "recordingFormat", "RecordingFormat", out var recordingFormat))
+        {
+            target.RecordingFormat = recordingFormat;
+        }
+
+        if (TryGetNullableBoolProperty(element, "enableRecordingOnMotion", "EnableRecordingOnMotion", out var recordOnMotion))
+        {
+            target.EnableRecordingOnMotion = recordOnMotion;
+        }
+
+        if (TryGetNullableBoolProperty(element, "enableRecordingOnConnect", "EnableRecordingOnConnect", out var recordOnConnect))
+        {
+            target.EnableRecordingOnConnect = recordOnConnect;
+        }
+
+        if (TryGetNullableInt32Property(element, "thumbnailTileCount", "ThumbnailTileCount", out var tileCount))
+        {
+            target.ThumbnailTileCount = tileCount;
+        }
+
+        if (TryGetNullableBoolProperty(element, "enableTimelapse", "EnableTimelapse", out var enableTimelapse))
+        {
+            target.EnableTimelapse = enableTimelapse;
+        }
+
+        if (TryGetStringProperty(element, "timelapseInterval", "TimelapseInterval", out var timelapseInterval))
+        {
+            target.TimelapseInterval = timelapseInterval;
+        }
+    }
+
+    private static void ReadMotionDetectionOverrides(
+        JsonElement element,
+        MotionDetectionOverrides target)
+    {
+        if (TryGetNullableInt32Property(element, "sensitivity", "Sensitivity", out var sensitivity))
+        {
+            target.Sensitivity = sensitivity;
+        }
+
+        if (TryGetNullableDoubleProperty(element, "minimumChangePercent", "MinimumChangePercent", out var minChange))
+        {
+            target.MinimumChangePercent = minChange;
+        }
+
+        if (TryGetNullableInt32Property(element, "analysisFrameRate", "AnalysisFrameRate", out var frameRate))
+        {
+            target.AnalysisFrameRate = frameRate;
+        }
+
+        if (TryGetNullableInt32Property(element, "analysisWidth", "AnalysisWidth", out var width))
+        {
+            target.AnalysisWidth = width;
+        }
+
+        if (TryGetNullableInt32Property(element, "analysisHeight", "AnalysisHeight", out var height))
+        {
+            target.AnalysisHeight = height;
+        }
+
+        if (TryGetNullableInt32Property(element, "postMotionDurationSeconds", "PostMotionDurationSeconds", out var postMotion))
+        {
+            target.PostMotionDurationSeconds = postMotion;
+        }
+
+        if (TryGetNullableInt32Property(element, "cooldownSeconds", "CooldownSeconds", out var cooldown))
+        {
+            target.CooldownSeconds = cooldown;
+        }
+
+        // BoundingBox sub-object
+        if ((element.TryGetProperty("boundingBox", out var bbEl) || element.TryGetProperty("BoundingBox", out bbEl)) &&
+            bbEl.ValueKind == JsonValueKind.Object)
+        {
+            ReadBoundingBoxOverrides(bbEl, target.BoundingBox);
+        }
+    }
+
+    private static void ReadBoundingBoxOverrides(
+        JsonElement element,
+        BoundingBoxOverrides target)
+    {
+        if (TryGetNullableBoolProperty(element, "showInGrid", "ShowInGrid", out var showInGrid))
+        {
+            target.ShowInGrid = showInGrid;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showInFullScreen", "ShowInFullScreen", out var showInFullScreen))
+        {
+            target.ShowInFullScreen = showInFullScreen;
+        }
+
+        if (TryGetStringProperty(element, "color", "Color", out var color))
+        {
+            target.Color = color;
+        }
+
+        if (TryGetNullableInt32Property(element, "thickness", "Thickness", out var thickness))
+        {
+            target.Thickness = thickness;
+        }
+
+        if (TryGetNullableDoubleProperty(element, "smoothing", "Smoothing", out var smoothing))
+        {
+            target.Smoothing = smoothing;
+        }
+
+        if (TryGetNullableInt32Property(element, "minArea", "MinArea", out var minArea))
+        {
+            target.MinArea = minArea;
+        }
+
+        if (TryGetNullableInt32Property(element, "padding", "Padding", out var padding))
+        {
+            target.Padding = padding;
+        }
+    }
+
+    private static void ReadLegacyFlatOverrides(
+        JsonElement element,
+        CameraOverrides overrides)
+    {
+        // Connection overrides
+        if (TryGetNullableInt32Property(element, "connectionTimeoutSeconds", "ConnectionTimeoutSeconds", out var connectionTimeout))
+        {
+            overrides.Connection.ConnectionTimeoutSeconds = connectionTimeout;
+        }
+
+        if (TryGetNullableInt32Property(element, "reconnectDelaySeconds", "ReconnectDelaySeconds", out var reconnectDelay))
+        {
+            overrides.Connection.ReconnectDelaySeconds = reconnectDelay;
+        }
+
+        if (TryGetNullableBoolProperty(element, "autoReconnectOnFailure", "AutoReconnectOnFailure", out var autoReconnect))
+        {
+            overrides.Connection.AutoReconnectOnFailure = autoReconnect;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showNotificationOnDisconnect", "ShowNotificationOnDisconnect", out var notifyDisconnect))
+        {
+            overrides.Connection.ShowNotificationOnDisconnect = notifyDisconnect;
+        }
+
+        if (TryGetNullableBoolProperty(element, "showNotificationOnReconnect", "ShowNotificationOnReconnect", out var notifyReconnect))
+        {
+            overrides.Connection.ShowNotificationOnReconnect = notifyReconnect;
+        }
+
+        if (TryGetNullableBoolProperty(element, "playNotificationSound", "PlayNotificationSound", out var playSound))
+        {
+            overrides.Connection.PlayNotificationSound = playSound;
         }
 
         // Performance overrides
         if (TryGetStringProperty(element, "videoQuality", "VideoQuality", out var videoQuality))
         {
-            overrides.VideoQuality = videoQuality;
+            overrides.Performance.VideoQuality = videoQuality;
         }
 
         if (TryGetNullableBoolProperty(element, "hardwareAcceleration", "HardwareAcceleration", out var hardwareAccel))
         {
-            overrides.HardwareAcceleration = hardwareAccel;
+            overrides.Performance.HardwareAcceleration = hardwareAccel;
         }
 
         // Display overrides
         if (TryGetNullableBoolProperty(element, "showOverlayTitle", "ShowOverlayTitle", out var showTitle))
         {
-            overrides.ShowOverlayTitle = showTitle;
+            overrides.CameraDisplay.ShowOverlayTitle = showTitle;
         }
 
         if (TryGetNullableBoolProperty(element, "showOverlayDescription", "ShowOverlayDescription", out var showDescription))
         {
-            overrides.ShowOverlayDescription = showDescription;
+            overrides.CameraDisplay.ShowOverlayDescription = showDescription;
         }
 
         if (TryGetNullableBoolProperty(element, "showOverlayTime", "ShowOverlayTime", out var showTime))
         {
-            overrides.ShowOverlayTime = showTime;
+            overrides.CameraDisplay.ShowOverlayTime = showTime;
         }
 
         if (TryGetNullableBoolProperty(element, "showOverlayConnectionStatus", "ShowOverlayConnectionStatus", out var showStatus))
         {
-            overrides.ShowOverlayConnectionStatus = showStatus;
+            overrides.CameraDisplay.ShowOverlayConnectionStatus = showStatus;
         }
 
         if (TryGetNullableDoubleProperty(element, "overlayOpacity", "OverlayOpacity", out var opacity))
         {
-            overrides.OverlayOpacity = opacity;
+            overrides.CameraDisplay.OverlayOpacity = opacity;
         }
 
         // Recording overrides
         if (TryGetStringProperty(element, "recordingPath", "RecordingPath", out var recordingPath))
         {
-            overrides.RecordingPath = recordingPath;
+            overrides.Recording.RecordingPath = recordingPath;
         }
 
         if (TryGetStringProperty(element, "recordingFormat", "RecordingFormat", out var recordingFormat))
         {
-            overrides.RecordingFormat = recordingFormat;
+            overrides.Recording.RecordingFormat = recordingFormat;
         }
 
         if (TryGetNullableBoolProperty(element, "enableRecordingOnMotion", "EnableRecordingOnMotion", out var recordOnMotion))
         {
-            overrides.EnableRecordingOnMotion = recordOnMotion;
+            overrides.Recording.EnableRecordingOnMotion = recordOnMotion;
         }
 
         if (TryGetNullableBoolProperty(element, "enableRecordingOnConnect", "EnableRecordingOnConnect", out var recordOnConnect))
         {
-            overrides.EnableRecordingOnConnect = recordOnConnect;
+            overrides.Recording.EnableRecordingOnConnect = recordOnConnect;
         }
 
-        if (TryGetNullableInt32Property(element, "motionSensitivity", "MotionSensitivity", out var motionSensitivity))
+        if (TryGetNullableInt32Property(element, "thumbnailTileCount", "ThumbnailTileCount", out var tileCount))
         {
-            overrides.MotionSensitivity = motionSensitivity;
+            overrides.Recording.ThumbnailTileCount = tileCount;
         }
 
-        if (TryGetNullableInt32Property(element, "postMotionDurationSeconds", "PostMotionDurationSeconds", out var postMotionDuration))
+        if (TryGetNullableBoolProperty(element, "enableTimelapse", "EnableTimelapse", out var enableTimelapse))
         {
-            overrides.PostMotionDurationSeconds = postMotionDuration;
+            overrides.Recording.EnableTimelapse = enableTimelapse;
+        }
+
+        if (TryGetStringProperty(element, "timelapseInterval", "TimelapseInterval", out var timelapseInterval))
+        {
+            overrides.Recording.TimelapseInterval = timelapseInterval;
         }
 
         // Motion detection overrides
+        if (TryGetNullableInt32Property(element, "motionSensitivity", "MotionSensitivity", out var motionSensitivity))
+        {
+            overrides.MotionDetection.Sensitivity = motionSensitivity;
+        }
+
         if (TryGetNullableDoubleProperty(element, "motionMinimumChangePercent", "MotionMinimumChangePercent", out var minChangePercent))
         {
-            overrides.MotionMinimumChangePercent = minChangePercent;
+            overrides.MotionDetection.MinimumChangePercent = minChangePercent;
         }
 
         if (TryGetNullableInt32Property(element, "motionAnalysisFrameRate", "MotionAnalysisFrameRate", out var analysisFrameRate))
         {
-            overrides.MotionAnalysisFrameRate = analysisFrameRate;
+            overrides.MotionDetection.AnalysisFrameRate = analysisFrameRate;
         }
 
         if (TryGetNullableInt32Property(element, "motionAnalysisWidth", "MotionAnalysisWidth", out var analysisWidth))
         {
-            overrides.MotionAnalysisWidth = analysisWidth;
+            overrides.MotionDetection.AnalysisWidth = analysisWidth;
         }
 
         if (TryGetNullableInt32Property(element, "motionAnalysisHeight", "MotionAnalysisHeight", out var analysisHeight))
         {
-            overrides.MotionAnalysisHeight = analysisHeight;
+            overrides.MotionDetection.AnalysisHeight = analysisHeight;
         }
 
         if (TryGetNullableInt32Property(element, "motionCooldownSeconds", "MotionCooldownSeconds", out var cooldownSeconds))
         {
-            overrides.MotionCooldownSeconds = cooldownSeconds;
+            overrides.MotionDetection.CooldownSeconds = cooldownSeconds;
+        }
+
+        if (TryGetNullableInt32Property(element, "postMotionDurationSeconds", "PostMotionDurationSeconds", out var postMotionDuration))
+        {
+            overrides.MotionDetection.PostMotionDurationSeconds = postMotionDuration;
         }
 
         // Bounding box overrides
         if (TryGetNullableBoolProperty(element, "showBoundingBoxInGrid", "ShowBoundingBoxInGrid", out var showBoundingBoxInGrid))
         {
-            overrides.ShowBoundingBoxInGrid = showBoundingBoxInGrid;
+            overrides.MotionDetection.BoundingBox.ShowInGrid = showBoundingBoxInGrid;
         }
 
         if (TryGetNullableBoolProperty(element, "showBoundingBoxInFullScreen", "ShowBoundingBoxInFullScreen", out var showBoundingBoxInFullScreen))
         {
-            overrides.ShowBoundingBoxInFullScreen = showBoundingBoxInFullScreen;
+            overrides.MotionDetection.BoundingBox.ShowInFullScreen = showBoundingBoxInFullScreen;
         }
 
         if (TryGetStringProperty(element, "boundingBoxColor", "BoundingBoxColor", out var boundingBoxColor))
         {
-            overrides.BoundingBoxColor = boundingBoxColor;
+            overrides.MotionDetection.BoundingBox.Color = boundingBoxColor;
         }
 
         if (TryGetNullableInt32Property(element, "boundingBoxThickness", "BoundingBoxThickness", out var boundingBoxThickness))
         {
-            overrides.BoundingBoxThickness = boundingBoxThickness;
+            overrides.MotionDetection.BoundingBox.Thickness = boundingBoxThickness;
         }
 
         if (TryGetNullableDoubleProperty(element, "boundingBoxSmoothing", "BoundingBoxSmoothing", out var boundingBoxSmoothing))
         {
-            overrides.BoundingBoxSmoothing = boundingBoxSmoothing;
+            overrides.MotionDetection.BoundingBox.Smoothing = boundingBoxSmoothing;
         }
 
         if (TryGetNullableInt32Property(element, "boundingBoxMinArea", "BoundingBoxMinArea", out var boundingBoxMinArea))
         {
-            overrides.BoundingBoxMinArea = boundingBoxMinArea;
+            overrides.MotionDetection.BoundingBox.MinArea = boundingBoxMinArea;
         }
 
         if (TryGetNullableInt32Property(element, "boundingBoxPadding", "BoundingBoxPadding", out var boundingBoxPadding))
         {
-            overrides.BoundingBoxPadding = boundingBoxPadding;
+            overrides.MotionDetection.BoundingBox.Padding = boundingBoxPadding;
         }
-
-        return overrides;
     }
 
     private static void WriteConnectionSettings(
@@ -543,165 +824,269 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
     {
         writer.WriteStartObject();
 
-        // Connection overrides - only write non-null values
-        if (overrides.ConnectionTimeoutSeconds.HasValue)
+        // Connection sub-section
+        if (overrides.Connection.HasAnyOverride())
         {
-            writer.WriteNumber("connectionTimeoutSeconds", overrides.ConnectionTimeoutSeconds.Value);
+            writer.WritePropertyName("connection");
+            WriteConnectionOverrides(writer, overrides.Connection);
         }
 
-        if (overrides.ReconnectDelaySeconds.HasValue)
+        // CameraDisplay sub-section
+        if (overrides.CameraDisplay.HasAnyOverride())
         {
-            writer.WriteNumber("reconnectDelaySeconds", overrides.ReconnectDelaySeconds.Value);
+            writer.WritePropertyName("cameraDisplay");
+            WriteCameraDisplayOverrides(writer, overrides.CameraDisplay);
         }
 
-        if (overrides.AutoReconnectOnFailure.HasValue)
+        // Performance sub-section
+        if (overrides.Performance.HasAnyOverride())
         {
-            writer.WriteBoolean("autoReconnectOnFailure", overrides.AutoReconnectOnFailure.Value);
+            writer.WritePropertyName("performance");
+            WritePerformanceOverrides(writer, overrides.Performance);
         }
 
-        if (overrides.ShowNotificationOnDisconnect.HasValue)
+        // Recording sub-section
+        if (overrides.Recording.HasAnyOverride())
         {
-            writer.WriteBoolean("showNotificationOnDisconnect", overrides.ShowNotificationOnDisconnect.Value);
+            writer.WritePropertyName("recording");
+            WriteRecordingOverrides(writer, overrides.Recording);
         }
 
-        if (overrides.ShowNotificationOnReconnect.HasValue)
+        // MotionDetection sub-section
+        if (overrides.MotionDetection.HasAnyOverride())
         {
-            writer.WriteBoolean("showNotificationOnReconnect", overrides.ShowNotificationOnReconnect.Value);
+            writer.WritePropertyName("motionDetection");
+            WriteMotionDetectionOverrides(writer, overrides.MotionDetection);
         }
 
-        if (overrides.PlayNotificationSound.HasValue)
+        writer.WriteEndObject();
+    }
+
+    private static void WriteConnectionOverrides(
+        Utf8JsonWriter writer,
+        ConnectionOverrides conn)
+    {
+        writer.WriteStartObject();
+
+        if (conn.ConnectionTimeoutSeconds.HasValue)
         {
-            writer.WriteBoolean("playNotificationSound", overrides.PlayNotificationSound.Value);
+            writer.WriteNumber("connectionTimeoutSeconds", conn.ConnectionTimeoutSeconds.Value);
         }
 
-        // Performance overrides
-        if (overrides.VideoQuality is not null)
+        if (conn.ReconnectDelaySeconds.HasValue)
         {
-            writer.WriteString("videoQuality", overrides.VideoQuality);
+            writer.WriteNumber("reconnectDelaySeconds", conn.ReconnectDelaySeconds.Value);
         }
 
-        if (overrides.HardwareAcceleration.HasValue)
+        if (conn.AutoReconnectOnFailure.HasValue)
         {
-            writer.WriteBoolean("hardwareAcceleration", overrides.HardwareAcceleration.Value);
+            writer.WriteBoolean("autoReconnectOnFailure", conn.AutoReconnectOnFailure.Value);
         }
 
-        // Display overrides
-        if (overrides.ShowOverlayTitle.HasValue)
+        if (conn.ShowNotificationOnDisconnect.HasValue)
         {
-            writer.WriteBoolean("showOverlayTitle", overrides.ShowOverlayTitle.Value);
+            writer.WriteBoolean("showNotificationOnDisconnect", conn.ShowNotificationOnDisconnect.Value);
         }
 
-        if (overrides.ShowOverlayDescription.HasValue)
+        if (conn.ShowNotificationOnReconnect.HasValue)
         {
-            writer.WriteBoolean("showOverlayDescription", overrides.ShowOverlayDescription.Value);
+            writer.WriteBoolean("showNotificationOnReconnect", conn.ShowNotificationOnReconnect.Value);
         }
 
-        if (overrides.ShowOverlayTime.HasValue)
+        if (conn.PlayNotificationSound.HasValue)
         {
-            writer.WriteBoolean("showOverlayTime", overrides.ShowOverlayTime.Value);
+            writer.WriteBoolean("playNotificationSound", conn.PlayNotificationSound.Value);
         }
 
-        if (overrides.ShowOverlayConnectionStatus.HasValue)
+        writer.WriteEndObject();
+    }
+
+    private static void WriteCameraDisplayOverrides(
+        Utf8JsonWriter writer,
+        CameraDisplayOverrides display)
+    {
+        writer.WriteStartObject();
+
+        if (display.ShowOverlayTitle.HasValue)
         {
-            writer.WriteBoolean("showOverlayConnectionStatus", overrides.ShowOverlayConnectionStatus.Value);
+            writer.WriteBoolean("showOverlayTitle", display.ShowOverlayTitle.Value);
         }
 
-        if (overrides.OverlayOpacity.HasValue)
+        if (display.ShowOverlayDescription.HasValue)
         {
-            writer.WriteNumber("overlayOpacity", overrides.OverlayOpacity.Value);
+            writer.WriteBoolean("showOverlayDescription", display.ShowOverlayDescription.Value);
         }
 
-        // Recording overrides
-        if (overrides.RecordingPath is not null)
+        if (display.ShowOverlayTime.HasValue)
         {
-            writer.WriteString("recordingPath", overrides.RecordingPath);
+            writer.WriteBoolean("showOverlayTime", display.ShowOverlayTime.Value);
         }
 
-        if (overrides.RecordingFormat is not null)
+        if (display.ShowOverlayConnectionStatus.HasValue)
         {
-            writer.WriteString("recordingFormat", overrides.RecordingFormat);
+            writer.WriteBoolean("showOverlayConnectionStatus", display.ShowOverlayConnectionStatus.Value);
         }
 
-        if (overrides.EnableRecordingOnMotion.HasValue)
+        if (display.OverlayOpacity.HasValue)
         {
-            writer.WriteBoolean("enableRecordingOnMotion", overrides.EnableRecordingOnMotion.Value);
+            writer.WriteNumber("overlayOpacity", display.OverlayOpacity.Value);
         }
 
-        if (overrides.EnableRecordingOnConnect.HasValue)
+        writer.WriteEndObject();
+    }
+
+    private static void WritePerformanceOverrides(
+        Utf8JsonWriter writer,
+        PerformanceOverrides perf)
+    {
+        writer.WriteStartObject();
+
+        if (perf.VideoQuality is not null)
         {
-            writer.WriteBoolean("enableRecordingOnConnect", overrides.EnableRecordingOnConnect.Value);
+            writer.WriteString("videoQuality", perf.VideoQuality);
         }
 
-        if (overrides.MotionSensitivity.HasValue)
+        if (perf.HardwareAcceleration.HasValue)
         {
-            writer.WriteNumber("motionSensitivity", overrides.MotionSensitivity.Value);
+            writer.WriteBoolean("hardwareAcceleration", perf.HardwareAcceleration.Value);
         }
 
-        if (overrides.PostMotionDurationSeconds.HasValue)
+        writer.WriteEndObject();
+    }
+
+    private static void WriteRecordingOverrides(
+        Utf8JsonWriter writer,
+        RecordingOverrides rec)
+    {
+        writer.WriteStartObject();
+
+        if (rec.RecordingPath is not null)
         {
-            writer.WriteNumber("postMotionDurationSeconds", overrides.PostMotionDurationSeconds.Value);
+            writer.WriteString("recordingPath", rec.RecordingPath);
         }
 
-        // Motion detection overrides
-        if (overrides.MotionMinimumChangePercent.HasValue)
+        if (rec.RecordingFormat is not null)
         {
-            writer.WriteNumber("motionMinimumChangePercent", overrides.MotionMinimumChangePercent.Value);
+            writer.WriteString("recordingFormat", rec.RecordingFormat);
         }
 
-        if (overrides.MotionAnalysisFrameRate.HasValue)
+        if (rec.EnableRecordingOnMotion.HasValue)
         {
-            writer.WriteNumber("motionAnalysisFrameRate", overrides.MotionAnalysisFrameRate.Value);
+            writer.WriteBoolean("enableRecordingOnMotion", rec.EnableRecordingOnMotion.Value);
         }
 
-        if (overrides.MotionAnalysisWidth.HasValue)
+        if (rec.EnableRecordingOnConnect.HasValue)
         {
-            writer.WriteNumber("motionAnalysisWidth", overrides.MotionAnalysisWidth.Value);
+            writer.WriteBoolean("enableRecordingOnConnect", rec.EnableRecordingOnConnect.Value);
         }
 
-        if (overrides.MotionAnalysisHeight.HasValue)
+        if (rec.ThumbnailTileCount.HasValue)
         {
-            writer.WriteNumber("motionAnalysisHeight", overrides.MotionAnalysisHeight.Value);
+            writer.WriteNumber("thumbnailTileCount", rec.ThumbnailTileCount.Value);
         }
 
-        if (overrides.MotionCooldownSeconds.HasValue)
+        if (rec.EnableTimelapse.HasValue)
         {
-            writer.WriteNumber("motionCooldownSeconds", overrides.MotionCooldownSeconds.Value);
+            writer.WriteBoolean("enableTimelapse", rec.EnableTimelapse.Value);
         }
 
-        // Bounding box overrides
-        if (overrides.ShowBoundingBoxInGrid.HasValue)
+        if (rec.TimelapseInterval is not null)
         {
-            writer.WriteBoolean("showBoundingBoxInGrid", overrides.ShowBoundingBoxInGrid.Value);
+            writer.WriteString("timelapseInterval", rec.TimelapseInterval);
         }
 
-        if (overrides.ShowBoundingBoxInFullScreen.HasValue)
+        writer.WriteEndObject();
+    }
+
+    private static void WriteMotionDetectionOverrides(
+        Utf8JsonWriter writer,
+        MotionDetectionOverrides motion)
+    {
+        writer.WriteStartObject();
+
+        if (motion.Sensitivity.HasValue)
         {
-            writer.WriteBoolean("showBoundingBoxInFullScreen", overrides.ShowBoundingBoxInFullScreen.Value);
+            writer.WriteNumber("sensitivity", motion.Sensitivity.Value);
         }
 
-        if (overrides.BoundingBoxColor is not null)
+        if (motion.MinimumChangePercent.HasValue)
         {
-            writer.WriteString("boundingBoxColor", overrides.BoundingBoxColor);
+            writer.WriteNumber("minimumChangePercent", motion.MinimumChangePercent.Value);
         }
 
-        if (overrides.BoundingBoxThickness.HasValue)
+        if (motion.AnalysisFrameRate.HasValue)
         {
-            writer.WriteNumber("boundingBoxThickness", overrides.BoundingBoxThickness.Value);
+            writer.WriteNumber("analysisFrameRate", motion.AnalysisFrameRate.Value);
         }
 
-        if (overrides.BoundingBoxSmoothing.HasValue)
+        if (motion.AnalysisWidth.HasValue)
         {
-            writer.WriteNumber("boundingBoxSmoothing", overrides.BoundingBoxSmoothing.Value);
+            writer.WriteNumber("analysisWidth", motion.AnalysisWidth.Value);
         }
 
-        if (overrides.BoundingBoxMinArea.HasValue)
+        if (motion.AnalysisHeight.HasValue)
         {
-            writer.WriteNumber("boundingBoxMinArea", overrides.BoundingBoxMinArea.Value);
+            writer.WriteNumber("analysisHeight", motion.AnalysisHeight.Value);
         }
 
-        if (overrides.BoundingBoxPadding.HasValue)
+        if (motion.PostMotionDurationSeconds.HasValue)
         {
-            writer.WriteNumber("boundingBoxPadding", overrides.BoundingBoxPadding.Value);
+            writer.WriteNumber("postMotionDurationSeconds", motion.PostMotionDurationSeconds.Value);
+        }
+
+        if (motion.CooldownSeconds.HasValue)
+        {
+            writer.WriteNumber("cooldownSeconds", motion.CooldownSeconds.Value);
+        }
+
+        if (motion.BoundingBox.HasAnyOverride())
+        {
+            writer.WritePropertyName("boundingBox");
+            WriteBoundingBoxOverrides(writer, motion.BoundingBox);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteBoundingBoxOverrides(
+        Utf8JsonWriter writer,
+        BoundingBoxOverrides bb)
+    {
+        writer.WriteStartObject();
+
+        if (bb.ShowInGrid.HasValue)
+        {
+            writer.WriteBoolean("showInGrid", bb.ShowInGrid.Value);
+        }
+
+        if (bb.ShowInFullScreen.HasValue)
+        {
+            writer.WriteBoolean("showInFullScreen", bb.ShowInFullScreen.Value);
+        }
+
+        if (bb.Color is not null)
+        {
+            writer.WriteString("color", bb.Color);
+        }
+
+        if (bb.Thickness.HasValue)
+        {
+            writer.WriteNumber("thickness", bb.Thickness.Value);
+        }
+
+        if (bb.Smoothing.HasValue)
+        {
+            writer.WriteNumber("smoothing", bb.Smoothing.Value);
+        }
+
+        if (bb.MinArea.HasValue)
+        {
+            writer.WriteNumber("minArea", bb.MinArea.Value);
+        }
+
+        if (bb.Padding.HasValue)
+        {
+            writer.WriteNumber("padding", bb.Padding.Value);
         }
 
         writer.WriteEndObject();

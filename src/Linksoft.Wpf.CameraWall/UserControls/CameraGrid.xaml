@@ -40,102 +40,102 @@
                         <!--  Per-camera overrides with fallback to app defaults  -->
                         <local:CameraTile.ShowOverlayTitle>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.ShowOverlayTitle" />
+                                <Binding Path="Overrides.CameraDisplay.ShowOverlayTitle" />
                                 <Binding Path="ShowOverlayTitle" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ShowOverlayTitle>
                         <local:CameraTile.ShowOverlayDescription>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.ShowOverlayDescription" />
+                                <Binding Path="Overrides.CameraDisplay.ShowOverlayDescription" />
                                 <Binding Path="ShowOverlayDescription" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ShowOverlayDescription>
                         <local:CameraTile.ShowOverlayTime>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.ShowOverlayTime" />
+                                <Binding Path="Overrides.CameraDisplay.ShowOverlayTime" />
                                 <Binding Path="ShowOverlayTime" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ShowOverlayTime>
                         <local:CameraTile.ShowOverlayConnectionStatus>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.ShowOverlayConnectionStatus" />
+                                <Binding Path="Overrides.CameraDisplay.ShowOverlayConnectionStatus" />
                                 <Binding Path="ShowOverlayConnectionStatus" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ShowOverlayConnectionStatus>
                         <local:CameraTile.OverlayOpacity>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.OverlayOpacity" />
+                                <Binding Path="Overrides.CameraDisplay.OverlayOpacity" />
                                 <Binding Path="OverlayOpacity" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.OverlayOpacity>
                         <!--  Connection settings with per-camera overrides  -->
                         <local:CameraTile.ConnectionTimeoutSeconds>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.ConnectionTimeoutSeconds" />
+                                <Binding Path="Overrides.Connection.ConnectionTimeoutSeconds" />
                                 <Binding Path="ConnectionTimeoutSeconds" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ConnectionTimeoutSeconds>
                         <local:CameraTile.ReconnectDelaySeconds>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.ReconnectDelaySeconds" />
+                                <Binding Path="Overrides.Connection.ReconnectDelaySeconds" />
                                 <Binding Path="ReconnectDelaySeconds" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ReconnectDelaySeconds>
                         <local:CameraTile.AutoReconnectOnFailure>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.AutoReconnectOnFailure" />
+                                <Binding Path="Overrides.Connection.AutoReconnectOnFailure" />
                                 <Binding Path="AutoReconnectOnFailure" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.AutoReconnectOnFailure>
                         <!--  Notification settings with per-camera overrides  -->
                         <local:CameraTile.ShowNotificationOnDisconnect>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.ShowNotificationOnDisconnect" />
+                                <Binding Path="Overrides.Connection.ShowNotificationOnDisconnect" />
                                 <Binding Path="ShowNotificationOnDisconnect" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ShowNotificationOnDisconnect>
                         <local:CameraTile.ShowNotificationOnReconnect>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.ShowNotificationOnReconnect" />
+                                <Binding Path="Overrides.Connection.ShowNotificationOnReconnect" />
                                 <Binding Path="ShowNotificationOnReconnect" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ShowNotificationOnReconnect>
                         <local:CameraTile.PlayNotificationSound>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.PlayNotificationSound" />
+                                <Binding Path="Overrides.Connection.PlayNotificationSound" />
                                 <Binding Path="PlayNotificationSound" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.PlayNotificationSound>
                         <!--  Performance settings with per-camera overrides  -->
                         <local:CameraTile.VideoQuality>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.VideoQuality" />
+                                <Binding Path="Overrides.Performance.VideoQuality" />
                                 <Binding Path="VideoQuality" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.VideoQuality>
                         <local:CameraTile.HardwareAcceleration>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.HardwareAcceleration" />
+                                <Binding Path="Overrides.Performance.HardwareAcceleration" />
                                 <Binding Path="HardwareAcceleration" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.HardwareAcceleration>
                         <!--  Recording settings with per-camera overrides  -->
                         <local:CameraTile.EnableRecordingOnMotion>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.EnableRecordingOnMotion" />
+                                <Binding Path="Overrides.Recording.EnableRecordingOnMotion" />
                                 <Binding Path="EnableRecordingOnMotion" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.EnableRecordingOnMotion>
                         <local:CameraTile.EnableRecordingOnConnect>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.EnableRecordingOnConnect" />
+                                <Binding Path="Overrides.Recording.EnableRecordingOnConnect" />
                                 <Binding Path="EnableRecordingOnConnect" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.EnableRecordingOnConnect>
                         <!--  Motion detection settings with per-camera overrides  -->
                         <local:CameraTile.MotionSensitivity>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.MotionSensitivity" />
+                                <Binding Path="Overrides.MotionDetection.Sensitivity" />
                                 <Binding Path="MotionSensitivity" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.MotionSensitivity>
@@ -147,7 +147,7 @@
                         </local:CameraTile.MotionAnalysisFrameRate>
                         <local:CameraTile.MotionPostDurationSeconds>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
-                                <Binding Path="Overrides.PostMotionDurationSeconds" />
+                                <Binding Path="Overrides.MotionDetection.PostMotionDurationSeconds" />
                                 <Binding Path="MotionPostDurationSeconds" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.MotionPostDurationSeconds>

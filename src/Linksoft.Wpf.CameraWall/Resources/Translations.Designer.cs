@@ -430,6 +430,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Capture.
+        /// </summary>
+        public static string Capture {
+            get {
+                return ResourceManager.GetString("Capture", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capture Overrides.
+        /// </summary>
+        public static string CaptureOverrides {
+            get {
+                return ResourceManager.GetString("CaptureOverrides", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Check for Updates.
         /// </summary>
         public static string CheckForUpdates {
@@ -867,6 +885,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string EnableRecordingOnMotion {
             get {
                 return ResourceManager.GetString("EnableRecordingOnMotion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable Timelapse Capture.
+        /// </summary>
+        public static string EnableTimelapse {
+            get {
+                return ResourceManager.GetString("EnableTimelapse", resourceCulture);
             }
         }
         
@@ -1587,6 +1614,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string OverrideSettingsInfo {
             get {
                 return ResourceManager.GetString("OverrideSettingsInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Local.
+        /// </summary>
+        public static string OverrideToggleLocal {
+            get {
+                return ResourceManager.GetString("OverrideToggleLocal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Master.
+        /// </summary>
+        public static string OverrideToggleMaster {
+            get {
+                return ResourceManager.GetString("OverrideToggleMaster", resourceCulture);
             }
         }
         
@@ -2320,6 +2365,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Storage.
+        /// </summary>
+        public static string Storage {
+            get {
+                return ResourceManager.GetString("Storage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Streaming Settings.
         /// </summary>
         public static string StreamingSettings {
@@ -2415,6 +2469,42 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string Time {
             get {
                 return ResourceManager.GetString("Time", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timelapse.
+        /// </summary>
+        public static string Timelapse {
+            get {
+                return ResourceManager.GetString("Timelapse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capture Interval.
+        /// </summary>
+        public static string TimelapseInterval {
+            get {
+                return ResourceManager.GetString("TimelapseInterval", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timelapse Overrides.
+        /// </summary>
+        public static string TimelapseOverrides {
+            get {
+                return ResourceManager.GetString("TimelapseOverrides", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timelapse Settings.
+        /// </summary>
+        public static string TimelapseSettings {
+            get {
+                return ResourceManager.GetString("TimelapseSettings", resourceCulture);
             }
         }
         

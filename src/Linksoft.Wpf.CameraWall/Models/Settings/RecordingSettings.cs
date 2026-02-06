@@ -52,4 +52,14 @@ public class RecordingSettings
     /// 1 = single image (320x240), 4 = 2x2 grid (640x480).
     /// </summary>
     public int ThumbnailTileCount { get; set; } = 4;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether timelapse capture is enabled.
+    /// </summary>
+    public bool EnableTimelapse { get; set; }
+
+    /// <summary>
+    /// Gets or sets the timelapse capture interval (e.g., "10s", "1m", "5m", "1h").
+    /// </summary>
+    public string TimelapseInterval { get; set; } = "5m";
 }

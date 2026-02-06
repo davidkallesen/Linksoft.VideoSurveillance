@@ -216,6 +216,22 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     public IDictionary<string, string> ThumbnailTileCountItems
         => DropDownItemsFactory.ThumbnailTileCountItems;
 
+    // Timelapse Settings
+    [ObservableProperty(DependentPropertyNames = [nameof(IsTimelapseIntervalEnabled)])]
+    private bool enableTimelapse;
+
+    [ObservableProperty]
+    private string selectedTimelapseInterval = DropDownItemsFactory.DefaultTimelapseInterval;
+
+    public IDictionary<string, string> TimelapseIntervalItems
+        => DropDownItemsFactory.TimelapseIntervalItems;
+
+    /// <summary>
+    /// Gets a value indicating whether the timelapse interval dropdown should be enabled.
+    /// </summary>
+    public bool IsTimelapseIntervalEnabled
+        => EnableTimelapse;
+
     // Media Cleanup Settings
     [ObservableProperty(DependentPropertyNames = [nameof(IsCleanupEnabled), nameof(IsSnapshotRetentionEnabled)])]
     private string selectedCleanupSchedule = DropDownItemsFactory.DefaultMediaCleanupSchedule;
@@ -365,6 +381,10 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         // Thumbnail Settings
         SelectedThumbnailTileCount = DropDownItemsFactory.DefaultThumbnailTileCount.ToString(CultureInfo.InvariantCulture);
 
+        // Timelapse Settings
+        EnableTimelapse = false;
+        SelectedTimelapseInterval = DropDownItemsFactory.DefaultTimelapseInterval;
+
         // Media Cleanup
         SelectedCleanupSchedule = DropDownItemsFactory.DefaultMediaCleanupSchedule;
         SelectedRecordingRetention = DropDownItemsFactory.DefaultRecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
@@ -459,6 +479,10 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
 
         // Thumbnail Settings
         SelectedThumbnailTileCount = recording.ThumbnailTileCount.ToString(CultureInfo.InvariantCulture);
+
+        // Timelapse Settings
+        EnableTimelapse = recording.EnableTimelapse;
+        SelectedTimelapseInterval = recording.TimelapseInterval;
 
         // Media Cleanup Settings
         SelectedCleanupSchedule = recording.Cleanup.Schedule.ToString();
@@ -597,6 +621,8 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
             EnableHourlySegmentation = EnableHourlySegmentation,
             MaxRecordingDurationMinutes = maxRecordingDuration > 0 ? maxRecordingDuration : DropDownItemsFactory.DefaultMaxRecordingDuration,
             ThumbnailTileCount = thumbnailTileCount == 1 || thumbnailTileCount == 4 ? thumbnailTileCount : DropDownItemsFactory.DefaultThumbnailTileCount,
+            EnableTimelapse = EnableTimelapse,
+            TimelapseInterval = SelectedTimelapseInterval,
             Cleanup = new MediaCleanupSettings
             {
                 Schedule = cleanupSchedule,

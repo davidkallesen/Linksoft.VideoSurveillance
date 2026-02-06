@@ -433,7 +433,7 @@ public class RecordingService : IRecordingService, IDisposable
 
     private string GetEffectiveRecordingPath(CameraConfiguration camera)
     {
-        var overridePath = camera.Overrides?.RecordingPath;
+        var overridePath = camera.Overrides?.Recording.RecordingPath;
         if (!string.IsNullOrEmpty(overridePath))
         {
             return overridePath;
@@ -447,7 +447,7 @@ public class RecordingService : IRecordingService, IDisposable
 
     private string GetEffectiveRecordingFormat(CameraConfiguration camera)
     {
-        var overrideFormat = camera.Overrides?.RecordingFormat;
+        var overrideFormat = camera.Overrides?.Recording.RecordingFormat;
         if (!string.IsNullOrEmpty(overrideFormat))
         {
             return overrideFormat;
@@ -461,7 +461,7 @@ public class RecordingService : IRecordingService, IDisposable
 
     private int GetEffectivePostMotionDuration(CameraConfiguration camera)
     {
-        var overrideDuration = camera.Overrides?.PostMotionDurationSeconds;
+        var overrideDuration = camera.Overrides?.MotionDetection.PostMotionDurationSeconds;
         if (overrideDuration.HasValue)
         {
             return overrideDuration.Value;
@@ -472,7 +472,7 @@ public class RecordingService : IRecordingService, IDisposable
 
     private int GetEffectiveThumbnailTileCount(CameraConfiguration camera)
     {
-        var overrideTileCount = camera.Overrides?.ThumbnailTileCount;
+        var overrideTileCount = camera.Overrides?.Recording.ThumbnailTileCount;
         if (overrideTileCount.HasValue)
         {
             return overrideTileCount.Value;

@@ -939,4 +939,34 @@
   <data name="FilterEvening" xml:space="preserve">
     <value>18:00 - 24:00 (Evening)</value>
   </data>
+  <data name="EnableTimelapse" xml:space="preserve">
+    <value>Enable Timelapse Capture</value>
+  </data>
+  <data name="TimelapseInterval" xml:space="preserve">
+    <value>Capture Interval</value>
+  </data>
+  <data name="TimelapseSettings" xml:space="preserve">
+    <value>Timelapse Settings</value>
+  </data>
+  <data name="Capture" xml:space="preserve">
+    <value>Capture</value>
+  </data>
+  <data name="Storage" xml:space="preserve">
+    <value>Storage</value>
+  </data>
+  <data name="Timelapse" xml:space="preserve">
+    <value>Timelapse</value>
+  </data>
+  <data name="CaptureOverrides" xml:space="preserve">
+    <value>Capture Overrides</value>
+  </data>
+  <data name="TimelapseOverrides" xml:space="preserve">
+    <value>Timelapse Overrides</value>
+  </data>
+  <data name="OverrideToggleMaster" xml:space="preserve">
+    <value>Master</value>
+  </data>
+  <data name="OverrideToggleLocal" xml:space="preserve">
+    <value>Local</value>
+  </data>
 </root>

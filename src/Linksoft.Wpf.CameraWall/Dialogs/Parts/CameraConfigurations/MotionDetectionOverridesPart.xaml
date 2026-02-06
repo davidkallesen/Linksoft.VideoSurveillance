@@ -13,170 +13,186 @@
     d:DesignWidth="1100"
     mc:Ignorable="d">
 
-    <GroupBox
-        atc:HeaderedControlHelper.HeaderBackground="Transparent"
-        atc:HeaderedControlHelper.HeaderFontWeight="Bold"
-        atc:HeaderedControlHelper.HeaderForeground="{DynamicResource AtcApps.Brushes.Text}"
-        Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                     Key=MotionOverrides}">
-        <atc:GridEx
+    <UserControl.Resources>
+        <ResourceDictionary Source="/Linksoft.Wpf.CameraWall;component/Themes/OverrideStyles.xaml" />
+    </UserControl.Resources>
+
+    <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=MotionOverrides}">
+
+        <atc:UniformSpacingPanel
             Margin="10"
-            Columns="*,20,*,20,*"
-            Rows="Auto,16,Auto,16,Auto">
-            <!--  Row 0, Column 0 - Motion Sensitivity (already in RecordingOverridesPart)  -->
-            <!--  Row 0, Column 0 - Minimum Change Percent  -->
-            <StackPanel Grid.Row="0" Grid.Column="0">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultMinimumChangePercent, Mode=TwoWay}"
+            Orientation="Vertical"
+            Spacing="10">
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultMotionSensitivity, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelIntegerBox
+                    IsEnabled="{Binding Path=UseDefaultMotionSensitivity, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
+                                                    Key=MotionSensitivity}"
+                    Maximum="100"
+                    Minimum="0"
+                    Value="{Binding Path=OverrideMotionSensitivity, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultPostMotionDuration, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelIntegerBox
+                    IsEnabled="{Binding Path=UseDefaultPostMotionDuration, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=PostMotionDuration}"
+                    Maximum="300"
+                    Minimum="1"
+                    Value="{Binding Path=OverridePostMotionDuration, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultMinimumChangePercent, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
                 <atc:LabelDecimalBox
-                    HideAreas="All"
                     IsEnabled="{Binding Path=UseDefaultMinimumChangePercent, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=MinimumChangePercent}"
-                    LabelWidthNumber="220"
                     Maximum="100"
                     Minimum="0.1"
                     Value="{Binding Path=OverrideMinimumChangePercent, Mode=TwoWay}" />
             </StackPanel>
-            <!--  Row 0, Column 2 - Analysis Frame Rate  -->
-            <StackPanel Grid.Row="0" Grid.Column="2">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultAnalysisFrameRate, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultAnalysisFrameRate, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
                 <atc:LabelIntegerBox
-                    HideAreas="All"
                     IsEnabled="{Binding Path=UseDefaultAnalysisFrameRate, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=AnalysisFrameRate}"
-                    LabelWidthNumber="220"
                     Maximum="30"
                     Minimum="1"
                     Value="{Binding Path=OverrideAnalysisFrameRate, Mode=TwoWay}" />
             </StackPanel>
-            <!--  Row 0, Column 4 - Cooldown Seconds  -->
-            <StackPanel Grid.Row="0" Grid.Column="4">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultCooldownSeconds, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultCooldownSeconds, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
                 <atc:LabelIntegerBox
-                    HideAreas="All"
                     IsEnabled="{Binding Path=UseDefaultCooldownSeconds, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=CooldownSeconds}"
-                    LabelWidthNumber="220"
                     Maximum="300"
                     Minimum="0"
                     Value="{Binding Path=OverrideCooldownSeconds, Mode=TwoWay}" />
             </StackPanel>
-            <!--  Row 2, Column 0 - Show Bounding Box in Grid  -->
-            <StackPanel Grid.Row="2" Grid.Column="0">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultShowBoundingBoxInGrid, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=OverrideShowBoundingBoxInGrid, Mode=TwoWay}"
-                    IsEnabled="{Binding Path=UseDefaultShowBoundingBoxInGrid, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=ShowBoundingBoxInGrid}"
-                    LabelWidthNumber="220" />
-            </StackPanel>
-            <!--  Row 2, Column 2 - Show Bounding Box in Full Screen  -->
-            <StackPanel Grid.Row="2" Grid.Column="2">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultShowBoundingBoxInFullScreen, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=OverrideShowBoundingBoxInFullScreen, Mode=TwoWay}"
-                    IsEnabled="{Binding Path=UseDefaultShowBoundingBoxInFullScreen, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=ShowBoundingBoxInFullScreen}"
-                    LabelWidthNumber="220" />
-            </StackPanel>
-            <!--  Row 2, Column 4 - Bounding Box Color  -->
-            <StackPanel Grid.Row="2" Grid.Column="4">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultBoundingBoxColor, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
-                <atc:LabelWellKnownColorSelector
-                    HideAreas="All"
-                    IsEnabled="{Binding Path=UseDefaultBoundingBoxColor, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=BoundingBoxColor}"
-                    LabelWidthNumber="220"
-                    SelectedKey="{Binding Path=OverrideBoundingBoxColor, Mode=TwoWay}" />
-            </StackPanel>
-            <!--  Row 4, Column 0 - Bounding Box Thickness  -->
-            <StackPanel Grid.Row="4" Grid.Column="0">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultBoundingBoxThickness, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultAnalysisResolution, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
                 <atc:LabelComboBox
-                    HideAreas="All"
-                    IsEnabled="{Binding Path=UseDefaultBoundingBoxThickness, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    Items="{Binding Path=BoundingBoxThicknessItems}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=BoundingBoxThickness}"
-                    LabelWidthNumber="220"
-                    SelectedKey="{Binding Path=OverrideBoundingBoxThickness, Mode=TwoWay}" />
-            </StackPanel>
-            <!--  Row 4, Column 2 - Bounding Box Min Area  -->
-            <StackPanel Grid.Row="4" Grid.Column="2">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultBoundingBoxMinArea, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
-                <atc:LabelComboBox
-                    HideAreas="All"
-                    IsEnabled="{Binding Path=UseDefaultBoundingBoxMinArea, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    Items="{Binding Path=BoundingBoxMinAreaItems}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=BoundingBoxMinArea}"
-                    LabelWidthNumber="220"
-                    SelectedKey="{Binding Path=OverrideBoundingBoxMinArea, Mode=TwoWay}" />
-            </StackPanel>
-            <!--  Row 4, Column 4 - Analysis Resolution  -->
-            <StackPanel Grid.Row="4" Grid.Column="4">
-                <atc:LabelCheckBox
-                    HideAreas="All"
-                    IsChecked="{Binding Path=UseDefaultAnalysisResolution, Mode=TwoWay}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=UseDefaultSetting}"
-                    LabelWidthNumber="220" />
-                <atc:LabelComboBox
-                    HideAreas="All"
                     IsEnabled="{Binding Path=UseDefaultAnalysisResolution, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     Items="{Binding Path=AnalysisResolutionItems}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=AnalysisResolution}"
-                    LabelWidthNumber="220"
                     SelectedKey="{Binding Path=OverrideAnalysisResolution, Mode=TwoWay}" />
             </StackPanel>
-        </atc:GridEx>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultShowBoundingBoxInGrid, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelToggleSwitch
+                    IsEnabled="{Binding Path=UseDefaultShowBoundingBoxInGrid, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    IsOn="{Binding Path=OverrideShowBoundingBoxInGrid, Mode=TwoWay}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=ShowBoundingBoxInGrid}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultShowBoundingBoxInFullScreen, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelToggleSwitch
+                    IsEnabled="{Binding Path=UseDefaultShowBoundingBoxInFullScreen, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    IsOn="{Binding Path=OverrideShowBoundingBoxInFullScreen, Mode=TwoWay}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=ShowBoundingBoxInFullScreen}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultBoundingBoxColor, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelWellKnownColorSelector
+                    IsEnabled="{Binding Path=UseDefaultBoundingBoxColor, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=BoundingBoxColor}"
+                    SelectedKey="{Binding Path=OverrideBoundingBoxColor, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultBoundingBoxThickness, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelComboBox
+                    IsEnabled="{Binding Path=UseDefaultBoundingBoxThickness, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    Items="{Binding Path=BoundingBoxThicknessItems}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=BoundingBoxThickness}"
+                    SelectedKey="{Binding Path=OverrideBoundingBoxThickness, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultBoundingBoxMinArea, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelComboBox
+                    IsEnabled="{Binding Path=UseDefaultBoundingBoxMinArea, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    Items="{Binding Path=BoundingBoxMinAreaItems}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=BoundingBoxMinArea}"
+                    SelectedKey="{Binding Path=OverrideBoundingBoxMinArea, Mode=TwoWay}" />
+            </StackPanel>
+
+        </atc:UniformSpacingPanel>
+
     </GroupBox>
+
 </UserControl>

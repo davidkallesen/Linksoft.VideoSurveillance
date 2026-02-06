@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="Linksoft.Wpf.CameraWall.Dialogs.Parts.CameraConfigurations.ConnectionOverridesPart"
+    x:Class="Linksoft.Wpf.CameraWall.Dialogs.Parts.CameraConfigurations.TimelapseOverridesPart"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
@@ -17,7 +17,7 @@
         <ResourceDictionary Source="/Linksoft.Wpf.CameraWall;component/Themes/OverrideStyles.xaml" />
     </UserControl.Resources>
 
-    <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=ConnectionOverrides}">
+    <GroupBox Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=TimelapseOverrides}">
 
         <atc:UniformSpacingPanel
             Margin="10"
@@ -26,48 +26,31 @@
 
             <StackPanel Orientation="Horizontal">
                 <atc:ToggleSwitch
-                    IsOn="{Binding Path=UseDefaultConnectionTimeout, Mode=TwoWay}"
-                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                     Key=OverrideToggleLocal}"
-                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=OverrideToggleMaster}" />
-                <atc:LabelIntegerBox
-                    IsEnabled="{Binding Path=UseDefaultConnectionTimeout, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=ConnectionTimeoutSeconds}"
-                    Maximum="300"
-                    Minimum="1"
-                    Value="{Binding Path=OverrideConnectionTimeout, Mode=TwoWay}" />
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal">
-                <atc:ToggleSwitch
-                    IsOn="{Binding Path=UseDefaultReconnectDelay, Mode=TwoWay}"
-                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                     Key=OverrideToggleLocal}"
-                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=OverrideToggleMaster}" />
-                <atc:LabelIntegerBox
-                    IsEnabled="{Binding Path=UseDefaultReconnectDelay, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=ReconnectDelaySeconds}"
-                    Maximum="300"
-                    Minimum="1"
-                    Value="{Binding Path=OverrideReconnectDelay, Mode=TwoWay}" />
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal">
-                <atc:ToggleSwitch
-                    IsOn="{Binding Path=UseDefaultAutoReconnect, Mode=TwoWay}"
+                    IsOn="{Binding Path=UseDefaultEnableTimelapse, Mode=TwoWay}"
                     OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                      Key=OverrideToggleLocal}"
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelToggleSwitch
-                    IsEnabled="{Binding Path=UseDefaultAutoReconnect, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
-                    IsOn="{Binding Path=OverrideAutoReconnect, Mode=TwoWay}"
+                    IsEnabled="{Binding Path=UseDefaultEnableTimelapse, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    IsOn="{Binding Path=OverrideEnableTimelapse, Mode=TwoWay}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                    Key=AutoReconnectOnFailure}" />
+                                                    Key=EnableTimelapse}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultTimelapseInterval, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelComboBox
+                    IsEnabled="{Binding Path=UseDefaultTimelapseInterval, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    Items="{Binding Path=TimelapseIntervalItems}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                    Key=TimelapseInterval}"
+                    SelectedKey="{Binding Path=OverrideTimelapseInterval, Mode=TwoWay}" />
             </StackPanel>
 
         </atc:UniformSpacingPanel>

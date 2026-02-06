@@ -142,20 +142,20 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool UseDefaultShowOverlayTitle
     {
-        get => Camera.Overrides?.ShowOverlayTitle is null;
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayTitle is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ShowOverlayTitle = null;
+                    Camera.Overrides.CameraDisplay.ShowOverlayTitle = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowOverlayTitle = settingsService.CameraDisplay.ShowOverlayTitle;
+                Camera.Overrides!.CameraDisplay.ShowOverlayTitle = settingsService.CameraDisplay.ShowOverlayTitle;
             }
 
             RaisePropertyChanged();
@@ -165,31 +165,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowOverlayTitle
     {
-        get => Camera.Overrides?.ShowOverlayTitle ?? settingsService.CameraDisplay.ShowOverlayTitle;
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayTitle ?? settingsService.CameraDisplay.ShowOverlayTitle;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.ShowOverlayTitle = value;
+            Camera.Overrides!.CameraDisplay.ShowOverlayTitle = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultShowOverlayDescription
     {
-        get => Camera.Overrides?.ShowOverlayDescription is null;
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayDescription is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ShowOverlayDescription = null;
+                    Camera.Overrides.CameraDisplay.ShowOverlayDescription = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowOverlayDescription = settingsService.CameraDisplay.ShowOverlayDescription;
+                Camera.Overrides!.CameraDisplay.ShowOverlayDescription = settingsService.CameraDisplay.ShowOverlayDescription;
             }
 
             RaisePropertyChanged();
@@ -199,31 +199,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowOverlayDescription
     {
-        get => Camera.Overrides?.ShowOverlayDescription ?? settingsService.CameraDisplay.ShowOverlayDescription;
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayDescription ?? settingsService.CameraDisplay.ShowOverlayDescription;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.ShowOverlayDescription = value;
+            Camera.Overrides!.CameraDisplay.ShowOverlayDescription = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultShowOverlayTime
     {
-        get => Camera.Overrides?.ShowOverlayTime is null;
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayTime is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ShowOverlayTime = null;
+                    Camera.Overrides.CameraDisplay.ShowOverlayTime = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowOverlayTime = settingsService.CameraDisplay.ShowOverlayTime;
+                Camera.Overrides!.CameraDisplay.ShowOverlayTime = settingsService.CameraDisplay.ShowOverlayTime;
             }
 
             RaisePropertyChanged();
@@ -233,31 +233,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowOverlayTime
     {
-        get => Camera.Overrides?.ShowOverlayTime ?? settingsService.CameraDisplay.ShowOverlayTime;
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayTime ?? settingsService.CameraDisplay.ShowOverlayTime;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.ShowOverlayTime = value;
+            Camera.Overrides!.CameraDisplay.ShowOverlayTime = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultShowOverlayConnectionStatus
     {
-        get => Camera.Overrides?.ShowOverlayConnectionStatus is null;
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayConnectionStatus is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ShowOverlayConnectionStatus = null;
+                    Camera.Overrides.CameraDisplay.ShowOverlayConnectionStatus = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowOverlayConnectionStatus = settingsService.CameraDisplay.ShowOverlayConnectionStatus;
+                Camera.Overrides!.CameraDisplay.ShowOverlayConnectionStatus = settingsService.CameraDisplay.ShowOverlayConnectionStatus;
             }
 
             RaisePropertyChanged();
@@ -267,31 +267,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowOverlayConnectionStatus
     {
-        get => Camera.Overrides?.ShowOverlayConnectionStatus ?? settingsService.CameraDisplay.ShowOverlayConnectionStatus;
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayConnectionStatus ?? settingsService.CameraDisplay.ShowOverlayConnectionStatus;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.ShowOverlayConnectionStatus = value;
+            Camera.Overrides!.CameraDisplay.ShowOverlayConnectionStatus = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultOverlayOpacity
     {
-        get => Camera.Overrides?.OverlayOpacity is null;
+        get => Camera.Overrides?.CameraDisplay.OverlayOpacity is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.OverlayOpacity = null;
+                    Camera.Overrides.CameraDisplay.OverlayOpacity = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.OverlayOpacity = settingsService.CameraDisplay.OverlayOpacity;
+                Camera.Overrides!.CameraDisplay.OverlayOpacity = settingsService.CameraDisplay.OverlayOpacity;
             }
 
             RaisePropertyChanged();
@@ -303,7 +303,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     {
         get
         {
-            var opacity = Camera.Overrides?.OverlayOpacity ?? settingsService.CameraDisplay.OverlayOpacity;
+            var opacity = Camera.Overrides?.CameraDisplay.OverlayOpacity ?? settingsService.CameraDisplay.OverlayOpacity;
             return opacity.ToString("F1", CultureInfo.InvariantCulture);
         }
 
@@ -312,7 +312,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var opacity))
             {
                 EnsureOverrides();
-                Camera.Overrides!.OverlayOpacity = opacity;
+                Camera.Overrides!.CameraDisplay.OverlayOpacity = opacity;
                 RaisePropertyChanged();
             }
         }
@@ -320,20 +320,20 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool UseDefaultConnectionTimeout
     {
-        get => Camera.Overrides?.ConnectionTimeoutSeconds is null;
+        get => Camera.Overrides?.Connection.ConnectionTimeoutSeconds is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ConnectionTimeoutSeconds = null;
+                    Camera.Overrides.Connection.ConnectionTimeoutSeconds = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ConnectionTimeoutSeconds = settingsService.Connection.ConnectionTimeoutSeconds;
+                Camera.Overrides!.Connection.ConnectionTimeoutSeconds = settingsService.Connection.ConnectionTimeoutSeconds;
             }
 
             RaisePropertyChanged();
@@ -343,31 +343,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideConnectionTimeout
     {
-        get => Camera.Overrides?.ConnectionTimeoutSeconds ?? settingsService.Connection.ConnectionTimeoutSeconds;
+        get => Camera.Overrides?.Connection.ConnectionTimeoutSeconds ?? settingsService.Connection.ConnectionTimeoutSeconds;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.ConnectionTimeoutSeconds = value;
+            Camera.Overrides!.Connection.ConnectionTimeoutSeconds = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultReconnectDelay
     {
-        get => Camera.Overrides?.ReconnectDelaySeconds is null;
+        get => Camera.Overrides?.Connection.ReconnectDelaySeconds is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ReconnectDelaySeconds = null;
+                    Camera.Overrides.Connection.ReconnectDelaySeconds = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ReconnectDelaySeconds = settingsService.Connection.ReconnectDelaySeconds;
+                Camera.Overrides!.Connection.ReconnectDelaySeconds = settingsService.Connection.ReconnectDelaySeconds;
             }
 
             RaisePropertyChanged();
@@ -377,31 +377,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideReconnectDelay
     {
-        get => Camera.Overrides?.ReconnectDelaySeconds ?? settingsService.Connection.ReconnectDelaySeconds;
+        get => Camera.Overrides?.Connection.ReconnectDelaySeconds ?? settingsService.Connection.ReconnectDelaySeconds;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.ReconnectDelaySeconds = value;
+            Camera.Overrides!.Connection.ReconnectDelaySeconds = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultAutoReconnect
     {
-        get => Camera.Overrides?.AutoReconnectOnFailure is null;
+        get => Camera.Overrides?.Connection.AutoReconnectOnFailure is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.AutoReconnectOnFailure = null;
+                    Camera.Overrides.Connection.AutoReconnectOnFailure = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.AutoReconnectOnFailure = settingsService.Connection.AutoReconnectOnFailure;
+                Camera.Overrides!.Connection.AutoReconnectOnFailure = settingsService.Connection.AutoReconnectOnFailure;
             }
 
             RaisePropertyChanged();
@@ -411,31 +411,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideAutoReconnect
     {
-        get => Camera.Overrides?.AutoReconnectOnFailure ?? settingsService.Connection.AutoReconnectOnFailure;
+        get => Camera.Overrides?.Connection.AutoReconnectOnFailure ?? settingsService.Connection.AutoReconnectOnFailure;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.AutoReconnectOnFailure = value;
+            Camera.Overrides!.Connection.AutoReconnectOnFailure = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultVideoQuality
     {
-        get => Camera.Overrides?.VideoQuality is null;
+        get => Camera.Overrides?.Performance.VideoQuality is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.VideoQuality = null;
+                    Camera.Overrides.Performance.VideoQuality = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.VideoQuality = settingsService.Performance.VideoQuality;
+                Camera.Overrides!.Performance.VideoQuality = settingsService.Performance.VideoQuality;
             }
 
             RaisePropertyChanged();
@@ -445,31 +445,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideVideoQuality
     {
-        get => Camera.Overrides?.VideoQuality ?? settingsService.Performance.VideoQuality;
+        get => Camera.Overrides?.Performance.VideoQuality ?? settingsService.Performance.VideoQuality;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.VideoQuality = value;
+            Camera.Overrides!.Performance.VideoQuality = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultHardwareAcceleration
     {
-        get => Camera.Overrides?.HardwareAcceleration is null;
+        get => Camera.Overrides?.Performance.HardwareAcceleration is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.HardwareAcceleration = null;
+                    Camera.Overrides.Performance.HardwareAcceleration = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.HardwareAcceleration = settingsService.Performance.HardwareAcceleration;
+                Camera.Overrides!.Performance.HardwareAcceleration = settingsService.Performance.HardwareAcceleration;
             }
 
             RaisePropertyChanged();
@@ -479,31 +479,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideHardwareAcceleration
     {
-        get => Camera.Overrides?.HardwareAcceleration ?? settingsService.Performance.HardwareAcceleration;
+        get => Camera.Overrides?.Performance.HardwareAcceleration ?? settingsService.Performance.HardwareAcceleration;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.HardwareAcceleration = value;
+            Camera.Overrides!.Performance.HardwareAcceleration = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultRecordingPath
     {
-        get => Camera.Overrides?.RecordingPath is null;
+        get => Camera.Overrides?.Recording.RecordingPath is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.RecordingPath = null;
+                    Camera.Overrides.Recording.RecordingPath = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.RecordingPath = settingsService.Recording.RecordingPath ?? string.Empty;
+                Camera.Overrides!.Recording.RecordingPath = settingsService.Recording.RecordingPath ?? string.Empty;
             }
 
             RaisePropertyChanged();
@@ -515,34 +515,34 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     {
         get
         {
-            var path = Camera.Overrides?.RecordingPath ?? settingsService.Recording.RecordingPath;
+            var path = Camera.Overrides?.Recording.RecordingPath ?? settingsService.Recording.RecordingPath;
             return string.IsNullOrEmpty(path) ? null : new DirectoryInfo(path);
         }
 
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.RecordingPath = value?.FullName;
+            Camera.Overrides!.Recording.RecordingPath = value?.FullName;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultRecordingFormat
     {
-        get => Camera.Overrides?.RecordingFormat is null;
+        get => Camera.Overrides?.Recording.RecordingFormat is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.RecordingFormat = null;
+                    Camera.Overrides.Recording.RecordingFormat = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.RecordingFormat = settingsService.Recording.RecordingFormat;
+                Camera.Overrides!.Recording.RecordingFormat = settingsService.Recording.RecordingFormat;
             }
 
             RaisePropertyChanged();
@@ -552,31 +552,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideRecordingFormat
     {
-        get => Camera.Overrides?.RecordingFormat ?? settingsService.Recording.RecordingFormat;
+        get => Camera.Overrides?.Recording.RecordingFormat ?? settingsService.Recording.RecordingFormat;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.RecordingFormat = value;
+            Camera.Overrides!.Recording.RecordingFormat = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultRecordingOnMotion
     {
-        get => Camera.Overrides?.EnableRecordingOnMotion is null;
+        get => Camera.Overrides?.Recording.EnableRecordingOnMotion is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.EnableRecordingOnMotion = null;
+                    Camera.Overrides.Recording.EnableRecordingOnMotion = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.EnableRecordingOnMotion = settingsService.Recording.EnableRecordingOnMotion;
+                Camera.Overrides!.Recording.EnableRecordingOnMotion = settingsService.Recording.EnableRecordingOnMotion;
             }
 
             RaisePropertyChanged();
@@ -586,31 +586,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideRecordingOnMotion
     {
-        get => Camera.Overrides?.EnableRecordingOnMotion ?? settingsService.Recording.EnableRecordingOnMotion;
+        get => Camera.Overrides?.Recording.EnableRecordingOnMotion ?? settingsService.Recording.EnableRecordingOnMotion;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.EnableRecordingOnMotion = value;
+            Camera.Overrides!.Recording.EnableRecordingOnMotion = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultMotionSensitivity
     {
-        get => Camera.Overrides?.MotionSensitivity is null;
+        get => Camera.Overrides?.MotionDetection.Sensitivity is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.MotionSensitivity = null;
+                    Camera.Overrides.MotionDetection.Sensitivity = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.MotionSensitivity = settingsService.MotionDetection.Sensitivity;
+                Camera.Overrides!.MotionDetection.Sensitivity = settingsService.MotionDetection.Sensitivity;
             }
 
             RaisePropertyChanged();
@@ -620,31 +620,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideMotionSensitivity
     {
-        get => Camera.Overrides?.MotionSensitivity ?? settingsService.MotionDetection.Sensitivity;
+        get => Camera.Overrides?.MotionDetection.Sensitivity ?? settingsService.MotionDetection.Sensitivity;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.MotionSensitivity = value;
+            Camera.Overrides!.MotionDetection.Sensitivity = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultPostMotionDuration
     {
-        get => Camera.Overrides?.PostMotionDurationSeconds is null;
+        get => Camera.Overrides?.MotionDetection.PostMotionDurationSeconds is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.PostMotionDurationSeconds = null;
+                    Camera.Overrides.MotionDetection.PostMotionDurationSeconds = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.PostMotionDurationSeconds = settingsService.MotionDetection.PostMotionDurationSeconds;
+                Camera.Overrides!.MotionDetection.PostMotionDurationSeconds = settingsService.MotionDetection.PostMotionDurationSeconds;
             }
 
             RaisePropertyChanged();
@@ -654,31 +654,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverridePostMotionDuration
     {
-        get => Camera.Overrides?.PostMotionDurationSeconds ?? settingsService.MotionDetection.PostMotionDurationSeconds;
+        get => Camera.Overrides?.MotionDetection.PostMotionDurationSeconds ?? settingsService.MotionDetection.PostMotionDurationSeconds;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.PostMotionDurationSeconds = value;
+            Camera.Overrides!.MotionDetection.PostMotionDurationSeconds = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultRecordingOnConnect
     {
-        get => Camera.Overrides?.EnableRecordingOnConnect is null;
+        get => Camera.Overrides?.Recording.EnableRecordingOnConnect is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.EnableRecordingOnConnect = null;
+                    Camera.Overrides.Recording.EnableRecordingOnConnect = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.EnableRecordingOnConnect = settingsService.Recording.EnableRecordingOnConnect;
+                Camera.Overrides!.Recording.EnableRecordingOnConnect = settingsService.Recording.EnableRecordingOnConnect;
             }
 
             RaisePropertyChanged();
@@ -688,11 +688,11 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideRecordingOnConnect
     {
-        get => Camera.Overrides?.EnableRecordingOnConnect ?? settingsService.Recording.EnableRecordingOnConnect;
+        get => Camera.Overrides?.Recording.EnableRecordingOnConnect ?? settingsService.Recording.EnableRecordingOnConnect;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.EnableRecordingOnConnect = value;
+            Camera.Overrides!.Recording.EnableRecordingOnConnect = value;
             RaisePropertyChanged();
         }
     }
@@ -700,20 +700,20 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     // Motion Detection Overrides
     public bool UseDefaultMinimumChangePercent
     {
-        get => Camera.Overrides?.MotionMinimumChangePercent is null;
+        get => Camera.Overrides?.MotionDetection.MinimumChangePercent is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.MotionMinimumChangePercent = null;
+                    Camera.Overrides.MotionDetection.MinimumChangePercent = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.MotionMinimumChangePercent = settingsService.MotionDetection.MinimumChangePercent;
+                Camera.Overrides!.MotionDetection.MinimumChangePercent = settingsService.MotionDetection.MinimumChangePercent;
             }
 
             RaisePropertyChanged();
@@ -723,31 +723,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public double OverrideMinimumChangePercent
     {
-        get => Camera.Overrides?.MotionMinimumChangePercent ?? settingsService.MotionDetection.MinimumChangePercent;
+        get => Camera.Overrides?.MotionDetection.MinimumChangePercent ?? settingsService.MotionDetection.MinimumChangePercent;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.MotionMinimumChangePercent = value;
+            Camera.Overrides!.MotionDetection.MinimumChangePercent = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultAnalysisFrameRate
     {
-        get => Camera.Overrides?.MotionAnalysisFrameRate is null;
+        get => Camera.Overrides?.MotionDetection.AnalysisFrameRate is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.MotionAnalysisFrameRate = null;
+                    Camera.Overrides.MotionDetection.AnalysisFrameRate = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.MotionAnalysisFrameRate = settingsService.MotionDetection.AnalysisFrameRate;
+                Camera.Overrides!.MotionDetection.AnalysisFrameRate = settingsService.MotionDetection.AnalysisFrameRate;
             }
 
             RaisePropertyChanged();
@@ -757,31 +757,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideAnalysisFrameRate
     {
-        get => Camera.Overrides?.MotionAnalysisFrameRate ?? settingsService.MotionDetection.AnalysisFrameRate;
+        get => Camera.Overrides?.MotionDetection.AnalysisFrameRate ?? settingsService.MotionDetection.AnalysisFrameRate;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.MotionAnalysisFrameRate = value;
+            Camera.Overrides!.MotionDetection.AnalysisFrameRate = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultCooldownSeconds
     {
-        get => Camera.Overrides?.MotionCooldownSeconds is null;
+        get => Camera.Overrides?.MotionDetection.CooldownSeconds is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.MotionCooldownSeconds = null;
+                    Camera.Overrides.MotionDetection.CooldownSeconds = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.MotionCooldownSeconds = settingsService.MotionDetection.CooldownSeconds;
+                Camera.Overrides!.MotionDetection.CooldownSeconds = settingsService.MotionDetection.CooldownSeconds;
             }
 
             RaisePropertyChanged();
@@ -791,11 +791,11 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public int OverrideCooldownSeconds
     {
-        get => Camera.Overrides?.MotionCooldownSeconds ?? settingsService.MotionDetection.CooldownSeconds;
+        get => Camera.Overrides?.MotionDetection.CooldownSeconds ?? settingsService.MotionDetection.CooldownSeconds;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.MotionCooldownSeconds = value;
+            Camera.Overrides!.MotionDetection.CooldownSeconds = value;
             RaisePropertyChanged();
         }
     }
@@ -803,20 +803,20 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     // Bounding Box Overrides
     public bool UseDefaultShowBoundingBoxInGrid
     {
-        get => Camera.Overrides?.ShowBoundingBoxInGrid is null;
+        get => Camera.Overrides?.MotionDetection.BoundingBox.ShowInGrid is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ShowBoundingBoxInGrid = null;
+                    Camera.Overrides.MotionDetection.BoundingBox.ShowInGrid = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowBoundingBoxInGrid = settingsService.MotionDetection.BoundingBox.ShowInGrid;
+                Camera.Overrides!.MotionDetection.BoundingBox.ShowInGrid = settingsService.MotionDetection.BoundingBox.ShowInGrid;
             }
 
             RaisePropertyChanged();
@@ -826,31 +826,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowBoundingBoxInGrid
     {
-        get => Camera.Overrides?.ShowBoundingBoxInGrid ?? settingsService.MotionDetection.BoundingBox.ShowInGrid;
+        get => Camera.Overrides?.MotionDetection.BoundingBox.ShowInGrid ?? settingsService.MotionDetection.BoundingBox.ShowInGrid;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.ShowBoundingBoxInGrid = value;
+            Camera.Overrides!.MotionDetection.BoundingBox.ShowInGrid = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultShowBoundingBoxInFullScreen
     {
-        get => Camera.Overrides?.ShowBoundingBoxInFullScreen is null;
+        get => Camera.Overrides?.MotionDetection.BoundingBox.ShowInFullScreen is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ShowBoundingBoxInFullScreen = null;
+                    Camera.Overrides.MotionDetection.BoundingBox.ShowInFullScreen = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ShowBoundingBoxInFullScreen = settingsService.MotionDetection.BoundingBox.ShowInFullScreen;
+                Camera.Overrides!.MotionDetection.BoundingBox.ShowInFullScreen = settingsService.MotionDetection.BoundingBox.ShowInFullScreen;
             }
 
             RaisePropertyChanged();
@@ -860,31 +860,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool OverrideShowBoundingBoxInFullScreen
     {
-        get => Camera.Overrides?.ShowBoundingBoxInFullScreen ?? settingsService.MotionDetection.BoundingBox.ShowInFullScreen;
+        get => Camera.Overrides?.MotionDetection.BoundingBox.ShowInFullScreen ?? settingsService.MotionDetection.BoundingBox.ShowInFullScreen;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.ShowBoundingBoxInFullScreen = value;
+            Camera.Overrides!.MotionDetection.BoundingBox.ShowInFullScreen = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultBoundingBoxColor
     {
-        get => Camera.Overrides?.BoundingBoxColor is null;
+        get => Camera.Overrides?.MotionDetection.BoundingBox.Color is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.BoundingBoxColor = null;
+                    Camera.Overrides.MotionDetection.BoundingBox.Color = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.BoundingBoxColor = settingsService.MotionDetection.BoundingBox.Color;
+                Camera.Overrides!.MotionDetection.BoundingBox.Color = settingsService.MotionDetection.BoundingBox.Color;
             }
 
             RaisePropertyChanged();
@@ -894,31 +894,31 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideBoundingBoxColor
     {
-        get => Camera.Overrides?.BoundingBoxColor ?? settingsService.MotionDetection.BoundingBox.Color;
+        get => Camera.Overrides?.MotionDetection.BoundingBox.Color ?? settingsService.MotionDetection.BoundingBox.Color;
         set
         {
             EnsureOverrides();
-            Camera.Overrides!.BoundingBoxColor = value;
+            Camera.Overrides!.MotionDetection.BoundingBox.Color = value;
             RaisePropertyChanged();
         }
     }
 
     public bool UseDefaultBoundingBoxThickness
     {
-        get => Camera.Overrides?.BoundingBoxThickness is null;
+        get => Camera.Overrides?.MotionDetection.BoundingBox.Thickness is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.BoundingBoxThickness = null;
+                    Camera.Overrides.MotionDetection.BoundingBox.Thickness = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.BoundingBoxThickness = settingsService.MotionDetection.BoundingBox.Thickness;
+                Camera.Overrides!.MotionDetection.BoundingBox.Thickness = settingsService.MotionDetection.BoundingBox.Thickness;
             }
 
             RaisePropertyChanged();
@@ -928,13 +928,13 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideBoundingBoxThickness
     {
-        get => (Camera.Overrides?.BoundingBoxThickness ?? settingsService.MotionDetection.BoundingBox.Thickness).ToString(CultureInfo.InvariantCulture);
+        get => (Camera.Overrides?.MotionDetection.BoundingBox.Thickness ?? settingsService.MotionDetection.BoundingBox.Thickness).ToString(CultureInfo.InvariantCulture);
         set
         {
             if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var thickness))
             {
                 EnsureOverrides();
-                Camera.Overrides!.BoundingBoxThickness = thickness;
+                Camera.Overrides!.MotionDetection.BoundingBox.Thickness = thickness;
                 RaisePropertyChanged();
             }
         }
@@ -945,20 +945,20 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public bool UseDefaultBoundingBoxMinArea
     {
-        get => Camera.Overrides?.BoundingBoxMinArea is null;
+        get => Camera.Overrides?.MotionDetection.BoundingBox.MinArea is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.BoundingBoxMinArea = null;
+                    Camera.Overrides.MotionDetection.BoundingBox.MinArea = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.BoundingBoxMinArea = settingsService.MotionDetection.BoundingBox.MinArea;
+                Camera.Overrides!.MotionDetection.BoundingBox.MinArea = settingsService.MotionDetection.BoundingBox.MinArea;
             }
 
             RaisePropertyChanged();
@@ -968,13 +968,13 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideBoundingBoxMinArea
     {
-        get => (Camera.Overrides?.BoundingBoxMinArea ?? settingsService.MotionDetection.BoundingBox.MinArea).ToString(CultureInfo.InvariantCulture);
+        get => (Camera.Overrides?.MotionDetection.BoundingBox.MinArea ?? settingsService.MotionDetection.BoundingBox.MinArea).ToString(CultureInfo.InvariantCulture);
         set
         {
             if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minArea))
             {
                 EnsureOverrides();
-                Camera.Overrides!.BoundingBoxMinArea = minArea;
+                Camera.Overrides!.MotionDetection.BoundingBox.MinArea = minArea;
                 RaisePropertyChanged();
             }
         }
@@ -989,22 +989,25 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     public IDictionary<string, string> ThumbnailTileCountItems
         => DropDownItemsFactory.ThumbnailTileCountItems;
 
+    public IDictionary<string, string> TimelapseIntervalItems
+        => DropDownItemsFactory.TimelapseIntervalItems;
+
     public bool UseDefaultThumbnailTileCount
     {
-        get => Camera.Overrides?.ThumbnailTileCount is null;
+        get => Camera.Overrides?.Recording.ThumbnailTileCount is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.ThumbnailTileCount = null;
+                    Camera.Overrides.Recording.ThumbnailTileCount = null;
                 }
             }
             else
             {
                 EnsureOverrides();
-                Camera.Overrides!.ThumbnailTileCount = settingsService.Recording.ThumbnailTileCount;
+                Camera.Overrides!.Recording.ThumbnailTileCount = settingsService.Recording.ThumbnailTileCount;
             }
 
             RaisePropertyChanged();
@@ -1014,29 +1017,97 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     public string OverrideThumbnailTileCount
     {
-        get => (Camera.Overrides?.ThumbnailTileCount ?? settingsService.Recording.ThumbnailTileCount).ToString(CultureInfo.InvariantCulture);
+        get => (Camera.Overrides?.Recording.ThumbnailTileCount ?? settingsService.Recording.ThumbnailTileCount).ToString(CultureInfo.InvariantCulture);
         set
         {
             if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var tileCount))
             {
                 EnsureOverrides();
-                Camera.Overrides!.ThumbnailTileCount = tileCount;
+                Camera.Overrides!.Recording.ThumbnailTileCount = tileCount;
                 RaisePropertyChanged();
             }
         }
     }
 
-    public bool UseDefaultAnalysisResolution
+    public bool UseDefaultEnableTimelapse
     {
-        get => Camera.Overrides?.MotionAnalysisWidth is null && Camera.Overrides?.MotionAnalysisHeight is null;
+        get => Camera.Overrides?.Recording.EnableTimelapse is null;
         set
         {
             if (value)
             {
                 if (Camera.Overrides is not null)
                 {
-                    Camera.Overrides.MotionAnalysisWidth = null;
-                    Camera.Overrides.MotionAnalysisHeight = null;
+                    Camera.Overrides.Recording.EnableTimelapse = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.Recording.EnableTimelapse = settingsService.Recording.EnableTimelapse;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideEnableTimelapse));
+        }
+    }
+
+    public bool OverrideEnableTimelapse
+    {
+        get => Camera.Overrides?.Recording.EnableTimelapse ?? settingsService.Recording.EnableTimelapse;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.Recording.EnableTimelapse = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultTimelapseInterval
+    {
+        get => Camera.Overrides?.Recording.TimelapseInterval is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.Recording.TimelapseInterval = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.Recording.TimelapseInterval = settingsService.Recording.TimelapseInterval;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideTimelapseInterval));
+        }
+    }
+
+    public string OverrideTimelapseInterval
+    {
+        get => Camera.Overrides?.Recording.TimelapseInterval ?? settingsService.Recording.TimelapseInterval;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.Recording.TimelapseInterval = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public bool UseDefaultAnalysisResolution
+    {
+        get => Camera.Overrides?.MotionDetection.AnalysisWidth is null && Camera.Overrides?.MotionDetection.AnalysisHeight is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.MotionDetection.AnalysisWidth = null;
+                    Camera.Overrides.MotionDetection.AnalysisHeight = null;
                 }
             }
             else
@@ -1048,8 +1119,8 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
                             settingsService.MotionDetection.AnalysisWidth,
                             settingsService.MotionDetection.AnalysisHeight)
                         : DropDownItemsFactory.DefaultMotionAnalysisResolution);
-                Camera.Overrides!.MotionAnalysisWidth = width;
-                Camera.Overrides!.MotionAnalysisHeight = height;
+                Camera.Overrides!.MotionDetection.AnalysisWidth = width;
+                Camera.Overrides!.MotionDetection.AnalysisHeight = height;
             }
 
             RaisePropertyChanged();
@@ -1061,8 +1132,8 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     {
         get
         {
-            var width = Camera.Overrides?.MotionAnalysisWidth ?? settingsService.MotionDetection.AnalysisWidth;
-            var height = Camera.Overrides?.MotionAnalysisHeight ?? settingsService.MotionDetection.AnalysisHeight;
+            var width = Camera.Overrides?.MotionDetection.AnalysisWidth ?? settingsService.MotionDetection.AnalysisWidth;
+            var height = Camera.Overrides?.MotionDetection.AnalysisHeight ?? settingsService.MotionDetection.AnalysisHeight;
             if (width > 0 && height > 0)
             {
                 return DropDownItemsFactory.FormatAnalysisResolution(width, height);
@@ -1075,8 +1146,8 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         {
             var (width, height) = DropDownItemsFactory.ParseAnalysisResolution(value);
             EnsureOverrides();
-            Camera.Overrides!.MotionAnalysisWidth = width;
-            Camera.Overrides!.MotionAnalysisHeight = height;
+            Camera.Overrides!.MotionDetection.AnalysisWidth = width;
+            Camera.Overrides!.MotionDetection.AnalysisHeight = height;
             RaisePropertyChanged();
         }
     }

@@ -13,6 +13,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
     private readonly IMotionDetectionService motionDetectionService;
+    private readonly ITimelapseService timelapseService;
 
     [ObservableProperty(DependentPropertyNames = [nameof(CanCreateNewLayout)])]
     private CameraGrid? cameraGrid;
@@ -43,13 +44,15 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <param name="settingsService">The application settings service.</param>
     /// <param name="recordingService">The recording service.</param>
     /// <param name="motionDetectionService">The motion detection service.</param>
+    /// <param name="timelapseService">The timelapse service.</param>
     public CameraWallManager(
         ILogger<CameraWallManager> logger,
         ICameraStorageService storageService,
         IDialogService dialogService,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService,
-        IMotionDetectionService motionDetectionService)
+        IMotionDetectionService motionDetectionService,
+        ITimelapseService timelapseService)
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(storageService);
@@ -57,6 +60,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(recordingService);
         ArgumentNullException.ThrowIfNull(motionDetectionService);
+        ArgumentNullException.ThrowIfNull(timelapseService);
 
         this.logger = logger;
         this.storageService = storageService;
@@ -64,6 +68,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         this.settingsService = settingsService;
         this.recordingService = recordingService;
         this.motionDetectionService = motionDetectionService;
+        this.timelapseService = timelapseService;
 
         Layouts = new ObservableCollection<CameraLayout>(storageService.GetAllLayouts());
 
@@ -108,9 +113,10 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         CameraGrid = cameraGridControl;
 
-        // Inject recording and motion detection services
+        // Inject recording, motion detection, and timelapse services
         CameraGrid.RecordingService = recordingService;
         CameraGrid.MotionDetectionService = motionDetectionService;
+        CameraGrid.TimelapseService = timelapseService;
 
         ApplyDisplaySettings();
         LoadStartupCameras();
@@ -614,8 +620,8 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
         foreach (var camera in camerasInLayout)
         {
-            var recordOnConnect = camera.Overrides?.EnableRecordingOnConnect ?? recording.EnableRecordingOnConnect;
-            var recordOnMotion = camera.Overrides?.EnableRecordingOnMotion ?? recording.EnableRecordingOnMotion;
+            var recordOnConnect = camera.Overrides?.Recording.EnableRecordingOnConnect ?? recording.EnableRecordingOnConnect;
+            var recordOnMotion = camera.Overrides?.Recording.EnableRecordingOnMotion ?? recording.EnableRecordingOnMotion;
 
             logger.LogInformation(
                 "Camera: '{CameraName}' - RecordOnConnect: {RecordOnConnect}, RecordOnMotion: {RecordOnMotion}",
@@ -715,8 +721,8 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         // Log camera information for cameras in the current layout
         foreach (var camera in camerasToLoad)
         {
-            var recordOnConnect = camera.Overrides?.EnableRecordingOnConnect ?? recording.EnableRecordingOnConnect;
-            var recordOnMotion = camera.Overrides?.EnableRecordingOnMotion ?? recording.EnableRecordingOnMotion;
+            var recordOnConnect = camera.Overrides?.Recording.EnableRecordingOnConnect ?? recording.EnableRecordingOnConnect;
+            var recordOnMotion = camera.Overrides?.Recording.EnableRecordingOnMotion ?? recording.EnableRecordingOnMotion;
 
             logger.LogInformation(
                 "Camera: '{CameraName}' - RecordOnConnect: {RecordOnConnect}, RecordOnMotion: {RecordOnMotion}",

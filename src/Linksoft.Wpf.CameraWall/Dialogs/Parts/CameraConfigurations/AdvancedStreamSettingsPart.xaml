@@ -12,49 +12,48 @@
     d:DesignWidth="1100"
     mc:Ignorable="d">
 
-    <atc:GroupBoxExpander Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=AdvancedSettings}">
-        <atc:GridEx Margin="10" Columns="*,20,*,20,*,20,*">
-            <atc:LabelCheckBox
-                Grid.Column="0"
-                HideAreas="All"
-                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                      Key=UseLowLatencyModeInfo}"
-                IsChecked="{Binding Path=Camera.Stream.UseLowLatencyMode, Mode=TwoWay}"
-                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                Key=UseLowLatencyMode}"
-                LabelWidthNumber="180" />
+    <atc:GridEx Columns="*,20,*,20,*,20,*">
+        <atc:LabelCheckBox
+            Grid.Column="0"
+            HideAreas="All"
+            InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                  Key=UseLowLatencyModeInfo}"
+            IsChecked="{Binding Path=Camera.Stream.UseLowLatencyMode, Mode=TwoWay}"
+            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                            Key=UseLowLatencyMode}"
+            LabelWidthNumber="180" />
 
-            <atc:LabelIntegerBox
-                Grid.Column="2"
-                HideAreas="Asterisk"
-                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                      Key=MaxLatencyMsInfo}"
-                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                Key=MaxLatencyMs}"
-                Maximum="10000"
-                Minimum="0"
-                Value="{Binding Path=Camera.Stream.MaxLatencyMs, Mode=TwoWay}" />
+        <atc:LabelIntegerBox
+            Grid.Column="2"
+            HideAreas="Asterisk"
+            InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                  Key=MaxLatencyMsInfo}"
+            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                            Key=MaxLatencyMs}"
+            Maximum="10000"
+            Minimum="0"
+            Value="{Binding Path=Camera.Stream.MaxLatencyMs, Mode=TwoWay}" />
 
-            <atc:LabelComboBox
-                Grid.Column="4"
-                HideAreas="All"
-                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                      Key=RtspTransportInfo}"
-                Items="{Binding Path=RtspTransportItems}"
-                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                Key=RtspTransport}"
-                SelectedKey="{Binding Path=SelectedRtspTransportKey, Mode=TwoWay}" />
+        <atc:LabelComboBox
+            Grid.Column="4"
+            HideAreas="All"
+            InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                  Key=RtspTransportInfo}"
+            Items="{Binding Path=RtspTransportItems}"
+            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                            Key=RtspTransport}"
+            SelectedKey="{Binding Path=SelectedRtspTransportKey, Mode=TwoWay}" />
 
-            <atc:LabelIntegerBox
-                Grid.Column="6"
-                HideAreas="Asterisk"
-                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                      Key=BufferDurationMsInfo}"
-                LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                Key=BufferDurationMs}"
-                Maximum="10000"
-                Minimum="0"
-                Value="{Binding Path=Camera.Stream.BufferDurationMs, Mode=TwoWay}" />
-        </atc:GridEx>
-    </atc:GroupBoxExpander>
+        <atc:LabelIntegerBox
+            Grid.Column="6"
+            HideAreas="Asterisk"
+            InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                  Key=BufferDurationMsInfo}"
+            LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                            Key=BufferDurationMs}"
+            Maximum="10000"
+            Minimum="0"
+            Value="{Binding Path=Camera.Stream.BufferDurationMs, Mode=TwoWay}" />
+    </atc:GridEx>
+
 </UserControl>

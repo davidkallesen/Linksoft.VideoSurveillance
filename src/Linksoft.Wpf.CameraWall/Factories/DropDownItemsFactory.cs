@@ -190,6 +190,25 @@ public static class DropDownItemsFactory
     };
 
     /// <summary>
+    /// Gets the timelapse capture interval options for dropdowns.
+    /// Keys are interval codes (e.g., "10s", "1m"), values are display text.
+    /// </summary>
+    public static IDictionary<string, string> TimelapseIntervalItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["10s"] = "10 seconds",
+        ["30s"] = "30 seconds",
+        ["1m"] = "1 minute",
+        ["5m"] = "5 minutes",
+        ["10m"] = "10 minutes",
+        ["30m"] = "30 minutes",
+        ["1h"] = "1 hour",
+        ["3h"] = "3 hours",
+        ["6h"] = "6 hours",
+        ["12h"] = "12 hours",
+        ["24h"] = "24 hours",
+    };
+
+    /// <summary>
     /// Gets the day filter options for recordings browser.
     /// Keys are filter identifiers, values are display text.
     /// </summary>
@@ -316,6 +335,11 @@ public static class DropDownItemsFactory
     public const string DefaultTimeFilter = "_ALL_";
 
     /// <summary>
+    /// Gets the default timelapse capture interval.
+    /// </summary>
+    public const string DefaultTimelapseInterval = "5m";
+
+    /// <summary>
     /// Converts a video quality setting to the maximum vertical resolution in pixels.
     /// Returns 0 for Auto (no limit).
     /// </summary>
@@ -373,4 +397,26 @@ public static class DropDownItemsFactory
         int width,
         int height)
         => $"{width}x{height}";
+
+    /// <summary>
+    /// Parses a timelapse interval string (e.g., "10s", "5m", "1h") into a TimeSpan.
+    /// </summary>
+    /// <param name="interval">The interval string.</param>
+    /// <returns>The parsed TimeSpan, or 5 minutes if parsing fails.</returns>
+    public static TimeSpan ParseTimelapseInterval(string? interval)
+        => interval switch
+        {
+            "10s" => TimeSpan.FromSeconds(10),
+            "30s" => TimeSpan.FromSeconds(30),
+            "1m" => TimeSpan.FromMinutes(1),
+            "5m" => TimeSpan.FromMinutes(5),
+            "10m" => TimeSpan.FromMinutes(10),
+            "30m" => TimeSpan.FromMinutes(30),
+            "1h" => TimeSpan.FromHours(1),
+            "3h" => TimeSpan.FromHours(3),
+            "6h" => TimeSpan.FromHours(6),
+            "12h" => TimeSpan.FromHours(12),
+            "24h" => TimeSpan.FromHours(24),
+            _ => TimeSpan.FromMinutes(5),
+        };
 }

@@ -106,6 +106,17 @@ public partial class FullScreenCameraWindow : IDisposable
             return;
         }
 
+        // Set analysis resolution
+        motionOverlay.AnalysisWidth = viewModel.AnalysisWidth;
+        motionOverlay.AnalysisHeight = viewModel.AnalysisHeight;
+
+        // Set the video stream dimensions for letterbox-aware coordinate mapping
+        if (viewModel.Player?.Video is not null && viewModel.Player.Video.Width > 0 && viewModel.Player.Video.Height > 0)
+        {
+            motionOverlay.VideoWidth = viewModel.Player.Video.Width;
+            motionOverlay.VideoHeight = viewModel.Player.Video.Height;
+        }
+
         // Get the video container size for coordinate mapping
         var containerSize = new Size(VideoPlayer.ActualWidth, VideoPlayer.ActualHeight);
         if ((containerSize.Width <= 0 || containerSize.Height <= 0) &&

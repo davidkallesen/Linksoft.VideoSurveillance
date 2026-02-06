@@ -32,83 +32,145 @@
     <atc:BusyOverlay IsBusy="{Binding Path=IsTesting}">
         <atc:GridEx Rows="*,20,Auto">
 
-            <!--  Scrollable Content Area  -->
-            <ScrollViewer
+            <TabControl
                 Grid.Row="0"
-                Padding="0,0,20,0"
-                HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto">
+                Margin="0,10,0,0"
+                atc:TabControlHelper.UnderlinePlacement="Bottom"
+                atc:TabControlHelper.Underlined="TabPanel"
+                BorderThickness="0"
+                TabStripPlacement="Top">
 
-                <StackPanel Margin="20">
+                <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=General}">
+                    <ScrollViewer
+                        Padding="0,0,20,0"
+                        HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto">
 
-                    <!--  Network Scanner (only instantiated when adding new camera)  -->
-                    <ContentControl Content="{Binding}">
-                        <ContentControl.Style>
-                            <Style TargetType="ContentControl">
-                                <Setter Property="ContentTemplate" Value="{StaticResource EmptyTemplate}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsNew}" Value="True">
-                                        <Setter Property="ContentTemplate" Value="{StaticResource NetworkScannerTemplate}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ContentControl.Style>
-                    </ContentControl>
+                        <StackPanel Margin="15,15,0,15">
 
-                    <!--  Form Content - 3 Column Layout  -->
-                    <atc:GroupBoxExpander Margin="0,0,0,20" Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=CameraConfiguration}">
-                        <atc:GridEx
-                            Margin="10"
-                            Columns="*,20,*,20,*"
-                            Rows="Auto">
-                            <cameraConfigs:BasicDisplaySettingsPart Grid.Row="0" Grid.Column="0" />
-                            <cameraConfigs:BasicConnectionSettingsPart Grid.Row="0" Grid.Column="2" />
-                            <cameraConfigs:BasicAuthenticationSettingsPart Grid.Row="0" Grid.Column="4" />
-                        </atc:GridEx>
-                    </atc:GroupBoxExpander>
+                            <!--  Network Scanner (only instantiated when adding new camera)  -->
+                            <ContentControl Content="{Binding}">
+                                <ContentControl.Style>
+                                    <Style TargetType="ContentControl">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource EmptyTemplate}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsNew}" Value="True">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource NetworkScannerTemplate}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ContentControl.Style>
+                            </ContentControl>
 
-                    <!--  Advanced Settings  -->
-                    <cameraConfigs:AdvancedStreamSettingsPart Margin="0,0,0,20" />
+                            <!--  Form Content - 3 Column Layout  -->
+                            <atc:GroupBoxExpander Margin="0,0,0,20" Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=CameraConfiguration}">
+                                <atc:GridEx
+                                    Margin="0,20,0,0"
+                                    Columns="*,20,*,20,*"
+                                    Rows="Auto">
+                                    <cameraConfigs:BasicDisplaySettingsPart Grid.Row="0" Grid.Column="0" />
+                                    <cameraConfigs:BasicConnectionSettingsPart Grid.Row="0" Grid.Column="2" />
+                                    <cameraConfigs:BasicAuthenticationSettingsPart Grid.Row="0" Grid.Column="4" />
+                                </atc:GridEx>
+                            </atc:GroupBoxExpander>
 
-                    <!--  Camera-Specific Overrides  -->
-                    <atc:GroupBoxExpander Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Overrides}">
-                        <atc:UniformSpacingPanel
-                            Margin="10"
-                            Orientation="Vertical"
-                            Spacing="20">
-                            <!--  Info text  -->
-                            <TextBlock
-                                FontStyle="Italic"
-                                Foreground="{DynamicResource AtcApps.Brushes.Text}"
-                                Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                                           Key=OverrideSettingsInfo}"
-                                TextWrapping="Wrap" />
+                            <!--  Advanced Settings  -->
+                            <atc:GroupBoxExpander Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=AdvancedSettings}">
+                                <cameraConfigs:AdvancedStreamSettingsPart Margin="10,15,0,-5" />
+                            </atc:GroupBoxExpander>
+
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Overrides}">
+                    <atc:GridEx Rows="Auto,*">
+
+                        <!--  Info text  -->
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="15,15,15,10"
+                            FontStyle="Italic"
+                            Foreground="{DynamicResource AtcApps.Brushes.Text}"
+                            Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                       Key=OverrideSettingsInfo}"
+                            TextWrapping="Wrap" />
+
+                        <!--  Camera-Specific Overrides - Left-side tab menu  -->
+                        <TabControl
+                            Grid.Row="1"
+                            BorderThickness="0"
+                            TabStripPlacement="Left">
 
                             <!--  Display Overrides  -->
-                            <cameraConfigs:DisplayOverridesPart />
+                            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=CameraDisplay}">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                    <cameraConfigs:DisplayOverridesPart Margin="15" />
+                                </ScrollViewer>
+                            </TabItem>
 
                             <!--  Connection Overrides  -->
-                            <cameraConfigs:ConnectionOverridesPart />
+                            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Connection}">
+                                <ScrollViewer
+                                    Padding="0,0,20,0"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+                                    <cameraConfigs:ConnectionOverridesPart Margin="15" />
+                                </ScrollViewer>
+                            </TabItem>
 
                             <!--  Performance Overrides  -->
-                            <cameraConfigs:PerformanceOverridesPart />
+                            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Performance}">
+                                <ScrollViewer
+                                    Padding="0,0,20,0"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+                                    <cameraConfigs:PerformanceOverridesPart Margin="15" />
+                                </ScrollViewer>
+                            </TabItem>
 
-                            <!--  Recording Overrides  -->
-                            <cameraConfigs:RecordingOverridesPart />
+                            <!--  Capture Overrides  -->
+                            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Capture}">
+                                <ScrollViewer
+                                    Padding="0,0,20,0"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+                                    <cameraConfigs:CaptureOverridesPart Margin="15" />
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <!--  Timelapse Overrides  -->
+                            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Timelapse}">
+                                <ScrollViewer
+                                    Padding="0,0,20,0"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+                                    <cameraConfigs:TimelapseOverridesPart Margin="15" />
+                                </ScrollViewer>
+                            </TabItem>
 
                             <!--  Motion Detection Overrides  -->
-                            <cameraConfigs:MotionDetectionOverridesPart />
-                        </atc:UniformSpacingPanel>
-                    </atc:GroupBoxExpander>
+                            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=MotionDetection}">
+                                <ScrollViewer
+                                    Padding="0,0,20,0"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+                                    <cameraConfigs:MotionDetectionOverridesPart Margin="15" />
+                                </ScrollViewer>
+                            </TabItem>
 
-                </StackPanel>
-            </ScrollViewer>
+                        </TabControl>
+
+                    </atc:GridEx>
+                </TabItem>
+
+            </TabControl>
 
             <!--  Test Result | Buttons (sticky at bottom)  -->
             <atc:GridEx
                 Grid.Row="2"
-                Margin="20"
-                Columns="*,20,Auto,40">
+                Margin="20,0,0,20"
+                Columns="*,20,Auto,24">
                 <atc:LabelTextInfo
                     Grid.Column="0"
                     VerticalAlignment="Center"

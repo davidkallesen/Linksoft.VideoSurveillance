@@ -141,6 +141,7 @@ public partial class CameraTile : IDisposable
     // Recording services
     private IRecordingService? recordingService;
     private IMotionDetectionService? motionDetectionService;
+    private ITimelapseService? timelapseService;
     private DispatcherTimer? recordingDurationTimer;
 
     private bool disposed;
@@ -190,91 +191,91 @@ public partial class CameraTile : IDisposable
     /// Gets the effective EnableRecordingOnMotion value, considering camera override.
     /// </summary>
     private bool GetEffectiveEnableRecordingOnMotion()
-        => Camera?.Overrides?.EnableRecordingOnMotion ?? EnableRecordingOnMotion;
+        => Camera?.Overrides?.Recording.EnableRecordingOnMotion ?? EnableRecordingOnMotion;
 
     /// <summary>
     /// Gets the effective ShowBoundingBoxInGrid value, considering camera override.
     /// </summary>
     private bool GetEffectiveShowBoundingBoxInGrid()
-        => Camera?.Overrides?.ShowBoundingBoxInGrid ?? ShowBoundingBoxInGrid;
+        => Camera?.Overrides?.MotionDetection.BoundingBox.ShowInGrid ?? ShowBoundingBoxInGrid;
 
     /// <summary>
     /// Gets the effective ShowBoundingBoxInFullScreen value, considering camera override.
     /// </summary>
     private bool GetEffectiveShowBoundingBoxInFullScreen()
-        => Camera?.Overrides?.ShowBoundingBoxInFullScreen ?? false;
+        => Camera?.Overrides?.MotionDetection.BoundingBox.ShowInFullScreen ?? false;
 
     /// <summary>
     /// Gets the effective BoundingBoxColor value, considering camera override.
     /// </summary>
     private string GetEffectiveBoundingBoxColor()
-        => Camera?.Overrides?.BoundingBoxColor ?? BoundingBoxColor;
+        => Camera?.Overrides?.MotionDetection.BoundingBox.Color ?? BoundingBoxColor;
 
     /// <summary>
     /// Gets the effective BoundingBoxThickness value, considering camera override.
     /// </summary>
     private int GetEffectiveBoundingBoxThickness()
-        => Camera?.Overrides?.BoundingBoxThickness ?? BoundingBoxThickness;
+        => Camera?.Overrides?.MotionDetection.BoundingBox.Thickness ?? BoundingBoxThickness;
 
     /// <summary>
     /// Gets the effective BoundingBoxSmoothing value, considering camera override.
     /// </summary>
     private double GetEffectiveBoundingBoxSmoothing()
-        => Camera?.Overrides?.BoundingBoxSmoothing ?? BoundingBoxSmoothing;
+        => Camera?.Overrides?.MotionDetection.BoundingBox.Smoothing ?? BoundingBoxSmoothing;
 
     /// <summary>
     /// Gets the effective BoundingBoxMinArea value, considering camera override.
     /// </summary>
     private int GetEffectiveBoundingBoxMinArea()
-        => Camera?.Overrides?.BoundingBoxMinArea ?? MotionBoundingBoxMinArea;
+        => Camera?.Overrides?.MotionDetection.BoundingBox.MinArea ?? MotionBoundingBoxMinArea;
 
     /// <summary>
     /// Gets the effective BoundingBoxPadding value, considering camera override.
     /// </summary>
     private int GetEffectiveBoundingBoxPadding()
-        => Camera?.Overrides?.BoundingBoxPadding ?? MotionBoundingBoxPadding;
+        => Camera?.Overrides?.MotionDetection.BoundingBox.Padding ?? MotionBoundingBoxPadding;
 
     /// <summary>
     /// Gets the effective MotionSensitivity value, considering camera override.
     /// </summary>
     private int GetEffectiveMotionSensitivity()
-        => Camera?.Overrides?.MotionSensitivity ?? MotionSensitivity;
+        => Camera?.Overrides?.MotionDetection.Sensitivity ?? MotionSensitivity;
 
     /// <summary>
     /// Gets the effective MotionMinimumChangePercent value, considering camera override.
     /// </summary>
     private double GetEffectiveMotionMinimumChangePercent()
-        => Camera?.Overrides?.MotionMinimumChangePercent ?? MotionMinimumChangePercent;
+        => Camera?.Overrides?.MotionDetection.MinimumChangePercent ?? MotionMinimumChangePercent;
 
     /// <summary>
     /// Gets the effective MotionAnalysisFrameRate value, considering camera override.
     /// </summary>
     private int GetEffectiveMotionAnalysisFrameRate()
-        => Camera?.Overrides?.MotionAnalysisFrameRate ?? MotionAnalysisFrameRate;
+        => Camera?.Overrides?.MotionDetection.AnalysisFrameRate ?? MotionAnalysisFrameRate;
 
     /// <summary>
     /// Gets the effective MotionPostDurationSeconds value, considering camera override.
     /// </summary>
     private int GetEffectiveMotionPostDurationSeconds()
-        => Camera?.Overrides?.PostMotionDurationSeconds ?? MotionPostDurationSeconds;
+        => Camera?.Overrides?.MotionDetection.PostMotionDurationSeconds ?? MotionPostDurationSeconds;
 
     /// <summary>
     /// Gets the effective MotionCooldownSeconds value, considering camera override.
     /// </summary>
     private int GetEffectiveMotionCooldownSeconds()
-        => Camera?.Overrides?.MotionCooldownSeconds ?? MotionCooldownSeconds;
+        => Camera?.Overrides?.MotionDetection.CooldownSeconds ?? MotionCooldownSeconds;
 
     /// <summary>
     /// Gets the effective AutoReconnectOnFailure value, considering camera override.
     /// </summary>
     private bool GetEffectiveAutoReconnectOnFailure()
-        => Camera?.Overrides?.AutoReconnectOnFailure ?? AutoReconnectOnFailure;
+        => Camera?.Overrides?.Connection.AutoReconnectOnFailure ?? AutoReconnectOnFailure;
 
     /// <summary>
     /// Gets the effective ReconnectDelaySeconds value, considering camera override.
     /// </summary>
     private int GetEffectiveReconnectDelaySeconds()
-        => Camera?.Overrides?.ReconnectDelaySeconds ?? ReconnectDelaySeconds;
+        => Camera?.Overrides?.Connection.ReconnectDelaySeconds ?? ReconnectDelaySeconds;
 
     /// <summary>
     /// Gets the effective motion analysis resolution, considering camera override.
@@ -282,8 +283,8 @@ public partial class CameraTile : IDisposable
     /// </summary>
     private (int Width, int Height) GetEffectiveMotionAnalysisResolution()
     {
-        var overrideWidth = Camera?.Overrides?.MotionAnalysisWidth;
-        var overrideHeight = Camera?.Overrides?.MotionAnalysisHeight;
+        var overrideWidth = Camera?.Overrides?.MotionDetection.AnalysisWidth;
+        var overrideHeight = Camera?.Overrides?.MotionDetection.AnalysisHeight;
 
         if (overrideWidth.HasValue && overrideHeight.HasValue && overrideWidth.Value > 0 && overrideHeight.Value > 0)
         {
@@ -353,13 +354,15 @@ public partial class CameraTile : IDisposable
     }
 
     /// <summary>
-    /// Initializes the recording and motion detection services.
+    /// Initializes the recording, motion detection, and timelapse services.
     /// </summary>
     /// <param name="recordingService">The recording service.</param>
     /// <param name="motionDetectionService">The motion detection service.</param>
+    /// <param name="timelapseService">The timelapse service.</param>
     public void InitializeServices(
         IRecordingService? recordingService,
-        IMotionDetectionService? motionDetectionService)
+        IMotionDetectionService? motionDetectionService,
+        ITimelapseService? timelapseService = null)
     {
         // Unsubscribe from previous services
         if (this.recordingService is not null)
@@ -374,6 +377,7 @@ public partial class CameraTile : IDisposable
 
         this.recordingService = recordingService;
         this.motionDetectionService = motionDetectionService;
+        this.timelapseService = timelapseService;
 
         // Subscribe to new services
         if (this.recordingService is not null)
@@ -391,6 +395,12 @@ public partial class CameraTile : IDisposable
         if (ConnectionState == ConnectionState.Connected && ShouldRunMotionDetection)
         {
             StartMotionDetection();
+        }
+
+        // Start timelapse if camera is already connected and enabled
+        if (ConnectionState == ConnectionState.Connected)
+        {
+            StartTimelapse();
         }
     }
 
@@ -846,8 +856,8 @@ public partial class CameraTile : IDisposable
 
     private void HandleOverridesChanged()
     {
-        var currentVideoQuality = Camera?.Overrides?.VideoQuality;
-        var currentHardwareAcceleration = Camera?.Overrides?.HardwareAcceleration;
+        var currentVideoQuality = Camera?.Overrides?.Performance.VideoQuality;
+        var currentHardwareAcceleration = Camera?.Overrides?.Performance.HardwareAcceleration;
 
         var performanceChanged =
             currentVideoQuality != previousOverrideVideoQuality ||
@@ -864,19 +874,19 @@ public partial class CameraTile : IDisposable
         }
 
         // Check for motion detection override changes
-        var currentEnableRecordingOnMotion = Camera?.Overrides?.EnableRecordingOnMotion;
-        var currentShowBoundingBoxInGrid = Camera?.Overrides?.ShowBoundingBoxInGrid;
-        var currentShowBoundingBoxInFullScreen = Camera?.Overrides?.ShowBoundingBoxInFullScreen;
-        var currentBoundingBoxColor = Camera?.Overrides?.BoundingBoxColor;
-        var currentBoundingBoxThickness = Camera?.Overrides?.BoundingBoxThickness;
-        var currentBoundingBoxMinArea = Camera?.Overrides?.BoundingBoxMinArea;
-        var currentMotionSensitivity = Camera?.Overrides?.MotionSensitivity;
-        var currentMotionMinimumChangePercent = Camera?.Overrides?.MotionMinimumChangePercent;
-        var currentMotionAnalysisFrameRate = Camera?.Overrides?.MotionAnalysisFrameRate;
-        var currentMotionAnalysisWidth = Camera?.Overrides?.MotionAnalysisWidth;
-        var currentMotionAnalysisHeight = Camera?.Overrides?.MotionAnalysisHeight;
-        var currentMotionCooldownSeconds = Camera?.Overrides?.MotionCooldownSeconds;
-        var currentPostMotionDurationSeconds = Camera?.Overrides?.PostMotionDurationSeconds;
+        var currentEnableRecordingOnMotion = Camera?.Overrides?.Recording.EnableRecordingOnMotion;
+        var currentShowBoundingBoxInGrid = Camera?.Overrides?.MotionDetection.BoundingBox.ShowInGrid;
+        var currentShowBoundingBoxInFullScreen = Camera?.Overrides?.MotionDetection.BoundingBox.ShowInFullScreen;
+        var currentBoundingBoxColor = Camera?.Overrides?.MotionDetection.BoundingBox.Color;
+        var currentBoundingBoxThickness = Camera?.Overrides?.MotionDetection.BoundingBox.Thickness;
+        var currentBoundingBoxMinArea = Camera?.Overrides?.MotionDetection.BoundingBox.MinArea;
+        var currentMotionSensitivity = Camera?.Overrides?.MotionDetection.Sensitivity;
+        var currentMotionMinimumChangePercent = Camera?.Overrides?.MotionDetection.MinimumChangePercent;
+        var currentMotionAnalysisFrameRate = Camera?.Overrides?.MotionDetection.AnalysisFrameRate;
+        var currentMotionAnalysisWidth = Camera?.Overrides?.MotionDetection.AnalysisWidth;
+        var currentMotionAnalysisHeight = Camera?.Overrides?.MotionDetection.AnalysisHeight;
+        var currentMotionCooldownSeconds = Camera?.Overrides?.MotionDetection.CooldownSeconds;
+        var currentPostMotionDurationSeconds = Camera?.Overrides?.MotionDetection.PostMotionDurationSeconds;
 
         var motionDetectionChanged =
             currentEnableRecordingOnMotion != previousOverrideEnableRecordingOnMotion ||
@@ -1023,21 +1033,21 @@ public partial class CameraTile : IDisposable
         }
 
         // Initialize tracked override values for change detection
-        previousOverrideVideoQuality = cameraConfig.Overrides?.VideoQuality;
-        previousOverrideHardwareAcceleration = cameraConfig.Overrides?.HardwareAcceleration;
-        previousOverrideEnableRecordingOnMotion = cameraConfig.Overrides?.EnableRecordingOnMotion;
-        previousOverrideShowBoundingBoxInGrid = cameraConfig.Overrides?.ShowBoundingBoxInGrid;
-        previousOverrideShowBoundingBoxInFullScreen = cameraConfig.Overrides?.ShowBoundingBoxInFullScreen;
-        previousOverrideBoundingBoxColor = cameraConfig.Overrides?.BoundingBoxColor;
-        previousOverrideBoundingBoxThickness = cameraConfig.Overrides?.BoundingBoxThickness;
-        previousOverrideBoundingBoxMinArea = cameraConfig.Overrides?.BoundingBoxMinArea;
-        previousOverrideMotionSensitivity = cameraConfig.Overrides?.MotionSensitivity;
-        previousOverrideMotionMinimumChangePercent = cameraConfig.Overrides?.MotionMinimumChangePercent;
-        previousOverrideMotionAnalysisFrameRate = cameraConfig.Overrides?.MotionAnalysisFrameRate;
-        previousOverrideMotionAnalysisWidth = cameraConfig.Overrides?.MotionAnalysisWidth;
-        previousOverrideMotionAnalysisHeight = cameraConfig.Overrides?.MotionAnalysisHeight;
-        previousOverrideMotionCooldownSeconds = cameraConfig.Overrides?.MotionCooldownSeconds;
-        previousOverridePostMotionDurationSeconds = cameraConfig.Overrides?.PostMotionDurationSeconds;
+        previousOverrideVideoQuality = cameraConfig.Overrides?.Performance.VideoQuality;
+        previousOverrideHardwareAcceleration = cameraConfig.Overrides?.Performance.HardwareAcceleration;
+        previousOverrideEnableRecordingOnMotion = cameraConfig.Overrides?.Recording.EnableRecordingOnMotion;
+        previousOverrideShowBoundingBoxInGrid = cameraConfig.Overrides?.MotionDetection.BoundingBox.ShowInGrid;
+        previousOverrideShowBoundingBoxInFullScreen = cameraConfig.Overrides?.MotionDetection.BoundingBox.ShowInFullScreen;
+        previousOverrideBoundingBoxColor = cameraConfig.Overrides?.MotionDetection.BoundingBox.Color;
+        previousOverrideBoundingBoxThickness = cameraConfig.Overrides?.MotionDetection.BoundingBox.Thickness;
+        previousOverrideBoundingBoxMinArea = cameraConfig.Overrides?.MotionDetection.BoundingBox.MinArea;
+        previousOverrideMotionSensitivity = cameraConfig.Overrides?.MotionDetection.Sensitivity;
+        previousOverrideMotionMinimumChangePercent = cameraConfig.Overrides?.MotionDetection.MinimumChangePercent;
+        previousOverrideMotionAnalysisFrameRate = cameraConfig.Overrides?.MotionDetection.AnalysisFrameRate;
+        previousOverrideMotionAnalysisWidth = cameraConfig.Overrides?.MotionDetection.AnalysisWidth;
+        previousOverrideMotionAnalysisHeight = cameraConfig.Overrides?.MotionDetection.AnalysisHeight;
+        previousOverrideMotionCooldownSeconds = cameraConfig.Overrides?.MotionDetection.CooldownSeconds;
+        previousOverridePostMotionDurationSeconds = cameraConfig.Overrides?.MotionDetection.PostMotionDurationSeconds;
 
         CameraName = cameraConfig.Display.DisplayName;
         CameraDescription = cameraConfig.Display.Description ?? string.Empty;
@@ -1288,6 +1298,9 @@ public partial class CameraTile : IDisposable
             // Stop motion detection when disconnected
             StopMotionDetection();
 
+            // Stop timelapse capture when disconnected
+            StopTimelapse();
+
             // Try auto-reconnect on failure (but not on manual disconnect)
             if (newState == ConnectionState.ConnectionFailed)
             {
@@ -1321,6 +1334,9 @@ public partial class CameraTile : IDisposable
             {
                 StartMotionDetection();
             }
+
+            // Auto-start timelapse capture if enabled
+            StartTimelapse();
         }
     }
 
@@ -2017,6 +2033,13 @@ public partial class CameraTile : IDisposable
         motionOverlay.AnalysisWidth = analysisWidth;
         motionOverlay.AnalysisHeight = analysisHeight;
 
+        // Set the video stream dimensions for letterbox-aware coordinate mapping
+        if (Player?.Video is not null && Player.Video.Width > 0 && Player.Video.Height > 0)
+        {
+            motionOverlay.VideoWidth = Player.Video.Width;
+            motionOverlay.VideoHeight = Player.Video.Height;
+        }
+
         // Get the video container size for coordinate mapping
         var containerSize = new Size(VideoPlayer.ActualWidth, VideoPlayer.ActualHeight);
         if ((containerSize.Width <= 0 || containerSize.Height <= 0) &&
@@ -2077,7 +2100,7 @@ public partial class CameraTile : IDisposable
             $"[MotionDetection] Starting detection for '{Camera.Display.DisplayName}' with " +
             $"ShowInGrid={settings.BoundingBox.ShowInGrid}, MinArea={settings.BoundingBox.MinArea}, " +
             $"Sensitivity={settings.Sensitivity}, Resolution={settings.AnalysisWidth}x{settings.AnalysisHeight}, " +
-            $"OverrideMinArea={Camera.Overrides?.BoundingBoxMinArea}");
+            $"OverrideMinArea={Camera.Overrides?.MotionDetection.BoundingBox.MinArea}");
         motionDetectionService.StartDetection(Camera.Id, Player, settings);
 
         // Apply bounding box settings AFTER starting detection so the overlay gets the correct resolution
@@ -2095,6 +2118,37 @@ public partial class CameraTile : IDisposable
         }
 
         motionDetectionService.StopDetection(Camera.Id);
+    }
+
+    /// <summary>
+    /// Starts timelapse capture for this camera if enabled.
+    /// </summary>
+    public void StartTimelapse()
+    {
+        if (Camera is null || Player is null || timelapseService is null)
+        {
+            return;
+        }
+
+        if (!timelapseService.GetEffectiveEnabled(Camera))
+        {
+            return;
+        }
+
+        timelapseService.StartCapture(Camera, Player);
+    }
+
+    /// <summary>
+    /// Stops timelapse capture for this camera.
+    /// </summary>
+    public void StopTimelapse()
+    {
+        if (Camera is null || timelapseService is null)
+        {
+            return;
+        }
+
+        timelapseService.StopCapture(Camera.Id);
     }
 
     private void OnDragCaptureLayerMouseLeftButtonDown(

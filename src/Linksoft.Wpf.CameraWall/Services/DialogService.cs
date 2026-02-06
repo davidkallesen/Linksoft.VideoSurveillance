@@ -190,19 +190,19 @@ public class DialogService : IDialogService
         var display = settingsService.CameraDisplay;
         var overrides = camera.Overrides;
 
-        var showOverlayTitle = overrides?.ShowOverlayTitle ?? display.ShowOverlayTitle;
-        var showOverlayDescription = overrides?.ShowOverlayDescription ?? display.ShowOverlayDescription;
-        var showOverlayTime = overrides?.ShowOverlayTime ?? display.ShowOverlayTime;
-        var showOverlayConnectionStatus = overrides?.ShowOverlayConnectionStatus ?? display.ShowOverlayConnectionStatus;
-        var overlayOpacity = overrides?.OverlayOpacity ?? display.OverlayOpacity;
+        var showOverlayTitle = overrides?.CameraDisplay.ShowOverlayTitle ?? display.ShowOverlayTitle;
+        var showOverlayDescription = overrides?.CameraDisplay.ShowOverlayDescription ?? display.ShowOverlayDescription;
+        var showOverlayTime = overrides?.CameraDisplay.ShowOverlayTime ?? display.ShowOverlayTime;
+        var showOverlayConnectionStatus = overrides?.CameraDisplay.ShowOverlayConnectionStatus ?? display.ShowOverlayConnectionStatus;
+        var overlayOpacity = overrides?.CameraDisplay.OverlayOpacity ?? display.OverlayOpacity;
         var overlayPosition = camera.Display.OverlayPosition;
 
         // Compute effective bounding box settings (per-camera overrides → app defaults)
         var motionDetection = settingsService.MotionDetection;
-        var showBoundingBoxInFullScreen = overrides?.ShowBoundingBoxInFullScreen ?? motionDetection.BoundingBox.ShowInFullScreen;
-        var boundingBoxColor = overrides?.BoundingBoxColor ?? motionDetection.BoundingBox.Color;
-        var boundingBoxThickness = overrides?.BoundingBoxThickness ?? motionDetection.BoundingBox.Thickness;
-        var boundingBoxSmoothing = overrides?.BoundingBoxSmoothing ?? motionDetection.BoundingBox.Smoothing;
+        var showBoundingBoxInFullScreen = overrides?.MotionDetection.BoundingBox.ShowInFullScreen ?? motionDetection.BoundingBox.ShowInFullScreen;
+        var boundingBoxColor = overrides?.MotionDetection.BoundingBox.Color ?? motionDetection.BoundingBox.Color;
+        var boundingBoxThickness = overrides?.MotionDetection.BoundingBox.Thickness ?? motionDetection.BoundingBox.Thickness;
+        var boundingBoxSmoothing = overrides?.MotionDetection.BoundingBox.Smoothing ?? motionDetection.BoundingBox.Smoothing;
 
         // Borrow player from source tile for instant display (no reconnection delay)
         var borrowedPlayer = sourceTile?.LendPlayer();

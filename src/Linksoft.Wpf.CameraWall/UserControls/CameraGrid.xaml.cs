@@ -67,12 +67,15 @@ public partial class CameraGrid
     [DependencyProperty(DefaultValue = true)]
     private bool hardwareAcceleration;
 
-    // Recording/Motion Detection services
+    // Recording/Motion Detection/Timelapse services
     [DependencyProperty(PropertyChangedCallback = nameof(OnRecordingServiceChanged))]
     private IRecordingService? recordingService;
 
     [DependencyProperty(PropertyChangedCallback = nameof(OnMotionDetectionServiceChanged))]
     private IMotionDetectionService? motionDetectionService;
+
+    [DependencyProperty(PropertyChangedCallback = nameof(OnTimelapseServiceChanged))]
+    private ITimelapseService? timelapseService;
 
     // Recording settings
     [DependencyProperty(DefaultValue = false)]
@@ -556,8 +559,18 @@ public partial class CameraGrid
         }
     }
 
+    private static void OnTimelapseServiceChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraGrid grid)
+        {
+            grid.InitializeAllTileServices();
+        }
+    }
+
     /// <summary>
-    /// Initializes all camera tiles with the recording and motion detection services.
+    /// Initializes all camera tiles with the recording, motion detection, and timelapse services.
     /// </summary>
     private void InitializeAllTileServices()
     {
@@ -569,7 +582,7 @@ public partial class CameraGrid
         for (var i = 0; i < CameraTiles.Count; i++)
         {
             var tile = GetCameraTileAt(i);
-            tile?.InitializeServices(RecordingService, MotionDetectionService);
+            tile?.InitializeServices(RecordingService, MotionDetectionService, TimelapseService);
         }
     }
 }

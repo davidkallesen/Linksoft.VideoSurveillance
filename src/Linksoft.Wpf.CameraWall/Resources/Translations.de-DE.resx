@@ -861,4 +861,112 @@
   <data name="ThumbnailTileCount" xml:space="preserve">
     <value>Miniaturansicht-Kacheln</value>
   </data>
+  <data name="OverrideToggleMaster" xml:space="preserve">
+    <value>Master</value>
+  </data>
+  <data name="OverrideToggleLocal" xml:space="preserve">
+    <value>Lokal</value>
+  </data>
+  <data name="AnalysisResolution" xml:space="preserve">
+    <value>Analyseauflösung</value>
+  </data>
+  <data name="BoundingBoxDisplay" xml:space="preserve">
+    <value>Begrenzungsrahmen-Anzeige</value>
+  </data>
+  <data name="ShowBoundingBoxInGrid" xml:space="preserve">
+    <value>Begrenzungsrahmen in Rasteransicht anzeigen</value>
+  </data>
+  <data name="ShowBoundingBoxInFullScreen" xml:space="preserve">
+    <value>Begrenzungsrahmen im Vollbild anzeigen</value>
+  </data>
+  <data name="BoundingBoxColor" xml:space="preserve">
+    <value>Begrenzungsrahmen-Farbe</value>
+  </data>
+  <data name="BoundingBoxThickness" xml:space="preserve">
+    <value>Begrenzungsrahmen-Stärke</value>
+  </data>
+  <data name="BoundingBoxMinArea" xml:space="preserve">
+    <value>Min. Erkennungsgröße</value>
+  </data>
+  <data name="ClickOutsideToClose" xml:space="preserve">
+    <value>Außerhalb klicken zum Schließen</value>
+  </data>
+  <data name="PlaybackOverlaySettings" xml:space="preserve">
+    <value>Wiedergabe-Overlay-Einstellungen</value>
+  </data>
+  <data name="ShowPlaybackFilename" xml:space="preserve">
+    <value>Dateiname anzeigen</value>
+  </data>
+  <data name="PlaybackFilenameColor" xml:space="preserve">
+    <value>Dateiname-Farbe</value>
+  </data>
+  <data name="ShowPlaybackTimestamp" xml:space="preserve">
+    <value>Zeitstempel anzeigen</value>
+  </data>
+  <data name="PlaybackTimestampColor" xml:space="preserve">
+    <value>Zeitstempel-Farbe</value>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Zeit</value>
+  </data>
+  <data name="FilterAll" xml:space="preserve">
+    <value>Alle</value>
+  </data>
+  <data name="FilterToday" xml:space="preserve">
+    <value>Heute</value>
+  </data>
+  <data name="FilterYesterday" xml:space="preserve">
+    <value>Gestern</value>
+  </data>
+  <data name="FilterLast7Days" xml:space="preserve">
+    <value>Letzte 7 Tage</value>
+  </data>
+  <data name="FilterLast30Days" xml:space="preserve">
+    <value>Letzte 30 Tage</value>
+  </data>
+  <data name="FilterThisWeek" xml:space="preserve">
+    <value>Diese Woche</value>
+  </data>
+  <data name="FilterThisMonth" xml:space="preserve">
+    <value>Dieser Monat</value>
+  </data>
+  <data name="FilterNight" xml:space="preserve">
+    <value>00:00 - 06:00 (Nacht)</value>
+  </data>
+  <data name="FilterMorning" xml:space="preserve">
+    <value>06:00 - 12:00 (Morgen)</value>
+  </data>
+  <data name="FilterAfternoon" xml:space="preserve">
+    <value>12:00 - 18:00 (Nachmittag)</value>
+  </data>
+  <data name="FilterEvening" xml:space="preserve">
+    <value>18:00 - 24:00 (Abend)</value>
+  </data>
+  <data name="EnableTimelapse" xml:space="preserve">
+    <value>Zeitraffer-Aufnahme aktivieren</value>
+  </data>
+  <data name="TimelapseInterval" xml:space="preserve">
+    <value>Aufnahmeintervall</value>
+  </data>
+  <data name="TimelapseSettings" xml:space="preserve">
+    <value>Zeitraffer-Einstellungen</value>
+  </data>
+  <data name="Capture" xml:space="preserve">
+    <value>Aufnahme</value>
+  </data>
+  <data name="Storage" xml:space="preserve">
+    <value>Speicher</value>
+  </data>
+  <data name="Timelapse" xml:space="preserve">
+    <value>Zeitraffer</value>
+  </data>
+  <data name="CaptureOverrides" xml:space="preserve">
+    <value>Aufnahme-Überschreibungen</value>
+  </data>
+  <data name="TimelapseOverrides" xml:space="preserve">
+    <value>Zeitraffer-Überschreibungen</value>
+  </data>
 </root>

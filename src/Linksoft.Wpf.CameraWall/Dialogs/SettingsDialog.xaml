@@ -30,7 +30,10 @@
     <atc:GridEx Margin="16" Rows="*,Auto">
 
         <!--  Tabbed Settings  -->
-        <TabControl Grid.Row="0" TabStripPlacement="Left">
+        <TabControl
+            Grid.Row="0"
+            BorderThickness="0"
+            TabStripPlacement="Left">
 
             <!--  General Tab  -->
             <TabItem Width="180" Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=General}">
@@ -84,11 +87,28 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!--  Recording Tab  -->
-            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Recording}">
+            <!--  Capture Tab  -->
+            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Capture}">
                 <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
                     <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
-                        <settings:RecordingGeneralSettings />
+                        <settings:CaptureRecordingSettings />
+                    </atc:UniformSpacingPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Timelapse Tab  -->
+            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Timelapse}">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
+                        <settings:TimelapseSettings />
+                    </atc:UniformSpacingPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Storage Tab  -->
+            <TabItem Header="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations, Key=Storage}">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <atc:UniformSpacingPanel Orientation="Vertical" Spacing="20">
                         <settings:RecordingSegmentationSettings />
                         <settings:RecordingMediaCleanupSettings />
                         <settings:RecordingPlaybackOverlaySettings />

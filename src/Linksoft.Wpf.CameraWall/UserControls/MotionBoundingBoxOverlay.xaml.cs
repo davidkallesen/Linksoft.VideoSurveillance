@@ -18,6 +18,13 @@ public partial class MotionBoundingBoxOverlay
     // Smoothed position values for jitter reduction (per box, indexed by position in list)
     private readonly List<SmoothedBox> smoothedBoxes = [];
 
+    // Last bounding box state for re-rendering on resize
+    private IReadOnlyList<Rect>? lastBoundingBoxes;
+    private int lastAnalysisWidth = DefaultAnalysisWidth;
+    private int lastAnalysisHeight = DefaultAnalysisHeight;
+    private int lastVideoWidth;
+    private int lastVideoHeight;
+
     [DependencyProperty(DefaultValue = true, PropertyChangedCallback = nameof(OnIsOverlayEnabledChanged))]
     private bool isOverlayEnabled;
 
@@ -37,11 +44,26 @@ public partial class MotionBoundingBoxOverlay
     private int analysisHeight;
 
     /// <summary>
+    /// The actual video stream width, used to compute letterbox offset.
+    /// When set to 0, falls back to stretching across the full container (legacy behavior).
+    /// </summary>
+    [DependencyProperty(DefaultValue = 0)]
+    private int videoWidth;
+
+    /// <summary>
+    /// The actual video stream height, used to compute letterbox offset.
+    /// When set to 0, falls back to stretching across the full container (legacy behavior).
+    /// </summary>
+    [DependencyProperty(DefaultValue = 0)]
+    private int videoHeight;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="MotionBoundingBoxOverlay"/> class.
     /// </summary>
     public MotionBoundingBoxOverlay()
     {
         InitializeComponent();
+        OverlayCanvas.SizeChanged += OnCanvasSizeChanged;
     }
 
     /// <summary>
@@ -63,15 +85,33 @@ public partial class MotionBoundingBoxOverlay
             return;
         }
 
+        // Store last state for re-rendering on resize
+        lastBoundingBoxes = boundingBoxes;
+        lastAnalysisWidth = AnalysisWidth;
+        lastAnalysisHeight = AnalysisHeight;
+        lastVideoWidth = VideoWidth;
+        lastVideoHeight = VideoHeight;
+
+        // Prefer the canvas's own size when available (it lives in the overlay window),
+        // falling back to the passed containerSize for the initial call before layout.
+        if (OverlayCanvas.ActualWidth > 0 && OverlayCanvas.ActualHeight > 0)
+        {
+            containerSize = new Size(OverlayCanvas.ActualWidth, OverlayCanvas.ActualHeight);
+        }
+
         // Limit the number of boxes to prevent performance issues
         var boxCount = Math.Min(boundingBoxes.Count, MaxBoundingBoxes);
 
         // Ensure we have enough rectangles in the pool
         EnsureRectangles(boxCount);
 
-        // Calculate scale factors
-        var scaleX = containerSize.Width / AnalysisWidth;
-        var scaleY = containerSize.Height / AnalysisHeight;
+        // Calculate the actual video rendering area within the container,
+        // accounting for letterboxing (black bars) when aspect ratios differ.
+        var (renderWidth, renderHeight, offsetX, offsetY) = CalculateVideoRenderArea(containerSize);
+
+        // Calculate scale factors using the video rendering area, not the full container
+        var scaleX = renderWidth / AnalysisWidth;
+        var scaleY = renderHeight / AnalysisHeight;
 
         // Ensure we have enough smoothed box states
         while (smoothedBoxes.Count < boxCount)
@@ -86,9 +126,9 @@ public partial class MotionBoundingBoxOverlay
             var rect = rectanglePool[i];
             var smoothed = smoothedBoxes[i];
 
-            // Map from analysis coordinates to container coordinates
-            var targetLeft = box.X * scaleX;
-            var targetTop = box.Y * scaleY;
+            // Map from analysis coordinates to the video content area (with letterbox offset)
+            var targetLeft = (box.X * scaleX) + offsetX;
+            var targetTop = (box.Y * scaleY) + offsetY;
             var targetWidth = box.Width * scaleX;
             var targetHeight = box.Height * scaleY;
 
@@ -157,6 +197,8 @@ public partial class MotionBoundingBoxOverlay
     /// </summary>
     public void HideBoundingBoxes()
     {
+        lastBoundingBoxes = null;
+
         foreach (var rect in rectanglePool)
         {
             rect.Visibility = Visibility.Collapsed;
@@ -185,6 +227,91 @@ public partial class MotionBoundingBoxOverlay
         {
             smoothed.HasInitialPosition = false;
         }
+    }
+
+    private void OnCanvasSizeChanged(
+        object sender,
+        SizeChangedEventArgs e)
+    {
+        ResetSmoothing();
+        ReRenderLastBoundingBoxes();
+    }
+
+    private void ReRenderLastBoundingBoxes()
+    {
+        if (lastBoundingBoxes is null ||
+            lastBoundingBoxes.Count == 0 ||
+            OverlayCanvas.ActualWidth <= 0 ||
+            OverlayCanvas.ActualHeight <= 0)
+        {
+            return;
+        }
+
+        // Temporarily set stored values for re-rendering
+        var currentAnalysisWidth = AnalysisWidth;
+        var currentAnalysisHeight = AnalysisHeight;
+        var currentVideoWidth = VideoWidth;
+        var currentVideoHeight = VideoHeight;
+
+        AnalysisWidth = lastAnalysisWidth;
+        AnalysisHeight = lastAnalysisHeight;
+        VideoWidth = lastVideoWidth;
+        VideoHeight = lastVideoHeight;
+
+        UpdateBoundingBoxes(
+            lastBoundingBoxes,
+            new Size(OverlayCanvas.ActualWidth, OverlayCanvas.ActualHeight));
+
+        AnalysisWidth = currentAnalysisWidth;
+        AnalysisHeight = currentAnalysisHeight;
+        VideoWidth = currentVideoWidth;
+        VideoHeight = currentVideoHeight;
+    }
+
+    /// <summary>
+    /// Calculates the actual video rendering area within the container,
+    /// accounting for letterboxing when the video and container aspect ratios differ.
+    /// </summary>
+    private (double RenderWidth, double RenderHeight, double OffsetX, double OffsetY) CalculateVideoRenderArea(
+        Size containerSize)
+    {
+        if (VideoWidth <= 0 || VideoHeight <= 0)
+        {
+            // No video dimensions known - fall back to full container (legacy behavior)
+            return (containerSize.Width, containerSize.Height, 0, 0);
+        }
+
+        var videoAspect = (double)VideoWidth / VideoHeight;
+        var containerAspect = containerSize.Width / containerSize.Height;
+
+        double renderWidth, renderHeight, offsetX, offsetY;
+
+        if (videoAspect > containerAspect)
+        {
+            // Video is wider than container - black bars top/bottom
+            renderWidth = containerSize.Width;
+            renderHeight = containerSize.Width / videoAspect;
+            offsetX = 0;
+            offsetY = (containerSize.Height - renderHeight) / 2;
+        }
+        else if (videoAspect < containerAspect)
+        {
+            // Video is taller than container - black bars left/right
+            renderHeight = containerSize.Height;
+            renderWidth = containerSize.Height * videoAspect;
+            offsetX = (containerSize.Width - renderWidth) / 2;
+            offsetY = 0;
+        }
+        else
+        {
+            // Same aspect ratio - no letterboxing
+            renderWidth = containerSize.Width;
+            renderHeight = containerSize.Height;
+            offsetX = 0;
+            offsetY = 0;
+        }
+
+        return (renderWidth, renderHeight, offsetX, offsetY);
     }
 
     private void EnsureRectangles(int count)
