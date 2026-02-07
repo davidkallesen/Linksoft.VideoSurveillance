@@ -50,14 +50,8 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
-
       - name: Pack NuGet
-        run: dotnet pack src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj --configuration ${{ env.CONFIGURATION }} --no-build --output ./nuget
+        run: dotnet pack src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj --configuration ${{ env.CONFIGURATION }} --output ./nuget
 
       - name: Push to NuGet.org
         run: dotnet nuget push ./nuget/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
