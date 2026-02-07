@@ -1,29 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Fragment>
-    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-      <Component Id="CameraWallApp" Guid="A1B2C3D4-E5F6-7890-ABCD-EF1234567890">
-        <File Id="CameraWallExe" Source="$(HarvestDirectory)\Linksoft.Wpf.CameraWall.App.exe" KeyPath="yes" />
-      </Component>
-
-      <Component Id="CameraWallDll" Guid="B2C3D4E5-F6A7-8901-BCDE-F12345678901">
-        <File Id="CameraWallLibrary" Source="$(HarvestDirectory)\Linksoft.Wpf.CameraWall.dll" />
-      </Component>
-
-      <Component Id="AppSettings" Guid="C3D4E5F6-A7B8-9012-CDEF-123456789012">
-        <File Id="AppSettingsJson" Source="$(HarvestDirectory)\appsettings.json" />
-      </Component>
-
-      <Component Id="AppIcon" Guid="D4E5F6A7-B8C9-0123-DEF0-234567890123">
-        <File Id="IconFile" Source="$(HarvestDirectory)\cctv-camera.ico" />
-      </Component>
-
-      <!-- Runtime configuration files -->
-      <Component Id="RuntimeConfig" Guid="E5F6A7B8-C9D0-1234-EF01-345678901234">
-        <File Id="RuntimeConfigJson" Source="$(HarvestDirectory)\Linksoft.Wpf.CameraWall.App.runtimeconfig.json" />
-        <File Id="DepsJson" Source="$(HarvestDirectory)\Linksoft.Wpf.CameraWall.App.deps.json" />
-      </Component>
-    </ComponentGroup>
+    <!-- All published files are auto-harvested via HarvestDirectory in the wixproj.
+         The HarvestedComponents group is populated automatically by WixToolset.Heat. -->
 
     <!-- Start Menu Shortcut -->
     <Component Id="ApplicationShortcut" Guid="F6A7B8C9-D0E1-2345-F012-456789012345" Directory="ApplicationProgramsFolder">

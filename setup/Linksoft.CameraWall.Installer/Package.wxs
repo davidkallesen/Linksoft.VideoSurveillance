@@ -4,7 +4,7 @@
   <Package
     Name="Linksoft Camera Wall"
     Manufacturer="Linksoft"
-    Version="!(bind.FileVersion.CameraWallExe)"
+    Version="$(ProductVersion)"
     UpgradeCode="E5A8B4C1-9D2F-4E3A-8B7C-6D5E4F3A2B1C"
     Scope="perMachine">
 
@@ -15,7 +15,7 @@
     <MediaTemplate EmbedCab="yes" />
 
     <Feature Id="ProductFeature" Title="Linksoft Camera Wall" Level="1">
-      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="HarvestedComponents" />
       <ComponentRef Id="ApplicationShortcut" />
       <ComponentRef Id="DesktopShortcut" />
     </Feature>

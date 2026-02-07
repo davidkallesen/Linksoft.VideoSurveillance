@@ -5,9 +5,19 @@
   </PropertyGroup>
   <PropertyGroup>
     <PublishDir>$(MSBuildThisFileDirectory)..\..\publish</PublishDir>
-    <DefineConstants>HarvestDirectory=$(PublishDir)</DefineConstants>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0</ProductVersion>
+    <DefineConstants>HarvestDirectory=$(PublishDir);ProductVersion=$(ProductVersion)</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Heat" Version="5.0.2" />
+  </ItemGroup>
+  <!-- Auto-harvest all files from publish directory -->
+  <ItemGroup>
+    <HarvestDirectory Include="$(PublishDir)"
+                      ComponentGroupName="HarvestedComponents"
+                      DirectoryRefId="INSTALLFOLDER"
+                      SuppressRegistry="true" />
+    <BindPath Include="$(PublishDir)" />
   </ItemGroup>
 </Project>
