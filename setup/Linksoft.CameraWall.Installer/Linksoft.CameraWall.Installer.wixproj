@@ -17,7 +17,8 @@
     <HarvestDirectory Include="$(PublishDir)"
                       ComponentGroupName="HarvestedComponents"
                       DirectoryRefId="INSTALLFOLDER"
-                      SuppressRegistry="true" />
+                      SuppressRegistry="true"
+                      SuppressRootDirectory="true" />
     <BindPath Include="$(PublishDir)" />
   </ItemGroup>
 </Project>
