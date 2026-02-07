@@ -204,7 +204,10 @@ public partial class CameraWallApp
         AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeComplete, 100);
 
         // Show main window and close splash
+        // Explicitly set MainWindow so dialogs resolve the correct Owner
+        // (WPF auto-assigns MainWindow to the first Window created, which is the splash screen)
         mainWindow.Show();
+        MainWindow = mainWindow;
         splashScreen.Close();
 
         logger!.LogInformation("App started");
