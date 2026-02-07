@@ -567,6 +567,9 @@
   <data name="ApplicationTitle" xml:space="preserve">
     <value>Linksoft Camera Wall</value>
   </data>
+  <data name="InitializePrefix" xml:space="preserve">
+    <value>Initialisieren:</value>
+  </data>
   <data name="InitializeLoadConfiguration" xml:space="preserve">
     <value>Konfiguration laden</value>
   </data>
@@ -577,7 +580,7 @@
     <value>UI-Einstellungen anwenden</value>
   </data>
   <data name="InitializeCameraEngine" xml:space="preserve">
-    <value>Kamera-Engine initialisieren</value>
+    <value>Kamera-Engine</value>
   </data>
   <data name="InitializeLoadMainWindow" xml:space="preserve">
     <value>Hauptfenster laden</value>
@@ -968,5 +971,11 @@
   </data>
   <data name="TimelapseOverrides" xml:space="preserve">
     <value>Zeitraffer-Überschreibungen</value>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Update verfügbar</value>
+  </data>
+  <data name="UpdateAvailableMessage1" xml:space="preserve">
+    <value>Version {0} ist verfügbar. Klicken zum Herunterladen.</value>
   </data>
 </root>

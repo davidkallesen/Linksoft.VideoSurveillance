@@ -567,6 +567,9 @@
   <data name="ApplicationTitle" xml:space="preserve">
     <value>Linksoft Camera Wall</value>
   </data>
+  <data name="InitializePrefix" xml:space="preserve">
+    <value>Initialiserer:</value>
+  </data>
   <data name="InitializeLoadConfiguration" xml:space="preserve">
     <value>Indlæs konfiguration</value>
   </data>
@@ -577,7 +580,7 @@
     <value>Anvend UI-indstillinger</value>
   </data>
   <data name="InitializeCameraEngine" xml:space="preserve">
-    <value>Initialiser kameramotor</value>
+    <value>Kameramotor</value>
   </data>
   <data name="InitializeLoadMainWindow" xml:space="preserve">
     <value>Indlæs hovedvindue</value>
@@ -968,5 +971,11 @@
   </data>
   <data name="TimelapseOverrides" xml:space="preserve">
     <value>Timelapse tilsidesættelser</value>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Opdatering tilgængelig</value>
+  </data>
+  <data name="UpdateAvailableMessage1" xml:space="preserve">
+    <value>Version {0} er tilgængelig. Klik for at downloade.</value>
   </data>
 </root>

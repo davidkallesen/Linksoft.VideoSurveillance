@@ -178,4 +178,26 @@ public interface ICameraWallManager : INotifyPropertyChanged
     /// Applies the display settings to the camera wall.
     /// </summary>
     void ApplyDisplaySettings();
+
+    /// <summary>
+    /// Gets a value indicating whether an update is available.
+    /// </summary>
+    bool IsUpdateAvailable { get; }
+
+    /// <summary>
+    /// Gets the version string of the available update.
+    /// </summary>
+    string UpdateVersion { get; }
+
+    /// <summary>
+    /// Checks for updates on startup and sets <see cref="IsUpdateAvailable"/> and <see cref="UpdateVersion"/> if a newer version exists.
+    /// Silently does nothing on failure.
+    /// </summary>
+    /// <returns>A task representing the async operation.</returns>
+    Task CheckForUpdatesOnStartupAsync();
+
+    /// <summary>
+    /// Opens the latest MSI download URL in the default browser.
+    /// </summary>
+    void DownloadLatestUpdate();
 }

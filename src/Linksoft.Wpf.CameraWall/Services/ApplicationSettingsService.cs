@@ -16,7 +16,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
     };
 
     private readonly string storagePath;
-    private ApplicationSettings settings = new();
+    private ApplicationSettings appSettings = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ApplicationSettingsService"/> class.
@@ -40,31 +40,32 @@ public class ApplicationSettingsService : IApplicationSettingsService
     }
 
     /// <inheritdoc/>
-    public GeneralSettings General => settings.General;
+    public GeneralSettings General => appSettings.General;
 
     /// <inheritdoc/>
-    public CameraDisplayAppSettings CameraDisplay => settings.CameraDisplay;
+    public CameraDisplayAppSettings CameraDisplay => appSettings.CameraDisplay;
 
     /// <inheritdoc/>
-    public ConnectionAppSettings Connection => settings.Connection;
+    public ConnectionAppSettings Connection => appSettings.Connection;
 
     /// <inheritdoc/>
-    public PerformanceSettings Performance => settings.Performance;
+    public PerformanceSettings Performance => appSettings.Performance;
 
     /// <inheritdoc/>
-    public MotionDetectionSettings MotionDetection => settings.MotionDetection;
+    public MotionDetectionSettings MotionDetection
+        => appSettings.MotionDetection;
 
     /// <inheritdoc/>
-    public RecordingSettings Recording => settings.Recording;
+    public RecordingSettings Recording => appSettings.Recording;
 
     /// <inheritdoc/>
-    public AdvancedSettings Advanced => settings.Advanced;
+    public AdvancedSettings Advanced => appSettings.Advanced;
 
     /// <inheritdoc/>
     public void SaveGeneral(GeneralSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        this.settings.General = settings;
+        this.appSettings.General = settings;
         Save();
     }
 
@@ -72,7 +73,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
     public void SaveCameraDisplay(CameraDisplayAppSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        this.settings.CameraDisplay = settings;
+        this.appSettings.CameraDisplay = settings;
         Save();
     }
 
@@ -80,7 +81,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
     public void SaveConnection(ConnectionAppSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        this.settings.Connection = settings;
+        this.appSettings.Connection = settings;
         Save();
     }
 
@@ -88,7 +89,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
     public void SavePerformance(PerformanceSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        this.settings.Performance = settings;
+        this.appSettings.Performance = settings;
         Save();
     }
 
@@ -96,7 +97,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
     public void SaveMotionDetection(MotionDetectionSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        this.settings.MotionDetection = settings;
+        this.appSettings.MotionDetection = settings;
         Save();
     }
 
@@ -104,7 +105,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
     public void SaveRecording(RecordingSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        this.settings.Recording = settings;
+        this.appSettings.Recording = settings;
         Save();
     }
 
@@ -112,7 +113,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
     public void SaveAdvanced(AdvancedSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        this.settings.Advanced = settings;
+        this.appSettings.Advanced = settings;
         Save();
     }
 
@@ -169,17 +170,17 @@ public class ApplicationSettingsService : IApplicationSettingsService
         {
             if (!File.Exists(storagePath))
             {
-                settings = new ApplicationSettings();
+                appSettings = new ApplicationSettings();
                 return;
             }
 
             var json = File.ReadAllText(storagePath);
-            settings = JsonSerializer.Deserialize<ApplicationSettings>(json, JsonOptions) ?? new ApplicationSettings();
+            appSettings = JsonSerializer.Deserialize<ApplicationSettings>(json, JsonOptions) ?? new ApplicationSettings();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to load application settings: {ex.Message}");
-            settings = new ApplicationSettings();
+            appSettings = new ApplicationSettings();
         }
     }
 
@@ -194,7 +195,7 @@ public class ApplicationSettingsService : IApplicationSettingsService
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(settings, JsonOptions);
+            var json = JsonSerializer.Serialize(appSettings, JsonOptions);
             File.WriteAllText(storagePath, json);
         }
         catch (Exception ex)

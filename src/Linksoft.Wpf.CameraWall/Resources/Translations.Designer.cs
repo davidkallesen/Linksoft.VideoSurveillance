@@ -1114,7 +1114,7 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Initialize camera engine.
+        ///   Looks up a localized string similar to Camera engine.
         /// </summary>
         public static string InitializeCameraEngine {
             get {
@@ -1131,6 +1131,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Initialize:.
+        /// </summary>
+        public static string InitializePrefix {
+            get {
+                return ResourceManager.GetString("InitializePrefix", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Load configuration.
         /// </summary>
@@ -2523,6 +2532,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string Unknown {
             get {
                 return ResourceManager.GetString("Unknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update Available.
+        /// </summary>
+        public static string UpdateAvailable {
+            get {
+                return ResourceManager.GetString("UpdateAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Version {0} is available. Click to download..
+        /// </summary>
+        public static string UpdateAvailableMessage1 {
+            get {
+                return ResourceManager.GetString("UpdateAvailableMessage1", resourceCulture);
             }
         }
         

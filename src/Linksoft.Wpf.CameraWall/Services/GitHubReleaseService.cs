@@ -11,6 +11,8 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
     private const string UserAgent = "Linksoft-CameraWall";
 
     private readonly HttpClient httpClient;
+    private readonly SemaphoreSlim cacheLock = new(1, 1);
+    private string? cachedResponse;
     private bool disposed;
 
     /// <summary>
@@ -27,9 +29,11 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
     {
         try
         {
-            var response = await httpClient
-                .GetStringAsync(new Uri(GitHubApiUrl))
-                .ConfigureAwait(false);
+            var response = await GetCachedResponseAsync().ConfigureAwait(false);
+            if (response is null)
+            {
+                return null;
+            }
 
             using var document = JsonDocument.Parse(response);
             var root = document.RootElement;
@@ -65,9 +69,11 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
     {
         try
         {
-            var response = await httpClient
-                .GetStringAsync(new Uri(GitHubApiUrl))
-                .ConfigureAwait(false);
+            var response = await GetCachedResponseAsync().ConfigureAwait(false);
+            if (response is null)
+            {
+                return null;
+            }
 
             using var document = JsonDocument.Parse(response);
             var root = document.RootElement;
@@ -90,6 +96,48 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
     }
 
     /// <inheritdoc />
+    public async Task<Uri?> GetLatestMsiDownloadUrlAsync()
+    {
+        try
+        {
+            var response = await GetCachedResponseAsync().ConfigureAwait(false);
+            if (response is null)
+            {
+                return null;
+            }
+
+            using var document = JsonDocument.Parse(response);
+            var root = document.RootElement;
+
+            if (root.TryGetProperty("assets", out var assets) &&
+                assets.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var asset in assets.EnumerateArray())
+                {
+                    if (asset.TryGetProperty("name", out var name) &&
+                        name.GetString() is { } assetName &&
+                        assetName.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) &&
+                        asset.TryGetProperty("browser_download_url", out var downloadUrl))
+                    {
+                        var urlString = downloadUrl.GetString();
+                        if (!string.IsNullOrEmpty(urlString))
+                        {
+                            return new Uri(urlString);
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Silently fail - update check is not critical
+        }
+
+        // Fall back to release page URL
+        return await GetLatestReleaseUrlAsync().ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
         if (disposed)
@@ -98,6 +146,47 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
         }
 
         httpClient.Dispose();
+        cacheLock.Dispose();
         disposed = true;
+    }
+
+    private async Task<string?> GetCachedResponseAsync()
+    {
+        if (cachedResponse is not null)
+        {
+            return cachedResponse;
+        }
+
+        var acquired = false;
+        try
+        {
+            await cacheLock.WaitAsync().ConfigureAwait(false);
+            acquired = true;
+
+            // Double-check after acquiring lock (another thread may have populated the cache)
+#pragma warning disable CA1508 // Avoid dead conditional code - valid double-check locking pattern
+            if (cachedResponse is not null)
+#pragma warning restore CA1508
+            {
+                return cachedResponse;
+            }
+
+            cachedResponse = await httpClient
+                .GetStringAsync(new Uri(GitHubApiUrl))
+                .ConfigureAwait(false);
+
+            return cachedResponse;
+        }
+        catch
+        {
+            return null;
+        }
+        finally
+        {
+            if (acquired)
+            {
+                cacheLock.Release();
+            }
+        }
     }
 }

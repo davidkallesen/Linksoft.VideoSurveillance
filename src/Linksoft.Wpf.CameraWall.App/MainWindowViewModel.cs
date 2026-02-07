@@ -74,6 +74,18 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         => Manager.StatusText;
 
     /// <summary>
+    /// Gets a value indicating whether an update is available.
+    /// </summary>
+    public bool IsUpdateAvailable
+        => Manager.IsUpdateAvailable;
+
+    /// <summary>
+    /// Gets the version string of the available update.
+    /// </summary>
+    public string UpdateVersion
+        => Manager.UpdateVersion;
+
+    /// <summary>
     /// Initializes the view model with the camera grid control.
     /// </summary>
     /// <param name="cameraGridControl">The camera grid control.</param>
@@ -128,7 +140,9 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             or nameof(SelectedStartupLayout)
             or nameof(CameraCount)
             or nameof(ConnectedCount)
-            or nameof(StatusText))
+            or nameof(StatusText)
+            or nameof(IsUpdateAvailable)
+            or nameof(UpdateVersion))
         {
             OnPropertyChanged(e.PropertyName);
         }
@@ -210,6 +224,10 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     [RelayCommand]
     private void ShowRecordingsBrowser()
         => Manager.ShowRecordingsBrowserDialog();
+
+    [RelayCommand]
+    private void DownloadUpdate()
+        => Manager.DownloadLatestUpdate();
 
     [RelayCommand]
     private static void Exit()

@@ -211,6 +211,48 @@ public partial class CameraWallApp
         splashScreen.Close();
 
         logger!.LogInformation("App started");
+
+        _ = CheckForUpdatesAndNotifyAsync(mainWindow);
+    }
+
+    private async Task CheckForUpdatesAndNotifyAsync(MainWindow mainWindow)
+    {
+        try
+        {
+            // Wait for UI to settle before checking
+            await Task
+                .Delay(3000)
+                .ConfigureAwait(true);
+
+            var manager = host.Services.GetRequiredService<ICameraWallManager>();
+            await manager
+                .CheckForUpdatesOnStartupAsync()
+                .ConfigureAwait(true);
+
+            if (!manager.IsUpdateAvailable)
+            {
+                return;
+            }
+
+            var content = new ToastNotificationContent(
+                ToastNotificationType.Information,
+                Translations.UpdateAvailable,
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.UpdateAvailableMessage1,
+                    manager.UpdateVersion));
+
+            var notificationManager = new ToastNotificationManager(mainWindow.Dispatcher);
+            notificationManager.Show(
+                useDesktop: true,
+                content,
+                expirationTime: TimeSpan.FromSeconds(10),
+                onClick: manager.DownloadLatestUpdate);
+        }
+        catch
+        {
+            // Silently fail - startup notification is not critical
+        }
     }
 
     private static void ApplyStartupSettings(GeneralSettings settings)

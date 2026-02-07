@@ -14,6 +14,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     private readonly IRecordingService recordingService;
     private readonly IMotionDetectionService motionDetectionService;
     private readonly ITimelapseService timelapseService;
+    private readonly IGitHubReleaseService gitHubReleaseService;
 
     [ObservableProperty(DependentPropertyNames = [nameof(CanCreateNewLayout)])]
     private CameraGrid? cameraGrid;
@@ -30,6 +31,14 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     [ObservableProperty]
     private CameraLayout? selectedStartupLayout;
 
+    [ObservableProperty]
+    private bool isUpdateAvailable;
+
+    [ObservableProperty]
+    private string updateVersion = string.Empty;
+
+    private Uri? updateDownloadUrl;
+
     [ObservableProperty(
         AfterChangedCallback = nameof(OnCurrentLayoutChangedCallback),
         DependentPropertyNames = [nameof(CanDeleteCurrentLayout), nameof(CanSetCurrentAsStartup)])]
@@ -45,6 +54,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <param name="recordingService">The recording service.</param>
     /// <param name="motionDetectionService">The motion detection service.</param>
     /// <param name="timelapseService">The timelapse service.</param>
+    /// <param name="gitHubReleaseService">The GitHub release service.</param>
     public CameraWallManager(
         ILogger<CameraWallManager> logger,
         ICameraStorageService storageService,
@@ -52,7 +62,8 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         IApplicationSettingsService settingsService,
         IRecordingService recordingService,
         IMotionDetectionService motionDetectionService,
-        ITimelapseService timelapseService)
+        ITimelapseService timelapseService,
+        IGitHubReleaseService gitHubReleaseService)
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(storageService);
@@ -61,6 +72,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         ArgumentNullException.ThrowIfNull(recordingService);
         ArgumentNullException.ThrowIfNull(motionDetectionService);
         ArgumentNullException.ThrowIfNull(timelapseService);
+        ArgumentNullException.ThrowIfNull(gitHubReleaseService);
 
         this.logger = logger;
         this.storageService = storageService;
@@ -69,6 +81,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         this.recordingService = recordingService;
         this.motionDetectionService = motionDetectionService;
         this.timelapseService = timelapseService;
+        this.gitHubReleaseService = gitHubReleaseService;
 
         Layouts = new ObservableCollection<CameraLayout>(storageService.GetAllLayouts());
 
@@ -554,7 +567,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             e.NewState.ToString());
 
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.CameraStateChanged2, e.Camera.Display.DisplayName, e.NewState));
-        UpdateConnectionCount();
+        UpdateConnectionCount(e);
     }
 
     /// <inheritdoc />
@@ -591,6 +604,68 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <inheritdoc />
     public void ShowRecordingsBrowserDialog()
         => dialogService.ShowRecordingsBrowserDialog();
+
+    /// <inheritdoc />
+    public async Task CheckForUpdatesOnStartupAsync()
+    {
+        try
+        {
+            var latest = await gitHubReleaseService
+                .GetLatestVersionAsync()
+                .ConfigureAwait(true);
+
+            if (latest is null)
+            {
+                return;
+            }
+
+            var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+            var currentVersion = assembly.GetName().Version;
+
+            if (currentVersion is null || latest <= currentVersion)
+            {
+                return;
+            }
+
+            updateDownloadUrl = await gitHubReleaseService
+                .GetLatestMsiDownloadUrlAsync()
+                .ConfigureAwait(true);
+
+            UpdateVersion = latest.ToString(3);
+            IsUpdateAvailable = true;
+
+            logger.LogInformation(
+                "Update available: current {CurrentVersion}, latest {LatestVersion}",
+                currentVersion.ToString(3),
+                UpdateVersion);
+        }
+        catch
+        {
+            // Silently fail - startup update check is not critical
+        }
+    }
+
+    /// <inheritdoc />
+    public void DownloadLatestUpdate()
+    {
+        if (updateDownloadUrl is null)
+        {
+            return;
+        }
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = updateDownloadUrl.ToString(),
+                UseShellExecute = true,
+            });
+        }
+        catch
+        {
+            // Silently fail if unable to open browser
+        }
+    }
 
     private void OnCurrentLayoutChangedCallback()
     {
@@ -734,10 +809,19 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.LoadedCameras1, camerasToLoad.Count));
     }
 
-    private void UpdateConnectionCount()
+    private void UpdateConnectionCount(CameraConnectionChangedEventArgs e)
     {
-        // This would be tracked properly with events from each tile
-        // For now, just update based on loaded cameras
+        var wasConnected = e.PreviousState == ConnectionState.Connected;
+        var isConnected = e.NewState == ConnectionState.Connected;
+
+        if (!wasConnected && isConnected)
+        {
+            ConnectedCount++;
+        }
+        else if (wasConnected && !isConnected)
+        {
+            ConnectedCount = Math.Max(0, ConnectedCount - 1);
+        }
     }
 
     private void UpdateStatus(string status)

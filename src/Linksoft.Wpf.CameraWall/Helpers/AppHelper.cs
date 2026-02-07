@@ -16,7 +16,7 @@ public static class AppHelper
         string message,
         int percentage)
     {
-        var msg = "Initialize: " + message;
+        var msg = Translations.InitializePrefix + " " + message;
         MessageListener.Instance.ReceiveMessage(msg);
         PercentListener.Instance.ReceivePercent(percentage);
         logger?.LogDebug("{Message} - {Percentage}%", msg, percentage);

@@ -77,7 +77,7 @@ public sealed partial class CheckForUpdatesDialogViewModel : ViewModelDialogBase
                     HasNewVersion = true;
                     StatusMessage = Translations.NewVersionAvailable;
                     DownloadUrl = await gitHubReleaseService
-                        .GetLatestReleaseUrlAsync()
+                        .GetLatestMsiDownloadUrlAsync()
                         .ConfigureAwait(true);
                 }
                 else

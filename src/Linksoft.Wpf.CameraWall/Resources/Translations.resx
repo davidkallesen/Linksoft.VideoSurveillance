@@ -567,6 +567,9 @@
   <data name="ApplicationTitle" xml:space="preserve">
     <value>Linksoft Camera Wall</value>
   </data>
+  <data name="InitializePrefix" xml:space="preserve">
+    <value>Initialize:</value>
+  </data>
   <data name="InitializeLoadConfiguration" xml:space="preserve">
     <value>Load configuration</value>
   </data>
@@ -577,7 +580,7 @@
     <value>Apply UI settings</value>
   </data>
   <data name="InitializeCameraEngine" xml:space="preserve">
-    <value>Initialize camera engine</value>
+    <value>Camera engine</value>
   </data>
   <data name="InitializeLoadMainWindow" xml:space="preserve">
     <value>Load main window</value>
@@ -968,5 +971,11 @@
   </data>
   <data name="OverrideToggleLocal" xml:space="preserve">
     <value>Local</value>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Update Available</value>
+  </data>
+  <data name="UpdateAvailableMessage1" xml:space="preserve">
+    <value>Version {0} is available. Click to download.</value>
   </data>
 </root>
