@@ -54,13 +54,16 @@ jobs:
         run: dotnet restore src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj
 
       - name: Pack NuGet
-        run: dotnet pack src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj --configuration ${{ env.CONFIGURATION }} --no-restore --output ./nuget --verbosity normal
-
-      - name: Verify package
-        run: Get-ChildItem ./nuget -Recurse | ForEach-Object { Write-Host $_.FullName }
+        run: dotnet pack src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj --configuration ${{ env.CONFIGURATION }} --no-restore --output ./nuget -p:IsPackable=true
 
       - name: Push to NuGet.org
-        run: dotnet nuget push ./nuget/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: |
+          $packages = Get-ChildItem ./nuget -Filter *.nupkg
+          if ($packages.Count -eq 0) { throw "No .nupkg files found in ./nuget" }
+          foreach ($pkg in $packages) {
+            Write-Host "Pushing $($pkg.Name)"
+            dotnet nuget push $pkg.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }
 
   build-installer:
     name: Build MSI Installer
