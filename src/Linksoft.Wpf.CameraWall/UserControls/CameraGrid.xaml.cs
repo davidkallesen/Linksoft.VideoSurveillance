@@ -275,8 +275,6 @@ public partial class CameraGrid
         if (sourceTile is not null && targetTile is not null)
         {
             var targetCamera = CameraTiles[targetIndex];
-            var sourceUri = sourceCamera.BuildUri();
-            var targetUri = targetCamera.BuildUri();
 
             sourceTile.PrepareForSwap();
             targetTile.PrepareForSwap();
@@ -284,10 +282,22 @@ public partial class CameraGrid
             CameraTiles[sourceIndex] = targetCamera;
             CameraTiles[targetIndex] = sourceCamera;
 
+            if (sourceTile.ConnectionState == ConnectionState.Connected &&
+                targetTile.ConnectionState == ConnectionState.Connected)
+            {
+                // Both connected — swap players to keep streams alive
+                sourceTile.SwapPlayerWith(targetTile);
+            }
+            else
+            {
+                // At least one not connected — re-open streams on the swapped players
+                var sourceUri = sourceCamera.BuildUri();
+                var targetUri = targetCamera.BuildUri();
+                OpenStreamsInParallel(sourceTile.Player, targetUri, targetTile.Player, sourceUri);
+            }
+
             sourceTile.CompleteSwap();
             targetTile.CompleteSwap();
-
-            OpenStreamsInParallel(sourceTile.Player, targetUri, targetTile.Player, sourceUri);
         }
         else
         {
@@ -359,6 +369,12 @@ public partial class CameraGrid
 
     /// <summary>
     /// Applies a layout to the camera wall.
+    /// Reuses cameras that exist in both the current and new layout to avoid
+    /// unnecessary stream disconnection/reconnection. Shared cameras keep their
+    /// tiles and active connections — only cameras unique to the old or new layout
+    /// are removed or inserted. The grid order may not exactly match the target
+    /// layout's OrderNumber when shared cameras were in a different relative order,
+    /// but connections stay alive.
     /// </summary>
     /// <param name="layout">The layout to apply.</param>
     /// <param name="cameras">The available cameras.</param>
@@ -369,17 +385,40 @@ public partial class CameraGrid
         ArgumentNullException.ThrowIfNull(layout);
         ArgumentNullException.ThrowIfNull(cameras);
 
-        Clear();
-
         var cameraDict = cameras.ToDictionary(c => c.Id);
 
-        foreach (var item in layout.Items.OrderBy(i => i.OrderNumber))
+        // Build the target list of cameras in layout order
+        var targetCameras = layout.Items
+            .Where(item => cameraDict.ContainsKey(item.CameraId))
+            .OrderBy(i => i.OrderNumber)
+            .Select(item => cameraDict[item.CameraId])
+            .ToList();
+
+        var targetIds = new HashSet<Guid>(targetCameras.Select(c => c.Id));
+        var currentIds = new HashSet<Guid>(CameraTiles.Select(c => c.Id));
+        var sharedIds = new HashSet<Guid>(currentIds.Where(targetIds.Contains));
+
+        // Remove cameras not in the target layout (iterating backwards to preserve indices)
+        for (var i = CameraTiles.Count - 1; i >= 0; i--)
         {
-            if (cameraDict.TryGetValue(item.CameraId, out var camera))
+            if (!targetIds.Contains(CameraTiles[i].Id))
             {
-                AddCamera(camera);
+                CameraTiles.RemoveAt(i);
             }
         }
+
+        // Insert new cameras at their target positions.
+        // Shared cameras stay untouched — no remove, no re-add, no move.
+        for (var i = 0; i < targetCameras.Count; i++)
+        {
+            if (!sharedIds.Contains(targetCameras[i].Id))
+            {
+                CameraTiles.Insert(i, targetCameras[i]);
+            }
+        }
+
+        UpdateGridLayout();
+        UpdateEmptyState();
     }
 
     private static void OnCameraTilesChanged(

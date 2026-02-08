@@ -451,6 +451,86 @@ public partial class CameraTile : IDisposable
     }
 
     /// <summary>
+    /// Swaps the Player instance with another CameraTile to keep streams alive
+    /// during a position swap. Both tiles should already have their Camera DPs
+    /// updated (via collection swap with isSwapping=true). After this call, each
+    /// tile's Player plays the stream matching its new Camera.
+    /// </summary>
+    /// <param name="other">The other tile to swap players with.</param>
+    public void SwapPlayerWith(CameraTile other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+
+        var myPlayer = Player;
+        var otherPlayer = other.Player;
+
+        // Detach PropertyChanged handlers from current players
+        if (myPlayer is not null)
+        {
+            myPlayer.PropertyChanged -= OnPlayerPropertyChanged;
+        }
+
+        if (otherPlayer is not null)
+        {
+            otherPlayer.PropertyChanged -= other.OnPlayerPropertyChanged;
+        }
+
+        // Stop stream health monitoring on both (will be restarted after swap)
+        StopStreamHealthCheck();
+        other.StopStreamHealthCheck();
+
+        // Detach both players from FlyleafHost to avoid a Player being
+        // attached to two hosts simultaneously
+        Player = null;
+        other.Player = null;
+
+        // Reattach swapped players
+        Player = otherPlayer;
+        other.Player = myPlayer;
+
+        // Reattach PropertyChanged handlers to the new players
+        if (Player is not null)
+        {
+            Player.PropertyChanged += OnPlayerPropertyChanged;
+        }
+
+        if (other.Player is not null)
+        {
+            other.Player.PropertyChanged += other.OnPlayerPropertyChanged;
+        }
+
+        // Swap recording state (tracked per camera by IRecordingService)
+        (RecordingState, other.RecordingState) = (other.RecordingState, RecordingState);
+        (RecordingDuration, other.RecordingDuration) = (other.RecordingDuration, RecordingDuration);
+
+        // Stop recording duration timers — their Tick closures reference the original tile,
+        // so we must recreate them rather than swapping references
+        recordingDurationTimer?.Stop();
+        recordingDurationTimer = null;
+        other.recordingDurationTimer?.Stop();
+        other.recordingDurationTimer = null;
+        UpdateRecordingDurationTimer();
+        other.UpdateRecordingDurationTimer();
+
+        // Swap motion detection state
+        (IsMotionDetected, other.IsMotionDetected) = (other.IsMotionDetected, IsMotionDetected);
+
+        // Restart stream health monitoring with new players
+        StartStreamHealthCheck();
+        other.StartStreamHealthCheck();
+
+        // Update overlays to reflect swapped state
+        UpdateOverlayRecordingState();
+        other.UpdateOverlayRecordingState();
+        UpdateOverlayMotionIndicator();
+        other.UpdateOverlayMotionIndicator();
+        UpdateOverlayRecordingOnMotion();
+        other.UpdateOverlayRecordingOnMotion();
+        ApplyBoundingBoxSettings();
+        other.ApplyBoundingBoxSettings();
+    }
+
+    /// <summary>
     /// Lends the player to another control (e.g., fullscreen window).
     /// The player is removed from this tile and the tile shows a placeholder.
     /// </summary>
@@ -750,6 +830,12 @@ public partial class CameraTile : IDisposable
             return;
         }
 
+        // Skip if value didn't actually change (safety for binding re-evaluation during layout switches)
+        if (Equals(e.OldValue, e.NewValue))
+        {
+            return;
+        }
+
         // Use Dispatcher to ensure we're on the UI thread and to defer the recreation
         // until after the binding updates have completed
         _ = tile.Dispatcher.BeginInvoke(() =>
@@ -852,6 +938,25 @@ public partial class CameraTile : IDisposable
                     break;
             }
         });
+    }
+
+    private void InitializeOverrideTracking(CameraConfiguration cameraConfig)
+    {
+        previousOverrideVideoQuality = cameraConfig.Overrides?.Performance.VideoQuality;
+        previousOverrideHardwareAcceleration = cameraConfig.Overrides?.Performance.HardwareAcceleration;
+        previousOverrideEnableRecordingOnMotion = cameraConfig.Overrides?.Recording.EnableRecordingOnMotion;
+        previousOverrideShowBoundingBoxInGrid = cameraConfig.Overrides?.MotionDetection.BoundingBox.ShowInGrid;
+        previousOverrideShowBoundingBoxInFullScreen = cameraConfig.Overrides?.MotionDetection.BoundingBox.ShowInFullScreen;
+        previousOverrideBoundingBoxColor = cameraConfig.Overrides?.MotionDetection.BoundingBox.Color;
+        previousOverrideBoundingBoxThickness = cameraConfig.Overrides?.MotionDetection.BoundingBox.Thickness;
+        previousOverrideBoundingBoxMinArea = cameraConfig.Overrides?.MotionDetection.BoundingBox.MinArea;
+        previousOverrideMotionSensitivity = cameraConfig.Overrides?.MotionDetection.Sensitivity;
+        previousOverrideMotionMinimumChangePercent = cameraConfig.Overrides?.MotionDetection.MinimumChangePercent;
+        previousOverrideMotionAnalysisFrameRate = cameraConfig.Overrides?.MotionDetection.AnalysisFrameRate;
+        previousOverrideMotionAnalysisWidth = cameraConfig.Overrides?.MotionDetection.AnalysisWidth;
+        previousOverrideMotionAnalysisHeight = cameraConfig.Overrides?.MotionDetection.AnalysisHeight;
+        previousOverrideMotionCooldownSeconds = cameraConfig.Overrides?.MotionDetection.CooldownSeconds;
+        previousOverridePostMotionDurationSeconds = cameraConfig.Overrides?.MotionDetection.PostMotionDurationSeconds;
     }
 
     private void HandleOverridesChanged()
@@ -999,6 +1104,7 @@ public partial class CameraTile : IDisposable
             CameraName = cameraConfig.Display.DisplayName;
             CameraDescription = cameraConfig.Display.Description ?? string.Empty;
             UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
+            InitializeOverrideTracking(cameraConfig);
             return;
         }
 
@@ -1033,21 +1139,7 @@ public partial class CameraTile : IDisposable
         }
 
         // Initialize tracked override values for change detection
-        previousOverrideVideoQuality = cameraConfig.Overrides?.Performance.VideoQuality;
-        previousOverrideHardwareAcceleration = cameraConfig.Overrides?.Performance.HardwareAcceleration;
-        previousOverrideEnableRecordingOnMotion = cameraConfig.Overrides?.Recording.EnableRecordingOnMotion;
-        previousOverrideShowBoundingBoxInGrid = cameraConfig.Overrides?.MotionDetection.BoundingBox.ShowInGrid;
-        previousOverrideShowBoundingBoxInFullScreen = cameraConfig.Overrides?.MotionDetection.BoundingBox.ShowInFullScreen;
-        previousOverrideBoundingBoxColor = cameraConfig.Overrides?.MotionDetection.BoundingBox.Color;
-        previousOverrideBoundingBoxThickness = cameraConfig.Overrides?.MotionDetection.BoundingBox.Thickness;
-        previousOverrideBoundingBoxMinArea = cameraConfig.Overrides?.MotionDetection.BoundingBox.MinArea;
-        previousOverrideMotionSensitivity = cameraConfig.Overrides?.MotionDetection.Sensitivity;
-        previousOverrideMotionMinimumChangePercent = cameraConfig.Overrides?.MotionDetection.MinimumChangePercent;
-        previousOverrideMotionAnalysisFrameRate = cameraConfig.Overrides?.MotionDetection.AnalysisFrameRate;
-        previousOverrideMotionAnalysisWidth = cameraConfig.Overrides?.MotionDetection.AnalysisWidth;
-        previousOverrideMotionAnalysisHeight = cameraConfig.Overrides?.MotionDetection.AnalysisHeight;
-        previousOverrideMotionCooldownSeconds = cameraConfig.Overrides?.MotionDetection.CooldownSeconds;
-        previousOverridePostMotionDurationSeconds = cameraConfig.Overrides?.MotionDetection.PostMotionDurationSeconds;
+        InitializeOverrideTracking(cameraConfig);
 
         CameraName = cameraConfig.Display.DisplayName;
         CameraDescription = cameraConfig.Display.Description ?? string.Empty;
