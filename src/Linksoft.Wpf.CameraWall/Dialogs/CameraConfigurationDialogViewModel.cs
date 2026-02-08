@@ -6,7 +6,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 {
     private readonly CameraConfiguration originalCamera;
     private readonly bool isNew;
-    private readonly IReadOnlyCollection<string> existingIpAddresses;
+    private readonly IReadOnlyCollection<(string IpAddress, string? Path)> existingEndpoints;
     private readonly IApplicationSettingsService settingsService;
 
     [ObservableProperty(AfterChangedCallback = nameof(OnIsTestingChanged))]
@@ -40,7 +40,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     public CameraConfigurationDialogViewModel(
         CameraConfiguration camera,
         bool isNew,
-        IReadOnlyCollection<string> existingIpAddresses,
+        IReadOnlyCollection<(string IpAddress, string? Path)> existingEndpoints,
         IApplicationSettingsService settingsService)
     {
         ArgumentNullException.ThrowIfNull(camera);
@@ -48,7 +48,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
         originalCamera = camera;
         this.isNew = isNew;
-        this.existingIpAddresses = existingIpAddresses ?? [];
+        this.existingEndpoints = existingEndpoints ?? [];
         this.settingsService = settingsService;
 
         // Create a clone for editing - changes only apply when Save is clicked
@@ -1240,17 +1240,17 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             ClearTestResult();
         }
 
-        // Validate IP address uniqueness when connection changes
+        // Validate IP address + path uniqueness when connection changes
         if (e.PropertyName == nameof(Camera.Connection))
         {
-            ValidateIpAddress();
+            ValidateCameraEndpoint();
         }
 
         // Always invalidate commands when any property changes (for Save button CanExecute)
         CommandManager.InvalidateRequerySuggested();
     }
 
-    private void ValidateIpAddress()
+    private void ValidateCameraEndpoint()
     {
         if (string.IsNullOrWhiteSpace(Camera.Connection.IpAddress))
         {
@@ -1258,18 +1258,24 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             return;
         }
 
-        var isDuplicate = existingIpAddresses.Contains(Camera.Connection.IpAddress, StringComparer.OrdinalIgnoreCase);
-        IpAddressError = isDuplicate ? Translations.IpAddressAlreadyExists : null;
+        IpAddressError = !IsCameraEndpointUnique() ? Translations.IpAddressAlreadyExists : null;
     }
 
-    private bool IsIpAddressUnique()
+    private bool IsCameraEndpointUnique()
     {
         if (string.IsNullOrWhiteSpace(Camera.Connection.IpAddress))
         {
             return true;
         }
 
-        return !existingIpAddresses.Contains(Camera.Connection.IpAddress, StringComparer.OrdinalIgnoreCase);
+        var currentPath = Camera.Connection.Path;
+
+        return !existingEndpoints.Any(e =>
+            string.Equals(e.IpAddress, Camera.Connection.IpAddress, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(
+                string.IsNullOrEmpty(e.Path) ? null : e.Path,
+                string.IsNullOrEmpty(currentPath) ? null : currentPath,
+                StringComparison.OrdinalIgnoreCase));
     }
 
     [RelayCommand(CanExecute = nameof(CanTestConnection))]
@@ -1393,7 +1399,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     private bool CanSave()
         => !string.IsNullOrWhiteSpace(Camera.Display.DisplayName) &&
            !string.IsNullOrWhiteSpace(Camera.Connection.IpAddress) &&
-           IsIpAddressUnique() &&
+           IsCameraEndpointUnique() &&
            HasChanges();
 
     private bool HasChanges()

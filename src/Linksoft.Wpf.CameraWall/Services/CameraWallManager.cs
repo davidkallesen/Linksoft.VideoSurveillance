@@ -212,8 +212,8 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         UpdateStatus(Translations.AddCameraDialog);
 
-        var existingIpAddresses = GetExistingIpAddresses(excludeCameraId: null);
-        var camera = dialogService.ShowCameraConfigurationDialog(camera: null, isNew: true, existingIpAddresses);
+        var existingEndpoints = GetExistingCameraEndpoints(excludeCameraId: null);
+        var camera = dialogService.ShowCameraConfigurationDialog(camera: null, isNew: true, existingEndpoints);
 
         if (camera is not null)
         {
@@ -236,9 +236,9 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.EditingCamera1, camera.Display.DisplayName));
 
-        // Exclude current camera's IP when editing (allow keeping same IP)
-        var existingIpAddresses = GetExistingIpAddresses(excludeCameraId: camera.Id);
-        var result = dialogService.ShowCameraConfigurationDialog(camera, isNew: false, existingIpAddresses);
+        // Exclude current camera's endpoint when editing (allow keeping same IP+Path)
+        var existingEndpoints = GetExistingCameraEndpoints(excludeCameraId: camera.Id);
+        var result = dialogService.ShowCameraConfigurationDialog(camera, isNew: false, existingEndpoints);
 
         if (result is not null)
         {
@@ -251,12 +251,13 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         }
     }
 
-    private List<string> GetExistingIpAddresses(Guid? excludeCameraId)
+    private List<(string IpAddress, string? Path)> GetExistingCameraEndpoints(
+        Guid? excludeCameraId)
         => storageService
             .GetAllCameras()
             .Where(c => excludeCameraId is null || c.Id != excludeCameraId)
-            .Select(c => c.Connection.IpAddress)
-            .Where(ip => !string.IsNullOrWhiteSpace(ip))
+            .Where(c => !string.IsNullOrWhiteSpace(c.Connection.IpAddress))
+            .Select(c => (c.Connection.IpAddress, c.Connection.Path))
             .ToList();
 
     /// <inheritdoc />

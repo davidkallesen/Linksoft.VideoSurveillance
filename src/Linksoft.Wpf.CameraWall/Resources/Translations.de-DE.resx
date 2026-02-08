@@ -274,7 +274,7 @@
     <value>IP-Adresse ist erforderlich</value>
   </data>
   <data name="IpAddressAlreadyExists" xml:space="preserve">
-    <value>Eine Kamera mit dieser IP-Adresse existiert bereits</value>
+    <value>Eine Kamera mit dieser IP-Adresse und diesem Pfad existiert bereits</value>
   </data>
   <data name="PortRangeError" xml:space="preserve">
     <value>Port muss zwischen 1 und 65535 liegen</value>

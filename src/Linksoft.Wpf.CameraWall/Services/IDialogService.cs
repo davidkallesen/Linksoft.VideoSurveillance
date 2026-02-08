@@ -10,12 +10,12 @@ public interface IDialogService
     /// </summary>
     /// <param name="camera">The camera to edit, or null for a new camera.</param>
     /// <param name="isNew">Whether this is a new camera.</param>
-    /// <param name="existingIpAddresses">Existing IP addresses to validate uniqueness against.</param>
+    /// <param name="existingEndpoints">Existing camera endpoints (IP address + path) to validate uniqueness against.</param>
     /// <returns>The configured camera if saved, or null if cancelled.</returns>
     CameraConfiguration? ShowCameraConfigurationDialog(
         CameraConfiguration? camera,
         bool isNew,
-        IReadOnlyCollection<string> existingIpAddresses);
+        IReadOnlyCollection<(string IpAddress, string? Path)> existingEndpoints);
 
     /// <summary>
     /// Shows an input box dialog.

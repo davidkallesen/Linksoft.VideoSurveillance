@@ -27,7 +27,7 @@ public class DialogService : IDialogService
     public CameraConfiguration? ShowCameraConfigurationDialog(
         CameraConfiguration? camera,
         bool isNew,
-        IReadOnlyCollection<string> existingIpAddresses)
+        IReadOnlyCollection<(string IpAddress, string? Path)> existingEndpoints)
     {
         var cameraConfig = camera ?? new CameraConfiguration { Display = { DisplayName = Translations.NewCamera } };
 
@@ -37,7 +37,7 @@ public class DialogService : IDialogService
             settingsService.ApplyDefaultsToCamera(cameraConfig);
         }
 
-        var viewModel = new CameraConfigurationDialogViewModel(cameraConfig, isNew, existingIpAddresses, settingsService);
+        var viewModel = new CameraConfigurationDialogViewModel(cameraConfig, isNew, existingEndpoints, settingsService);
         var dialog = new CameraConfigurationDialog(viewModel)
         {
             Owner = Application.Current.MainWindow,
