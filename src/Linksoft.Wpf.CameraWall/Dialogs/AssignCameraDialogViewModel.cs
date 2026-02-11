@@ -2,7 +2,7 @@ namespace Linksoft.Wpf.CameraWall.Dialogs;
 
 /// <summary>
 /// View model for the Assign Camera to Layout dialog.
-/// Supports dual-list multi-select for assigning/unassigning cameras.
+/// Uses <see cref="DualListSelector"/> for dual-list management.
 /// </summary>
 public partial class AssignCameraDialogViewModel : ViewModelDialogBase
 {
@@ -25,20 +25,18 @@ public partial class AssignCameraDialogViewModel : ViewModelDialogBase
 
         LayoutName = layoutName;
 
-        AvailableCameras = new ObservableCollection<CameraConfiguration>(
-            availableCameras.OrderBy(c => c.Display.DisplayName, StringComparer.OrdinalIgnoreCase));
+        AvailableItems = new ObservableCollection<DualListSelectorItem>(
+            availableCameras
+                .OrderBy(c => c.Display.DisplayName, StringComparer.OrdinalIgnoreCase)
+                .Select(c => ToSelectorItem(c)));
 
-        // Keep assigned cameras in their original order (for order tracking)
         var assignedList = assignedCameras.ToList();
-        AssignedCameras = new ObservableCollection<CameraConfiguration>(assignedList);
+        SelectedItems = new ObservableCollection<DualListSelectorItem>(
+            assignedList.Select((c, i) => ToSelectorItem(c, (int?)i)));
 
-        // Store original state for IsDirty comparison
         originalAssignedCameraIds = assignedList
             .Select(c => c.Id)
             .ToList();
-
-        SelectedAvailableCameras = [];
-        SelectedAssignedCameras = [];
     }
 
     /// <summary>
@@ -57,173 +55,24 @@ public partial class AssignCameraDialogViewModel : ViewModelDialogBase
     public string LayoutName { get; }
 
     /// <summary>
-    /// Gets the cameras available for assignment (not in current layout).
+    /// Gets the header text for the available cameras list.
     /// </summary>
-    public ObservableCollection<CameraConfiguration> AvailableCameras { get; }
+    public static string AvailableHeaderText => Translations.AvailableCameras;
 
     /// <summary>
-    /// Gets the cameras assigned to the current layout.
+    /// Gets the header text for the assigned cameras list.
     /// </summary>
-    public ObservableCollection<CameraConfiguration> AssignedCameras { get; }
+    public static string SelectedHeaderText => Translations.AssignedToLayout;
 
     /// <summary>
-    /// Gets or sets the selected cameras in the available list.
+    /// Gets the items for the available list in the <see cref="DualListSelector"/>.
     /// </summary>
-    [ObservableProperty(AfterChangedCallback = nameof(OnSelectionChanged))]
-    private IList<CameraConfiguration> selectedAvailableCameras = [];
+    public ObservableCollection<DualListSelectorItem> AvailableItems { get; }
 
     /// <summary>
-    /// Gets or sets the selected cameras in the assigned list.
+    /// Gets the items for the selected list in the <see cref="DualListSelector"/>.
     /// </summary>
-    [ObservableProperty(AfterChangedCallback = nameof(OnSelectionChanged))]
-    private IList<CameraConfiguration> selectedAssignedCameras = [];
-
-    private static void OnSelectionChanged()
-        => CommandManager.InvalidateRequerySuggested();
-
-    /// <summary>
-    /// Moves selected cameras from available to assigned.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanMoveToAssigned))]
-    private void MoveToAssigned()
-    {
-        var toMove = SelectedAvailableCameras.ToList();
-        foreach (var camera in toMove)
-        {
-            AvailableCameras.Remove(camera);
-            InsertSorted(AssignedCameras, camera);
-        }
-
-        SelectedAvailableCameras = [];
-        IsDirty = true;
-    }
-
-    private bool CanMoveToAssigned()
-        => SelectedAvailableCameras.Count > 0;
-
-    /// <summary>
-    /// Moves selected cameras from assigned to available.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanMoveToAvailable))]
-    private void MoveToAvailable()
-    {
-        var toMove = SelectedAssignedCameras.ToList();
-        foreach (var camera in toMove)
-        {
-            AssignedCameras.Remove(camera);
-            InsertSorted(AvailableCameras, camera);
-        }
-
-        SelectedAssignedCameras = [];
-        IsDirty = true;
-    }
-
-    private bool CanMoveToAvailable()
-        => SelectedAssignedCameras.Count > 0;
-
-    /// <summary>
-    /// Moves all cameras from available to assigned.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanMoveAllToAssigned))]
-    private void MoveAllToAssigned()
-    {
-        var toMove = AvailableCameras.ToList();
-        foreach (var camera in toMove)
-        {
-            AvailableCameras.Remove(camera);
-            InsertSorted(AssignedCameras, camera);
-        }
-
-        IsDirty = true;
-    }
-
-    private bool CanMoveAllToAssigned()
-        => AvailableCameras.Count > 0;
-
-    /// <summary>
-    /// Moves all cameras from assigned to available.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanMoveAllToAvailable))]
-    private void MoveAllToAvailable()
-    {
-        var toMove = AssignedCameras.ToList();
-        foreach (var camera in toMove)
-        {
-            AssignedCameras.Remove(camera);
-            InsertSorted(AvailableCameras, camera);
-        }
-
-        IsDirty = true;
-    }
-
-    private bool CanMoveAllToAvailable()
-        => AssignedCameras.Count > 0;
-
-    /// <summary>
-    /// Moves the selected assigned camera up in the list.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanMoveUp))]
-    private void MoveUp()
-    {
-        if (SelectedAssignedCameras.Count != 1)
-        {
-            return;
-        }
-
-        var camera = SelectedAssignedCameras[0];
-        var index = AssignedCameras.IndexOf(camera);
-
-        if (index > 0)
-        {
-            AssignedCameras.Move(index, index - 1);
-            IsDirty = true;
-        }
-    }
-
-    private bool CanMoveUp()
-    {
-        if (SelectedAssignedCameras.Count != 1)
-        {
-            return false;
-        }
-
-        var camera = SelectedAssignedCameras[0];
-        var index = AssignedCameras.IndexOf(camera);
-        return index > 0;
-    }
-
-    /// <summary>
-    /// Moves the selected assigned camera down in the list.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanMoveDown))]
-    private void MoveDown()
-    {
-        if (SelectedAssignedCameras.Count != 1)
-        {
-            return;
-        }
-
-        var camera = SelectedAssignedCameras[0];
-        var index = AssignedCameras.IndexOf(camera);
-
-        if (index < AssignedCameras.Count - 1)
-        {
-            AssignedCameras.Move(index, index + 1);
-            IsDirty = true;
-        }
-    }
-
-    private bool CanMoveDown()
-    {
-        if (SelectedAssignedCameras.Count != 1)
-        {
-            return false;
-        }
-
-        var camera = SelectedAssignedCameras[0];
-        var index = AssignedCameras.IndexOf(camera);
-        return index < AssignedCameras.Count - 1;
-    }
+    public ObservableCollection<DualListSelectorItem> SelectedItems { get; }
 
     /// <summary>
     /// Gets a value indicating whether there are actual changes compared to the original state.
@@ -231,11 +80,20 @@ public partial class AssignCameraDialogViewModel : ViewModelDialogBase
     /// <returns><c>true</c> if the assigned cameras list differs from the original; otherwise, <c>false</c>.</returns>
     public bool HasActualChanges()
     {
-        var currentIds = AssignedCameras
-            .Select(c => c.Id)
+        var currentIds = SelectedItems
+            .Select(item => ((CameraConfiguration)item.Tag!).Id)
             .ToList();
         return !originalAssignedCameraIds.SequenceEqual(currentIds);
     }
+
+    /// <summary>
+    /// Gets the assigned cameras from the selected items.
+    /// </summary>
+    /// <returns>A list of camera configurations in their current order.</returns>
+    public IReadOnlyList<CameraConfiguration> GetAssignedCameras()
+        => SelectedItems
+            .Select(item => (CameraConfiguration)item.Tag!)
+            .ToList();
 
     [RelayCommand]
     private void Ok()
@@ -245,20 +103,15 @@ public partial class AssignCameraDialogViewModel : ViewModelDialogBase
     private void Cancel()
         => CloseRequested?.Invoke(this, new DialogClosedEventArgs(dialogResult: false));
 
-    private static void InsertSorted(
-        ObservableCollection<CameraConfiguration> collection,
-        CameraConfiguration camera)
-    {
-        var index = 0;
-        while (index < collection.Count &&
-               string.Compare(
-                   collection[index].Display.DisplayName,
-                   camera.Display.DisplayName,
-                   StringComparison.OrdinalIgnoreCase) < 0)
+    private static DualListSelectorItem ToSelectorItem(
+        CameraConfiguration camera,
+        int? sortOrder = null)
+        => new()
         {
-            index++;
-        }
-
-        collection.Insert(index, camera);
-    }
+            Identifier = camera.Id.ToString(),
+            Name = camera.Display.DisplayName,
+            Description = camera.Display.Description,
+            Tag = camera,
+            SortOrderNumber = sortOrder,
+        };
 }

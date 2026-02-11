@@ -5,8 +5,6 @@ namespace Linksoft.Wpf.CameraWall.Dialogs;
 /// </summary>
 public partial class AssignCameraDialog
 {
-    private readonly AssignCameraDialogViewModel viewModel;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="AssignCameraDialog"/> class.
     /// </summary>
@@ -14,8 +12,6 @@ public partial class AssignCameraDialog
     public AssignCameraDialog(AssignCameraDialogViewModel viewModel)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
-
-        this.viewModel = viewModel;
 
         InitializeComponent();
         DataContext = viewModel;
@@ -25,23 +21,5 @@ public partial class AssignCameraDialog
             DialogResult = e.DialogResult;
             Close();
         };
-    }
-
-    private void OnAvailableSelectionChanged(
-        object sender,
-        SelectionChangedEventArgs e)
-    {
-        viewModel.SelectedAvailableCameras = AvailableListBox.SelectedItems
-            .Cast<CameraConfiguration>()
-            .ToList();
-    }
-
-    private void OnAssignedSelectionChanged(
-        object sender,
-        SelectionChangedEventArgs e)
-    {
-        viewModel.SelectedAssignedCameras = AssignedListBox.SelectedItems
-            .Cast<CameraConfiguration>()
-            .ToList();
     }
 }

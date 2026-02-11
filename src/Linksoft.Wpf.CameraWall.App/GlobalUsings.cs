@@ -13,6 +13,7 @@ global using System.Windows.Threading;
 global using Atc.DependencyInjection;
 global using Atc.Helpers;
 global using Atc.Wpf.Components.Notifications;
+global using Atc.Wpf.Notifications;
 global using Atc.Wpf.Theming.Helpers;
 global using Atc.Wpf.Translation;
 global using Atc.XamlToolkit.Diagnostics;

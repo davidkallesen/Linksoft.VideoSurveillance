@@ -31,10 +31,10 @@ public class TimelapseService : ITimelapseService, IDisposable
     /// <inheritdoc/>
     public void StartCapture(
         CameraConfiguration camera,
-        Player player)
+        FlyleafLibMediaPipeline pipeline)
     {
         ArgumentNullException.ThrowIfNull(camera);
-        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(pipeline);
 
         // Check if timelapse is enabled for this camera
         if (!GetEffectiveEnabled(camera))
@@ -49,7 +49,7 @@ public class TimelapseService : ITimelapseService, IDisposable
         StopCapture(camera.Id);
 
         var interval = GetEffectiveInterval(camera);
-        var context = new TimelapseCaptureContext(camera, player, interval);
+        var context = new TimelapseCaptureContext(camera, pipeline, interval);
 
         if (!contexts.TryAdd(camera.Id, context))
         {
@@ -180,7 +180,7 @@ public class TimelapseService : ITimelapseService, IDisposable
             }
 
             // Capture snapshot using FlyleafLib
-            context.Player.TakeSnapshotToFile(filePath);
+            context.Pipeline.FlyleafPlayer.TakeSnapshotToFile(filePath);
 
             var capturedAt = DateTime.Now;
 

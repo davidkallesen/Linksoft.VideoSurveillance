@@ -16,6 +16,8 @@
         <StackPanel Margin="0,0,0,-20" Orientation="Vertical">
 
             <atc:LabelComboBox
+                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=VideoQualityInfo}"
                 Items="{Binding Path=VideoQualityItems}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=VideoQuality}"
@@ -23,6 +25,8 @@
                 SelectedKey="{Binding Path=SelectedVideoQuality, Mode=TwoWay}" />
 
             <atc:LabelToggleSwitch
+                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=HardwareAccelerationInfo}"
                 IsOn="{Binding Path=HardwareAcceleration, Mode=TwoWay}"
                 LabelPosition="Right"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,

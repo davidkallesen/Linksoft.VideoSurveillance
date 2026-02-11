@@ -12,8 +12,9 @@ public class RecordingService : IRecordingService, IDisposable
     private readonly IThumbnailGeneratorService thumbnailService;
     private readonly ICameraStorageService cameraStorageService;
     private readonly ConcurrentDictionary<Guid, RecordingSession> sessions = new();
-    private readonly ConcurrentDictionary<Guid, Player> players = new();
+    private readonly ConcurrentDictionary<Guid, FlyleafLibMediaPipeline> pipelines = new();
     private readonly ConcurrentDictionary<Guid, DispatcherTimer> postMotionTimers = new();
+    private readonly ConcurrentDictionary<Guid, DateTime> recordingCooldowns = new();
     private bool disposed;
 
     /// <summary>
@@ -59,10 +60,10 @@ public class RecordingService : IRecordingService, IDisposable
     /// <inheritdoc/>
     public bool StartRecording(
         CameraConfiguration camera,
-        Player player)
+        FlyleafLibMediaPipeline pipeline)
     {
         ArgumentNullException.ThrowIfNull(camera);
-        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(pipeline);
 
         // Check if already recording
         if (sessions.ContainsKey(camera.Id))
@@ -82,19 +83,19 @@ public class RecordingService : IRecordingService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            // Start FlyleafLib recording (useRecommendedExtension=false to use our format)
-            player.StartRecording(ref filePath, useRecommendedExtension: false);
+            // Start recording via media pipeline
+            pipeline.StartRecording(filePath);
 
             // Create session
             var session = new RecordingSession(camera.Id, filePath, isManualRecording: true);
             if (!sessions.TryAdd(camera.Id, session))
             {
-                player.StopRecording();
+                pipeline.StopRecording();
                 return false;
             }
 
-            // Store player reference for later stop
-            players[camera.Id] = player;
+            // Store pipeline reference for later stop
+            pipelines[camera.Id] = pipeline;
 
             logger.LogInformation(
                 "Recording started for camera: '{CameraName}', file: {FilePath}",
@@ -106,7 +107,7 @@ public class RecordingService : IRecordingService, IDisposable
 
             // Start thumbnail capture with configured tile count
             var tileCount = GetEffectiveThumbnailTileCount(camera);
-            thumbnailService.StartCapture(camera.Id, player, filePath, tileCount);
+            thumbnailService.StartCapture(camera.Id, pipeline, filePath, tileCount);
 
             return true;
         }
@@ -133,15 +134,15 @@ public class RecordingService : IRecordingService, IDisposable
         // Stop post-motion timer if running
         StopPostMotionTimer(cameraId);
 
-        // Stop FlyleafLib recording
-        // Note: Player is owned by CameraTile, not RecordingService - we just hold a reference for recording
-#pragma warning disable CA2000 // Player is owned and disposed by CameraTile
-        if (players.TryRemove(cameraId, out var player))
+        // Stop recording via media pipeline
+        // Note: Pipeline is owned by CameraTile, not RecordingService - we just hold a reference for recording
+#pragma warning disable CA2000 // Pipeline is owned and disposed by CameraTile
+        if (pipelines.TryRemove(cameraId, out var pipeline))
 #pragma warning restore CA2000
         {
             try
             {
-                player.StopRecording();
+                pipeline.StopRecording();
                 logger.LogInformation(
                     "Recording stopped for camera ID: {CameraId}, file: {FilePath}",
                     cameraId,
@@ -151,6 +152,12 @@ public class RecordingService : IRecordingService, IDisposable
             {
                 logger.LogError(ex, "Error stopping recording for camera ID: {CameraId}", cameraId);
             }
+        }
+
+        // Track cooldown for motion-triggered recordings
+        if (!session.IsManualRecording)
+        {
+            recordingCooldowns[cameraId] = DateTime.UtcNow;
         }
 
         // Raise event
@@ -164,10 +171,10 @@ public class RecordingService : IRecordingService, IDisposable
     /// <inheritdoc/>
     public bool TriggerMotionRecording(
         CameraConfiguration camera,
-        Player player)
+        FlyleafLibMediaPipeline pipeline)
     {
         ArgumentNullException.ThrowIfNull(camera);
-        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(pipeline);
 
         // If already recording manually, don't interfere
         if (sessions.TryGetValue(camera.Id, out var existingSession) && existingSession.IsManualRecording)
@@ -175,11 +182,21 @@ public class RecordingService : IRecordingService, IDisposable
             return true;
         }
 
-        // If already recording motion, just update the timestamp
+        // If already recording motion, just update the timestamp (no cooldown check)
         if (existingSession is not null)
         {
             UpdateMotionTimestamp(camera.Id);
             return true;
+        }
+
+        // Check recording cooldown before starting a NEW recording
+        if (recordingCooldowns.TryGetValue(camera.Id, out var lastStopTime))
+        {
+            var cooldownSeconds = GetEffectiveRecordingCooldown(camera);
+            if (cooldownSeconds > 0 && (DateTime.UtcNow - lastStopTime).TotalSeconds < cooldownSeconds)
+            {
+                return false;
+            }
         }
 
         var format = GetEffectiveRecordingFormat(camera);
@@ -194,8 +211,8 @@ public class RecordingService : IRecordingService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            // Start FlyleafLib recording (useRecommendedExtension=false to use our format)
-            player.StartRecording(ref filePath, useRecommendedExtension: false);
+            // Start recording via media pipeline
+            pipeline.StartRecording(filePath);
 
             // Create session
             var session = new RecordingSession(camera.Id, filePath, isManualRecording: false)
@@ -205,12 +222,12 @@ public class RecordingService : IRecordingService, IDisposable
 
             if (!sessions.TryAdd(camera.Id, session))
             {
-                player.StopRecording();
+                pipeline.StopRecording();
                 return false;
             }
 
-            // Store player reference for later stop
-            players[camera.Id] = player;
+            // Store pipeline reference for later stop
+            pipelines[camera.Id] = pipeline;
 
             // Start post-motion timer
             StartPostMotionTimer(camera);
@@ -225,7 +242,7 @@ public class RecordingService : IRecordingService, IDisposable
 
             // Start thumbnail capture with configured tile count
             var tileCount = GetEffectiveThumbnailTileCount(camera);
-            thumbnailService.StartCapture(camera.Id, player, filePath, tileCount);
+            thumbnailService.StartCapture(camera.Id, pipeline, filePath, tileCount);
 
             return true;
         }
@@ -310,10 +327,10 @@ public class RecordingService : IRecordingService, IDisposable
             return false;
         }
 
-        // Get the player
-        if (!players.TryGetValue(cameraId, out var player))
+        // Get the pipeline
+        if (!pipelines.TryGetValue(cameraId, out var pipeline))
         {
-            logger.LogWarning("No player found for camera ID: {CameraId}, cannot segment", cameraId);
+            logger.LogWarning("No pipeline found for camera ID: {CameraId}, cannot segment", cameraId);
             return false;
         }
 
@@ -341,8 +358,8 @@ public class RecordingService : IRecordingService, IDisposable
             // 1. Stop thumbnail capture for the old segment
             thumbnailService.StopCapture(cameraId);
 
-            // 2. Stop FlyleafLib recording
-            player.StopRecording();
+            // 2. Stop recording via media pipeline
+            pipeline.StopRecording();
 
             // 3. Remove old session
             sessions.TryRemove(cameraId, out _);
@@ -361,8 +378,8 @@ public class RecordingService : IRecordingService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            // 6. Start new FlyleafLib recording (useRecommendedExtension=false to use our format)
-            player.StartRecording(ref newFilePath, useRecommendedExtension: false);
+            // 6. Start new recording via media pipeline
+            pipeline.StartRecording(newFilePath);
 
             // 7. Create new session with preserved state
             var newState = isManualRecording ? RecordingState.Recording : RecordingState.RecordingMotion;
@@ -374,13 +391,13 @@ public class RecordingService : IRecordingService, IDisposable
 
             if (!sessions.TryAdd(cameraId, newSession))
             {
-                player.StopRecording();
+                pipeline.StopRecording();
                 logger.LogError("Failed to add new session for camera ID: {CameraId}", cameraId);
                 return false;
             }
 
-            // Keep player reference
-            players[cameraId] = player;
+            // Keep pipeline reference
+            pipelines[cameraId] = pipeline;
 
             logger.LogInformation(
                 "Recording segmented for camera: {CameraName}, new file: {NewFilePath}",
@@ -392,7 +409,7 @@ public class RecordingService : IRecordingService, IDisposable
 
             // 9. Start thumbnail capture for new segment with configured tile count
             var tileCount = GetEffectiveThumbnailTileCount(camera);
-            thumbnailService.StartCapture(cameraId, player, newFilePath, tileCount);
+            thumbnailService.StartCapture(cameraId, pipeline, newFilePath, tileCount);
 
             return true;
         }
@@ -457,6 +474,17 @@ public class RecordingService : IRecordingService, IDisposable
         return !string.IsNullOrEmpty(appFormat)
             ? appFormat
             : DropDownItemsFactory.DefaultRecordingFormat;
+    }
+
+    private int GetEffectiveRecordingCooldown(CameraConfiguration camera)
+    {
+        var overrideCooldown = camera.Overrides?.MotionDetection.CooldownSeconds;
+        if (overrideCooldown.HasValue)
+        {
+            return overrideCooldown.Value;
+        }
+
+        return settingsService.MotionDetection.CooldownSeconds;
     }
 
     private int GetEffectivePostMotionDuration(CameraConfiguration camera)

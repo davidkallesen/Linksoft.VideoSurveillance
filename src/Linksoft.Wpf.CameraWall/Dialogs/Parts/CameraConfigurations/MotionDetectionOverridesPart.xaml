@@ -32,6 +32,8 @@
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelIntegerBox
+                    InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                          Key=MotionSensitivityInfo}"
                     IsEnabled="{Binding Path=UseDefaultMotionSensitivity, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=MotionSensitivity}"
@@ -48,6 +50,8 @@
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelIntegerBox
+                    InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                          Key=PostMotionDurationInfo}"
                     IsEnabled="{Binding Path=UseDefaultPostMotionDuration, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=PostMotionDuration}"
@@ -80,6 +84,8 @@
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelIntegerBox
+                    InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                          Key=AnalysisFrameRateInfo}"
                     IsEnabled="{Binding Path=UseDefaultAnalysisFrameRate, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=AnalysisFrameRate}"
@@ -96,6 +102,8 @@
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelIntegerBox
+                    InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                          Key=CooldownSecondsInfo}"
                     IsEnabled="{Binding Path=UseDefaultCooldownSeconds, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=CooldownSeconds}"
@@ -112,6 +120,8 @@
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelComboBox
+                    InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                          Key=AnalysisResolutionInfo}"
                     IsEnabled="{Binding Path=UseDefaultAnalysisResolution, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     Items="{Binding Path=AnalysisResolutionItems}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
@@ -184,6 +194,8 @@
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelComboBox
+                    InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                          Key=BoundingBoxMinAreaInfo}"
                     IsEnabled="{Binding Path=UseDefaultBoundingBoxMinArea, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     Items="{Binding Path=BoundingBoxMinAreaItems}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,

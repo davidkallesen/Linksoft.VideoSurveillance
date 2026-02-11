@@ -67,7 +67,7 @@ public partial class CameraGrid
     [DependencyProperty(DefaultValue = true)]
     private bool hardwareAcceleration;
 
-    // Recording/Motion Detection/Timelapse services
+    // Recording/Motion Detection/Timelapse/Notification services
     [DependencyProperty(PropertyChangedCallback = nameof(OnRecordingServiceChanged))]
     private IRecordingService? recordingService;
 
@@ -76,6 +76,9 @@ public partial class CameraGrid
 
     [DependencyProperty(PropertyChangedCallback = nameof(OnTimelapseServiceChanged))]
     private ITimelapseService? timelapseService;
+
+    [DependencyProperty(PropertyChangedCallback = nameof(OnToastNotificationServiceChanged))]
+    private IToastNotificationService? toastNotificationService;
 
     // Recording settings
     [DependencyProperty(DefaultValue = false)]
@@ -371,10 +374,10 @@ public partial class CameraGrid
     /// Applies a layout to the camera wall.
     /// Reuses cameras that exist in both the current and new layout to avoid
     /// unnecessary stream disconnection/reconnection. Shared cameras keep their
-    /// tiles and active connections — only cameras unique to the old or new layout
-    /// are removed or inserted. The grid order may not exactly match the target
-    /// layout's OrderNumber when shared cameras were in a different relative order,
-    /// but connections stay alive.
+    /// tiles and active connections — reordering is done via swap operations
+    /// (same mechanism as <see cref="PerformSwap"/>) that exchange players between
+    /// tiles without disposing them. Only cameras unique to the old or new layout
+    /// are removed or inserted.
     /// </summary>
     /// <param name="layout">The layout to apply.</param>
     /// <param name="cameras">The available cameras.</param>
@@ -407,10 +410,77 @@ public partial class CameraGrid
             }
         }
 
-        // Insert new cameras at their target positions.
-        // Shared cameras stay untouched — no remove, no re-add, no move.
+        // Reorder shared cameras using swap operations (selection sort) to preserve
+        // player connections. Uses the same PrepareForSwap/SwapPlayerWith/CompleteSwap
+        // mechanism as PerformSwap — collection items are replaced via index assignment
+        // which keeps containers stable (no dispose/recreate).
+        var sharedTargetOrder = targetCameras
+            .Where(c => sharedIds.Contains(c.Id))
+            .ToList();
+
+        for (var i = 0; i < sharedTargetOrder.Count; i++)
+        {
+            if (CameraTiles[i].Id == sharedTargetOrder[i].Id)
+            {
+                continue;
+            }
+
+            var swapIndex = -1;
+            for (var j = i + 1; j < CameraTiles.Count; j++)
+            {
+                if (CameraTiles[j].Id == sharedTargetOrder[i].Id)
+                {
+                    swapIndex = j;
+                    break;
+                }
+            }
+
+            if (swapIndex < 0)
+            {
+                continue;
+            }
+
+            var tileA = GetCameraTileAt(i);
+            var tileB = GetCameraTileAt(swapIndex);
+
+            if (tileA is not null && tileB is not null)
+            {
+                var cameraA = CameraTiles[i];
+                var cameraB = CameraTiles[swapIndex];
+
+                tileA.PrepareForSwap();
+                tileB.PrepareForSwap();
+
+                CameraTiles[i] = cameraB;
+                CameraTiles[swapIndex] = cameraA;
+
+                if (tileA.ConnectionState == ConnectionState.Connected &&
+                    tileB.ConnectionState == ConnectionState.Connected)
+                {
+                    tileA.SwapPlayerWith(tileB);
+                }
+                else
+                {
+                    OpenStreamsInParallel(
+                        tileA.Player,
+                        cameraB.BuildUri(),
+                        tileB.Player,
+                        cameraA.BuildUri());
+                }
+
+                tileA.CompleteSwap();
+                tileB.CompleteSwap();
+            }
+        }
+
+        // Insert new cameras at their target positions
         for (var i = 0; i < targetCameras.Count; i++)
         {
+            if (i < CameraTiles.Count && CameraTiles[i].Id == targetCameras[i].Id)
+            {
+                continue;
+            }
+
             if (!sharedIds.Contains(targetCameras[i].Id))
             {
                 CameraTiles.Insert(i, targetCameras[i]);
@@ -608,6 +678,16 @@ public partial class CameraGrid
         }
     }
 
+    private static void OnToastNotificationServiceChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraGrid grid)
+        {
+            grid.InitializeAllTileServices();
+        }
+    }
+
     /// <summary>
     /// Initializes all camera tiles with the recording, motion detection, and timelapse services.
     /// </summary>
@@ -621,7 +701,7 @@ public partial class CameraGrid
         for (var i = 0; i < CameraTiles.Count; i++)
         {
             var tile = GetCameraTileAt(i);
-            tile?.InitializeServices(RecordingService, MotionDetectionService, TimelapseService);
+            tile?.InitializeServices(RecordingService, MotionDetectionService, TimelapseService, ToastNotificationService);
         }
     }
 }

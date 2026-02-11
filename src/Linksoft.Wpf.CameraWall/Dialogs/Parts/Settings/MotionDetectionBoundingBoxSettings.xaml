@@ -41,6 +41,8 @@
                 SelectedKey="{Binding Path=SelectedBoundingBoxThickness, Mode=TwoWay}" />
 
             <atc:LabelComboBox
+                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=BoundingBoxMinAreaInfo}"
                 Items="{Binding Path=BoundingBoxMinAreaItems}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=BoundingBoxMinArea}"

@@ -1,3 +1,4 @@
+// ReSharper disable InconsistentNaming
 namespace Linksoft.Wpf.CameraWall.Services.Internal;
 
 /// <summary>
@@ -7,17 +8,17 @@ internal sealed class MotionDetectionContext : IDisposable
 {
     public MotionDetectionContext(
         Guid cameraId,
-        Player player,
+        FlyleafLibMediaPipeline pipeline,
         MotionDetectionSettings settings)
     {
         CameraId = cameraId;
-        Player = player;
+        Pipeline = pipeline;
         Settings = settings;
     }
 
     public Guid CameraId { get; }
 
-    public Player Player { get; }
+    public FlyleafLibMediaPipeline Pipeline { get; }
 
     public MotionDetectionSettings Settings { get; }
 
@@ -28,6 +29,9 @@ internal sealed class MotionDetectionContext : IDisposable
     public DateTime? LastMotionTime { get; set; }
 
     public IReadOnlyList<Rect> LastBoundingBoxes { get; set; } = [];
+
+    [SuppressMessage("", "SA1401: Volatile requires a field, not a property", Justification = "OK")]
+    public volatile bool IsAnalyzing;
 
     public void Dispose()
     {

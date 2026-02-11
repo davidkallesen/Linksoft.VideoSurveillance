@@ -14,11 +14,11 @@ public interface IMotionDetectionService
     /// Starts motion detection for a camera.
     /// </summary>
     /// <param name="cameraId">The camera ID.</param>
-    /// <param name="player">The FlyleafLib player instance.</param>
+    /// <param name="pipeline">The media pipeline instance.</param>
     /// <param name="settings">Optional motion detection settings. If null, uses defaults.</param>
     void StartDetection(
         Guid cameraId,
-        FlyleafLib.MediaPlayer.Player player,
+        FlyleafLibMediaPipeline pipeline,
         MotionDetectionSettings? settings = null);
 
     /// <summary>

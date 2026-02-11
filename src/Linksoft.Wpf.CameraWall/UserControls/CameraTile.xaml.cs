@@ -138,11 +138,13 @@ public partial class CameraTile : IDisposable
     [DependencyProperty(DefaultValue = 4)]
     private int motionBoundingBoxPadding;
 
-    // Recording services
+    // Recording and notification services
     private IRecordingService? recordingService;
     private IMotionDetectionService? motionDetectionService;
     private ITimelapseService? timelapseService;
+    private IToastNotificationService? toastNotificationService;
     private DispatcherTimer? recordingDurationTimer;
+    private FlyleafLibMediaPipeline? mediaPipeline;
 
     private bool disposed;
     private bool isReconnecting;
@@ -354,15 +356,17 @@ public partial class CameraTile : IDisposable
     }
 
     /// <summary>
-    /// Initializes the recording, motion detection, and timelapse services.
+    /// Initializes the recording, motion detection, timelapse, and toast notification services.
     /// </summary>
     /// <param name="recordingService">The recording service.</param>
     /// <param name="motionDetectionService">The motion detection service.</param>
     /// <param name="timelapseService">The timelapse service.</param>
+    /// <param name="toastNotificationService">The toast notification service.</param>
     public void InitializeServices(
         IRecordingService? recordingService,
         IMotionDetectionService? motionDetectionService,
-        ITimelapseService? timelapseService = null)
+        ITimelapseService? timelapseService = null,
+        IToastNotificationService? toastNotificationService = null)
     {
         // Unsubscribe from previous services
         if (this.recordingService is not null)
@@ -378,6 +382,7 @@ public partial class CameraTile : IDisposable
         this.recordingService = recordingService;
         this.motionDetectionService = motionDetectionService;
         this.timelapseService = timelapseService;
+        this.toastNotificationService = toastNotificationService;
 
         // Subscribe to new services
         if (this.recordingService is not null)
@@ -463,6 +468,8 @@ public partial class CameraTile : IDisposable
 
         var myPlayer = Player;
         var otherPlayer = other.Player;
+        var myPipeline = mediaPipeline;
+        var otherPipeline = other.mediaPipeline;
 
         // Detach PropertyChanged handlers from current players
         if (myPlayer is not null)
@@ -487,6 +494,10 @@ public partial class CameraTile : IDisposable
         // Reattach swapped players
         Player = otherPlayer;
         other.Player = myPlayer;
+
+        // Swap media pipelines
+        mediaPipeline = otherPipeline;
+        other.mediaPipeline = myPipeline;
 
         // Reattach PropertyChanged handlers to the new players
         if (Player is not null)
@@ -664,6 +675,9 @@ public partial class CameraTile : IDisposable
             {
                 Camera.PropertyChanged -= OnCameraPropertyChanged;
             }
+
+            mediaPipeline?.Dispose();
+            mediaPipeline = null;
 
             Player?.Dispose();
             Player = null;
@@ -1063,8 +1077,9 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        // Keep reference to old player
+        // Keep reference to old player and pipeline
         var oldPlayer = Player;
+        var oldPipeline = mediaPipeline;
 
         // Create new player with updated settings FIRST
         var newPlayer = CreatePlayer(Camera);
@@ -1072,8 +1087,11 @@ public partial class CameraTile : IDisposable
 
         // Swap to new player (without intermediate null state)
         Player = newPlayer;
+        mediaPipeline = new FlyleafLibMediaPipeline(newPlayer);
 
-        // Now cleanup old player
+        // Now cleanup old player and pipeline
+        oldPipeline?.Dispose();
+
         if (oldPlayer is not null)
         {
             oldPlayer.PropertyChanged -= OnPlayerPropertyChanged;
@@ -1108,7 +1126,10 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        // Cleanup previous player
+        // Cleanup previous player and pipeline
+        mediaPipeline?.Dispose();
+        mediaPipeline = null;
+
         if (Player is not null)
         {
             Player.PropertyChanged -= OnPlayerPropertyChanged;
@@ -1146,6 +1167,7 @@ public partial class CameraTile : IDisposable
 
         Player = CreatePlayer(cameraConfig);
         Player.PropertyChanged += OnPlayerPropertyChanged;
+        mediaPipeline = new FlyleafLibMediaPipeline(Player);
 
         UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
 
@@ -1414,11 +1436,11 @@ public partial class CameraTile : IDisposable
             // Auto-start recording on connect if enabled
             if (EnableRecordingOnConnect &&
                 recordingService is not null &&
-                Player is not null &&
+                mediaPipeline is not null &&
                 Camera is not null &&
                 RecordingState == RecordingState.Idle)
             {
-                recordingService.StartRecording(Camera, Player);
+                recordingService.StartRecording(Camera, mediaPipeline);
             }
 
             // Auto-start motion detection if enabled (for motion-triggered recording or bounding box display)
@@ -1601,12 +1623,18 @@ public partial class CameraTile : IDisposable
         }
     }
 
-    private static void ShowToastNotification(string message)
+    private void ShowToastNotification(string message)
     {
-        // For now, we'll use a simple approach - the ConnectionStateChanged event
-        // can be handled by the parent to show notifications in a toast/snackbar control
-        // A full toast notification implementation would require additional infrastructure
-        System.Diagnostics.Debug.WriteLine($"Notification: {message}");
+        if (toastNotificationService is null)
+        {
+            return;
+        }
+
+        toastNotificationService.ShowInformation(
+            Camera?.Display.DisplayName ?? Translations.ApplicationTitle,
+            message,
+            useDesktop: true,
+            expirationTime: TimeSpan.FromSeconds(5));
     }
 
     private void UpdateOverlayConnectionState(ConnectionState state)
@@ -1873,12 +1901,12 @@ public partial class CameraTile : IDisposable
     [RelayCommand(CanExecute = nameof(CanExecuteStartRecording))]
     private void StartRecording()
     {
-        if (Camera is null || Player is null || recordingService is null)
+        if (Camera is null || mediaPipeline is null || recordingService is null)
         {
             return;
         }
 
-        recordingService.StartRecording(Camera, Player);
+        recordingService.StartRecording(Camera, mediaPipeline);
     }
 
     private bool CanExecuteStopRecording()
@@ -1951,18 +1979,19 @@ public partial class CameraTile : IDisposable
             }
 
             // Trigger motion recording if enabled and motion is active (use effective value for override)
-            if (e.IsMotionActive && GetEffectiveEnableRecordingOnMotion() && recordingService is not null && Player is not null)
+            if (e.IsMotionActive && GetEffectiveEnableRecordingOnMotion() && recordingService is not null && mediaPipeline is not null)
             {
-                recordingService.TriggerMotionRecording(Camera, Player);
+                recordingService.TriggerMotionRecording(Camera, mediaPipeline);
             }
 
             // If motion just stopped, schedule a delayed check to hide the bounding box
             if (wasMotionDetected && !e.IsMotionActive)
             {
-                // Reset motion indicator after a short delay to avoid flickering
+                // Reset motion indicator after the configured post-motion duration
+                var postMotionSeconds = GetEffectiveMotionPostDurationSeconds();
                 var resetTimer = new DispatcherTimer
                 {
-                    Interval = TimeSpan.FromMilliseconds(500),
+                    Interval = TimeSpan.FromSeconds(postMotionSeconds),
                 };
                 resetTimer.Tick += (_, _) =>
                 {
@@ -2155,11 +2184,11 @@ public partial class CameraTile : IDisposable
     {
         System.Diagnostics.Debug.WriteLine(
             $"[MotionDetection] StartMotionDetection called for '{Camera?.Display.DisplayName ?? "null"}' - " +
-            $"Camera={Camera is not null}, Player={Player is not null}, Service={motionDetectionService is not null}, " +
+            $"Camera={Camera is not null}, Pipeline={mediaPipeline is not null}, Service={motionDetectionService is not null}, " +
             $"EnableRecordingOnMotion={GetEffectiveEnableRecordingOnMotion()}, ShowBoundingBoxInGrid={GetEffectiveShowBoundingBoxInGrid()}, " +
             $"ShouldRun={ShouldRunMotionDetection}");
 
-        if (Camera is null || Player is null || motionDetectionService is null || !ShouldRunMotionDetection)
+        if (Camera is null || mediaPipeline is null || motionDetectionService is null || !ShouldRunMotionDetection)
         {
             System.Diagnostics.Debug.WriteLine("[MotionDetection] StartMotionDetection early return - preconditions not met");
             return;
@@ -2193,7 +2222,7 @@ public partial class CameraTile : IDisposable
             $"ShowInGrid={settings.BoundingBox.ShowInGrid}, MinArea={settings.BoundingBox.MinArea}, " +
             $"Sensitivity={settings.Sensitivity}, Resolution={settings.AnalysisWidth}x{settings.AnalysisHeight}, " +
             $"OverrideMinArea={Camera.Overrides?.MotionDetection.BoundingBox.MinArea}");
-        motionDetectionService.StartDetection(Camera.Id, Player, settings);
+        motionDetectionService.StartDetection(Camera.Id, mediaPipeline, settings);
 
         // Apply bounding box settings AFTER starting detection so the overlay gets the correct resolution
         ApplyBoundingBoxSettings();
@@ -2217,7 +2246,7 @@ public partial class CameraTile : IDisposable
     /// </summary>
     public void StartTimelapse()
     {
-        if (Camera is null || Player is null || timelapseService is null)
+        if (Camera is null || mediaPipeline is null || timelapseService is null)
         {
             return;
         }
@@ -2227,7 +2256,7 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        timelapseService.StartCapture(Camera, Player);
+        timelapseService.StartCapture(Camera, mediaPipeline);
     }
 
     /// <summary>

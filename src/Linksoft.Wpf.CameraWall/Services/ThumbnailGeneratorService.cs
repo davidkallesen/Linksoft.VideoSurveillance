@@ -28,11 +28,11 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
     /// <inheritdoc/>
     public void StartCapture(
         Guid cameraId,
-        Player player,
+        FlyleafLibMediaPipeline pipeline,
         string videoFilePath,
         int tileCount = 4)
     {
-        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(pipeline);
 
         // Validate tile count (must be 1 or 4)
         if (tileCount != 1 && tileCount != 4)
@@ -44,7 +44,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
         StopCapture(cameraId);
 
         var thumbnailPath = Path.ChangeExtension(videoFilePath, ".png");
-        var context = new ThumbnailCaptureContext(player, thumbnailPath, tileCount);
+        var context = new ThumbnailCaptureContext(pipeline, thumbnailPath, tileCount);
 
         if (!captures.TryAdd(cameraId, context))
         {
@@ -141,7 +141,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
 
         try
         {
-            context.Player.TakeSnapshotToFile(tempFile);
+            context.Pipeline.FlyleafPlayer.TakeSnapshotToFile(tempFile);
 
             if (!File.Exists(tempFile))
             {
@@ -287,16 +287,16 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
     private sealed class ThumbnailCaptureContext
     {
         public ThumbnailCaptureContext(
-            Player player,
+            FlyleafLibMediaPipeline pipeline,
             string thumbnailPath,
             int tileCount = 4)
         {
-            Player = player;
+            Pipeline = pipeline;
             ThumbnailPath = thumbnailPath;
             TileCount = tileCount;
         }
 
-        public Player Player { get; }
+        public FlyleafLibMediaPipeline Pipeline { get; }
 
         public string ThumbnailPath { get; }
 

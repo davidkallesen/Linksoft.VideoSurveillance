@@ -14,10 +14,10 @@ public interface ITimelapseService
     /// Starts timelapse capture for a camera.
     /// </summary>
     /// <param name="camera">The camera configuration.</param>
-    /// <param name="player">The FlyleafLib player instance.</param>
+    /// <param name="pipeline">The media pipeline instance.</param>
     void StartCapture(
         CameraConfiguration camera,
-        FlyleafLib.MediaPlayer.Player player);
+        FlyleafLibMediaPipeline pipeline);
 
     /// <summary>
     /// Stops timelapse capture for a camera.

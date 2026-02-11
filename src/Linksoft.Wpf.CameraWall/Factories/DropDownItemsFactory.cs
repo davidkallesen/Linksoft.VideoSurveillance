@@ -10,14 +10,15 @@ public static class DropDownItemsFactory
     /// Gets the video quality options for dropdowns.
     /// Keys are the stored values, values are display text.
     /// </summary>
-    public static IDictionary<string, string> VideoQualityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Auto"] = "Auto (Source Quality)",
-        ["1080p"] = "1080p",
-        ["720p"] = "720p",
-        ["480p"] = "480p",
-        ["360p"] = "360p",
-    };
+    public static IDictionary<string, string> VideoQualityItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Auto"] = Translations.VideoQualityAuto,
+            ["1080p"] = "1080p",
+            ["720p"] = "720p",
+            ["480p"] = "480p",
+            ["360p"] = "360p",
+        };
 
     /// <summary>
     /// Gets the RTSP transport protocol options for dropdowns.
@@ -32,22 +33,24 @@ public static class DropDownItemsFactory
     /// Gets the recording format options for dropdowns.
     /// Note: AVI removed as it doesn't properly support H.264/H.265 codecs used by modern IP cameras.
     /// </summary>
-    public static IDictionary<string, string> RecordingFormatItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["mp4"] = "MP4 (H.264)",
-        ["mkv"] = "MKV (Matroska)",
-    };
+    public static IDictionary<string, string> RecordingFormatItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["mp4"] = Translations.RecordingFormatMp4,
+            ["mkv"] = Translations.RecordingFormatMkv,
+        };
 
     /// <summary>
     /// Gets the overlay position options with friendly display names.
     /// </summary>
-    public static IDictionary<string, string> OverlayPositionItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["TopLeft"] = "Top Left",
-        ["TopRight"] = "Top Right",
-        ["BottomLeft"] = "Bottom Left",
-        ["BottomRight"] = "Bottom Right",
-    };
+    public static IDictionary<string, string> OverlayPositionItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["TopLeft"] = Translations.OverlayPositionTopLeft,
+            ["TopRight"] = Translations.OverlayPositionTopRight,
+            ["BottomLeft"] = Translations.OverlayPositionBottomLeft,
+            ["BottomRight"] = Translations.OverlayPositionBottomRight,
+        };
 
     /// <summary>
     /// Gets the overlay opacity options for dropdowns.
@@ -81,13 +84,14 @@ public static class DropDownItemsFactory
     /// Gets the motion sensitivity options for dropdowns.
     /// Keys are sensitivity values (0-100), values are display text.
     /// </summary>
-    public static IDictionary<string, string> MotionSensitivityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["10"] = "Low (10)",
-        ["30"] = "Medium (30)",
-        ["50"] = "High (50)",
-        ["70"] = "Very High (70)",
-    };
+    public static IDictionary<string, string> MotionSensitivityItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["10"] = Translations.MotionSensitivityLow,
+            ["30"] = Translations.MotionSensitivityMedium,
+            ["50"] = Translations.MotionSensitivityHigh,
+            ["70"] = Translations.MotionSensitivityVeryHigh,
+        };
 
     /// <summary>
     /// Gets the bounding box thickness options for dropdowns.
@@ -107,106 +111,114 @@ public static class DropDownItemsFactory
     /// Keys are area in pixels (at 320x240 analysis resolution), values are display text.
     /// Lower values detect smaller/distant objects but may increase false positives.
     /// </summary>
-    public static IDictionary<string, string> BoundingBoxMinAreaItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["10"] = "10 px² (Tiny)",
-        ["25"] = "25 px² (Small)",
-        ["50"] = "50 px² (Medium)",
-        ["100"] = "100 px² (Large)",
-        ["200"] = "200 px² (Very Large)",
-    };
+    public static IDictionary<string, string> BoundingBoxMinAreaItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["10"] = Translations.BoundingBoxMinAreaTiny,
+            ["25"] = Translations.BoundingBoxMinAreaSmall,
+            ["50"] = Translations.BoundingBoxMinAreaMedium,
+            ["100"] = Translations.BoundingBoxMinAreaLarge,
+            ["200"] = Translations.BoundingBoxMinAreaVeryLarge,
+        };
 
     /// <summary>
     /// Gets the motion analysis resolution options for dropdowns.
     /// Keys are "WIDTHxHEIGHT", values are display text with performance hints.
     /// Higher resolutions improve small object detection but increase CPU usage.
     /// </summary>
-    public static IDictionary<string, string> MotionAnalysisResolutionItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["320x240"] = "320x240 (Low CPU)",
-        ["480x360"] = "480x360 (Balanced)",
-        ["640x480"] = "640x480 (Better Detection)",
-        ["800x600"] = "800x600 (High CPU)",
-        ["960x720"] = "960x720 (Very High CPU)",
-    };
+    public static IDictionary<string, string> MotionAnalysisResolutionItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["320x240"] = Translations.MotionResolutionLowCpu,
+            ["480x360"] = Translations.MotionResolutionBalanced,
+            ["640x480"] = Translations.MotionResolutionBetterDetection,
+            ["800x600"] = Translations.MotionResolutionHighCpu,
+            ["960x720"] = Translations.MotionResolutionVeryHighCpu,
+        };
 
     /// <summary>
     /// Gets the post-motion duration options for dropdowns (in seconds).
     /// </summary>
-    public static IDictionary<string, string> PostMotionDurationItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["5"] = "5 seconds",
-        ["10"] = "10 seconds",
-        ["15"] = "15 seconds",
-        ["30"] = "30 seconds",
-        ["60"] = "1 minute",
-    };
+    public static IDictionary<string, string> PostMotionDurationItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["5"] = Translations.Duration5Seconds,
+            ["10"] = Translations.Duration10Seconds,
+            ["15"] = Translations.Duration15Seconds,
+            ["30"] = Translations.Duration30Seconds,
+            ["60"] = Translations.Duration1Minute,
+        };
 
     /// <summary>
     /// Gets the media cleanup schedule options for dropdowns.
     /// </summary>
-    public static IDictionary<string, string> MediaCleanupScheduleItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Disabled"] = "Disabled",
-        ["OnStartup"] = "On Application Startup",
-        ["OnStartupAndPeriodically"] = "On Startup and Every 6 Hours",
-    };
+    public static IDictionary<string, string> MediaCleanupScheduleItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Disabled"] = Translations.CleanupScheduleDisabled,
+            ["OnStartup"] = Translations.CleanupScheduleOnStartup,
+            ["OnStartupAndPeriodically"] = Translations.CleanupScheduleOnStartupAndPeriodically,
+        };
 
     /// <summary>
     /// Gets the media retention period options for dropdowns (in days).
     /// </summary>
-    public static IDictionary<string, string> MediaRetentionPeriodItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["7"] = "7 Days",
-        ["14"] = "14 Days",
-        ["30"] = "30 Days",
-        ["60"] = "60 Days",
-        ["90"] = "90 Days",
-        ["180"] = "6 Months",
-        ["365"] = "1 Year",
-    };
+    public static IDictionary<string, string> MediaRetentionPeriodItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["7"] = Translations.RetentionPeriod7Days,
+            ["14"] = Translations.RetentionPeriod14Days,
+            ["30"] = Translations.RetentionPeriod30Days,
+            ["60"] = Translations.RetentionPeriod60Days,
+            ["90"] = Translations.RetentionPeriod90Days,
+            ["180"] = Translations.RetentionPeriod6Months,
+            ["365"] = Translations.RetentionPeriod1Year,
+        };
 
     /// <summary>
     /// Gets the maximum recording duration options for dropdowns (in minutes).
     /// </summary>
-    public static IDictionary<string, string> MaxRecordingDurationItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["15"] = "15 minutes",
-        ["30"] = "30 minutes",
-        ["60"] = "1 hour",
-        ["120"] = "2 hours",
-        ["180"] = "3 hours",
-        ["240"] = "4 hours",
-    };
+    public static IDictionary<string, string> MaxRecordingDurationItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["15"] = Translations.Duration15Minutes,
+            ["30"] = Translations.Duration30Minutes,
+            ["60"] = Translations.Duration1Hour,
+            ["120"] = Translations.Duration2Hours,
+            ["180"] = Translations.Duration3Hours,
+            ["240"] = Translations.Duration4Hours,
+        };
 
     /// <summary>
     /// Gets the thumbnail tile count options for dropdowns.
     /// 1 = single image (320x240), 4 = 2x2 grid (640x480).
     /// </summary>
-    public static IDictionary<string, string> ThumbnailTileCountItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["1"] = "1 tile (320x240)",
-        ["4"] = "2x2 grid (640x480)",
-    };
+    public static IDictionary<string, string> ThumbnailTileCountItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["1"] = Translations.ThumbnailTile1,
+            ["4"] = Translations.ThumbnailTile4,
+        };
 
     /// <summary>
     /// Gets the timelapse capture interval options for dropdowns.
     /// Keys are interval codes (e.g., "10s", "1m"), values are display text.
     /// </summary>
-    public static IDictionary<string, string> TimelapseIntervalItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["10s"] = "10 seconds",
-        ["30s"] = "30 seconds",
-        ["1m"] = "1 minute",
-        ["5m"] = "5 minutes",
-        ["10m"] = "10 minutes",
-        ["30m"] = "30 minutes",
-        ["1h"] = "1 hour",
-        ["3h"] = "3 hours",
-        ["6h"] = "6 hours",
-        ["12h"] = "12 hours",
-        ["24h"] = "24 hours",
-    };
+    public static IDictionary<string, string> TimelapseIntervalItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["10s"] = Translations.Duration10Seconds,
+            ["30s"] = Translations.Duration30Seconds,
+            ["1m"] = Translations.Duration1Minute,
+            ["5m"] = Translations.Duration5Minutes,
+            ["10m"] = Translations.Duration10Minutes,
+            ["30m"] = Translations.Duration30Minutes,
+            ["1h"] = Translations.Duration1Hour,
+            ["3h"] = Translations.Duration3Hours,
+            ["6h"] = Translations.Duration6Hours,
+            ["12h"] = Translations.Duration12Hours,
+            ["24h"] = Translations.Duration24Hours,
+        };
 
     /// <summary>
     /// Gets the day filter options for recordings browser.

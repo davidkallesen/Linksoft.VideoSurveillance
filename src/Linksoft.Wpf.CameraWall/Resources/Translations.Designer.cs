@@ -187,11 +187,29 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Number of frames analyzed per second for motion. Higher values detect motion faster but use more CPU. Values between 5 and 15 are recommended..
+        /// </summary>
+        public static string AnalysisFrameRateInfo {
+            get {
+                return ResourceManager.GetString("AnalysisFrameRateInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Analysis resolution.
         /// </summary>
         public static string AnalysisResolution {
             get {
                 return ResourceManager.GetString("AnalysisResolution", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolution used for motion analysis. Lower resolutions are faster and use less CPU, while higher resolutions detect smaller objects more accurately..
+        /// </summary>
+        public static string AnalysisResolutionInfo {
+            get {
+                return ResourceManager.GetString("AnalysisResolutionInfo", resourceCulture);
             }
         }
         
@@ -309,6 +327,60 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string BoundingBoxMinArea {
             get {
                 return ResourceManager.GetString("BoundingBoxMinArea", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Minimum size of a motion region before a bounding box is drawn. Larger values ignore small movements like insects or pixel noise..
+        /// </summary>
+        public static string BoundingBoxMinAreaInfo {
+            get {
+                return ResourceManager.GetString("BoundingBoxMinAreaInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 100 px² (Large).
+        /// </summary>
+        public static string BoundingBoxMinAreaLarge {
+            get {
+                return ResourceManager.GetString("BoundingBoxMinAreaLarge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 50 px² (Medium).
+        /// </summary>
+        public static string BoundingBoxMinAreaMedium {
+            get {
+                return ResourceManager.GetString("BoundingBoxMinAreaMedium", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 25 px² (Small).
+        /// </summary>
+        public static string BoundingBoxMinAreaSmall {
+            get {
+                return ResourceManager.GetString("BoundingBoxMinAreaSmall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 10 px² (Tiny).
+        /// </summary>
+        public static string BoundingBoxMinAreaTiny {
+            get {
+                return ResourceManager.GetString("BoundingBoxMinAreaTiny", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 200 px² (Very Large).
+        /// </summary>
+        public static string BoundingBoxMinAreaVeryLarge {
+            get {
+                return ResourceManager.GetString("BoundingBoxMinAreaVeryLarge", resourceCulture);
             }
         }
         
@@ -646,6 +718,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Minimum wait time in seconds after a recording stops before a new motion-triggered recording can start. Prevents rapid on/off recording cycles..
+        /// </summary>
+        public static string CooldownSecondsInfo {
+            get {
+                return ResourceManager.GetString("CooldownSecondsInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Copyright.
         /// </summary>
         public static string Copyright {
@@ -822,6 +903,150 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string DownloadLatest {
             get {
                 return ResourceManager.GetString("DownloadLatest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 10 minutes.
+        /// </summary>
+        public static string Duration10Minutes {
+            get {
+                return ResourceManager.GetString("Duration10Minutes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 10 seconds.
+        /// </summary>
+        public static string Duration10Seconds {
+            get {
+                return ResourceManager.GetString("Duration10Seconds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 12 hours.
+        /// </summary>
+        public static string Duration12Hours {
+            get {
+                return ResourceManager.GetString("Duration12Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 15 minutes.
+        /// </summary>
+        public static string Duration15Minutes {
+            get {
+                return ResourceManager.GetString("Duration15Minutes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 15 seconds.
+        /// </summary>
+        public static string Duration15Seconds {
+            get {
+                return ResourceManager.GetString("Duration15Seconds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 hour.
+        /// </summary>
+        public static string Duration1Hour {
+            get {
+                return ResourceManager.GetString("Duration1Hour", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 minute.
+        /// </summary>
+        public static string Duration1Minute {
+            get {
+                return ResourceManager.GetString("Duration1Minute", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 24 hours.
+        /// </summary>
+        public static string Duration24Hours {
+            get {
+                return ResourceManager.GetString("Duration24Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 2 hours.
+        /// </summary>
+        public static string Duration2Hours {
+            get {
+                return ResourceManager.GetString("Duration2Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 30 minutes.
+        /// </summary>
+        public static string Duration30Minutes {
+            get {
+                return ResourceManager.GetString("Duration30Minutes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 30 seconds.
+        /// </summary>
+        public static string Duration30Seconds {
+            get {
+                return ResourceManager.GetString("Duration30Seconds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 3 hours.
+        /// </summary>
+        public static string Duration3Hours {
+            get {
+                return ResourceManager.GetString("Duration3Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 4 hours.
+        /// </summary>
+        public static string Duration4Hours {
+            get {
+                return ResourceManager.GetString("Duration4Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 5 minutes.
+        /// </summary>
+        public static string Duration5Minutes {
+            get {
+                return ResourceManager.GetString("Duration5Minutes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 5 seconds.
+        /// </summary>
+        public static string Duration5Seconds {
+            get {
+                return ResourceManager.GetString("Duration5Seconds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 6 hours.
+        /// </summary>
+        public static string Duration6Hours {
+            get {
+                return ResourceManager.GetString("Duration6Hours", resourceCulture);
             }
         }
         
@@ -1087,6 +1312,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Uses your graphics card (GPU) to decode video instead of the CPU. Significantly reduces CPU load and improves performance with multiple cameras..
+        /// </summary>
+        public static string HardwareAccelerationInfo {
+            get {
+                return ResourceManager.GetString("HardwareAccelerationInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Include snapshots in cleanup.
         /// </summary>
         public static string IncludeSnapshotsInCleanup {
@@ -1132,15 +1366,6 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Initialize:.
-        /// </summary>
-        public static string InitializePrefix {
-            get {
-                return ResourceManager.GetString("InitializePrefix", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Load configuration.
         /// </summary>
         public static string InitializeLoadConfiguration {
@@ -1155,6 +1380,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string InitializeLoadMainWindow {
             get {
                 return ResourceManager.GetString("InitializeLoadMainWindow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Initialize:.
+        /// </summary>
+        public static string InitializePrefix {
+            get {
+                return ResourceManager.GetString("InitializePrefix", resourceCulture);
             }
         }
         
@@ -1177,7 +1411,7 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A camera with this IP address already exists.
+        ///   Looks up a localized string similar to A camera with this IP address and path already exists.
         /// </summary>
         public static string IpAddressAlreadyExists {
             get {
@@ -1420,11 +1654,101 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 480x360 (Balanced).
+        /// </summary>
+        public static string MotionResolutionBalanced {
+            get {
+                return ResourceManager.GetString("MotionResolutionBalanced", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 640x480 (Better Detection).
+        /// </summary>
+        public static string MotionResolutionBetterDetection {
+            get {
+                return ResourceManager.GetString("MotionResolutionBetterDetection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 800x600 (High CPU).
+        /// </summary>
+        public static string MotionResolutionHighCpu {
+            get {
+                return ResourceManager.GetString("MotionResolutionHighCpu", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 320x240 (Low CPU).
+        /// </summary>
+        public static string MotionResolutionLowCpu {
+            get {
+                return ResourceManager.GetString("MotionResolutionLowCpu", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 960x720 (Very High CPU).
+        /// </summary>
+        public static string MotionResolutionVeryHighCpu {
+            get {
+                return ResourceManager.GetString("MotionResolutionVeryHighCpu", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Motion sensitivity.
         /// </summary>
         public static string MotionSensitivity {
             get {
                 return ResourceManager.GetString("MotionSensitivity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to High (50).
+        /// </summary>
+        public static string MotionSensitivityHigh {
+            get {
+                return ResourceManager.GetString("MotionSensitivityHigh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Controls how easily motion is detected. Higher values detect smaller movements but may trigger false alerts from noise or lighting changes..
+        /// </summary>
+        public static string MotionSensitivityInfo {
+            get {
+                return ResourceManager.GetString("MotionSensitivityInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Low (10).
+        /// </summary>
+        public static string MotionSensitivityLow {
+            get {
+                return ResourceManager.GetString("MotionSensitivityLow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Medium (30).
+        /// </summary>
+        public static string MotionSensitivityMedium {
+            get {
+                return ResourceManager.GetString("MotionSensitivityMedium", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Very High (70).
+        /// </summary>
+        public static string MotionSensitivityVeryHigh {
+            get {
+                return ResourceManager.GetString("MotionSensitivityVeryHigh", resourceCulture);
             }
         }
         
@@ -1596,6 +1920,42 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string OverlayPosition {
             get {
                 return ResourceManager.GetString("OverlayPosition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Bottom Left.
+        /// </summary>
+        public static string OverlayPositionBottomLeft {
+            get {
+                return ResourceManager.GetString("OverlayPositionBottomLeft", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Bottom Right.
+        /// </summary>
+        public static string OverlayPositionBottomRight {
+            get {
+                return ResourceManager.GetString("OverlayPositionBottomRight", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Top Left.
+        /// </summary>
+        public static string OverlayPositionTopLeft {
+            get {
+                return ResourceManager.GetString("OverlayPositionTopLeft", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Top Right.
+        /// </summary>
+        public static string OverlayPositionTopRight {
+            get {
+                return ResourceManager.GetString("OverlayPositionTopRight", resourceCulture);
             }
         }
         
@@ -1780,6 +2140,15 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to How many seconds to keep recording after motion stops. Ensures the full event is captured even if movement pauses briefly..
+        /// </summary>
+        public static string PostMotionDurationInfo {
+            get {
+                return ResourceManager.GetString("PostMotionDurationInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Press ESC to close.
         /// </summary>
         public static string PressEscToClose {
@@ -1911,6 +2280,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string RecordingFormat {
             get {
                 return ResourceManager.GetString("RecordingFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MKV (Matroska).
+        /// </summary>
+        public static string RecordingFormatMkv {
+            get {
+                return ResourceManager.GetString("RecordingFormatMkv", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MP4 (H.264).
+        /// </summary>
+        public static string RecordingFormatMp4 {
+            get {
+                return ResourceManager.GetString("RecordingFormatMp4", resourceCulture);
             }
         }
         
@@ -2464,6 +2851,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 1 tile (320x240).
+        /// </summary>
+        public static string ThumbnailTile1 {
+            get {
+                return ResourceManager.GetString("ThumbnailTile1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 2x2 grid (640x480).
+        /// </summary>
+        public static string ThumbnailTile4 {
+            get {
+                return ResourceManager.GetString("ThumbnailTile4", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Thumbnail tiles.
         /// </summary>
         public static string ThumbnailTileCount {
@@ -2613,6 +3018,24 @@ namespace Linksoft.Wpf.CameraWall.Resources {
         public static string VideoQuality {
             get {
                 return ResourceManager.GetString("VideoQuality", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Auto (Source Quality).
+        /// </summary>
+        public static string VideoQualityAuto {
+            get {
+                return ResourceManager.GetString("VideoQualityAuto", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Maximum video resolution for playback. Lower quality reduces bandwidth and CPU usage. &apos;Auto&apos; uses the best quality available from the camera..
+        /// </summary>
+        public static string VideoQualityInfo {
+            get {
+                return ResourceManager.GetString("VideoQualityInfo", resourceCulture);
             }
         }
         

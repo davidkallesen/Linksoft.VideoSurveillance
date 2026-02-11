@@ -7,11 +7,11 @@ internal sealed class TimelapseCaptureContext : IDisposable
 {
     public TimelapseCaptureContext(
         CameraConfiguration camera,
-        Player player,
+        FlyleafLibMediaPipeline pipeline,
         TimeSpan interval)
     {
         Camera = camera;
-        Player = player;
+        Pipeline = pipeline;
         Interval = interval;
         Timer = new DispatcherTimer
         {
@@ -21,7 +21,7 @@ internal sealed class TimelapseCaptureContext : IDisposable
 
     public CameraConfiguration Camera { get; }
 
-    public Player Player { get; }
+    public FlyleafLibMediaPipeline Pipeline { get; }
 
     public TimeSpan Interval { get; }
 

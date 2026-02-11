@@ -10,13 +10,15 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
 {
     private const int DefaultAnalysisWidth = 800;
     private const int DefaultAnalysisHeight = 600;
-    private const int DefaultTargetFps = 2; // Target analysis FPS per camera
-    private const int MinSchedulerIntervalMs = 50; // Minimum 50ms between analyses
+    private const int MinTargetFps = 2;
+    private const int MaxTargetFps = 15;
+    private const int MinSchedulerIntervalMs = 16; // ~60 Hz ceiling for scheduler ticks
     private const int MaxSchedulerIntervalMs = 500; // Maximum 500ms between analyses
 
     private readonly ConcurrentDictionary<Guid, MotionDetectionContext> contexts = new();
     private readonly List<Guid> scheduledCameras = [];
     private readonly Lock schedulerLock = new();
+    private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
     private DispatcherTimer? schedulerTimer;
     private int currentCameraIndex;
     private bool disposed;
@@ -27,15 +29,15 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
     /// <inheritdoc/>
     public void StartDetection(
         Guid cameraId,
-        Player player,
+        FlyleafLibMediaPipeline pipeline,
         MotionDetectionSettings? settings = null)
     {
-        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(pipeline);
 
         // Stop existing detection if any
         StopDetection(cameraId);
 
-        var context = new MotionDetectionContext(cameraId, player, settings ?? new MotionDetectionSettings());
+        var context = new MotionDetectionContext(cameraId, pipeline, settings ?? new MotionDetectionSettings());
         if (!contexts.TryAdd(cameraId, context))
         {
             context.Dispose();
@@ -149,10 +151,23 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
             return;
         }
 
-        // Calculate interval: total analyses per second = cameras * targetFps
+        // Compute max AnalysisFrameRate across all active cameras (clamped to MinTargetFps..MaxTargetFps)
+        var maxFps = MinTargetFps;
+        foreach (var id in scheduledCameras)
+        {
+            if (contexts.TryGetValue(id, out var ctx))
+            {
+                var fps = Math.Clamp(ctx.Settings.AnalysisFrameRate, MinTargetFps, MaxTargetFps);
+                if (fps > maxFps)
+                {
+                    maxFps = fps;
+                }
+            }
+        }
+
+        // Calculate interval: total analyses per second = cameras * maxFps
         // Interval = 1000ms / totalAnalysesPerSecond
-        // Example: 8 cameras * 2 fps = 16 analyses/sec = 62.5ms interval
-        var totalAnalysesPerSecond = scheduledCameras.Count * DefaultTargetFps;
+        var totalAnalysesPerSecond = scheduledCameras.Count * maxFps;
         var intervalMs = Math.Max(MinSchedulerIntervalMs, Math.Min(MaxSchedulerIntervalMs, 1000.0 / totalAnalysesPerSecond));
 
         if (schedulerTimer is null)
@@ -172,7 +187,8 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
     }
 
     /// <summary>
-    /// Scheduler tick handler - analyzes the next camera in sequence.
+    /// Scheduler tick handler - captures a snapshot on the UI thread, then
+    /// dispatches heavy image processing to a background thread.
     /// </summary>
     private void OnSchedulerTick(
         object? sender,
@@ -193,11 +209,36 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
             currentCameraIndex++;
         }
 
-        // Analyze frame outside the lock
-        AnalyzeFrame(cameraId);
+        if (!contexts.TryGetValue(cameraId, out var context))
+        {
+            return;
+        }
+
+        // Skip if the previous frame is still being analyzed
+        if (context.IsAnalyzing)
+        {
+            return;
+        }
+
+        // Capture snapshot on the UI thread (FlyleafLib's Player requires it)
+        var tempFile = Path.Combine(Path.GetTempPath(), $"motion_{cameraId:N}.png");
+        try
+        {
+            context.Pipeline.FlyleafPlayer.TakeSnapshotToFile(tempFile);
+        }
+        catch
+        {
+            return;
+        }
+
+        // Dispatch heavy processing (file wait, bitmap decode, frame diff) to background thread
+        context.IsAnalyzing = true;
+        _ = Task.Run(() => ProcessCapturedFrame(cameraId, tempFile));
     }
 
-    private void AnalyzeFrame(Guid cameraId)
+    private void ProcessCapturedFrame(
+        Guid cameraId,
+        string tempFile)
     {
         if (!contexts.TryGetValue(cameraId, out var context))
         {
@@ -206,13 +247,8 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
 
         try
         {
-            // Use temp file approach for frame capture (FlyleafLib's TakeSnapshotToFile)
-            var tempFile = Path.Combine(Path.GetTempPath(), $"motion_{cameraId:N}.png");
-
             try
             {
-                context.Player.TakeSnapshotToFile(tempFile);
-
                 // Wait a bit for the file to be fully written (FlyleafLib writes async)
                 var maxWaitMs = 500;
                 var waitedMs = 0;
@@ -267,27 +303,19 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
 
                     if (isMotionActive)
                     {
-                        // Check cooldown
-                        var cooldownElapsed = context.LastMotionTime is null ||
-                            (DateTime.UtcNow - context.LastMotionTime.Value).TotalSeconds >= context.Settings.CooldownSeconds;
+                        context.IsMotionDetected = true;
+                        context.LastMotionTime = DateTime.UtcNow;
+                        context.LastBoundingBoxes = boundingBoxes;
 
-                        if (cooldownElapsed || wasMotionDetected)
-                        {
-                            context.IsMotionDetected = true;
-                            context.LastMotionTime = DateTime.UtcNow;
-                            context.LastBoundingBoxes = boundingBoxes;
-
-                            // Raise event with bounding box data
-                            MotionDetected?.Invoke(
-                                this,
-                                new MotionDetectedEventArgs(
-                                    cameraId,
-                                    changePercent,
-                                    isMotionActive: true,
-                                    boundingBoxes,
-                                    analysisWidth,
-                                    analysisHeight));
-                        }
+                        // Always fire event when motion is active - cooldown is handled by RecordingService for recordings
+                        // Marshal to UI thread since subscribers access DependencyProperties
+                        RaiseMotionDetected(new MotionDetectedEventArgs(
+                            cameraId,
+                            changePercent,
+                            isMotionActive: true,
+                            boundingBoxes,
+                            analysisWidth,
+                            analysisHeight));
                     }
                     else
                     {
@@ -295,15 +323,13 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
                         if (wasMotionDetected)
                         {
                             // Raise event indicating motion stopped
-                            MotionDetected?.Invoke(
-                                this,
-                                new MotionDetectedEventArgs(
-                                    cameraId,
-                                    changePercent,
-                                    isMotionActive: false,
-                                    boundingBoxes: null,
-                                    analysisWidth,
-                                    analysisHeight));
+                            RaiseMotionDetected(new MotionDetectedEventArgs(
+                                cameraId,
+                                changePercent,
+                                isMotionActive: false,
+                                boundingBoxes: null,
+                                analysisWidth,
+                                analysisHeight));
                         }
 
                         context.IsMotionDetected = false;
@@ -333,6 +359,26 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         catch
         {
             // Silently ignore frame analysis errors - next frame will be analyzed
+        }
+        finally
+        {
+            context.IsAnalyzing = false;
+        }
+    }
+
+    /// <summary>
+    /// Raises the MotionDetected event on the UI thread to avoid cross-thread
+    /// access violations on WPF DependencyProperties in event handlers.
+    /// </summary>
+    private void RaiseMotionDetected(MotionDetectedEventArgs args)
+    {
+        if (dispatcher.CheckAccess())
+        {
+            MotionDetected?.Invoke(this, args);
+        }
+        else
+        {
+            _ = dispatcher.BeginInvoke(() => MotionDetected?.Invoke(this, args));
         }
     }
 

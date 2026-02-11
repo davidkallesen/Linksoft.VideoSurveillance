@@ -32,6 +32,8 @@
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelComboBox
+                    InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                          Key=VideoQualityInfo}"
                     IsEnabled="{Binding Path=UseDefaultVideoQuality, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     Items="{Binding Path=VideoQualityItems}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
@@ -47,6 +49,8 @@
                     OnContent="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                     Key=OverrideToggleMaster}" />
                 <atc:LabelToggleSwitch
+                    InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                          Key=HardwareAccelerationInfo}"
                     IsEnabled="{Binding Path=UseDefaultHardwareAcceleration, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
                     IsOn="{Binding Path=OverrideHardwareAcceleration, Mode=TwoWay}"
                     LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,

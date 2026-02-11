@@ -35,6 +35,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Linksoft.VideoSurveillance.Core\Linksoft.VideoSurveillance.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Atc" Version="3.0.18" />
     <PackageReference Include="Atc.SourceGenerators" Version="0.1.49">
       <PrivateAssets>all</PrivateAssets>

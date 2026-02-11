@@ -10,12 +10,12 @@ public interface IThumbnailGeneratorService
     /// Starts capturing frames for thumbnail generation.
     /// </summary>
     /// <param name="cameraId">The camera identifier.</param>
-    /// <param name="player">The FlyleafLib player to capture frames from.</param>
+    /// <param name="pipeline">The media pipeline to capture frames from.</param>
     /// <param name="videoFilePath">The video file path (thumbnail will use same base name with .png extension).</param>
     /// <param name="tileCount">The number of tiles in the thumbnail (1 or 4). Default is 4 (2x2 grid).</param>
     void StartCapture(
         Guid cameraId,
-        Player player,
+        FlyleafLibMediaPipeline pipeline,
         string videoFilePath,
         int tileCount = 4);
 

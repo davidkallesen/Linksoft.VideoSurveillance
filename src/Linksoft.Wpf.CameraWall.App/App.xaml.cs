@@ -39,6 +39,9 @@ public partial class CameraWallApp
                 // Library services (auto-registered via [Registration] attribute)
                 services.AddDependencyRegistrationsFromCameraWall();
 
+                // Toast notification service (used by library and app)
+                services.AddSingleton<IToastNotificationService, ToastNotificationService>();
+
                 // App
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();
@@ -212,10 +215,10 @@ public partial class CameraWallApp
 
         logger!.LogInformation("App started");
 
-        _ = CheckForUpdatesAndNotifyAsync(mainWindow);
+        _ = CheckForUpdatesAndNotifyAsync();
     }
 
-    private async Task CheckForUpdatesAndNotifyAsync(MainWindow mainWindow)
+    private async Task CheckForUpdatesAndNotifyAsync()
     {
         try
         {
@@ -234,18 +237,14 @@ public partial class CameraWallApp
                 return;
             }
 
-            var content = new ToastNotificationContent(
-                ToastNotificationType.Information,
+            var toastService = host.Services.GetRequiredService<IToastNotificationService>();
+            toastService.ShowInformation(
                 Translations.UpdateAvailable,
                 string.Format(
                     CultureInfo.CurrentCulture,
                     Translations.UpdateAvailableMessage1,
-                    manager.UpdateVersion));
-
-            var notificationManager = new ToastNotificationManager(mainWindow.Dispatcher);
-            notificationManager.Show(
+                    manager.UpdateVersion),
                 useDesktop: true,
-                content,
                 expirationTime: TimeSpan.FromSeconds(10),
                 onClick: manager.DownloadLatestUpdate);
         }

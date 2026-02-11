@@ -28,11 +28,11 @@ public interface IRecordingService
     /// Starts a manual recording for a camera.
     /// </summary>
     /// <param name="camera">The camera configuration.</param>
-    /// <param name="player">The FlyleafLib player instance.</param>
+    /// <param name="pipeline">The media pipeline instance.</param>
     /// <returns>True if recording started successfully; otherwise, false.</returns>
     bool StartRecording(
         CameraConfiguration camera,
-        Player player);
+        FlyleafLibMediaPipeline pipeline);
 
     /// <summary>
     /// Stops recording for a camera.
@@ -51,11 +51,11 @@ public interface IRecordingService
     /// Triggers motion-based recording for a camera.
     /// </summary>
     /// <param name="camera">The camera configuration.</param>
-    /// <param name="player">The FlyleafLib player instance.</param>
+    /// <param name="pipeline">The media pipeline instance.</param>
     /// <returns>True if recording started or was already in progress; otherwise, false.</returns>
     bool TriggerMotionRecording(
         CameraConfiguration camera,
-        FlyleafLib.MediaPlayer.Player player);
+        FlyleafLibMediaPipeline pipeline);
 
     /// <summary>
     /// Updates the last motion timestamp for an active motion recording.

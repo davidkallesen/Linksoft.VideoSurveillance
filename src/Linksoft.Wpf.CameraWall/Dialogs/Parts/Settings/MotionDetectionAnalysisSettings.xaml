@@ -16,6 +16,8 @@
         <StackPanel Margin="0,0,0,-20" Orientation="Vertical">
 
             <atc:LabelIntegerBox
+                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=MotionSensitivityInfo}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=MotionSensitivity}"
                 Maximum="100"
@@ -24,6 +26,8 @@
                 Value="{Binding Path=MotionSensitivity, Mode=TwoWay}" />
 
             <atc:LabelIntegerBox
+                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=PostMotionDurationInfo}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=PostMotionDuration}"
                 Maximum="300"
@@ -32,6 +36,8 @@
                 Value="{Binding Path=PostMotionDurationSeconds, Mode=TwoWay}" />
 
             <atc:LabelIntegerBox
+                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=AnalysisFrameRateInfo}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=AnalysisFrameRate}"
                 Maximum="30"
@@ -40,6 +46,8 @@
                 Value="{Binding Path=AnalysisFrameRate, Mode=TwoWay}" />
 
             <atc:LabelComboBox
+                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=AnalysisResolutionInfo}"
                 Items="{Binding Path=AnalysisResolutionItems}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=AnalysisResolution}"
@@ -47,6 +55,8 @@
                 SelectedKey="{Binding Path=SelectedAnalysisResolution, Mode=TwoWay}" />
 
             <atc:LabelIntegerBox
+                InformationText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                                      Key=CooldownSecondsInfo}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                 Key=CooldownSeconds}"
                 Maximum="60"

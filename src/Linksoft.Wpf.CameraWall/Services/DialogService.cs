@@ -279,7 +279,7 @@ public class DialogService : IDialogService
         // Only return result if dialog was confirmed AND there are actual changes
         if (dialog.ShowDialog() == true && viewModel.HasActualChanges())
         {
-            return viewModel.AssignedCameras.ToList();
+            return viewModel.GetAssignedCameras();
         }
 
         return null;

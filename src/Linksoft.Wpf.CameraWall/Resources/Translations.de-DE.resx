@@ -978,4 +978,145 @@
   <data name="UpdateAvailableMessage1" xml:space="preserve">
     <value>Version {0} ist verfügbar. Klicken zum Herunterladen.</value>
   </data>
+  <data name="MotionSensitivityInfo" xml:space="preserve">
+    <value>Steuert, wie leicht Bewegung erkannt wird. Höhere Werte erkennen kleinere Bewegungen, können aber Fehlalarme durch Rauschen oder Lichtänderungen auslösen.</value>
+  </data>
+  <data name="PostMotionDurationInfo" xml:space="preserve">
+    <value>Wie viele Sekunden nach dem Bewegungsstopp weiter aufgenommen wird. Stellt sicher, dass das gesamte Ereignis erfasst wird, auch wenn die Bewegung kurz pausiert.</value>
+  </data>
+  <data name="AnalysisFrameRateInfo" xml:space="preserve">
+    <value>Anzahl der pro Sekunde auf Bewegung analysierten Bilder. Höhere Werte erkennen Bewegung schneller, verbrauchen aber mehr CPU. Werte zwischen 5 und 15 werden empfohlen.</value>
+  </data>
+  <data name="AnalysisResolutionInfo" xml:space="preserve">
+    <value>Auflösung für die Bewegungsanalyse. Niedrigere Auflösungen sind schneller und verbrauchen weniger CPU, während höhere Auflösungen kleinere Objekte genauer erkennen.</value>
+  </data>
+  <data name="CooldownSecondsInfo" xml:space="preserve">
+    <value>Mindestwartezeit in Sekunden nach dem Stopp einer Aufnahme, bevor eine neue bewegungsausgelöste Aufnahme starten kann. Verhindert schnelle Ein/Aus-Aufnahmezyklen.</value>
+  </data>
+  <data name="BoundingBoxMinAreaInfo" xml:space="preserve">
+    <value>Mindestgröße eines Bewegungsbereichs, bevor ein Begrenzungsrahmen gezeichnet wird. Größere Werte ignorieren kleine Bewegungen wie Insekten oder Pixelrauschen.</value>
+  </data>
+  <data name="VideoQualityInfo" xml:space="preserve">
+    <value>Maximale Videoauflösung für die Wiedergabe. Niedrigere Qualität reduziert Bandbreite und CPU-Auslastung. 'Auto' verwendet die beste verfügbare Qualität der Kamera.</value>
+  </data>
+  <data name="HardwareAccelerationInfo" xml:space="preserve">
+    <value>Verwendet Ihre Grafikkarte (GPU) zur Videodekodierung anstelle der CPU. Reduziert die CPU-Last erheblich und verbessert die Leistung bei mehreren Kameras.</value>
+  </data>
+  <data name="VideoQualityAuto" xml:space="preserve">
+    <value>Auto (Quellqualität)</value>
+  </data>
+  <data name="OverlayPositionTopLeft" xml:space="preserve">
+    <value>Oben links</value>
+  </data>
+  <data name="OverlayPositionTopRight" xml:space="preserve">
+    <value>Oben rechts</value>
+  </data>
+  <data name="OverlayPositionBottomLeft" xml:space="preserve">
+    <value>Unten links</value>
+  </data>
+  <data name="OverlayPositionBottomRight" xml:space="preserve">
+    <value>Unten rechts</value>
+  </data>
+  <data name="MotionSensitivityLow" xml:space="preserve">
+    <value>Niedrig (10)</value>
+  </data>
+  <data name="MotionSensitivityMedium" xml:space="preserve">
+    <value>Mittel (30)</value>
+  </data>
+  <data name="MotionSensitivityHigh" xml:space="preserve">
+    <value>Hoch (50)</value>
+  </data>
+  <data name="MotionSensitivityVeryHigh" xml:space="preserve">
+    <value>Sehr hoch (70)</value>
+  </data>
+  <data name="BoundingBoxMinAreaTiny" xml:space="preserve">
+    <value>10 px² (Winzig)</value>
+  </data>
+  <data name="BoundingBoxMinAreaSmall" xml:space="preserve">
+    <value>25 px² (Klein)</value>
+  </data>
+  <data name="BoundingBoxMinAreaMedium" xml:space="preserve">
+    <value>50 px² (Mittel)</value>
+  </data>
+  <data name="BoundingBoxMinAreaLarge" xml:space="preserve">
+    <value>100 px² (Groß)</value>
+  </data>
+  <data name="BoundingBoxMinAreaVeryLarge" xml:space="preserve">
+    <value>200 px² (Sehr groß)</value>
+  </data>
+  <data name="MotionResolutionLowCpu" xml:space="preserve">
+    <value>320x240 (Niedrige CPU)</value>
+  </data>
+  <data name="MotionResolutionBalanced" xml:space="preserve">
+    <value>480x360 (Ausgewogen)</value>
+  </data>
+  <data name="MotionResolutionBetterDetection" xml:space="preserve">
+    <value>640x480 (Bessere Erkennung)</value>
+  </data>
+  <data name="MotionResolutionHighCpu" xml:space="preserve">
+    <value>800x600 (Hohe CPU)</value>
+  </data>
+  <data name="MotionResolutionVeryHighCpu" xml:space="preserve">
+    <value>960x720 (Sehr hohe CPU)</value>
+  </data>
+  <data name="Duration5Seconds" xml:space="preserve">
+    <value>5 Sekunden</value>
+  </data>
+  <data name="Duration10Seconds" xml:space="preserve">
+    <value>10 Sekunden</value>
+  </data>
+  <data name="Duration15Seconds" xml:space="preserve">
+    <value>15 Sekunden</value>
+  </data>
+  <data name="Duration30Seconds" xml:space="preserve">
+    <value>30 Sekunden</value>
+  </data>
+  <data name="Duration1Minute" xml:space="preserve">
+    <value>1 Minute</value>
+  </data>
+  <data name="Duration5Minutes" xml:space="preserve">
+    <value>5 Minuten</value>
+  </data>
+  <data name="Duration10Minutes" xml:space="preserve">
+    <value>10 Minuten</value>
+  </data>
+  <data name="Duration15Minutes" xml:space="preserve">
+    <value>15 Minuten</value>
+  </data>
+  <data name="Duration30Minutes" xml:space="preserve">
+    <value>30 Minuten</value>
+  </data>
+  <data name="Duration1Hour" xml:space="preserve">
+    <value>1 Stunde</value>
+  </data>
+  <data name="Duration2Hours" xml:space="preserve">
+    <value>2 Stunden</value>
+  </data>
+  <data name="Duration3Hours" xml:space="preserve">
+    <value>3 Stunden</value>
+  </data>
+  <data name="Duration4Hours" xml:space="preserve">
+    <value>4 Stunden</value>
+  </data>
+  <data name="Duration6Hours" xml:space="preserve">
+    <value>6 Stunden</value>
+  </data>
+  <data name="Duration12Hours" xml:space="preserve">
+    <value>12 Stunden</value>
+  </data>
+  <data name="Duration24Hours" xml:space="preserve">
+    <value>24 Stunden</value>
+  </data>
+  <data name="ThumbnailTile1" xml:space="preserve">
+    <value>1 Kachel (320x240)</value>
+  </data>
+  <data name="ThumbnailTile4" xml:space="preserve">
+    <value>2x2 Raster (640x480)</value>
+  </data>
+  <data name="RecordingFormatMp4" xml:space="preserve">
+    <value>MP4 (H.264)</value>
+  </data>
+  <data name="RecordingFormatMkv" xml:space="preserve">
+    <value>MKV (Matroska)</value>
+  </data>
 </root>
