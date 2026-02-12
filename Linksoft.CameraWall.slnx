@@ -1,9 +1,19 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.Api.Contracts/Linksoft.VideoSurveillance.Api.Contracts.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.Api.Domain/Linksoft.VideoSurveillance.Api.Domain.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.Api/Linksoft.VideoSurveillance.Api.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.Core/Linksoft.VideoSurveillance.Core.csproj" />
     <Project Path="src/Linksoft.Wpf.CameraWall.App/Linksoft.Wpf.CameraWall.App.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.Aspire/Linksoft.VideoSurveillance.Aspire.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.BlazorApp/Linksoft.VideoSurveillance.BlazorApp.csproj" />
   </Folder>
   <!-- WiX installer excluded from VS solution due to SDK compatibility issues.
        Build via command line: dotnet build setup/Linksoft.CameraWall.Installer/Linksoft.CameraWall.Installer.wixproj
        GitHub Actions builds the installer automatically on release. -->
+  <Folder Name="/test/">
+    <Project Path="test/Linksoft.VideoSurveillance.Api.Tests/Linksoft.VideoSurveillance.Api.Tests.csproj" />
+    <Project Path="test/Linksoft.VideoSurveillance.Core.Tests/Linksoft.VideoSurveillance.Core.Tests.csproj" />
+  </Folder>
 </Solution>

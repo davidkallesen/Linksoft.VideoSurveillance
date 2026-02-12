@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Linksoft.VideoSurveillance</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Linksoft.VideoSurveillance.Core\Linksoft.VideoSurveillance.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Atc.Test" Version="2.0.17" />
+    <PackageReference Update="Microsoft.Testing.Extensions.CodeCoverage" Version="18.4.1" />
+    <PackageReference Update="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
+    <PackageReference Update="xunit.v3.mtp-v2" Version="3.2.2" />
+  </ItemGroup>
+
+</Project>

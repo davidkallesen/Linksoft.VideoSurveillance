@@ -3,7 +3,6 @@ namespace Linksoft.Wpf.CameraWall.Services;
 using CoreConnectionState = Linksoft.VideoSurveillance.Enums.ConnectionState;
 using CoreConnectionStateChangedEventArgs = Linksoft.VideoSurveillance.Events.ConnectionStateChangedEventArgs;
 using CoreStreamSettings = Linksoft.VideoSurveillance.Models.Settings.StreamSettings;
-using Drawing = System.Drawing;
 using IMediaPipeline = Linksoft.VideoSurveillance.Services.IMediaPipeline;
 
 /// <summary>
@@ -87,7 +86,7 @@ public sealed class FlyleafLibMediaPipeline : IMediaPipeline
     }
 
     /// <inheritdoc />
-    public async Task<Drawing.Bitmap?> CaptureFrameAsync(
+    public async Task<byte[]?> CaptureFrameAsync(
         CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
@@ -122,8 +121,7 @@ public sealed class FlyleafLibMediaPipeline : IMediaPipeline
                 return null;
             }
 
-            using var stream = new FileStream(tempFile, FileMode.Open, FileAccess.Read);
-            return new Drawing.Bitmap(stream);
+            return await File.ReadAllBytesAsync(tempFile, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

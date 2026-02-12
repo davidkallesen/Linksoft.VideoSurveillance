@@ -1,0 +1,169 @@
+@page "/cameras/create"
+@page "/cameras/{CameraId:guid}/edit"
+@inject GatewayService Gateway
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<MudText Typo="Typo.h4" Class="mb-4">@(IsEdit ? "Edit Camera" : "Add Camera")</MudText>
+
+@if (isLoading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4" MaxWidth="600px">
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="displayName"
+                          Label="Display Name"
+                          Required="true"
+                          RequiredError="Display name is required" />
+            <MudTextField @bind-Value="description"
+                          Label="Description"
+                          Lines="2"
+                          Class="mt-3" />
+            <MudTextField @bind-Value="ipAddress"
+                          Label="IP Address"
+                          Required="true"
+                          RequiredError="IP address is required"
+                          Class="mt-3" />
+            <MudNumericField @bind-Value="port"
+                             Label="Port"
+                             Min="1"
+                             Max="65535"
+                             Class="mt-3" />
+            <MudSelect @bind-Value="protocol"
+                       Label="Protocol"
+                       Class="mt-3">
+                <MudSelectItem Value="CameraProtocol.Rtsp">RTSP</MudSelectItem>
+                <MudSelectItem Value="CameraProtocol.Http">HTTP</MudSelectItem>
+                <MudSelectItem Value="CameraProtocol.Https">HTTPS</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="path"
+                          Label="Path"
+                          Placeholder="/stream1"
+                          Class="mt-3" />
+            <MudTextField @bind-Value="username"
+                          Label="Username"
+                          Class="mt-3" />
+            <MudTextField @bind-Value="password"
+                          Label="Password"
+                          InputType="InputType.Password"
+                          Class="mt-3" />
+
+            <MudStack Row="true" Class="mt-4" Spacing="2">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="SaveAsync"
+                           Disabled="isSaving">
+                    @(isSaving ? "Saving..." : "Save")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined"
+                           Href="/cameras">
+                    Cancel
+                </MudButton>
+            </MudStack>
+        </MudForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public Guid? CameraId { get; set; }
+
+    private bool IsEdit => CameraId.HasValue;
+
+    private MudForm form = null!;
+    private bool isLoading;
+    private bool isSaving;
+
+    private string displayName = string.Empty;
+    private string description = string.Empty;
+    private string ipAddress = string.Empty;
+    private int port = 554;
+    private CameraProtocol protocol = CameraProtocol.Rtsp;
+    private string path = string.Empty;
+    private string username = string.Empty;
+    private string password = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            isLoading = true;
+            var camera = await Gateway.GetCameraByIdAsync(CameraId!.Value);
+            if (camera is not null)
+            {
+                displayName = camera.DisplayName;
+                description = camera.Description ?? string.Empty;
+                ipAddress = camera.IpAddress;
+                port = camera.Port;
+                protocol = camera.Protocol;
+                path = camera.Path ?? string.Empty;
+                username = camera.Username ?? string.Empty;
+            }
+
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            return;
+        }
+
+        isSaving = true;
+
+        if (IsEdit)
+        {
+            var request = new UpdateCameraRequest(
+                DisplayName: displayName,
+                Description: description,
+                IpAddress: ipAddress,
+                Port: port,
+                Protocol: protocol,
+                Path: path,
+                Username: username,
+                Password: password);
+
+            var result = await Gateway.UpdateCameraAsync(CameraId!.Value, request);
+            if (result is not null)
+            {
+                Snackbar.Add("Camera updated.", Severity.Success);
+                Navigation.NavigateTo("/cameras");
+            }
+            else
+            {
+                Snackbar.Add("Failed to update camera.", Severity.Error);
+            }
+        }
+        else
+        {
+            var request = new CreateCameraRequest(
+                DisplayName: displayName,
+                Description: description,
+                IpAddress: ipAddress,
+                Port: port,
+                Protocol: protocol,
+                Path: path,
+                Username: username,
+                Password: password);
+
+            var result = await Gateway.CreateCameraAsync(request);
+            if (result is not null)
+            {
+                Snackbar.Add("Camera created.", Severity.Success);
+                Navigation.NavigateTo("/cameras");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create camera.", Severity.Error);
+            }
+        }
+
+        isSaving = false;
+    }
+}

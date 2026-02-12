@@ -1,17 +1,32 @@
 # Linksoft.CameraWall - Claude Code Guidelines
 
 ## Project Overview
-A WPF application for displaying multiple camera streams in a configurable grid layout. Uses RTSP/HTTP protocols with FlyleafLib for video playback.
+A multi-assembly video surveillance platform with a WPF desktop app and a headless REST API + SignalR server, sharing a common Core library. Uses RTSP/HTTP protocols with FlyleafLib (WPF) and FFmpeg (server) for video.
 
 ## Solution Structure
-- `Linksoft.Wpf.CameraWall` - Reusable WPF library (NuGet package) with all core functionality
+- `Linksoft.VideoSurveillance.Core` - Shared library: models, enums, events, service interfaces, helpers (net10.0, no WPF)
+- `Linksoft.Wpf.CameraWall` - Reusable WPF library (NuGet package) with UI, dialogs, FlyleafLib integration
 - `Linksoft.Wpf.CameraWall.App` - Thin shell WPF application using the library
+- `Linksoft.VideoSurveillance.Api.Contracts` - Generated API models, endpoints, handler interfaces (OpenAPI-first via atc-rest-api-source-generator)
+- `Linksoft.VideoSurveillance.Api.Domain` - Handler implementations calling Core services
+- `Linksoft.VideoSurveillance.Api` - ASP.NET Core host with SignalR hub
+- `Linksoft.VideoSurveillance.Aspire` - Aspire AppHost for orchestrated startup and developer dashboard
+- `Linksoft.VideoSurveillance.Core.Tests` - xUnit v3 tests for Core library
 
 ## Architecture
-The library contains all business logic. The App is a thin shell that:
-- Provides Ribbon UI (Fluent.Ribbon)
-- Hosts the CameraGrid control
-- Delegates all operations to `ICameraWallManager`
+The solution follows a layered architecture with Core at the base:
+- **Core** contains all shared models, enums, events, service interfaces, and helpers (zero UI dependencies)
+- **WPF library** references Core and adds UI controls, dialogs, FlyleafLib-based media pipeline
+- **WPF App** is a thin shell with Ribbon UI delegating to `ICameraWallManager`
+- **API** references Core and provides REST endpoints + SignalR real-time events
+- **Aspire** orchestrates the API (and future Blazor UI) with a developer dashboard
+
+## Server Edition
+The REST API + SignalR server enables headless video surveillance:
+- **OpenAPI-first**: `src/VideoSurveillance.yaml` defines all endpoints; `Atc.Rest.Api.SourceGenerator` generates contracts
+- **Endpoints**: Cameras CRUD, Layouts CRUD, Recordings list, Settings get/update, Snapshot capture, Recording start/stop
+- **SignalR hub**: `/hubs/surveillance` broadcasts connection state, motion, and recording events
+- **Run with Aspire**: `dotnet run --project src/Linksoft.VideoSurveillance.Aspire` starts the API with the Aspire dashboard
 
 ## Key Frameworks & Packages
 - **Atc.XamlToolkit** - MVVM source generators (`[ObservableProperty]`, `[RelayCommand]`, `[DependencyProperty]`)

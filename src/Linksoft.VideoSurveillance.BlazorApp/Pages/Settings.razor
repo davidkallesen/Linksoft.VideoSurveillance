@@ -1,0 +1,119 @@
+@page "/settings"
+@inject GatewayService Gateway
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-4">Settings</MudText>
+
+@if (isLoading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4" MaxWidth="600px">
+        <MudForm @ref="form">
+            <MudText Typo="Typo.h6" Class="mb-2">General</MudText>
+            <MudSelect @bind-Value="themeBase" Label="Theme" Class="mt-2">
+                <MudSelectItem Value="AppSettingsThemeBase.Dark">Dark</MudSelectItem>
+                <MudSelectItem Value="AppSettingsThemeBase.Light">Light</MudSelectItem>
+            </MudSelect>
+            <MudSelect @bind-Value="language" Label="Language" Class="mt-2">
+                <MudSelectItem Value="@("1033")">English (en-US)</MudSelectItem>
+                <MudSelectItem Value="@("1030")">Danish (da-DK)</MudSelectItem>
+                <MudSelectItem Value="@("1031")">German (de-DE)</MudSelectItem>
+            </MudSelect>
+            <MudCheckBox @bind-Value="connectOnStartup" Label="Connect cameras on startup" Class="mt-2" />
+
+            <MudDivider Class="my-4" />
+
+            <MudText Typo="Typo.h6" Class="mb-2">Recording</MudText>
+            <MudTextField @bind-Value="recordingPath" Label="Recording Path" Class="mt-2" />
+            <MudSelect @bind-Value="recordingFormat" Label="Recording Format" Class="mt-2">
+                <MudSelectItem Value="AppSettingsRecordingFormat.Mp4">MP4</MudSelectItem>
+                <MudSelectItem Value="AppSettingsRecordingFormat.Mkv">MKV</MudSelectItem>
+                <MudSelectItem Value="AppSettingsRecordingFormat.Avi">AVI</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="snapshotPath" Label="Snapshot Path" Class="mt-2" />
+
+            <MudDivider Class="my-4" />
+
+            <MudText Typo="Typo.h6" Class="mb-2">Advanced</MudText>
+            <MudCheckBox @bind-Value="enableDebugLogging" Label="Enable debug logging" Class="mt-2" />
+            <MudTextField @bind-Value="logPath" Label="Log Path" Class="mt-2" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Class="mt-4"
+                       OnClick="SaveSettingsAsync"
+                       Disabled="isSaving">
+                @(isSaving ? "Saving..." : "Save Settings")
+            </MudButton>
+        </MudForm>
+    </MudPaper>
+}
+
+@code {
+    private MudForm form = null!;
+    private bool isLoading = true;
+    private bool isSaving;
+
+    private AppSettingsThemeBase themeBase = AppSettingsThemeBase.Dark;
+    private string? language;
+    private bool connectOnStartup;
+    private string? recordingPath;
+    private AppSettingsRecordingFormat recordingFormat = AppSettingsRecordingFormat.Mp4;
+    private string? snapshotPath;
+    private bool enableDebugLogging;
+    private string? logPath;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await Gateway.GetSettingsAsync();
+        if (settings is not null)
+        {
+            themeBase = settings.ThemeBase ?? AppSettingsThemeBase.Dark;
+            language = settings.Language;
+            connectOnStartup = settings.ConnectOnStartup;
+            recordingPath = settings.RecordingPath;
+            recordingFormat = settings.RecordingFormat ?? AppSettingsRecordingFormat.Mp4;
+            snapshotPath = settings.SnapshotPath;
+            enableDebugLogging = settings.EnableDebugLogging;
+            logPath = settings.LogPath;
+        }
+
+        isLoading = false;
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            return;
+        }
+
+        isSaving = true;
+
+        var updated = new AppSettings(
+            ThemeBase: themeBase,
+            Language: language ?? string.Empty,
+            ConnectOnStartup: connectOnStartup,
+            RecordingPath: recordingPath ?? string.Empty,
+            RecordingFormat: recordingFormat,
+            SnapshotPath: snapshotPath ?? string.Empty,
+            EnableDebugLogging: enableDebugLogging,
+            LogPath: logPath ?? string.Empty);
+
+        var result = await Gateway.UpdateSettingsAsync(updated);
+        if (result is not null)
+        {
+            Snackbar.Add("Settings saved.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to save settings.", Severity.Error);
+        }
+
+        isSaving = false;
+    }
+}

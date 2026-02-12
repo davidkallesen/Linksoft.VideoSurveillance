@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <NoWarn>$(NoWarn);SA1649;MA0048;CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.12.00" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Linksoft.VideoSurveillance.Api.Contracts\Linksoft.VideoSurveillance.Api.Contracts.csproj" />
+    <ProjectReference Include="..\Linksoft.VideoSurveillance.Api.Domain\Linksoft.VideoSurveillance.Api.Domain.csproj" />
+    <ProjectReference Include="..\Linksoft.VideoSurveillance.Core\Linksoft.VideoSurveillance.Core.csproj" />
+  </ItemGroup>
+
+</Project>

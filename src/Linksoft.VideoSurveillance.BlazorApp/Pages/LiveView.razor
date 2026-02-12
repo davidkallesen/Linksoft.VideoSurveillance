@@ -1,0 +1,243 @@
+@page "/live"
+@inject GatewayService Gateway
+@inject SurveillanceHubService Hub
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<MudText Typo="Typo.h4" Class="mb-4">Live View</MudText>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+    <MudSelect @bind-Value="selectedLayoutId"
+               Label="Layout"
+               Variant="Variant.Outlined"
+               Dense="true"
+               Style="max-width: 300px;"
+               ToStringFunc="@(id => layouts?.FirstOrDefault(l => l.Id == id) is { } l ? $"{l.Name} ({l.Rows}x{l.Columns})" : string.Empty)">
+        @if (layouts is not null)
+        {
+            @foreach (var item in layouts)
+            {
+                <MudSelectItem Value="@item.Id">@item.Name (@(item.Rows)x@(item.Columns))</MudSelectItem>
+            }
+        }
+    </MudSelect>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               OnClick="ApplySelectedLayoutAsync"
+               Disabled="selectedLayoutId == Guid.Empty">
+        Apply
+    </MudButton>
+    <MudSpacer />
+    <MudChip T="string" Size="Size.Small" Color="@(Hub.IsConnected ? Color.Success : Color.Default)">
+        @Hub.ConnectionState
+    </MudChip>
+</MudStack>
+
+@if (activeLayout is not null && cameras is not null)
+{
+    <div style="display: grid; grid-template-columns: repeat(@activeLayout.Columns, 1fr); gap: 4px;">
+        @for (var i = 0; i < activeLayout.Rows * activeLayout.Columns; i++)
+        {
+            var position = i;
+            var gridItem = activeLayout.Cameras?.FirstOrDefault(c => c.Position == position);
+            var camera = gridItem is not null
+                ? cameras.FirstOrDefault(c => c.Id == gridItem.CameraId)
+                : null;
+
+            <MudPaper Class="pa-2" Elevation="1" Style="aspect-ratio: 16/9; position: relative; overflow: hidden; background: #1a1a2e;">
+                @if (camera is not null)
+                {
+                    @if (streamUrls.ContainsKey(camera.Id))
+                    {
+                        <video id="video-@camera.Id" autoplay muted playsinline controls
+                               style="width: 100%; height: 100%; object-fit: contain;"></video>
+                        <div style="position: absolute; bottom: 4px; right: 4px; display: flex; gap: 4px; align-items: center;">
+                            <MudIconButton Icon="@Icons.Material.Filled.Stop"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => StopStreamAsync(camera.Id))"
+                                           Style="background: rgba(0,0,0,0.6); border-radius: 4px;" />
+                            <span style="background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 4px;">
+                                <MudText Typo="Typo.caption" Style="color: lime;">Streaming</MudText>
+                            </span>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height: 100%;">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(() => StartStreamAsync(camera.Id))">
+                                Start Stream
+                            </MudButton>
+                        </MudStack>
+                    }
+                    <div style="position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 4px;">
+                        <MudText Typo="Typo.caption" Style="color: white;">@camera.DisplayName</MudText>
+                    </div>
+                }
+                else
+                {
+                    <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height: 100%;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Empty</MudText>
+                    </MudStack>
+                }
+            </MudPaper>
+        }
+    </div>
+}
+else if (isLoading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudText Color="Color.Secondary">Select a layout and click Apply to view cameras.</MudText>
+}
+
+@code {
+    private Layout[]? layouts;
+    private Camera[]? cameras;
+    private Layout? activeLayout;
+    private Guid selectedLayoutId;
+    private bool isLoading = true;
+    private readonly Dictionary<Guid, string> streamUrls = new();
+    private readonly HashSet<Guid> pendingStreamInits = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Hub.OnStreamStarted += OnStreamStarted;
+        Hub.OnConnectionStateChanged += OnConnectionStateChanged;
+
+        await Hub.ConnectAsync();
+
+        layouts = await Gateway.GetLayoutsAsync();
+        cameras = await Gateway.GetCamerasAsync();
+
+        if (layouts?.Length > 0)
+        {
+            selectedLayoutId = layouts[0].Id;
+        }
+
+        isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (pendingStreamInits.Count == 0)
+        {
+            return;
+        }
+
+        var toInit = pendingStreamInits.ToList();
+        pendingStreamInits.Clear();
+
+        foreach (var cameraId in toInit)
+        {
+            if (streamUrls.TryGetValue(cameraId, out var url))
+            {
+                await JS.InvokeVoidAsync("hlsInterop.initPlayer", $"video-{cameraId}", url);
+            }
+        }
+    }
+
+    private async Task ApplySelectedLayoutAsync()
+    {
+        if (selectedLayoutId == Guid.Empty)
+        {
+            return;
+        }
+
+        activeLayout = await Gateway.ApplyLayoutAsync(selectedLayoutId);
+        if (activeLayout is null)
+        {
+            Snackbar.Add("Failed to apply layout.", Severity.Error);
+            return;
+        }
+
+        if (activeLayout.Cameras is null || cameras is null || !Hub.IsConnected)
+        {
+            return;
+        }
+
+        var startTasks = activeLayout.Cameras
+            .Where(lc => !streamUrls.ContainsKey(lc.CameraId)
+                         && cameras.Any(c => c.Id == lc.CameraId))
+            .Select(lc => StartStreamAsync(lc.CameraId));
+
+        await Task.WhenAll(startTasks);
+    }
+
+    private async Task StartStreamAsync(Guid cameraId)
+    {
+        if (!Hub.IsConnected)
+        {
+            Snackbar.Add("Hub not connected. Cannot start stream.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await Hub.StartStreamAsync(cameraId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to start stream: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task StopStreamAsync(Guid cameraId)
+    {
+        try
+        {
+            await Hub.StopStreamAsync(cameraId);
+            if (streamUrls.Remove(cameraId))
+            {
+                await JS.InvokeVoidAsync("hlsInterop.destroyPlayer", $"video-{cameraId}");
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to stop stream: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OnStreamStarted(SurveillanceHubService.StreamStartedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            var url = $"{Gateway.ApiBaseUrl}{e.PlaylistUrl}";
+            streamUrls[e.CameraId] = url;
+            pendingStreamInits.Add(e.CameraId);
+            StateHasChanged();
+        });
+    }
+
+    private void OnConnectionStateChanged(SurveillanceHubService.ConnectionStateEvent e)
+    {
+        InvokeAsync(async () =>
+        {
+            if ((string.Equals(e.NewState, "Disconnected", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(e.NewState, "Error", StringComparison.OrdinalIgnoreCase))
+                && streamUrls.Remove(e.CameraId))
+            {
+                await JS.InvokeVoidAsync("hlsInterop.destroyPlayer", $"video-{e.CameraId}");
+                StateHasChanged();
+            }
+        });
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Hub.OnStreamStarted -= OnStreamStarted;
+        Hub.OnConnectionStateChanged -= OnConnectionStateChanged;
+
+        foreach (var cameraId in streamUrls.Keys)
+        {
+            await JS.InvokeVoidAsync("hlsInterop.destroyPlayer", $"video-{cameraId}");
+        }
+    }
+}

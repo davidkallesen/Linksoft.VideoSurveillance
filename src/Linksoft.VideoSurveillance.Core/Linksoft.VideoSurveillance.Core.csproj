@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Linksoft.VideoSurveillance</RootNamespace>
+    <NoWarn>$(NoWarn);CA1716</NoWarn>
+    <IsPackable>true</IsPackable>
+    <Description>Core domain library for video surveillance — models, enums, events, and service interfaces with zero UI dependencies.</Description>
+    <PackageTags>surveillance;video;rtsp;camera;core</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet Package Metadata">
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/davidkallesen/Linksoft.CameraWall</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/davidkallesen/Linksoft.CameraWall.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Atc" Version="3.0.18" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
+  </ItemGroup>
+
+</Project>

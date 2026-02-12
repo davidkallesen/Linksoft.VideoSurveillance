@@ -1,0 +1,645 @@
+openapi: "3.0.3"
+info:
+  version: 1.0.0
+  title: Linksoft Video Surveillance API
+  description: REST API for headless video surveillance — camera management, recording, and live streaming.
+  license:
+    name: MIT
+
+paths:
+  /cameras:
+    get:
+      summary: List all cameras
+      operationId: listCameras
+      tags:
+        - cameras
+      responses:
+        '200':
+          description: A list of cameras
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Camera"
+    post:
+      summary: Add a new camera
+      operationId: createCamera
+      tags:
+        - cameras
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCameraRequest"
+      responses:
+        '201':
+          description: Camera created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camera"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /cameras/{cameraId}:
+    get:
+      summary: Get camera by ID
+      operationId: getCameraById
+      tags:
+        - cameras
+      parameters:
+        - name: cameraId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Camera details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camera"
+        '404':
+          description: Camera not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update a camera
+      operationId: updateCamera
+      tags:
+        - cameras
+      parameters:
+        - name: cameraId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCameraRequest"
+      responses:
+        '200':
+          description: Camera updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camera"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Camera not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a camera
+      operationId: deleteCamera
+      tags:
+        - cameras
+      parameters:
+        - name: cameraId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Camera deleted
+        '404':
+          description: Camera not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /cameras/{cameraId}/snapshot:
+    get:
+      summary: Capture a snapshot from a camera
+      operationId: captureSnapshot
+      tags:
+        - cameras
+      parameters:
+        - name: cameraId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Snapshot image
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Camera not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '503':
+          description: Camera not connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /cameras/{cameraId}/recording:
+    post:
+      summary: Start recording a camera
+      operationId: startRecording
+      tags:
+        - cameras
+      parameters:
+        - name: cameraId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recording started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordingStatus"
+        '404':
+          description: Camera not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Already recording
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Stop recording a camera
+      operationId: stopRecording
+      tags:
+        - cameras
+      parameters:
+        - name: cameraId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recording stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordingStatus"
+        '404':
+          description: Camera not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /layouts:
+    get:
+      summary: List all layouts
+      operationId: listLayouts
+      tags:
+        - layouts
+      responses:
+        '200':
+          description: A list of layouts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Layout"
+    post:
+      summary: Create a new layout
+      operationId: createLayout
+      tags:
+        - layouts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLayoutRequest"
+      responses:
+        '201':
+          description: Layout created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Layout"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /layouts/{layoutId}:
+    put:
+      summary: Update a layout
+      operationId: updateLayout
+      tags:
+        - layouts
+      parameters:
+        - name: layoutId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLayoutRequest"
+      responses:
+        '200':
+          description: Layout updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Layout"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Layout not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a layout
+      operationId: deleteLayout
+      tags:
+        - layouts
+      parameters:
+        - name: layoutId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Layout deleted
+        '404':
+          description: Layout not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /layouts/{layoutId}/apply:
+    post:
+      summary: Apply a layout as the active layout
+      operationId: applyLayout
+      tags:
+        - layouts
+      parameters:
+        - name: layoutId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Layout applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Layout"
+        '404':
+          description: Layout not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /recordings:
+    get:
+      summary: List recordings
+      operationId: listRecordings
+      tags:
+        - recordings
+      parameters:
+        - name: cameraId
+          in: query
+          required: false
+          description: Filter by camera ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A list of recordings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recording"
+
+  /settings:
+    get:
+      summary: Get application settings
+      operationId: getSettings
+      tags:
+        - settings
+      responses:
+        '200':
+          description: Application settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+    put:
+      summary: Update application settings
+      operationId: updateSettings
+      tags:
+        - settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppSettings"
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+        '400':
+          description: Invalid settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Camera:
+      type: object
+      required:
+        - id
+        - displayName
+        - ipAddress
+        - port
+        - protocol
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        description:
+          type: string
+        ipAddress:
+          type: string
+        port:
+          type: integer
+          format: int32
+        protocol:
+          type: string
+          enum: [rtsp, http, https]
+        path:
+          type: string
+        username:
+          type: string
+        connectionState:
+          type: string
+          enum: [disconnected, connecting, connected, reconnecting, error]
+        isRecording:
+          type: boolean
+
+    CreateCameraRequest:
+      type: object
+      required:
+        - displayName
+        - ipAddress
+      properties:
+        displayName:
+          type: string
+        description:
+          type: string
+        ipAddress:
+          type: string
+        port:
+          type: integer
+          format: int32
+          default: 554
+        protocol:
+          type: string
+          enum: [rtsp, http, https]
+          default: rtsp
+        path:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+
+    UpdateCameraRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        description:
+          type: string
+        ipAddress:
+          type: string
+        port:
+          type: integer
+          format: int32
+        protocol:
+          type: string
+          enum: [rtsp, http, https]
+        path:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+
+    RecordingStatus:
+      type: object
+      required:
+        - cameraId
+        - state
+      properties:
+        cameraId:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum: [idle, recording, recordingMotion, recordingPostMotion]
+        filePath:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+
+    Layout:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        rows:
+          type: integer
+          format: int32
+        columns:
+          type: integer
+          format: int32
+        cameras:
+          type: array
+          items:
+            $ref: "#/components/schemas/LayoutItem"
+
+    LayoutItem:
+      type: object
+      properties:
+        cameraId:
+          type: string
+          format: uuid
+        position:
+          type: integer
+          format: int32
+
+    CreateLayoutRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        rows:
+          type: integer
+          format: int32
+          default: 2
+        columns:
+          type: integer
+          format: int32
+          default: 2
+
+    UpdateLayoutRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        rows:
+          type: integer
+          format: int32
+        columns:
+          type: integer
+          format: int32
+        cameras:
+          type: array
+          items:
+            $ref: "#/components/schemas/LayoutItem"
+
+    Recording:
+      type: object
+      required:
+        - id
+        - cameraId
+        - filePath
+        - startedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        cameraId:
+          type: string
+          format: uuid
+        cameraName:
+          type: string
+        filePath:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        duration:
+          type: string
+          description: ISO 8601 duration
+        fileSizeBytes:
+          type: integer
+          format: int64
+        hasThumbnail:
+          type: boolean
+
+    AppSettings:
+      type: object
+      properties:
+        themeBase:
+          type: string
+          enum: [dark, light]
+        language:
+          type: string
+        connectOnStartup:
+          type: boolean
+        recordingPath:
+          type: string
+        recordingFormat:
+          type: string
+          enum: [mp4, mkv, avi]
+        snapshotPath:
+          type: string
+        enableDebugLogging:
+          type: boolean
+        logPath:
+          type: string
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

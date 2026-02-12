@@ -2,311 +2,224 @@
 
 ## Overview
 
-Linksoft.CameraWall is a WPF-based camera wall application for displaying multiple RTSP/HTTP camera streams in a dynamic grid layout. The solution consists of two projects:
+Linksoft.CameraWall is a multi-assembly video surveillance platform. A shared Core library provides models, service interfaces, and business logic that powers both a WPF desktop application and a headless REST API + SignalR server. An Aspire AppHost orchestrates the server-side components.
 
-- **Linksoft.Wpf.CameraWall** - Reusable library (NuGet package) containing all core functionality
-- **Linksoft.Wpf.CameraWall.App** - Thin shell WPF application with Ribbon UI
+### Projects
+
+| Project | Framework | Role |
+|---------|-----------|------|
+| `Linksoft.VideoSurveillance.Core` | net10.0 | Shared models, enums, events, service interfaces, helpers |
+| `Linksoft.Wpf.CameraWall` | net10.0-windows | Reusable WPF library (NuGet) with UI, dialogs, FlyleafLib |
+| `Linksoft.Wpf.CameraWall.App` | net10.0-windows | Thin WPF shell with Fluent.Ribbon |
+| `Linksoft.VideoSurveillance.Api.Contracts` | net10.0 | Generated API models, endpoints, handler interfaces |
+| `Linksoft.VideoSurveillance.Api.Domain` | net10.0 | Handler implementations calling Core services |
+| `Linksoft.VideoSurveillance.Api` | net10.0 | ASP.NET Core host with SignalR hub |
+| `Linksoft.VideoSurveillance.Aspire` | net10.0 | Aspire AppHost for orchestrated startup |
+| `Linksoft.VideoSurveillance.Core.Tests` | net10.0 | xUnit v3 tests for Core library |
+
+### Dependency Graph
+
+```
+Linksoft.VideoSurveillance.Core                    (net10.0, no WPF)
+    ^                ^               ^
+    |                |               |
+    |     Api.Contracts -----> Api.Domain
+    |           ^                    ^
+    |           |                    |
+    |     Linksoft.VideoSurveillance.Api (host)
+    |           ^
+    |           |
+    |     Linksoft.VideoSurveillance.Aspire (orchestration)
+    |
+Linksoft.Wpf.CameraWall
+(net10.0-windows, WPF)
+    ^
+    |
+Linksoft.Wpf.CameraWall.App
+(net10.0-windows, WPF shell)
+```
 
 ## Architecture Philosophy
 
-The library is designed to be a complete, self-contained package that other applications can consume. The App project serves as a thin shell that:
-- Provides the Ribbon UI (Fluent.Ribbon)
-- Hosts the CameraWall control
-- Displays the status bar
-- Delegates all business logic to the library's `ICameraWallManager`
+- **Core** contains zero UI dependencies. All shared models, enums, events, service interfaces, and helpers live here. Both the WPF app and the API server reference Core.
+- **WPF library** provides the complete desktop experience: camera grid, dialogs, settings, FlyleafLib video playback. Apps inject `ICameraWallManager` and delegate all business logic.
+- **WPF App** is a thin shell providing the Ribbon UI, status bar, and theme initialization.
+- **API** is OpenAPI-first: a YAML spec defines all endpoints, and `Atc.Rest.Api.SourceGenerator` generates the contracts. Handler implementations inject Core services.
+- **Aspire** orchestrates the API (and future Blazor UI) with a developer dashboard providing logs, traces, and metrics.
 
 ## Technology Stack
 
 | Component | Technology |
 |-----------|------------|
-| Framework | .NET 10.0-windows |
-| UI Framework | WPF |
-| Video Streaming | FlyleafLib (FFmpeg-based) |
+| Framework | .NET 10.0 / .NET 10.0-windows |
+| Desktop UI | WPF with Fluent.Ribbon, Atc.Wpf.Controls |
+| Server | ASP.NET Core, SignalR |
+| API Definition | OpenAPI 3.0 (atc-rest-api-source-generator) |
+| Orchestration | .NET Aspire v13 |
+| Video (Desktop) | FlyleafLib (FFmpeg-based) |
+| Video (Server) | FFmpeg subprocess |
 | MVVM | Atc.XamlToolkit |
-| Source Generators | Atc.SourceGenerators |
-| UI Controls | Fluent.Ribbon, Atc.Wpf.Controls |
-| Theming | Atc.Wpf.Theming |
+| Source Generators | Atc.SourceGenerators (`[Registration]`, `[MapTo]`, `[OptionsBinding]`) |
 | DI Container | Microsoft.Extensions.DependencyInjection |
+| Theming | Atc.Wpf.Theming |
 | Logging | Serilog (file sink) |
 | Network | Atc.Network |
 
-## Project Structure
+## Core Library (Linksoft.VideoSurveillance.Core)
 
-### Linksoft.Wpf.CameraWall (Library)
+The Core library contains everything that is shared between the WPF desktop app and the server API.
 
-```
-src/Linksoft.Wpf.CameraWall/
-├── CameraWallEngine.cs              # FlyleafLib initialization
-├── Converters/
-│   ├── BoolToOpacityConverter.cs    # Bool to opacity value
-│   ├── ConnectionStateToColorConverter.cs   # State to brush color
-│   └── ConnectionStateToTextConverter.cs    # State to localized text
-├── Dialogs/
-│   ├── CameraConfigurationDialog.xaml/.cs  # Add/Edit camera dialog
-│   ├── CheckForUpdatesDialog.xaml/.cs      # GitHub update checker
-│   ├── InputBox.xaml/.cs            # Simple text input dialog
-│   ├── RecordingsBrowserDialog.xaml/.cs    # Browse recordings dialog
-│   ├── SettingsDialog.xaml/.cs      # Application settings dialog
-│   └── Parts/Settings/              # Extracted settings UserControls
-│       ├── GeneralAppearanceSettings.xaml/.cs
-│       ├── GeneralStartupSettings.xaml/.cs
-│       ├── CameraDisplayOverlaySettings.xaml/.cs
-│       ├── CameraDisplayGridLayoutSettings.xaml/.cs
-│       ├── CameraDisplaySnapshotSettings.xaml/.cs
-│       ├── ConnectionDefaultCameraSettings.xaml/.cs
-│       ├── ConnectionConnectionSettings.xaml/.cs
-│       ├── ConnectionNotificationsSettings.xaml/.cs
-│       ├── PerformanceVideoSettings.xaml/.cs
-│       ├── PerformanceStreamingSettings.xaml/.cs
-│       ├── RecordingGeneralSettings.xaml/.cs
-│       ├── RecordingMotionDetectionSettings.xaml/.cs
-│       ├── RecordingSegmentationSettings.xaml/.cs
-│       ├── RecordingMediaCleanupSettings.xaml/.cs
-│       ├── RecordingPlaybackOverlaySettings.xaml/.cs
-│       ├── AdvancedLoggingSettings.xaml/.cs
-│       └── AdvancedMaintenanceSettings.xaml/.cs
-├── Enums/
-│   ├── CameraProtocol.cs            # Rtsp, Http, Https
-│   ├── ConnectionState.cs           # Connected, Connecting, Error
-│   ├── OverlayPosition.cs           # TopLeft, TopRight, BottomLeft, BottomRight
-│   └── SwapDirection.cs             # Left, Right
-├── Events/
-│   ├── CameraConnectionChangedEventArgs.cs
-│   ├── CameraPositionChangedEventArgs.cs
-│   └── DialogClosedEventArgs.cs
-├── Extensions/
-│   └── CameraProtocolExtensions.cs  # Protocol-related extensions
-├── Factories/
-│   └── DropDownItemsFactory.cs      # Centralized dropdown items and defaults
-├── Helpers/
-│   ├── AppHelper.cs                 # Splash screen and app helpers
-│   ├── ApplicationPaths.cs          # Default paths for logs, snapshots, recordings
-│   ├── CameraUriHelper.cs           # Build RTSP/HTTP URIs
-│   └── GridLayoutHelper.cs          # Auto-calculate rows/columns
-├── Messages/
-│   ├── CameraAddMessage.cs          # Add camera to wall
-│   ├── CameraRemoveMessage.cs       # Remove camera from wall
-│   └── CameraSwapMessage.cs         # Swap camera positions
-├── Models/
-│   ├── CameraConfiguration.cs       # Camera settings
-│   ├── CameraLayout.cs              # Named layout
-│   ├── CameraLayoutItem.cs          # Camera position in layout
-│   ├── CameraStorageData.cs         # Root persistence model
-│   └── Settings/                    # Settings models subfolder
-│       ├── GeneralSettings.cs       # Theme, language, startup
-│       ├── CameraDisplayAppSettings.cs  # Overlay, drag-drop, snapshots
-│       ├── ConnectionAppSettings.cs # Connection defaults
-│       ├── PerformanceSettings.cs   # Video quality, hardware accel
-│       ├── RecordingSettings.cs     # Recording path, format
-│       ├── AdvancedSettings.cs      # Debug logging
-│       └── ... (other settings models)
-├── Options/
-│   └── CameraWallOptions.cs         # Library configuration options
-├── Services/
-│   ├── IApplicationSettingsService.cs  # Settings abstraction
-│   ├── ApplicationSettingsService.cs   # Settings implementation
-│   ├── ICameraStorageService.cs     # Storage abstraction
-│   ├── CameraStorageService.cs      # JSON file implementation
-│   ├── IDialogService.cs            # Dialog abstraction
-│   ├── DialogService.cs             # Default dialog implementation
-│   ├── IGitHubReleaseService.cs     # Update checker abstraction
-│   ├── GitHubReleaseService.cs      # GitHub API implementation
-│   ├── ICameraWallManager.cs        # Main facade interface
-│   └── CameraWallManager.cs         # Core business logic
-├── UserControls/
-│   ├── CameraTile.xaml/.cs          # Single camera with overlay
-│   ├── CameraOverlay.xaml/.cs       # Title/status overlay
-│   └── CameraGrid.xaml/.cs          # Multi-camera grid control
-├── ViewModels/
-│   ├── CameraConfigurationDialogViewModel.cs
-│   ├── CheckForUpdatesDialogViewModel.cs
-│   ├── RecordingsBrowserDialogViewModel.cs
-│   └── SettingsDialogViewModel.cs
-└── Windows/
-    ├── FullScreenCameraWindow.xaml/.cs         # Full screen camera view
-    ├── FullScreenCameraWindowViewModel.cs
-    ├── FullScreenRecordingWindow.xaml/.cs      # Full screen recording playback
-    └── FullScreenRecordingWindowViewModel.cs
-```
+### Contents
 
-### Linksoft.Wpf.CameraWall.App (Application)
+- **Enums**: `CameraProtocol`, `ConnectionState`, `RecordingState`, `OverlayPosition`, `MediaCleanupSchedule`, `SwapDirection`
+- **Models**: `CameraConfiguration`, `CameraLayout`, `CameraLayoutItem`, `RecordingEntry`, `RecordingSession`, `BoundingBox`, `SmoothedBox`, `MediaCleanupResult`
+- **Settings Models**: `ApplicationSettings`, `GeneralSettings`, `CameraDisplayAppSettings`, `ConnectionAppSettings`, `PerformanceSettings`, `RecordingSettings`, `MotionDetectionSettings`, `AdvancedSettings`, etc.
+- **Override Models**: `CameraOverrides`, `ConnectionOverrides`, `CameraDisplayOverrides`, `PerformanceOverrides`, `RecordingOverrides`, `MotionDetectionOverrides`, `BoundingBoxOverrides`
+- **Events**: `CameraConnectionChangedEventArgs`, `CameraPositionChangedEventArgs`, `RecordingStateChangedEventArgs`, `MotionDetectedEventArgs`, `RecordingSegmentedEventArgs`, `ConnectionStateChangedEventArgs`, etc.
+- **Service Interfaces**: `ICameraStorageService`, `IApplicationSettingsService`, `IRecordingService`, `IMotionDetectionService`, `ITimelapseService`, `IThumbnailGeneratorService`, `IMediaCleanupService`, `IGitHubReleaseService`, `IRecordingSegmentationService`
+- **Media Abstraction**: `IMediaPipeline`, `IMediaPipelineFactory` -- WPF uses FlyleafLib implementation, server uses FFmpeg subprocess
+- **Helpers**: `ApplicationPaths`, `CameraUriHelper`
+- **Factories**: `DropDownItemsFactory`
+
+## WPF Library (Linksoft.Wpf.CameraWall)
+
+### Key Services
+
+| Service | Description |
+|---------|-------------|
+| `ICameraWallManager` | Main facade for all camera wall operations |
+| `IDialogService` | Dialog abstraction for camera config, settings, input, confirmations |
+| `IToastNotificationService` | WPF toast popup notifications |
+
+### UI Components
+
+- **UserControls**: `CameraTile`, `CameraGrid`, `CameraOverlay`, `MotionBoundingBoxOverlay`
+- **Dialogs**: `CameraConfigurationDialog`, `SettingsDialog`, `InputBox`, `RecordingsBrowserDialog`, `CheckForUpdatesDialog`, `AssignCameraDialog`
+- **Windows**: `FullScreenCameraWindow`, `FullScreenRecordingWindow`
+- **Dialog Parts**: 11 camera configuration parts, 19 settings parts
+
+### Media Pipeline
+
+The WPF library implements `IMediaPipeline` via `FlyleafLibMediaPipeline`, wrapping FlyleafLib's `Player` for video playback, recording, and frame capture. `FlyleafLibMediaPipelineFactory` creates configured pipeline instances.
+
+## API Architecture (Linksoft.VideoSurveillance.Api)
+
+### OpenAPI-First Design
+
+The API is defined in `src/VideoSurveillance.yaml` (OpenAPI 3.0.3). The `Atc.Rest.Api.SourceGenerator` generates at build time:
+
+- **Contracts project**: Model records, parameter classes, handler interfaces, typed result classes, `MapEndpoints()` extension, `AddApiHandlersFromDomain()` DI extension
+- **Domain project**: Contains handler implementations (16 handlers) that inject Core services
+
+### REST Endpoints
 
 ```
-src/Linksoft.Wpf.CameraWall.App/
-├── App.xaml/.cs                     # DI host, startup, theme init
-├── appsettings.json                 # Configuration
-├── Configuration/
-│   └── AppOptions.cs                # App-specific settings
-├── MainWindow.xaml/.cs              # Fluent.Ribbon shell
-└── MainWindowViewModel.cs           # Thin binding layer
+GET    /api/cameras                    # List all cameras
+POST   /api/cameras                    # Add camera
+GET    /api/cameras/{id}               # Get camera by ID
+PUT    /api/cameras/{id}               # Update camera
+DELETE /api/cameras/{id}               # Delete camera
+POST   /api/cameras/{id}/snapshot      # Capture snapshot
+POST   /api/cameras/{id}/recording/start  # Start recording
+POST   /api/cameras/{id}/recording/stop   # Stop recording
+
+GET    /api/layouts                    # List layouts
+POST   /api/layouts                    # Create layout
+PUT    /api/layouts/{id}               # Update layout
+DELETE /api/layouts/{id}               # Delete layout
+POST   /api/layouts/{id}/apply         # Apply layout
+
+GET    /api/recordings                 # List recordings
+
+GET    /api/settings                   # Get settings
+PUT    /api/settings                   # Update settings
 ```
 
-## Key Services
+### SignalR Hub
 
-### ICameraWallManager
+`/hubs/surveillance` provides real-time events:
 
-The main facade that encapsulates all camera wall operations. Apps inject this service and delegate all business logic to it.
+**Server -> Client**: `ConnectionStateChanged`, `MotionDetected`, `RecordingStateChanged`, `CameraAdded`, `CameraRemoved`, `LayoutApplied`
 
-```csharp
-public interface ICameraWallManager : INotifyPropertyChanged
-{
-    // Properties
-    ObservableCollection<CameraLayout> Layouts { get; }
-    CameraLayout? CurrentLayout { get; set; }
-    CameraLayout? SelectedStartupLayout { get; }
-    int CameraCount { get; }
-    int ConnectedCount { get; }
-    string StatusText { get; }
-    UserControls.CameraWall? CameraWall { get; }
+**Client -> Server**: `StartRecording`, `StopRecording`, `SwapCameras`, `StartStream`, `StopStream`
 
-    // Initialization
-    void Initialize(UserControls.CameraWall cameraWallControl);
+### Server Services
 
-    // Camera operations
-    void AddCamera();
-    void EditCamera(CameraConfiguration camera);
-    void DeleteCamera(CameraConfiguration camera);
-    void ShowFullScreen(CameraConfiguration camera);
-    void RefreshAll();
+- `FFmpegMediaPipeline` -- implements `IMediaPipeline` using FFmpeg subprocess
+- `FFmpegMediaPipelineFactory` -- creates configured FFmpeg pipelines
+- `StreamingService` -- manages per-camera RTSP to HLS transcoding with viewer ref-counting
+- `SurveillanceEventBroadcaster` -- `IHostedService` that subscribes to recording/motion events and broadcasts via SignalR
 
-    // Layout operations
-    void CreateNewLayout();
-    void DeleteCurrentLayout();
-    void SetCurrentAsStartup();
-    void SaveCurrentLayout();
+## Aspire Orchestration
 
-    // Event handlers
-    void OnConnectionStateChanged(CameraConnectionChangedEventArgs e);
-    void OnPositionChanged(CameraPositionChangedEventArgs e);
+The `Linksoft.VideoSurveillance.Aspire` project uses the Aspire AppHost SDK v13.1.0 to orchestrate the API server. Running the Aspire project starts all referenced services and provides a developer dashboard with:
 
-    // CanExecute properties for commands
-    bool CanCreateNewLayout { get; }
-    bool CanDeleteCurrentLayout { get; }
-    bool CanSetCurrentAsStartup { get; }
-    bool CanRefreshAll { get; }
-}
+- Resource monitoring (CPU, memory)
+- Structured logs from all services
+- Distributed traces
+- Environment and endpoint information
+
+```bash
+dotnet run --project src/Linksoft.VideoSurveillance.Aspire
 ```
 
-### IDialogService
+## WPF Application (Linksoft.Wpf.CameraWall.App)
 
-Abstraction for showing dialogs, allowing apps to customize dialog behavior.
-
-```csharp
-public interface IDialogService
-{
-    CameraConfiguration? ShowCameraConfigurationDialog(CameraConfiguration? camera, bool isNew);
-    string? ShowInputBox(string title, string prompt, string defaultText = "");
-    bool ShowConfirmation(string message, string title);
-    void ShowError(string message, string title = "Error");
-    void ShowInfo(string message, string title = "Information");
-    void ShowAboutDialog();
-    void ShowCheckForUpdatesDialog();
-    void ShowFullScreenCamera(CameraConfiguration camera);
-    void ShowSettingsDialog();
-}
-```
-
-### IApplicationSettingsService
-
-Abstraction for application settings (theme, language, display, recording options).
-
-```csharp
-public interface IApplicationSettingsService
-{
-    GeneralSettings General { get; }
-    CameraDisplayAppSettings CameraDisplay { get; }
-    ConnectionAppSettings Connection { get; }
-    PerformanceSettings Performance { get; }
-    RecordingSettings Recording { get; }
-    AdvancedSettings Advanced { get; }
-    void Load();
-    void Save();
-}
-```
-
-### IRecordingService
-
-Service for managing camera recording sessions using FlyleafLib.
-
-```csharp
-public interface IRecordingService
-{
-    event EventHandler<RecordingStateChangedEventArgs>? RecordingStateChanged;
-    RecordingState GetRecordingState(Guid cameraId);
-    bool StartRecording(CameraConfiguration camera, Player player);
-    void StopRecording(Guid cameraId);
-    void StopAllRecordings();
-    bool IsRecording(Guid cameraId);
-    bool TriggerMotionRecording(CameraConfiguration camera, Player player);
-}
-```
-
-### IMotionDetectionService
-
-Service for detecting motion in camera frames.
-
-### IGitHubReleaseService
-
-Service for checking GitHub releases for application updates.
-
-### ICameraStorageService
-
-Abstraction for camera and layout persistence.
-
-```csharp
-public interface ICameraStorageService
-{
-    List<CameraConfiguration> GetAllCameras();
-    CameraConfiguration? GetCameraById(Guid id);
-    List<CameraLayout> GetAllLayouts();
-    CameraLayout? GetLayoutById(Guid id);
-    void AddOrUpdateCamera(CameraConfiguration camera);
-    void DeleteCamera(Guid id);
-    void AddOrUpdateLayout(CameraLayout layout);
-    void DeleteLayout(Guid id);
-    Guid? StartupLayoutId { get; set; }
-    void Load();
-    void Save();
-}
-```
-
-## Data Flow
+### Data Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │            MainWindowViewModel (Thin Shell)                  │
-│  - Exposes manager properties for binding                    │
-│  - Delegates commands to ICameraWallManager                  │
+│  - Exposes manager properties for binding                   │
+│  - Delegates commands to ICameraWallManager                 │
 │  - Only handles window-specific operations (theme, fullscreen)│
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │               ICameraWallManager (Library)                   │
-│  - Manages layouts and cameras                               │
-│  - Uses IDialogService for dialogs                           │
-│  - Uses ICameraStorageService for persistence                │
-│  - Sends messages via Atc.XamlToolkit Messenger              │
+│  - Manages layouts and cameras                              │
+│  - Uses IDialogService for dialogs                          │
+│  - Uses ICameraStorageService for persistence               │
+│  - Sends messages via Atc.XamlToolkit Messenger             │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   CameraWall Control                         │
-│  - Receives messages via Atc.XamlToolkit Messenger           │
-│  - Creates CameraTile for each camera                        │
-│  - Manages grid layout                                       │
-│  - Handles drag-and-drop reordering                          │
+│                   CameraGrid Control                        │
+│  - Receives messages via Atc.XamlToolkit Messenger          │
+│  - Creates CameraTile for each camera                       │
+│  - Manages grid layout                                      │
+│  - Handles drag-and-drop reordering                         │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   CameraTile Control                         │
-│  - Constructs camera URI                                     │
-│  - Creates FlyleafLib Player                                 │
-│  - Auto-starts streaming when Camera property is set         │
-│  - Handles connection/reconnection                           │
-│  - Displays overlay                                          │
-│  - Provides context menu actions                             │
+│                   CameraTile Control                        │
+│  - Creates FlyleafLibMediaPipeline per camera               │
+│  - Auto-starts streaming when Camera property is set        │
+│  - Handles connection/reconnection                          │
+│  - Displays overlay and bounding boxes                      │
+│  - Provides context menu actions                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Ribbon Menu (Fluent.Ribbon)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Layouts Tab                                                │
+│    [Layout ComboBox] [New Layout] [Delete Layout]           │
+│    [Set as Startup]                                         │
+├─────────────────────────────────────────────────────────────┤
+│  Cameras Tab                                                │
+│    [Add Camera] [Refresh All]                               │
+├─────────────────────────────────────────────────────────────┤
+│  View Tab                                                   │
+│    [Settings] [Recordings]                                  │
+├─────────────────────────────────────────────────────────────┤
+│  Help Tab                                                   │
+│    [About] [Check for Updates]                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -314,56 +227,19 @@ public interface ICameraStorageService
 
 ### Library Services Registration
 
-Library services are auto-registered using the source-generated extension method:
-
 ```csharp
 // Auto-registers all services marked with [Registration] attribute
-services.AddDependencyRegistrationsFromCameraWall();
-```
-
-For transitive registration of referenced assemblies:
-```csharp
 services.AddDependencyRegistrationsFromCameraWall(includeReferencedAssemblies: true);
 ```
 
-### App Services Registration
+### API Services Registration
 
 ```csharp
-services.AddSingleton<MainWindowViewModel>();
-services.AddSingleton<MainWindow>();
+builder.Services.AddApiHandlersFromDomain();  // Generated handler DI
+builder.Services.AddSignalR();
 ```
 
-## UI Architecture
-
-### Ribbon Menu (Fluent.Ribbon)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Layouts Tab                                                 │
-│    [Layout ComboBox] [New Layout] [Delete Layout]           │
-│    [Set as Startup]                                          │
-├─────────────────────────────────────────────────────────────┤
-│  Cameras Tab                                                 │
-│    [Add Camera] [Refresh All]                               │
-├─────────────────────────────────────────────────────────────┤
-│  View Tab                                                    │
-│    [Settings]                                                │
-├─────────────────────────────────────────────────────────────┤
-│  Help Tab                                                    │
-│    [About] [Check for Updates]                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Context Menu (CameraTile)
-
-- Edit Camera... → Opens CameraConfigurationDialog
-- Delete Camera → Confirmation then removes
-- Show in Full Screen
-- Swap Left / Swap Right
-- Take Snapshot
-- Reconnect
-
-## Messaging Pattern
+## Messaging Pattern (WPF)
 
 Uses Atc.XamlToolkit Messenger for loose coupling:
 
@@ -375,209 +251,40 @@ Uses Atc.XamlToolkit Messenger for loose coupling:
 
 ## Configuration
 
-### appsettings.json
-
-```json
-{
-  "App": {
-    "ApplicationUi": {
-      "ThemeBase": "Dark",
-      "ThemeAccent": "Blue",
-      "Language": "en-US"
-    }
-  }
-}
-```
-
-### CameraWallOptions (Library)
-
-Uses `[OptionsBinding]` for configuration binding with validation:
-
-```csharp
-[OptionsBinding("CameraWall", ValidateDataAnnotations = true, ValidateOnStart = true)]
-public partial class CameraWallOptions
-{
-    [Required]
-    public string ThemeBase { get; set; } = "Dark";
-
-    [Required]
-    public string ThemeAccent { get; set; } = "Blue";
-
-    [Required]
-    public string Language { get; set; } = "en-US";
-}
-```
-
-### Settings Models
-
-**GeneralSettings:**
-```csharp
-public class GeneralSettings
-{
-    public string ThemeBase { get; set; } = "Dark";           // "Dark" or "Light"
-    public string ThemeAccent { get; set; } = "Blue";         // Accent color name
-    public string Language { get; set; } = "1033";            // LCID as string
-    public bool ConnectCamerasOnStartup { get; set; } = true;
-    public bool StartMaximized { get; set; } = false;
-    public bool StartRibbonCollapsed { get; set; } = false;
-}
-```
-
-**CameraDisplayAppSettings:**
-```csharp
-public class CameraDisplayAppSettings
-{
-    public bool ShowOverlayTitle { get; set; } = true;
-    public bool ShowOverlayDescription { get; set; } = true;
-    public bool ShowOverlayTime { get; set; } = false;
-    public bool ShowOverlayConnectionStatus { get; set; } = true;
-    public double OverlayOpacity { get; set; } = 0.7;
-    public OverlayPosition OverlayPosition { get; set; } = OverlayPosition.TopLeft;
-    public bool AllowDragAndDropReorder { get; set; } = true;
-    public bool AutoSaveLayoutChanges { get; set; } = true;
-    public string SnapshotPath { get; set; } = ApplicationPaths.DefaultSnapshotsPath;
-}
-```
-
-**RecordingSettings:**
-```csharp
-public class RecordingSettings
-{
-    public string RecordingPath { get; set; } = ApplicationPaths.DefaultRecordingsPath;
-    public string RecordingFormat { get; set; } = "mp4";
-    public bool EnableRecordingOnMotion { get; set; }
-    public bool EnableRecordingOnConnect { get; set; }
-}
-```
-
 ### User Data Storage
 
 - Location: `%ProgramData%\Linksoft\CameraWall\` (via `ApplicationPaths` helper)
 - Files:
   - `cameras.json` - Camera configurations and layouts
-  - `settings.json` - Application settings (all 6 sections)
+  - `settings.json` - Application settings (all sections)
 - Directories:
   - `logs/` - Debug log files (when enabled)
-  - `snapshots/` - Camera snapshots
-  - `recordings/` - Camera recordings
+  - `snapshots/` - Camera snapshots and timelapse frames
+  - `recordings/` - Camera recordings with thumbnails
 
-## Dependencies
+## Source Generators
 
-### Library (Linksoft.Wpf.CameraWall)
+### Atc.SourceGenerators
 
-- FlyleafLib - Video playback engine
-- FlyleafLib.Controls.WPF - WPF video controls
-- Atc - Core utilities
-- Atc.Network - Network operations
-- Atc.SourceGenerators - Source generators for DI registration, options binding
-- Atc.Wpf - WPF utilities
-- Atc.Wpf.Controls - Custom controls
-- Atc.Wpf.NetworkControls - Network scanner control
-- Atc.Wpf.Theming - Theme management
-- Atc.XamlToolkit - MVVM infrastructure
-- Atc.XamlToolkit.Wpf - WPF MVVM utilities
-- Microsoft.Extensions.Options.DataAnnotations - Options validation
+- `[Registration]` -- auto-registers services via generated DI extension methods
+- `[OptionsBinding]` -- binds configuration sections with validation
+- `[MapTo]` -- generates compile-time model mapping between Core POCOs and API models
 
-### Application (Linksoft.Wpf.CameraWall.App)
+### Atc.Rest.Api.SourceGenerator
 
-- Fluent.Ribbon - Ribbon UI
-- Microsoft.Extensions.Hosting - DI and hosting
-- Microsoft.Extensions.Configuration.Json - Configuration
-- Serilog.Extensions.Hosting - Serilog integration with host
-- Serilog.Sinks.File - File logging sink
-- Serilog.Sinks.Debug - Debug output sink
-
-## Source Generators (Atc.SourceGenerators)
-
-### Service Registration
-
-Services annotated with `[Registration]` are auto-registered via source-generated extension methods:
-
-```csharp
-[Registration(Lifetime.Singleton)]
-public class CameraStorageService : ICameraStorageService { }
-
-[Registration(Lifetime.Singleton)]
-public class DialogService : IDialogService { }
-
-[Registration(Lifetime.Singleton)]
-public class CameraWallManager : ObservableObject, ICameraWallManager { }
-
-[Registration(Lifetime.Singleton)]
-public class ApplicationSettingsService : IApplicationSettingsService { }
-
-[Registration(Lifetime.Singleton)]
-public class GitHubReleaseService : IGitHubReleaseService { }
-```
-
-The generator creates `AddDependencyRegistrationsFrom{AssemblySuffix}()` extension methods based on the assembly name. For `Linksoft.Wpf.CameraWall`, this generates `AddDependencyRegistrationsFromCameraWall()`.
-
-**Lifetime Options:**
-- `Lifetime.Singleton` - Single instance for entire application
-- `Lifetime.Scoped` - New instance per scope
-- `Lifetime.Transient` - New instance every time
-
-**Advanced Options:**
-- `As` - Register against a specific interface
-- `AsSelf` - Also register the concrete type
-- `TryAdd` - Only register if not already present (for library authors)
-- `Factory` - Use a static factory method
-- `Condition` - Conditional registration based on configuration
-
-### Options Binding
-
-Configuration classes use `[OptionsBinding]` for automatic binding with validation:
-
-```csharp
-[OptionsBinding("CameraWall", ValidateDataAnnotations = true, ValidateOnStart = true)]
-public partial class CameraWallOptions { }
-```
-
-### Model Validation
-
-Models use DataAnnotations for validation metadata:
-
-```csharp
-public partial class CameraConfiguration : ObservableObject
-{
-    [ObservableProperty]
-    [Required(ErrorMessage = "IP Address is required")]
-    private string ipAddress = string.Empty;
-
-    [ObservableProperty]
-    [Range(1, 65535, ErrorMessage = "Port must be between 1 and 65535")]
-    private int port = 554;
-}
-```
+Generates from `VideoSurveillance.yaml` at build time:
+- Minimal API endpoints with `MapEndpoints()`
+- Handler interfaces with typed parameters and results
+- Model records with validation attributes
+- DI registration with `AddApiHandlersFromDomain()`
 
 ## Extension Points
 
 ### Custom Storage
-
 Implement `ICameraStorageService` for custom persistence (database, cloud, etc.).
 
 ### Custom Dialogs
+Implement `IDialogService` to customize how WPF dialogs are displayed.
 
-Implement `IDialogService` to customize how dialogs are displayed.
-
-### Custom Overlays
-
-Style the `CameraOverlay` control via WPF resource dictionaries.
-
-### Theming
-
-Use Atc.Wpf.Theming for Dark/Light theme switching with custom accent colors.
-
-## Creating a New App
-
-To create a new application using the library:
-
-1. Reference the `Linksoft.Wpf.CameraWall` library
-2. Register the library services using the source-generated extension method:
-   ```csharp
-   services.AddDependencyRegistrationsFromCameraWall();
-   ```
-3. Create a ViewModel that injects `ICameraWallManager`
-4. Create a View that hosts the `CameraWall` control
-5. Call `manager.Initialize(cameraWallControl)` when the view loads
-6. Bind UI commands to manager methods
+### Custom Media Pipeline
+Implement `IMediaPipeline` and `IMediaPipelineFactory` for alternative video backends.

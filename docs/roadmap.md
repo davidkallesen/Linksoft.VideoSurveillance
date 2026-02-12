@@ -187,9 +187,12 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Motion Detection | Simple frame comparison algorithm | Planned |
+| Motion Detection | Frame-based detection with grayscale pixel differencing | Done |
+| Multi-Bounding Box | Detect and highlight multiple motion regions via grid-based clustering | Done |
+| Sensitivity Config | Configurable sensitivity, min change %, analysis resolution | Done |
+| Bounding Box Visualization | Real-time colored bounding boxes with smoothing | Done |
+| Staggered Scheduling | Round-robin analysis across cameras to prevent CPU spikes | Done |
 | Visual Alerts | Border flash, notification badge | Planned |
-| Sensitivity Config | Threshold and area settings | Planned |
 
 ### Organization
 
@@ -232,6 +235,58 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 | Documentation | XML docs and README | Planned |
 | Samples | Example usage projects | Planned |
 | Symbol Package | Debugging support | Planned |
+
+---
+
+## Phase 6: Server Edition
+
+**Goal**: Headless video surveillance server with REST API and real-time events
+
+### Core Library
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Shared Core | Models, enums, events, service interfaces extracted to net10.0 library | Done |
+| IMediaPipeline | Abstraction for video stream operations (record, capture frame) | Done |
+| Core Tests | xUnit v3 tests (63 tests passing) | Done |
+
+### REST API
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| OpenAPI Spec | VideoSurveillance.yaml defining all endpoints | Done |
+| API Contracts | Generated models, endpoints, handler interfaces via atc-rest-api-source-generator | Done |
+| Handler Implementations | 16 handlers for cameras, layouts, recordings, settings | Done |
+| SignalR Hub | Real-time connection, motion, and recording events | Done |
+| FFmpeg Pipeline | Server-side IMediaPipeline using FFmpeg subprocess | Done |
+| Streaming Service | RTSP to HLS transcoding with viewer ref-counting | Done |
+| Event Broadcaster | IHostedService broadcasting events via SignalR | Done |
+
+### Orchestration
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Aspire AppHost | Orchestrated startup with developer dashboard | Done |
+| Aspire Dashboard | Resource monitoring, logs, traces | Done |
+
+---
+
+## Phase 7: Blazor Web UI
+
+**Goal**: Browser-based camera wall consuming the REST API
+
+### Web UI
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Blazor Project | Blazor Server project referencing API | Planned |
+| Camera Grid | Responsive camera grid with HLS.js video player | Planned |
+| Camera Tile | HLS video player + overlay per camera | Planned |
+| Settings Page | Settings management via API | Planned |
+| Recordings Page | Recording browser via API | Planned |
+| SignalR Client | Real-time updates from server | Planned |
+| Theme System | CSS dark/light theme | Planned |
+| Aspire Integration | Blazor project orchestrated by Aspire AppHost | Planned |
 
 ---
 
@@ -279,10 +334,10 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 - Hardware acceleration reduces CPU by 50%+ ✓
 - Snapshots save in < 500ms ✓
 
-### Phase 4 (Professional)
-- PTZ control responds in < 200ms
-- Motion detection < 5% false positive rate
-- Multi-monitor operates independently
+### Phase 4 (Professional) - Partially Achieved
+- PTZ control responds in < 200ms (pending)
+- Motion detection with bounding boxes working ✓
+- Multi-monitor operates independently (pending)
 
 ---
 

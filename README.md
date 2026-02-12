@@ -1,6 +1,6 @@
 # Linksoft.CameraWall
 
-A professional WPF camera wall application for live monitoring of multiple RTSP/HTTP camera streams with an intuitive ribbon interface and dynamic grid layout.
+A professional video surveillance platform for live monitoring of multiple RTSP/HTTP camera streams. Includes a WPF desktop application with an intuitive ribbon interface, a headless REST API + SignalR server edition, and Aspire orchestration.
 
 [![Release](https://img.shields.io/github/v/release/davidkallesen/Linksoft.CameraWall?include_prereleases)](https://github.com/davidkallesen/Linksoft.CameraWall/releases)
 [![NuGet](https://img.shields.io/nuget/v/Linksoft.Wpf.CameraWall)](https://www.nuget.org/packages/Linksoft.Wpf.CameraWall)
@@ -82,12 +82,14 @@ A professional WPF camera wall application for live monitoring of multiple RTSP/
 
 | Component | Technology |
 |-----------|------------|
-| Framework | .NET 10.0-windows |
-| UI Framework | WPF |
-| Video Streaming | FlyleafLib (FFmpeg-based) |
+| Framework | .NET 10.0 / .NET 10.0-windows |
+| Desktop UI | WPF with Fluent.Ribbon, Atc.Wpf.Controls |
+| Server | ASP.NET Core, SignalR |
+| API Definition | OpenAPI 3.0 (atc-rest-api-source-generator) |
+| Video Streaming | FlyleafLib (desktop), FFmpeg (server) |
+| Orchestration | .NET Aspire |
 | MVVM | Atc.XamlToolkit |
 | Source Generators | Atc.SourceGenerators |
-| UI Controls | Fluent.Ribbon, Atc.Wpf.Controls |
 | Theming | Atc.Wpf.Theming |
 | Logging | Serilog (file sink) |
 | Installer | WiX Toolset v5 |
@@ -97,49 +99,57 @@ A professional WPF camera wall application for live monitoring of multiple RTSP/
 ```
 Linksoft.CameraWall/
 ├── src/
-│   ├── Linksoft.Wpf.CameraWall/              # Reusable WPF library (NuGet package)
-│   │   ├── Dialogs/                           # CameraConfiguration, Settings, InputBox, etc.
-│   │   │   └── Parts/
-│   │   │       ├── CameraConfigurations/      # Camera dialog tab parts (11 files)
-│   │   │       └── Settings/                  # Settings dialog parts (19 files)
-│   │   ├── Enums/                             # CameraProtocol, ConnectionState, OverlayPosition, etc.
-│   │   ├── Events/                            # Connection, Position, Recording, Motion events
-│   │   ├── Extensions/                        # CameraProtocolExtensions
-│   │   ├── Factories/                         # DropDownItemsFactory
-│   │   ├── Helpers/                           # GridLayoutHelper, CameraUriHelper
-│   │   ├── Messages/                          # Camera Add/Remove/Swap messages
-│   │   ├── Models/
-│   │   │   ├── Settings/                      # Application settings models (15 files)
-│   │   │   └── OverrideModels/                # Per-camera override models (6 files)
-│   │   ├── Services/                          # All service interfaces and implementations
-│   │   ├── UserControls/                      # CameraTile, CameraGrid, CameraOverlay
-│   │   ├── ValueConverters/                   # JSON converter, Bool/State converters
-│   │   └── Windows/                           # FullScreenCamera, FullScreenRecording
-│   │
-│   └── Linksoft.Wpf.CameraWall.App/          # Thin shell WPF application
-│       ├── MainWindow.xaml                    # Fluent.Ribbon shell
-│       └── MainWindowViewModel.cs             # Thin binding layer to library
+│   ├── Linksoft.VideoSurveillance.Core/       # Shared library: models, enums, events, service interfaces
+│   ├── Linksoft.Wpf.CameraWall/               # Reusable WPF library (NuGet package)
+│   ├── Linksoft.Wpf.CameraWall.App/           # Thin shell WPF application (Fluent.Ribbon)
+│   ├── VideoSurveillance.yaml                 # OpenAPI 3.0 spec (shared contract)
+│   ├── Linksoft.VideoSurveillance.Api.Contracts/ # Generated: endpoints, models, handler interfaces
+│   ├── Linksoft.VideoSurveillance.Api.Domain/  # Handler implementations calling Core services
+│   ├── Linksoft.VideoSurveillance.Api/         # ASP.NET Core host with SignalR hub
+│   └── Linksoft.VideoSurveillance.Aspire/      # Aspire AppHost (orchestration + dashboard)
 │
 ├── setup/
 │   └── Linksoft.CameraWall.Installer/         # WiX MSI installer project
 │
-├── test/                                      # Test projects
+├── test/
+│   └── Linksoft.VideoSurveillance.Core.Tests/ # xUnit v3 tests (63 tests)
 │
 └── docs/                                      # Documentation
     ├── architecture.md
-    └── roadmap.md
+    ├── roadmap.md
+    └── layered-architecture-plan.md
+```
+
+### Dependency Graph
+
+```
+Linksoft.VideoSurveillance.Core  (net10.0, no WPF)
+    ^               ^                ^
+    |               |                |
+    |    Api.Contracts --> Api.Domain
+    |         ^                ^
+    |         |                |
+    |    VideoSurveillance.Api (host)
+    |         ^
+    |         |
+    |    VideoSurveillance.Aspire (orchestration)
+    |
+Linksoft.Wpf.CameraWall  (net10.0-windows, WPF)
+    ^
+    |
+Linksoft.Wpf.CameraWall.App  (WPF shell)
 ```
 
 ## Services
 
-The library provides a comprehensive set of services, all auto-registered via dependency injection using `[Registration]` attributes.
+Services are split between Core (shared) and WPF (UI-specific), all auto-registered via `[Registration]` attributes.
+
+### Core Services (Linksoft.VideoSurveillance.Core)
 
 | Service | Description |
 |---------|-------------|
-| `ICameraWallManager` | Main facade for all camera wall operations |
-| `ICameraStorageService` | JSON file-based persistence for cameras and layouts |
+| `ICameraStorageService` | Persistence for cameras and layouts |
 | `IApplicationSettingsService` | Application settings with per-camera override support |
-| `IDialogService` | Dialog abstraction for camera config, settings, input, confirmations |
 | `IRecordingService` | Manual and motion-triggered recording management |
 | `IRecordingSegmentationService` | Clock-aligned recording file segmentation |
 | `IMotionDetectionService` | Frame-based motion detection with multi-bounding box support |
@@ -147,6 +157,15 @@ The library provides a comprehensive set of services, all auto-registered via de
 | `IThumbnailGeneratorService` | Recording thumbnail generation |
 | `IMediaCleanupService` | Automatic cleanup of old recordings and snapshots |
 | `IGitHubReleaseService` | GitHub-based update checking |
+| `IMediaPipeline` | Abstraction for video stream operations (record, capture frame) |
+| `IMediaPipelineFactory` | Creates `IMediaPipeline` instances per camera |
+
+### WPF Services (Linksoft.Wpf.CameraWall)
+
+| Service | Description |
+|---------|-------------|
+| `ICameraWallManager` | Main facade for all camera wall operations |
+| `IDialogService` | Dialog abstraction for camera config, settings, input, confirmations |
 
 ### Per-Camera Override System
 
@@ -178,6 +197,20 @@ Download the latest MSI installer from [GitHub Releases](https://github.com/davi
 ```bash
 dotnet build
 dotnet run --project src/Linksoft.Wpf.CameraWall.App
+```
+
+### Run Server Edition with Aspire
+
+```bash
+dotnet run --project src/Linksoft.VideoSurveillance.Aspire
+```
+
+This starts the Aspire dashboard and the REST API server. The dashboard provides monitoring, logs, and traces for all orchestrated services.
+
+### Run Server Edition Standalone
+
+```bash
+dotnet run --project src/Linksoft.VideoSurveillance.Api
 ```
 
 ### User Data
