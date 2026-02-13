@@ -543,7 +543,7 @@ This section documents whether each setting is actually used at runtime (not jus
 
 - **Status:** Implemented using FlyleafLib recording APIs
 - **Settings:** RecordingPath, RecordingFormat, EnableRecordingOnMotion, EnableRecordingOnConnect, EnableHourlySegmentation, MaxRecordingDurationMinutes, ThumbnailTileCount
-- **Location:** `IRecordingService`, `RecordingService.cs`, `IMotionDetectionService`, `MotionDetectionService.cs`
+- **Location:** `IRecordingService`, `RecordingService.cs`, `IMotionDetectionService` (Core, aliased in WPF), `MotionDetectionService.cs`
 - **Implementation:**
   - Manual recording: Context menu "Start Recording" / "Stop Recording"
   - Auto-record on connect: Global setting with per-camera overrides

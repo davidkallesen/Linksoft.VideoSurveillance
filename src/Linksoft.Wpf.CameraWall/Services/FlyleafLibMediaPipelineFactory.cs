@@ -1,7 +1,6 @@
 namespace Linksoft.Wpf.CameraWall.Services;
 
 using CoreCameraConfiguration = Linksoft.VideoSurveillance.Models.CameraConfiguration;
-using IMediaPipeline = Linksoft.VideoSurveillance.Services.IMediaPipeline;
 using IMediaPipelineFactory = Linksoft.VideoSurveillance.Services.IMediaPipelineFactory;
 
 /// <summary>

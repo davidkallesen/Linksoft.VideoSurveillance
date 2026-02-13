@@ -29,7 +29,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
     /// <inheritdoc/>
     public void StartDetection(
         Guid cameraId,
-        FlyleafLibMediaPipeline pipeline,
+        IMediaPipeline pipeline,
         MotionDetectionSettings? settings = null)
     {
         ArgumentNullException.ThrowIfNull(pipeline);
@@ -84,7 +84,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
     }
 
     /// <inheritdoc/>
-    public IReadOnlyList<Rect> GetLastBoundingBoxes(Guid cameraId)
+    public IReadOnlyList<BoundingBox> GetLastBoundingBoxes(Guid cameraId)
         => contexts.TryGetValue(cameraId, out var context)
             ? context.LastBoundingBoxes
             : [];
@@ -220,25 +220,37 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
             return;
         }
 
-        // Capture snapshot on the UI thread (FlyleafLib's Player requires it)
-        var tempFile = Path.Combine(Path.GetTempPath(), $"motion_{cameraId:N}.png");
+        context.IsAnalyzing = true;
+        _ = CaptureAndProcessAsync(cameraId, context);
+    }
+
+    private async Task CaptureAndProcessAsync(
+        Guid cameraId,
+        MotionDetectionContext context)
+    {
         try
         {
-            context.Pipeline.FlyleafPlayer.TakeSnapshotToFile(tempFile);
+            var frameBytes = await context.Pipeline.CaptureFrameAsync().ConfigureAwait(false);
+            if (frameBytes is null || frameBytes.Length == 0)
+            {
+                return;
+            }
+
+            ProcessCapturedFrame(cameraId, frameBytes);
         }
         catch
         {
-            return;
+            // Silently ignore - next frame will be analyzed
         }
-
-        // Dispatch heavy processing (file wait, bitmap decode, frame diff) to background thread
-        context.IsAnalyzing = true;
-        _ = Task.Run(() => ProcessCapturedFrame(cameraId, tempFile));
+        finally
+        {
+            context.IsAnalyzing = false;
+        }
     }
 
     private void ProcessCapturedFrame(
         Guid cameraId,
-        string tempFile)
+        byte[] frameBytes)
     {
         if (!contexts.TryGetValue(cameraId, out var context))
         {
@@ -247,122 +259,72 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
 
         try
         {
-            try
+            using var ms = new MemoryStream(frameBytes);
+            using var bitmap = new System.Drawing.Bitmap(ms);
+
+            // Get analysis resolution from settings (or use defaults)
+            var analysisWidth = context.Settings.AnalysisWidth > 0 ? context.Settings.AnalysisWidth : DefaultAnalysisWidth;
+            var analysisHeight = context.Settings.AnalysisHeight > 0 ? context.Settings.AnalysisHeight : DefaultAnalysisHeight;
+
+            // Convert to grayscale and downscale for analysis
+            var currentFrame = ConvertToGrayscale(bitmap, analysisWidth, analysisHeight);
+
+            // Compare with previous frame
+            if (context.PreviousFrame is not null)
             {
-                // Wait a bit for the file to be fully written (FlyleafLib writes async)
-                var maxWaitMs = 500;
-                var waitedMs = 0;
-                while (waitedMs < maxWaitMs)
+                var (changePercent, boundingBoxes) = CalculateFrameDifferenceWithBoundingBoxes(
+                    context.PreviousFrame,
+                    currentFrame,
+                    context.Settings,
+                    analysisWidth,
+                    analysisHeight);
+
+                var wasMotionDetected = context.IsMotionDetected;
+                var minimumChange = context.Settings.MinimumChangePercent;
+                var isMotionActive = changePercent >= minimumChange;
+
+                if (isMotionActive)
                 {
-                    if (File.Exists(tempFile))
-                    {
-                        var fileInfo = new FileInfo(tempFile);
-                        if (fileInfo.Length > 0)
-                        {
-                            break;
-                        }
-                    }
+                    context.IsMotionDetected = true;
+                    context.LastMotionTime = DateTime.UtcNow;
+                    context.LastBoundingBoxes = boundingBoxes;
 
-                    Thread.Sleep(10);
-                    waitedMs += 10;
-                }
-
-                if (!File.Exists(tempFile))
-                {
-                    return;
-                }
-
-                var finalFileInfo = new FileInfo(tempFile);
-                if (finalFileInfo.Length == 0)
-                {
-                    return;
-                }
-
-                using var bitmap = new System.Drawing.Bitmap(tempFile);
-
-                // Get analysis resolution from settings (or use defaults)
-                var analysisWidth = context.Settings.AnalysisWidth > 0 ? context.Settings.AnalysisWidth : DefaultAnalysisWidth;
-                var analysisHeight = context.Settings.AnalysisHeight > 0 ? context.Settings.AnalysisHeight : DefaultAnalysisHeight;
-
-                // Convert to grayscale and downscale for analysis
-                var currentFrame = ConvertToGrayscale(bitmap, analysisWidth, analysisHeight);
-
-                // Compare with previous frame
-                if (context.PreviousFrame is not null)
-                {
-                    var (changePercent, boundingBoxes) = CalculateFrameDifferenceWithBoundingBoxes(
-                        context.PreviousFrame,
-                        currentFrame,
-                        context.Settings,
+                    // Always fire event when motion is active - cooldown is handled by RecordingService for recordings
+                    // Marshal to UI thread since subscribers access DependencyProperties
+                    RaiseMotionDetected(new MotionDetectedEventArgs(
+                        cameraId,
+                        changePercent,
+                        isMotionActive: true,
+                        boundingBoxes,
                         analysisWidth,
-                        analysisHeight);
-
-                    var wasMotionDetected = context.IsMotionDetected;
-                    var minimumChange = context.Settings.MinimumChangePercent;
-                    var isMotionActive = changePercent >= minimumChange;
-
-                    if (isMotionActive)
+                        analysisHeight));
+                }
+                else
+                {
+                    // Motion stopped
+                    if (wasMotionDetected)
                     {
-                        context.IsMotionDetected = true;
-                        context.LastMotionTime = DateTime.UtcNow;
-                        context.LastBoundingBoxes = boundingBoxes;
-
-                        // Always fire event when motion is active - cooldown is handled by RecordingService for recordings
-                        // Marshal to UI thread since subscribers access DependencyProperties
+                        // Raise event indicating motion stopped
                         RaiseMotionDetected(new MotionDetectedEventArgs(
                             cameraId,
                             changePercent,
-                            isMotionActive: true,
-                            boundingBoxes,
+                            isMotionActive: false,
+                            boundingBoxes: null,
                             analysisWidth,
                             analysisHeight));
                     }
-                    else
-                    {
-                        // Motion stopped
-                        if (wasMotionDetected)
-                        {
-                            // Raise event indicating motion stopped
-                            RaiseMotionDetected(new MotionDetectedEventArgs(
-                                cameraId,
-                                changePercent,
-                                isMotionActive: false,
-                                boundingBoxes: null,
-                                analysisWidth,
-                                analysisHeight));
-                        }
 
-                        context.IsMotionDetected = false;
-                        context.LastBoundingBoxes = [];
-                    }
-                }
-
-                // Store current frame for next comparison
-                context.PreviousFrame = currentFrame;
-            }
-            finally
-            {
-                // Clean up temp file
-                try
-                {
-                    if (File.Exists(tempFile))
-                    {
-                        File.Delete(tempFile);
-                    }
-                }
-                catch
-                {
-                    // Ignore cleanup errors
+                    context.IsMotionDetected = false;
+                    context.LastBoundingBoxes = [];
                 }
             }
+
+            // Store current frame for next comparison
+            context.PreviousFrame = currentFrame;
         }
         catch
         {
             // Silently ignore frame analysis errors - next frame will be analyzed
-        }
-        finally
-        {
-            context.IsAnalyzing = false;
         }
     }
 
@@ -434,7 +396,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         return grayscale;
     }
 
-    private static (double ChangePercent, IReadOnlyList<Rect> BoundingBoxes) CalculateFrameDifferenceWithBoundingBoxes(
+    private static (double ChangePercent, IReadOnlyList<BoundingBox> BoundingBoxes) CalculateFrameDifferenceWithBoundingBoxes(
         byte[] previous,
         byte[] current,
         MotionDetectionSettings settings,
@@ -528,7 +490,7 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         }
 
         // Create bounding boxes for all clusters that meet the minimum area requirement
-        var boundingBoxes = new List<Rect>();
+        var boundingBoxes = new List<BoundingBox>();
 
         foreach (var cluster in allClusters)
         {
@@ -561,11 +523,11 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
             var paddedWidth = Math.Min(analysisWidth - paddedX, width + (2 * padding));
             var paddedHeight = Math.Min(analysisHeight - paddedY, height + (2 * padding));
 
-            boundingBoxes.Add(new Rect(paddedX, paddedY, paddedWidth, paddedHeight));
+            boundingBoxes.Add(new BoundingBox { X = paddedX, Y = paddedY, Width = paddedWidth, Height = paddedHeight });
         }
 
         // Sort by area (largest first) for consistent ordering
-        boundingBoxes.Sort((a, b) => (b.Width * b.Height).CompareTo(a.Width * a.Height));
+        boundingBoxes.Sort((a, b) => b.Area.CompareTo(a.Area));
 
         return (changePercent, boundingBoxes);
     }

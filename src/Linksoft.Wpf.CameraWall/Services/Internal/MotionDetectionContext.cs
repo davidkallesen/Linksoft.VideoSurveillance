@@ -8,7 +8,7 @@ internal sealed class MotionDetectionContext : IDisposable
 {
     public MotionDetectionContext(
         Guid cameraId,
-        FlyleafLibMediaPipeline pipeline,
+        IMediaPipeline pipeline,
         MotionDetectionSettings settings)
     {
         CameraId = cameraId;
@@ -18,7 +18,7 @@ internal sealed class MotionDetectionContext : IDisposable
 
     public Guid CameraId { get; }
 
-    public FlyleafLibMediaPipeline Pipeline { get; }
+    public IMediaPipeline Pipeline { get; }
 
     public MotionDetectionSettings Settings { get; }
 
@@ -28,7 +28,7 @@ internal sealed class MotionDetectionContext : IDisposable
 
     public DateTime? LastMotionTime { get; set; }
 
-    public IReadOnlyList<Rect> LastBoundingBoxes { get; set; } = [];
+    public IReadOnlyList<BoundingBox> LastBoundingBoxes { get; set; } = [];
 
     [SuppressMessage("", "SA1401: Volatile requires a field, not a property", Justification = "OK")]
     public volatile bool IsAnalyzing;

@@ -36,7 +36,7 @@
 ### Phase 5: Performance & Testing 🚀 (Priority: LOW)
 - [x] **P3** Add scheduler for staggered analysis across streams
 - [x] **P3** Optimize grayscale conversion (LockBits instead of GetPixel)
-- [ ] **P3** Optimize frame capture (avoid temp files if possible) - *Requires FlyleafLib API investigation*
+- [x] **P3** Optimize frame capture (avoid temp files) - *Done: uses `IMediaPipeline.CaptureFrameAsync()` returning `byte[]` directly*
 - [ ] **P4** Unit tests for `MotionDetectionService`
 - [ ] **P4** Integration tests (8+ streams)
 
@@ -48,11 +48,11 @@
 
 | Component | Status | Location |
 |-----------|--------|----------|
-| `IMotionDetectionService` | ✅ Updated | `Services/IMotionDetectionService.cs` |
-| `MotionDetectionService` | ✅ Updated (with bounding box) | `Services/MotionDetectionService.cs` |
-| `MotionDetectionSettings` | ✅ Top-level in `ApplicationSettings` | `Models/Settings/MotionDetectionSettings.cs` |
-| `BoundingBoxSettings` | ✅ Nested in `MotionDetectionSettings` | `Models/Settings/BoundingBoxSettings.cs` |
-| `MotionDetectedEventArgs` | ✅ Updated (with bounding box) | `Events/MotionDetectedEventArgs.cs` |
+| `IMotionDetectionService` | ✅ Consolidated to Core | Defined in Core; aliased in WPF `GlobalUsings.cs` |
+| `MotionDetectionService` | ✅ Updated (uses `IMediaPipeline`) | `Services/MotionDetectionService.cs` |
+| `MotionDetectionSettings` | ✅ Top-level in `ApplicationSettings` | `Models/Settings/MotionDetectionSettings.cs` (Core) |
+| `BoundingBoxSettings` | ✅ Nested in `MotionDetectionSettings` | `Models/Settings/BoundingBoxSettings.cs` (Core) |
+| `MotionDetectedEventArgs` | ✅ Consolidated to Core | Defined in Core; aliased in WPF `GlobalUsings.cs` |
 | `RecordingSettings.EnableRecordingOnMotion` | ✅ Exists | `Models/Settings/RecordingSettings.cs` |
 | Settings UI - Motion Detection | ✅ Own tab | `Dialogs/Parts/Settings/MotionDetectionAnalysisSettings.xaml` |
 | Settings UI - Bounding Box | ✅ Own tab | `Dialogs/Parts/Settings/MotionDetectionBoundingBoxSettings.xaml` |
@@ -88,8 +88,8 @@ This separation allows motion detection with bounding box display to work indepe
 
 ```
 ┌─────────────────┐     ┌────────────────────┐     ┌──────────────────┐
-│  FlyleafPlayer  │────▶│MotionDetectionSvc  │────▶│MotionDetectedArgs│
-│  (per camera)   │     │ (frame analysis)   │     │ + BoundingBox    │
+│  IMediaPipeline │────▶│MotionDetectionSvc  │────▶│MotionDetectedArgs│
+│  (per camera)   │     │ (frame analysis)   │     │ + BoundingBox[]  │
 └─────────────────┘     └────────────────────┘     └──────────────────┘
                                                             │
                         ┌───────────────────────────────────┼───────────────────────────┐
@@ -138,7 +138,7 @@ public class BoundingBoxSettings
 
 ### 2️⃣ Extend `MotionDetectedEventArgs` (P1)
 
-**File:** `src/Linksoft.Wpf.CameraWall/Events/MotionDetectedEventArgs.cs`
+**File:** `src/Linksoft.VideoSurveillance.Core/Events/MotionDetectedEventArgs.cs` (consolidated to Core; WPF aliases via `GlobalUsings.cs`)
 
 ```csharp
 // Add bounding box properties:
@@ -170,6 +170,8 @@ public bool IsMotionActive { get; }
 ### 3️⃣ Update `MotionDetectionService` (P1)
 
 **File:** `src/Linksoft.Wpf.CameraWall/Services/MotionDetectionService.cs`
+
+> **Note:** The service now uses `IMediaPipeline.CaptureFrameAsync()` (returns `byte[]`) instead of temp-file-based `FlyleafPlayer.TakeSnapshotToFile()`. Bounding boxes use Core `BoundingBox` type; conversion to WPF `Rect` happens at the UI boundary via `BoundingBoxExtensions.ToRects()`.
 
 **Changes needed in `AnalyzeFrame` method:**
 
@@ -372,8 +374,8 @@ Colors are stored as well-known color name strings (e.g., `"Red"`, `"Blue"`). Th
 ## ⚡ Performance Considerations
 
 ### Current Issues in `MotionDetectionService`
-1. ❌ Uses temp files for frame capture (slow I/O)
-2. ❌ Uses `GetPixel()` for grayscale conversion (very slow)
+1. ✅ ~~Uses temp files for frame capture~~ — Fixed: uses `IMediaPipeline.CaptureFrameAsync()` returning `byte[]` directly
+2. ✅ ~~Uses `GetPixel()` for grayscale conversion~~ — Fixed: uses `LockBits` + unsafe pointer access
 3. ❌ No buffer reuse (GC pressure)
 
 ### Recommended Optimizations (P3)
@@ -504,9 +506,9 @@ public class MotionAnalysisScheduler
 - [x] `Models/Settings/RecordingSettings.cs` - Removed `MotionDetection` (moved to top-level)
 - [x] `Services/IApplicationSettingsService.cs` - Added `MotionDetection` property + `SaveMotionDetection()`
 - [x] `Services/ApplicationSettingsService.cs` - Implemented above
-- [x] `Events/MotionDetectedEventArgs.cs` - Added bounding box data
-- [x] `Services/IMotionDetectionService.cs` - Interface changes
-- [x] `Services/MotionDetectionService.cs` - Bounding box calculation
+- [x] `Events/MotionDetectedEventArgs.cs` - Added bounding box data (now consolidated to Core; WPF file deleted, aliased in `GlobalUsings.cs`)
+- [x] `Services/IMotionDetectionService.cs` - Interface changes (now consolidated to Core; WPF file deleted, aliased in `GlobalUsings.cs`)
+- [x] `Services/MotionDetectionService.cs` - Bounding box calculation (updated to use `IMediaPipeline` and Core `BoundingBox`)
 - [x] `Services/RecordingService.cs` - Updated to use `settingsService.MotionDetection`
 - [x] `UserControls/CameraTile.xaml(.cs)` - Added overlay, updated color default
 - [x] `UserControls/CameraGrid.xaml(.cs)` - Updated color default
@@ -549,55 +551,16 @@ public class MotionAnalysisScheduler
 
 ## 🆕 Additional Features (Based on Decisions)
 
-### 🔟 FlyleafLib Frame Callback API (P2)
+### 🔟 FlyleafLib Frame Callback API (P2) — ✅ SUPERSEDED
 
 **Goal:** Replace temp file snapshots with direct frame access for better performance.
 
-**Investigation Tasks:**
-- [ ] **P2** Research FlyleafLib's `Player.VideoDecoder` frame access
-- [ ] **P2** Check if `Player.renderer` exposes frame data
-- [ ] **P2** Test `VideoFrame` callback subscription
-- [ ] **P2** Implement direct frame capture if API available
+**Resolution:** This is now handled by `IMediaPipeline.CaptureFrameAsync()` which returns `byte[]` (PNG bytes) directly. The WPF implementation (`FlyleafLibMediaPipeline`) uses `TakeSnapshotToFile` internally but manages the temp file lifecycle, while the server implementation (`FFmpegMediaPipeline`) uses FFmpeg subprocess. The separate `IFrameProvider` abstraction is no longer needed since `IMediaPipeline` covers this use case.
 
-**Potential Approaches:**
-
-```csharp
-// Option A: VideoDecoder frame callback (if available)
-player.VideoDecoder.VideoFrameDecoded += (sender, frame) =>
-{
-    // frame.Data contains raw pixel data
-    ProcessFrame(frame.Data, frame.Width, frame.Height);
-};
-
-// Option B: Use Player.TakeSnapshot() to memory (check if available)
-// Some versions support BitmapSource output instead of file
-
-// Option C: Hook into D3D11 renderer (advanced)
-// Access the rendered texture and copy to CPU memory
-```
-
-**File:** `src/Linksoft.Wpf.CameraWall/Services/FrameProviders/IFrameProvider.cs`
-
-```csharp
-/// <summary>
-/// Provides frames from a video player for analysis.
-/// </summary>
-public interface IFrameProvider
-{
-    /// <summary>
-    /// Gets a grayscale frame for motion analysis.
-    /// </summary>
-    /// <param name="player">The FlyleafLib player.</param>
-    /// <param name="targetWidth">Target width for downscaling.</param>
-    /// <param name="targetHeight">Target height for downscaling.</param>
-    /// <returns>Grayscale byte array, or null if frame unavailable.</returns>
-    byte[]? GetGrayscaleFrame(Player player, int targetWidth, int targetHeight);
-}
-
-// Implementations:
-// - TempFileFrameProvider (current, fallback)
-// - DirectFrameProvider (new, preferred if FlyleafLib supports it)
-```
+The `MotionDetectionService` now:
+1. Calls `context.Pipeline.CaptureFrameAsync()` to get PNG bytes
+2. Creates `System.Drawing.Bitmap` from `MemoryStream(frameBytes)`
+3. No temp file management at the service level
 
 ---
 
@@ -984,12 +947,12 @@ public MotionSensitivityPreset SensitivityPreset { get; set; } = MotionSensitivi
 
 ## 📋 Updated Implementation Checklist
 
-### Phase 6: Frame Provider Abstraction 🎬 (Priority: MEDIUM)
-- [ ] **P2** Create `IFrameProvider` interface
-- [ ] **P2** Implement `TempFileFrameProvider` (current behavior)
-- [ ] **P2** Research FlyleafLib direct frame access
-- [ ] **P2** Implement `DirectFrameProvider` if API available
-- [ ] **P2** Add fallback logic in `MotionDetectionService`
+### Phase 6: Frame Provider Abstraction 🎬 — ✅ SUPERSEDED by IMediaPipeline
+- [x] **P2** ~~Create `IFrameProvider` interface~~ — Handled by `IMediaPipeline.CaptureFrameAsync()`
+- [x] **P2** ~~Implement `TempFileFrameProvider`~~ — `FlyleafLibMediaPipeline` handles temp files internally
+- [x] **P2** ~~Research FlyleafLib direct frame access~~ — Not needed; `IMediaPipeline` abstracts this
+- [x] **P2** ~~Implement `DirectFrameProvider`~~ — Server uses `FFmpegMediaPipeline` instead
+- [x] **P2** ~~Add fallback logic~~ — `MotionDetectionService` now uses `IMediaPipeline` directly
 
 ### Phase 7: Multiple Bounding Boxes 📦 (Priority: LOW)
 - [ ] **P3** Add `MaxBoundingBoxes` and `MinRegionSeparation` settings
@@ -1017,9 +980,10 @@ public MotionSensitivityPreset SensitivityPreset { get; set; } = MotionSensitivi
 
 | File | Description |
 |------|-------------|
-| `Services/FrameProviders/IFrameProvider.cs` | Frame provider interface |
-| `Services/FrameProviders/TempFileFrameProvider.cs` | Current temp file implementation |
-| `Services/FrameProviders/DirectFrameProvider.cs` | Direct FlyleafLib access (if available) |
+| ~~`Services/FrameProviders/IFrameProvider.cs`~~ | ~~Frame provider interface~~ — Superseded by `IMediaPipeline.CaptureFrameAsync()` |
+| ~~`Services/FrameProviders/TempFileFrameProvider.cs`~~ | ~~Current temp file implementation~~ — Superseded |
+| ~~`Services/FrameProviders/DirectFrameProvider.cs`~~ | ~~Direct FlyleafLib access~~ — Superseded |
+| `Helpers/BoundingBoxExtensions.cs` | ✅ Created — Converts Core `BoundingBox` to WPF `Rect` at UI boundary |
 | `Models/MotionIgnoreZone.cs` | Ignore zone model |
 | `Models/Enums/MotionSensitivityPreset.cs` | Sensitivity preset enum |
 | `Factories/MotionSensitivityPresets.cs` | Preset values and detection |

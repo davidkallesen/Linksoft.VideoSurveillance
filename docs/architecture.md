@@ -83,6 +83,8 @@ The Core library contains everything that is shared between the WPF desktop app 
 
 ## WPF Library (Linksoft.Wpf.CameraWall)
 
+Most service interfaces and event types are defined in Core and aliased into the WPF namespace via `global using` directives in `GlobalUsings.cs`. This includes `IMotionDetectionService`, `IRecordingSegmentationService`, `IGitHubReleaseService`, `IMediaPipeline`, `MotionDetectedEventArgs`, `RecordingStateChangedEventArgs`, and others. Only UI-specific interfaces remain defined in the WPF library.
+
 ### Key Services
 
 | Service | Description |

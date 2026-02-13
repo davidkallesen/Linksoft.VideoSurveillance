@@ -19,10 +19,11 @@ global using Atc.Wpf.Translation;
 global using Atc.XamlToolkit.Diagnostics;
 global using Atc.XamlToolkit.Mvvm;
 
+global using Linksoft.VideoSurveillance.Models.Settings;
+
 global using Linksoft.Wpf.CameraWall.Events;
 global using Linksoft.Wpf.CameraWall.Helpers;
 global using Linksoft.Wpf.CameraWall.Models;
-global using Linksoft.Wpf.CameraWall.Models.Settings;
 global using Linksoft.Wpf.CameraWall.Resources;
 global using Linksoft.Wpf.CameraWall.Services;
 global using Linksoft.Wpf.CameraWall.SplashScreens;
@@ -33,3 +34,6 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 
 global using Serilog;
+
+global using IMediaCleanupService = Linksoft.VideoSurveillance.Services.IMediaCleanupService;
+global using IRecordingSegmentationService = Linksoft.VideoSurveillance.Services.IRecordingSegmentationService;

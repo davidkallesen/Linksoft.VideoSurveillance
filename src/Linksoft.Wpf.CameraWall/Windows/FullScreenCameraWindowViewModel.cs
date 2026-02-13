@@ -244,7 +244,7 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         {
             if (e.IsMotionActive && e.HasBoundingBoxes)
             {
-                CurrentBoundingBoxes = e.BoundingBoxes;
+                CurrentBoundingBoxes = e.BoundingBoxes.ToRects();
             }
             else
             {

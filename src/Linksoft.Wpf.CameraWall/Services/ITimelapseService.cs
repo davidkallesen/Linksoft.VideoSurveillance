@@ -17,7 +17,7 @@ public interface ITimelapseService
     /// <param name="pipeline">The media pipeline instance.</param>
     void StartCapture(
         CameraConfiguration camera,
-        FlyleafLibMediaPipeline pipeline);
+        IMediaPipeline pipeline);
 
     /// <summary>
     /// Stops timelapse capture for a camera.

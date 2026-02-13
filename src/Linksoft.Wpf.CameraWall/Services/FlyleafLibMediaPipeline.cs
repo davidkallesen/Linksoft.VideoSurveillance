@@ -3,7 +3,6 @@ namespace Linksoft.Wpf.CameraWall.Services;
 using CoreConnectionState = Linksoft.VideoSurveillance.Enums.ConnectionState;
 using CoreConnectionStateChangedEventArgs = Linksoft.VideoSurveillance.Events.ConnectionStateChangedEventArgs;
 using CoreStreamSettings = Linksoft.VideoSurveillance.Models.Settings.StreamSettings;
-using IMediaPipeline = Linksoft.VideoSurveillance.Services.IMediaPipeline;
 
 /// <summary>
 /// FlyleafLib-based implementation of <see cref="IMediaPipeline"/>.
@@ -86,8 +85,7 @@ public sealed class FlyleafLibMediaPipeline : IMediaPipeline
     }
 
     /// <inheritdoc />
-    public async Task<byte[]?> CaptureFrameAsync(
-        CancellationToken ct = default)
+    public async Task<byte[]?> CaptureFrameAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
 

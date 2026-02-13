@@ -1,25 +1,72 @@
+using CoreSettings = Linksoft.VideoSurveillance.Models.Settings;
+
 namespace Linksoft.Wpf.CameraWall.Models.Settings;
 
 /// <summary>
-/// Represents authentication settings for a network camera.
+/// Wraps <see cref="CoreSettings.AuthenticationSettings"/> with change notification for WPF binding.
 /// </summary>
 public partial class AuthenticationSettings : ObservableObject
 {
-    [ObservableProperty]
-    private string? userName;
+    internal CoreSettings.AuthenticationSettings Core { get; }
 
-    [ObservableProperty]
-    private string? password;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthenticationSettings"/> class.
+    /// </summary>
+    public AuthenticationSettings()
+        : this(new CoreSettings.AuthenticationSettings())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthenticationSettings"/> class
+    /// wrapping the specified Core instance.
+    /// </summary>
+    internal AuthenticationSettings(CoreSettings.AuthenticationSettings core)
+    {
+        Core = core ?? throw new ArgumentNullException(nameof(core));
+    }
+
+    /// <summary>
+    /// Gets or sets the user name.
+    /// </summary>
+    public string? UserName
+    {
+        get => Core.UserName;
+        set
+        {
+            if (string.Equals(Core.UserName, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Core.UserName = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the password.
+    /// </summary>
+    public string? Password
+    {
+        get => Core.Password;
+        set
+        {
+            if (string.Equals(Core.Password, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Core.Password = value;
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>
     /// Creates a deep copy of this instance.
     /// </summary>
     public AuthenticationSettings Clone()
-        => new()
-        {
-            UserName = UserName,
-            Password = Password,
-        };
+        => new(Core.Clone());
 
     /// <summary>
     /// Copies values from another instance.
@@ -36,13 +83,5 @@ public partial class AuthenticationSettings : ObservableObject
     /// Determines whether the specified instance has the same values.
     /// </summary>
     public bool ValueEquals(AuthenticationSettings? other)
-    {
-        if (other is null)
-        {
-            return false;
-        }
-
-        return string.Equals(UserName, other.UserName, StringComparison.Ordinal) &&
-               string.Equals(Password, other.Password, StringComparison.Ordinal);
-    }
+        => other is not null && Core.ValueEquals(other.Core);
 }

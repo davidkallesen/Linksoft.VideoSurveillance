@@ -12,7 +12,7 @@ public class RecordingService : IRecordingService, IDisposable
     private readonly IThumbnailGeneratorService thumbnailService;
     private readonly ICameraStorageService cameraStorageService;
     private readonly ConcurrentDictionary<Guid, RecordingSession> sessions = new();
-    private readonly ConcurrentDictionary<Guid, FlyleafLibMediaPipeline> pipelines = new();
+    private readonly ConcurrentDictionary<Guid, IMediaPipeline> pipelines = new();
     private readonly ConcurrentDictionary<Guid, DispatcherTimer> postMotionTimers = new();
     private readonly ConcurrentDictionary<Guid, DateTime> recordingCooldowns = new();
     private bool disposed;
@@ -60,7 +60,7 @@ public class RecordingService : IRecordingService, IDisposable
     /// <inheritdoc/>
     public bool StartRecording(
         CameraConfiguration camera,
-        FlyleafLibMediaPipeline pipeline)
+        IMediaPipeline pipeline)
     {
         ArgumentNullException.ThrowIfNull(camera);
         ArgumentNullException.ThrowIfNull(pipeline);
@@ -171,7 +171,7 @@ public class RecordingService : IRecordingService, IDisposable
     /// <inheritdoc/>
     public bool TriggerMotionRecording(
         CameraConfiguration camera,
-        FlyleafLibMediaPipeline pipeline)
+        IMediaPipeline pipeline)
     {
         ArgumentNullException.ThrowIfNull(camera);
         ArgumentNullException.ThrowIfNull(pipeline);

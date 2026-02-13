@@ -1,31 +1,92 @@
+using CoreSettings = Linksoft.VideoSurveillance.Models.Settings;
+
 namespace Linksoft.Wpf.CameraWall.Models.Settings;
 
 /// <summary>
-/// Represents display settings for a network camera.
+/// Wraps <see cref="CoreSettings.CameraDisplaySettings"/> with change notification for WPF binding.
 /// </summary>
 public partial class CameraDisplaySettings : ObservableObject
 {
-    [ObservableProperty]
+    internal CoreSettings.CameraDisplaySettings Core { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CameraDisplaySettings"/> class.
+    /// </summary>
+    public CameraDisplaySettings()
+        : this(new CoreSettings.CameraDisplaySettings())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CameraDisplaySettings"/> class
+    /// wrapping the specified Core instance.
+    /// </summary>
+    internal CameraDisplaySettings(CoreSettings.CameraDisplaySettings core)
+    {
+        Core = core ?? throw new ArgumentNullException(nameof(core));
+    }
+
+    /// <summary>
+    /// Gets or sets the display name.
+    /// </summary>
     [Required(ErrorMessageResourceType = typeof(Translations), ErrorMessageResourceName = nameof(Translations.DisplayNameRequired))]
     [StringLength(256, ErrorMessageResourceType = typeof(Translations), ErrorMessageResourceName = nameof(Translations.DisplayNameTooLong))]
-    private string displayName = string.Empty;
+    public string DisplayName
+    {
+        get => Core.DisplayName;
+        set
+        {
+            if (string.Equals(Core.DisplayName, value, StringComparison.Ordinal))
+            {
+                return;
+            }
 
-    [ObservableProperty]
-    private string? description;
+            Core.DisplayName = value;
+            OnPropertyChanged();
+        }
+    }
 
-    [ObservableProperty]
-    private OverlayPosition overlayPosition = OverlayPosition.TopLeft;
+    /// <summary>
+    /// Gets or sets the description.
+    /// </summary>
+    public string? Description
+    {
+        get => Core.Description;
+        set
+        {
+            if (string.Equals(Core.Description, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Core.Description = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the overlay position.
+    /// </summary>
+    public OverlayPosition OverlayPosition
+    {
+        get => Core.OverlayPosition;
+        set
+        {
+            if (Core.OverlayPosition == value)
+            {
+                return;
+            }
+
+            Core.OverlayPosition = value;
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>
     /// Creates a deep copy of this instance.
     /// </summary>
     public CameraDisplaySettings Clone()
-        => new()
-        {
-            DisplayName = DisplayName,
-            Description = Description,
-            OverlayPosition = OverlayPosition,
-        };
+        => new(Core.Clone());
 
     /// <summary>
     /// Copies values from another instance.
@@ -43,14 +104,5 @@ public partial class CameraDisplaySettings : ObservableObject
     /// Determines whether the specified instance has the same values.
     /// </summary>
     public bool ValueEquals(CameraDisplaySettings? other)
-    {
-        if (other is null)
-        {
-            return false;
-        }
-
-        return string.Equals(DisplayName, other.DisplayName, StringComparison.Ordinal) &&
-               string.Equals(Description, other.Description, StringComparison.Ordinal) &&
-               OverlayPosition == other.OverlayPosition;
-    }
+        => other is not null && Core.ValueEquals(other.Core);
 }

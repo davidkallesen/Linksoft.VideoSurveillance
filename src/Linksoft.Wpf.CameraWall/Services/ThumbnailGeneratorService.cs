@@ -28,7 +28,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
     /// <inheritdoc/>
     public void StartCapture(
         Guid cameraId,
-        FlyleafLibMediaPipeline pipeline,
+        IMediaPipeline pipeline,
         string videoFilePath,
         int tileCount = 4)
     {
@@ -58,7 +58,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
             tileCount);
 
         // Capture first frame immediately
-        CaptureFrame(cameraId, context);
+        _ = CaptureFrameAsync(cameraId, context);
 
         // For single tile, we only need one frame - stop immediately
         if (tileCount == 1)
@@ -122,7 +122,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
             return;
         }
 
-        CaptureFrame(cameraId, context);
+        _ = CaptureFrameAsync(cameraId, context);
 
         // Check if we have all frames
         if (context.CapturedFrames.Count >= context.TileCount)
@@ -131,27 +131,23 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
         }
     }
 
-    private void CaptureFrame(
+    private async Task CaptureFrameAsync(
         Guid cameraId,
         ThumbnailCaptureContext context)
     {
-        var tempFile = Path.Combine(
-            Path.GetTempPath(),
-            $"thumb_{cameraId:N}_{context.CapturedFrames.Count}.png");
-
         try
         {
-            context.Pipeline.FlyleafPlayer.TakeSnapshotToFile(tempFile);
+            var pngBytes = await context.Pipeline.CaptureFrameAsync().ConfigureAwait(false);
 
-            if (!File.Exists(tempFile))
+            if (pngBytes is null || pngBytes.Length == 0)
             {
-                logger.LogWarning("Snapshot file not created for camera {CameraId}", cameraId);
+                logger.LogWarning("Snapshot capture returned no data for camera {CameraId}", cameraId);
                 context.CapturedFrames.Add(null);
                 return;
             }
 
-            using var stream = new FileStream(tempFile, FileMode.Open, FileAccess.Read);
-            var bitmap = new Drawing.Bitmap(stream);
+            using var memoryStream = new MemoryStream(pngBytes);
+            var bitmap = new Drawing.Bitmap(memoryStream);
             context.CapturedFrames.Add(bitmap);
 
             logger.LogDebug(
@@ -163,21 +159,6 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
         {
             logger.LogWarning(ex, "Failed to capture frame for camera {CameraId}", cameraId);
             context.CapturedFrames.Add(null);
-        }
-        finally
-        {
-            // Clean up temp file
-            try
-            {
-                if (File.Exists(tempFile))
-                {
-                    File.Delete(tempFile);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogDebug(ex, "Failed to delete temp snapshot file: {TempFile}", tempFile);
-            }
         }
     }
 
@@ -287,7 +268,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
     private sealed class ThumbnailCaptureContext
     {
         public ThumbnailCaptureContext(
-            FlyleafLibMediaPipeline pipeline,
+            IMediaPipeline pipeline,
             string thumbnailPath,
             int tileCount = 4)
         {
@@ -296,7 +277,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
             TileCount = tileCount;
         }
 
-        public FlyleafLibMediaPipeline Pipeline { get; }
+        public IMediaPipeline Pipeline { get; }
 
         public string ThumbnailPath { get; }
 

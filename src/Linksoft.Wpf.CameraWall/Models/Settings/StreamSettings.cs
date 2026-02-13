@@ -1,33 +1,108 @@
+using CoreSettings = Linksoft.VideoSurveillance.Models.Settings;
+
 namespace Linksoft.Wpf.CameraWall.Models.Settings;
 
 /// <summary>
-/// Represents streaming settings for a network camera.
+/// Wraps <see cref="CoreSettings.StreamSettings"/> with change notification for WPF binding.
 /// </summary>
 public partial class StreamSettings : ObservableObject
 {
-    [ObservableProperty]
-    private bool useLowLatencyMode = true;
+    internal CoreSettings.StreamSettings Core { get; }
 
-    [ObservableProperty]
-    private int maxLatencyMs = 500;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StreamSettings"/> class.
+    /// </summary>
+    public StreamSettings()
+        : this(new CoreSettings.StreamSettings())
+    {
+    }
 
-    [ObservableProperty]
-    private string rtspTransport = "tcp";
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StreamSettings"/> class
+    /// wrapping the specified Core instance.
+    /// </summary>
+    internal StreamSettings(CoreSettings.StreamSettings core)
+    {
+        Core = core ?? throw new ArgumentNullException(nameof(core));
+    }
 
-    [ObservableProperty]
-    private int bufferDurationMs;
+    /// <summary>
+    /// Gets or sets a value indicating whether to use low latency mode.
+    /// </summary>
+    public bool UseLowLatencyMode
+    {
+        get => Core.UseLowLatencyMode;
+        set
+        {
+            if (Core.UseLowLatencyMode == value)
+            {
+                return;
+            }
+
+            Core.UseLowLatencyMode = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum latency in milliseconds.
+    /// </summary>
+    public int MaxLatencyMs
+    {
+        get => Core.MaxLatencyMs;
+        set
+        {
+            if (Core.MaxLatencyMs == value)
+            {
+                return;
+            }
+
+            Core.MaxLatencyMs = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the RTSP transport protocol.
+    /// </summary>
+    public string RtspTransport
+    {
+        get => Core.RtspTransport;
+        set
+        {
+            if (string.Equals(Core.RtspTransport, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Core.RtspTransport = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the buffer duration in milliseconds.
+    /// </summary>
+    public int BufferDurationMs
+    {
+        get => Core.BufferDurationMs;
+        set
+        {
+            if (Core.BufferDurationMs == value)
+            {
+                return;
+            }
+
+            Core.BufferDurationMs = value;
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>
     /// Creates a deep copy of this instance.
     /// </summary>
     public StreamSettings Clone()
-        => new()
-        {
-            UseLowLatencyMode = UseLowLatencyMode,
-            MaxLatencyMs = MaxLatencyMs,
-            RtspTransport = RtspTransport,
-            BufferDurationMs = BufferDurationMs,
-        };
+        => new(Core.Clone());
 
     /// <summary>
     /// Copies values from another instance.
@@ -46,15 +121,5 @@ public partial class StreamSettings : ObservableObject
     /// Determines whether the specified instance has the same values.
     /// </summary>
     public bool ValueEquals(StreamSettings? other)
-    {
-        if (other is null)
-        {
-            return false;
-        }
-
-        return UseLowLatencyMode == other.UseLowLatencyMode &&
-               MaxLatencyMs == other.MaxLatencyMs &&
-               string.Equals(RtspTransport, other.RtspTransport, StringComparison.Ordinal) &&
-               BufferDurationMs == other.BufferDurationMs;
-    }
+        => other is not null && Core.ValueEquals(other.Core);
 }

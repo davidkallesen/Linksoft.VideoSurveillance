@@ -3,7 +3,7 @@ namespace Linksoft.VideoSurveillance.Models;
 /// <summary>
 /// Holds smoothed position values for a single bounding box.
 /// </summary>
-internal sealed class SmoothedBox
+public sealed class SmoothedBox
 {
     public double Left { get; set; }
 

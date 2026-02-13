@@ -1,29 +1,18 @@
+using CoreModels = Linksoft.VideoSurveillance.Models;
+
 namespace Linksoft.Wpf.CameraWall.Models;
 
 /// <summary>
-/// Represents the configuration for a network camera.
+/// Wraps <see cref="CoreModels.CameraConfiguration"/> with change notification for WPF binding.
 /// </summary>
 public partial class CameraConfiguration : ObservableObject
 {
-    /// <summary>
-    /// Gets or sets the unique identifier for the camera.
-    /// </summary>
-    public Guid Id { get; set; } = Guid.NewGuid();
+    internal CoreModels.CameraConfiguration Core { get; }
 
-    [ObservableProperty(AfterChangedCallback = nameof(OnConnectionChanged))]
-    private ConnectionSettings connection = new();
-
-    [ObservableProperty(AfterChangedCallback = nameof(OnAuthenticationChanged))]
-    private AuthenticationSettings authentication = new();
-
-    [ObservableProperty(AfterChangedCallback = nameof(OnDisplayChanged))]
-    private CameraDisplaySettings display = new();
-
-    [ObservableProperty(AfterChangedCallback = nameof(OnStreamChanged))]
-    private StreamSettings stream = new();
-
-    [ObservableProperty]
-    private CameraOverrides overrides = new();
+    private ConnectionSettings connection;
+    private AuthenticationSettings authentication;
+    private CameraDisplaySettings display;
+    private StreamSettings stream;
 
     [JsonIgnore]
     [ObservableProperty]
@@ -37,11 +26,142 @@ public partial class CameraConfiguration : ObservableObject
     /// Initializes a new instance of the <see cref="CameraConfiguration"/> class.
     /// </summary>
     public CameraConfiguration()
+        : this(new CoreModels.CameraConfiguration())
     {
-        SubscribeToNestedChanges(Connection);
-        SubscribeToNestedChanges(Authentication);
-        SubscribeToNestedChanges(Display);
-        SubscribeToNestedChanges(Stream);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CameraConfiguration"/> class
+    /// wrapping the specified Core instance.
+    /// </summary>
+    internal CameraConfiguration(CoreModels.CameraConfiguration core)
+    {
+        Core = core ?? throw new ArgumentNullException(nameof(core));
+
+        connection = new ConnectionSettings(Core.Connection);
+        authentication = new AuthenticationSettings(Core.Authentication);
+        display = new CameraDisplaySettings(Core.Display);
+        stream = new StreamSettings(Core.Stream);
+
+        SubscribeToNestedChanges(connection);
+        SubscribeToNestedChanges(authentication);
+        SubscribeToNestedChanges(display);
+        SubscribeToNestedChanges(stream);
+    }
+
+    /// <summary>
+    /// Gets or sets the unique identifier for the camera.
+    /// </summary>
+    public Guid Id
+    {
+        get => Core.Id;
+        set => Core.Id = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the connection settings.
+    /// </summary>
+    public ConnectionSettings Connection
+    {
+        get => connection;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(connection, value))
+            {
+                return;
+            }
+
+            connection = value;
+            Core.Connection = value.Core;
+            OnPropertyChanged();
+            SubscribeToNestedChanges(connection);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the authentication settings.
+    /// </summary>
+    public AuthenticationSettings Authentication
+    {
+        get => authentication;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(authentication, value))
+            {
+                return;
+            }
+
+            authentication = value;
+            Core.Authentication = value.Core;
+            OnPropertyChanged();
+            SubscribeToNestedChanges(authentication);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the display settings.
+    /// </summary>
+    public CameraDisplaySettings Display
+    {
+        get => display;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(display, value))
+            {
+                return;
+            }
+
+            display = value;
+            Core.Display = value.Core;
+            OnPropertyChanged();
+            SubscribeToNestedChanges(display);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the streaming settings.
+    /// </summary>
+    public StreamSettings Stream
+    {
+        get => stream;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(stream, value))
+            {
+                return;
+            }
+
+            stream = value;
+            Core.Stream = value.Core;
+            OnPropertyChanged();
+            SubscribeToNestedChanges(stream);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the per-camera overrides.
+    /// </summary>
+    public CameraOverrides Overrides
+    {
+        get => Core.Overrides;
+        set
+        {
+            if (ReferenceEquals(Core.Overrides, value))
+            {
+                return;
+            }
+
+            Core.Overrides = value;
+            OnPropertyChanged();
+        }
     }
 
     /// <summary>
@@ -49,19 +169,7 @@ public partial class CameraConfiguration : ObservableObject
     /// </summary>
     /// <returns>The constructed URI for the camera stream.</returns>
     public Uri BuildUri()
-    {
-        var scheme = Connection.Protocol.ToScheme();
-
-        var userInfo = !string.IsNullOrEmpty(Authentication.UserName)
-            ? $"{Uri.EscapeDataString(Authentication.UserName)}:{Uri.EscapeDataString(Authentication.Password ?? string.Empty)}@"
-            : string.Empty;
-
-        var normalizedPath = string.IsNullOrEmpty(Connection.Path)
-            ? string.Empty
-            : $"/{Connection.Path.TrimStart('/')}";
-
-        return new Uri($"{scheme}://{userInfo}{Connection.IpAddress}:{Connection.Port}{normalizedPath}");
-    }
+        => Core.BuildUri();
 
     /// <summary>
     /// Returns the display name of the camera.
@@ -75,17 +183,14 @@ public partial class CameraConfiguration : ObservableObject
     /// </summary>
     /// <returns>A new instance with the same values.</returns>
     public CameraConfiguration Clone()
-        => new()
+    {
+        var clone = new CameraConfiguration(Core.Clone())
         {
-            Id = Id,
-            Connection = Connection.Clone(),
-            Authentication = Authentication.Clone(),
-            Display = Display.Clone(),
-            Stream = Stream.Clone(),
-            Overrides = Overrides.Clone(),
             CanSwapLeft = CanSwapLeft,
             CanSwapRight = CanSwapRight,
         };
+        return clone;
+    }
 
     /// <summary>
     /// Copies values from another camera configuration.
@@ -116,36 +221,7 @@ public partial class CameraConfiguration : ObservableObject
             return false;
         }
 
-        // Compare overrides: both null, or both have same values
-        var overridesEqual = (Overrides is null && other.Overrides is null) ||
-                             (Overrides?.ValueEquals(other.Overrides) == true);
-
-        return Connection.ValueEquals(other.Connection) &&
-               Authentication.ValueEquals(other.Authentication) &&
-               Display.ValueEquals(other.Display) &&
-               Stream.ValueEquals(other.Stream) &&
-               overridesEqual;
-    }
-
-    private void OnConnectionChanged()
-    {
-        // Resubscribe to the new nested object's property changes
-        SubscribeToNestedChanges(Connection);
-    }
-
-    private void OnAuthenticationChanged()
-    {
-        SubscribeToNestedChanges(Authentication);
-    }
-
-    private void OnDisplayChanged()
-    {
-        SubscribeToNestedChanges(Display);
-    }
-
-    private void OnStreamChanged()
-    {
-        SubscribeToNestedChanges(Stream);
+        return Core.ValueEquals(other.Core);
     }
 
     private void SubscribeToNestedChanges(INotifyPropertyChanged? nested)

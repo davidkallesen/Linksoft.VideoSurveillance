@@ -1,35 +1,110 @@
+using CoreSettings = Linksoft.VideoSurveillance.Models.Settings;
+
 namespace Linksoft.Wpf.CameraWall.Models.Settings;
 
 /// <summary>
-/// Represents connection settings for a network camera.
+/// Wraps <see cref="CoreSettings.ConnectionSettings"/> with change notification for WPF binding.
 /// </summary>
 public partial class ConnectionSettings : ObservableObject
 {
-    [ObservableProperty]
+    internal CoreSettings.ConnectionSettings Core { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConnectionSettings"/> class.
+    /// </summary>
+    public ConnectionSettings()
+        : this(new CoreSettings.ConnectionSettings())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConnectionSettings"/> class
+    /// wrapping the specified Core instance.
+    /// </summary>
+    internal ConnectionSettings(CoreSettings.ConnectionSettings core)
+    {
+        Core = core ?? throw new ArgumentNullException(nameof(core));
+    }
+
+    /// <summary>
+    /// Gets or sets the IP address of the camera.
+    /// </summary>
     [Required(ErrorMessageResourceType = typeof(Translations), ErrorMessageResourceName = nameof(Translations.IpAddressRequired))]
-    private string ipAddress = string.Empty;
+    public string IpAddress
+    {
+        get => Core.IpAddress;
+        set
+        {
+            if (string.Equals(Core.IpAddress, value, StringComparison.Ordinal))
+            {
+                return;
+            }
 
-    [ObservableProperty]
-    private CameraProtocol protocol = CameraProtocol.Rtsp;
+            Core.IpAddress = value;
+            OnPropertyChanged();
+        }
+    }
 
-    [ObservableProperty]
+    /// <summary>
+    /// Gets or sets the protocol used to connect.
+    /// </summary>
+    public CameraProtocol Protocol
+    {
+        get => Core.Protocol;
+        set
+        {
+            if (Core.Protocol == value)
+            {
+                return;
+            }
+
+            Core.Protocol = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the port number.
+    /// </summary>
     [Range(1, 65535, ErrorMessageResourceType = typeof(Translations), ErrorMessageResourceName = nameof(Translations.PortRangeError))]
-    private int port = 554;
+    public int Port
+    {
+        get => Core.Port;
+        set
+        {
+            if (Core.Port == value)
+            {
+                return;
+            }
 
-    [ObservableProperty]
-    private string? path;
+            Core.Port = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the stream path.
+    /// </summary>
+    public string? Path
+    {
+        get => Core.Path;
+        set
+        {
+            if (string.Equals(Core.Path, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Core.Path = value;
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>
     /// Creates a deep copy of this instance.
     /// </summary>
     public ConnectionSettings Clone()
-        => new()
-        {
-            IpAddress = IpAddress,
-            Protocol = Protocol,
-            Port = Port,
-            Path = Path,
-        };
+        => new(Core.Clone());
 
     /// <summary>
     /// Copies values from another instance.
@@ -48,15 +123,5 @@ public partial class ConnectionSettings : ObservableObject
     /// Determines whether the specified instance has the same values.
     /// </summary>
     public bool ValueEquals(ConnectionSettings? other)
-    {
-        if (other is null)
-        {
-            return false;
-        }
-
-        return string.Equals(IpAddress, other.IpAddress, StringComparison.Ordinal) &&
-               Protocol == other.Protocol &&
-               Port == other.Port &&
-               string.Equals(Path, other.Path, StringComparison.Ordinal);
-    }
+        => other is not null && Core.ValueEquals(other.Core);
 }

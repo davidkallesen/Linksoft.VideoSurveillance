@@ -1971,7 +1971,7 @@ public partial class CameraTile : IDisposable
             {
                 System.Diagnostics.Debug.WriteLine(
                     $"[MotionDetection] Updating {e.BoundingBoxes.Count} bounding boxes, AnalysisRes={e.AnalysisWidth}x{e.AnalysisHeight}");
-                UpdateMotionBoundingBoxes(e.BoundingBoxes, e.AnalysisWidth, e.AnalysisHeight);
+                UpdateMotionBoundingBoxes(e.BoundingBoxes.ToRects(), e.AnalysisWidth, e.AnalysisHeight);
             }
             else
             {

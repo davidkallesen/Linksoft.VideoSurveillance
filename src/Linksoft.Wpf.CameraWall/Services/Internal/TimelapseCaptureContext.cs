@@ -7,7 +7,7 @@ internal sealed class TimelapseCaptureContext : IDisposable
 {
     public TimelapseCaptureContext(
         CameraConfiguration camera,
-        FlyleafLibMediaPipeline pipeline,
+        IMediaPipeline pipeline,
         TimeSpan interval)
     {
         Camera = camera;
@@ -21,7 +21,7 @@ internal sealed class TimelapseCaptureContext : IDisposable
 
     public CameraConfiguration Camera { get; }
 
-    public FlyleafLibMediaPipeline Pipeline { get; }
+    public IMediaPipeline Pipeline { get; }
 
     public TimeSpan Interval { get; }
 

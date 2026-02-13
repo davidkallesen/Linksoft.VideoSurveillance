@@ -32,7 +32,7 @@ public interface IRecordingService
     /// <returns>True if recording started successfully; otherwise, false.</returns>
     bool StartRecording(
         CameraConfiguration camera,
-        FlyleafLibMediaPipeline pipeline);
+        IMediaPipeline pipeline);
 
     /// <summary>
     /// Stops recording for a camera.
@@ -55,7 +55,7 @@ public interface IRecordingService
     /// <returns>True if recording started or was already in progress; otherwise, false.</returns>
     bool TriggerMotionRecording(
         CameraConfiguration camera,
-        FlyleafLibMediaPipeline pipeline);
+        IMediaPipeline pipeline);
 
     /// <summary>
     /// Updates the last motion timestamp for an active motion recording.

@@ -31,7 +31,7 @@ public class TimelapseService : ITimelapseService, IDisposable
     /// <inheritdoc/>
     public void StartCapture(
         CameraConfiguration camera,
-        FlyleafLibMediaPipeline pipeline)
+        IMediaPipeline pipeline)
     {
         ArgumentNullException.ThrowIfNull(camera);
         ArgumentNullException.ThrowIfNull(pipeline);
@@ -60,11 +60,11 @@ public class TimelapseService : ITimelapseService, IDisposable
         }
 
         // Start the timer
-        context.Timer.Tick += (_, _) => CaptureFrame(camera.Id);
+        context.Timer.Tick += (_, _) => _ = CaptureFrameAsync(camera.Id);
         context.Timer.Start();
 
         // Capture first frame immediately
-        CaptureFrame(camera.Id);
+        _ = CaptureFrameAsync(camera.Id);
 
         logger.LogInformation(
             "Timelapse capture started for camera: {CameraName}, interval: {Interval}",
@@ -161,7 +161,7 @@ public class TimelapseService : ITimelapseService, IDisposable
         disposed = true;
     }
 
-    private void CaptureFrame(Guid cameraId)
+    private async Task CaptureFrameAsync(Guid cameraId)
     {
         if (!contexts.TryGetValue(cameraId, out var context))
         {
@@ -179,8 +179,17 @@ public class TimelapseService : ITimelapseService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            // Capture snapshot using FlyleafLib
-            context.Pipeline.FlyleafPlayer.TakeSnapshotToFile(filePath);
+            // Capture snapshot using IMediaPipeline
+            var pngBytes = await context.Pipeline.CaptureFrameAsync().ConfigureAwait(false);
+            if (pngBytes is null || pngBytes.Length == 0)
+            {
+                logger.LogWarning(
+                    "Timelapse snapshot returned no data for camera: {CameraName}",
+                    context.Camera.Display.DisplayName);
+                return;
+            }
+
+            await File.WriteAllBytesAsync(filePath, pngBytes).ConfigureAwait(false);
 
             var capturedAt = DateTime.Now;
 
