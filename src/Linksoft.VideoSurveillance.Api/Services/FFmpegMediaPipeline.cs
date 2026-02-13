@@ -7,15 +7,19 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 public sealed class FFmpegMediaPipeline : IMediaPipeline
 {
     private readonly ILogger<FFmpegMediaPipeline> logger;
+    private readonly VideoTranscodeCodec transcodeCodec;
     private Uri? streamUri;
     private StreamSettings? settings;
     private Process? recordProcess;
     private bool disposed;
     private long framesDecoded;
 
-    public FFmpegMediaPipeline(ILogger<FFmpegMediaPipeline> logger)
+    public FFmpegMediaPipeline(
+        ILogger<FFmpegMediaPipeline> logger,
+        VideoTranscodeCodec transcodeCodec)
     {
         this.logger = logger;
+        this.transcodeCodec = transcodeCodec;
     }
 
     /// <inheritdoc />
@@ -90,14 +94,8 @@ public sealed class FFmpegMediaPipeline : IMediaPipeline
         }
 
         var transport = settings.RtspTransport ?? "tcp";
-
-        // -c:v copy: pass video through without re-encoding.
-        // -c:a aac: transcode audio to AAC (IP cameras often send pcm_mulaw
-        //           or pcm_alaw which the MP4 container does not support).
-        // -movflags frag_keyframe: write each keyframe as a self-contained
-        //           MP4 fragment so the file is playable even if FFmpeg is
-        //           killed without a graceful 'q' shutdown.
-        var args = $"-rtsp_transport {transport} -i \"{streamUri}\" -c:v copy -c:a aac -f mp4 -movflags frag_keyframe -y \"{outputFilePath}\"";
+        var (format, codecArgs) = BuildOutputArgs(outputFilePath);
+        var args = $"-rtsp_transport {transport} -i \"{streamUri}\" {codecArgs} -f {format} -y \"{outputFilePath}\"";
 
         recordProcess = StartFFmpegProcess(args);
         BeginReadingStderr(recordProcess);
@@ -237,6 +235,35 @@ public sealed class FFmpegMediaPipeline : IMediaPipeline
         };
 
         process.BeginErrorReadLine();
+    }
+
+    /// <summary>
+    /// Returns the FFmpeg format name and codec/mux arguments appropriate for
+    /// the output file extension and transcode setting.
+    /// </summary>
+    private (string Format, string CodecArgs) BuildOutputArgs(
+        string outputFilePath)
+    {
+        var ext = Path.GetExtension(outputFilePath).ToUpperInvariant();
+        var videoCodec = transcodeCodec switch
+        {
+            VideoTranscodeCodec.H264 => "-c:v libx264 -preset ultrafast -tune zerolatency",
+            _ => "-c:v copy",
+        };
+
+        return ext switch
+        {
+            // MKV (Matroska) supports virtually all codecs including pcm_mulaw,
+            // so we can copy audio streams without transcoding. EBML is also
+            // inherently resilient to truncation — most of the file remains
+            // playable even after an unclean shutdown.
+            ".MKV" => ("matroska", $"{videoCodec} -c:a copy"),
+
+            // MP4 does not support pcm_mulaw/pcm_alaw, so transcode audio to AAC.
+            // frag_keyframe writes self-contained fragments on each keyframe so
+            // the file is playable even if FFmpeg is killed without 'q'.
+            _ => ("mp4", $"{videoCodec} -c:a aac -movflags frag_keyframe"),
+        };
     }
 
     private static Process StartFFmpegProcess(string arguments)

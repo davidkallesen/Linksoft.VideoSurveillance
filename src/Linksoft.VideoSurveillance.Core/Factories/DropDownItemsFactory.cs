@@ -28,6 +28,12 @@ public static class DropDownItemsFactory
         ["mkv"] = "MKV (Matroska)",
     };
 
+    public static IDictionary<string, string> TranscodeVideoCodecItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["None"] = "None (Copy Original)",
+        ["H264"] = "H.264 (AVC)",
+    };
+
     public static IDictionary<string, string> OverlayPositionItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["TopLeft"] = "Top Left",
@@ -152,7 +158,8 @@ public static class DropDownItemsFactory
 
     public const string DefaultVideoQuality = "Auto";
     public const string DefaultRtspTransport = "tcp";
-    public const string DefaultRecordingFormat = "mp4";
+    public const string DefaultRecordingFormat = "mkv";
+    public const string DefaultTranscodeVideoCodec = "None";
     public const string DefaultOverlayPosition = "TopLeft";
     public const string DefaultOverlayOpacity = "0.7";
     public const string DefaultProtocol = "Rtsp";

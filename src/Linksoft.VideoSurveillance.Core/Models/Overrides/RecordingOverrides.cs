@@ -15,6 +15,8 @@ public class RecordingOverrides
 
     public int? ThumbnailTileCount { get; set; }
 
+    public VideoTranscodeCodec? TranscodeVideoCodec { get; set; }
+
     public bool? EnableTimelapse { get; set; }
 
     public string? TimelapseInterval { get; set; }
@@ -24,6 +26,7 @@ public class RecordingOverrides
            RecordingFormat is not null ||
            EnableRecordingOnMotion.HasValue ||
            EnableRecordingOnConnect.HasValue ||
+           TranscodeVideoCodec.HasValue ||
            ThumbnailTileCount.HasValue ||
            EnableTimelapse.HasValue ||
            TimelapseInterval is not null;
@@ -31,7 +34,7 @@ public class RecordingOverrides
     /// <inheritdoc />
     public override string ToString()
     {
-        var count = new[] { RecordingPath is not null, RecordingFormat is not null, EnableRecordingOnMotion.HasValue, EnableRecordingOnConnect.HasValue, ThumbnailTileCount.HasValue, EnableTimelapse.HasValue, TimelapseInterval is not null }.Count(v => v);
+        var count = new[] { RecordingPath is not null, RecordingFormat is not null, EnableRecordingOnMotion.HasValue, EnableRecordingOnConnect.HasValue, TranscodeVideoCodec.HasValue, ThumbnailTileCount.HasValue, EnableTimelapse.HasValue, TimelapseInterval is not null }.Count(v => v);
         return $"RecordingOverrides {{ NonNullOverrides={count.ToString(CultureInfo.InvariantCulture)} }}";
     }
 
@@ -42,6 +45,7 @@ public class RecordingOverrides
             RecordingFormat = RecordingFormat,
             EnableRecordingOnMotion = EnableRecordingOnMotion,
             EnableRecordingOnConnect = EnableRecordingOnConnect,
+            TranscodeVideoCodec = TranscodeVideoCodec,
             ThumbnailTileCount = ThumbnailTileCount,
             EnableTimelapse = EnableTimelapse,
             TimelapseInterval = TimelapseInterval,
@@ -53,6 +57,7 @@ public class RecordingOverrides
         RecordingFormat = source?.RecordingFormat;
         EnableRecordingOnMotion = source?.EnableRecordingOnMotion;
         EnableRecordingOnConnect = source?.EnableRecordingOnConnect;
+        TranscodeVideoCodec = source?.TranscodeVideoCodec;
         ThumbnailTileCount = source?.ThumbnailTileCount;
         EnableTimelapse = source?.EnableTimelapse;
         TimelapseInterval = source?.TimelapseInterval;
@@ -69,6 +74,7 @@ public class RecordingOverrides
                RecordingFormat == other.RecordingFormat &&
                EnableRecordingOnMotion == other.EnableRecordingOnMotion &&
                EnableRecordingOnConnect == other.EnableRecordingOnConnect &&
+               TranscodeVideoCodec == other.TranscodeVideoCodec &&
                ThumbnailTileCount == other.ThumbnailTileCount &&
                EnableTimelapse == other.EnableTimelapse &&
                TimelapseInterval == other.TimelapseInterval;

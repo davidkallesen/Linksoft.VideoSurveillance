@@ -7,7 +7,9 @@ public class RecordingSettings
 {
     public string RecordingPath { get; set; } = ApplicationPaths.DefaultRecordingsPath;
 
-    public string RecordingFormat { get; set; } = "mp4";
+    public string RecordingFormat { get; set; } = "mkv";
+
+    public VideoTranscodeCodec TranscodeVideoCodec { get; set; }
 
     public bool EnableRecordingOnMotion { get; set; }
 

@@ -18,4 +18,18 @@ public static class RecordingPolicyHelper
         ArgumentNullException.ThrowIfNull(camera);
         return camera.Overrides?.Recording.EnableRecordingOnConnect ?? appDefault;
     }
+
+    /// <summary>
+    /// Resolves the video transcode codec for a camera, considering per-camera overrides.
+    /// </summary>
+    /// <param name="camera">The camera configuration (may have per-camera overrides).</param>
+    /// <param name="appDefault">The application-level default for TranscodeVideoCodec.</param>
+    /// <returns>The resolved <see cref="VideoTranscodeCodec"/> for recording.</returns>
+    public static VideoTranscodeCodec ResolveTranscodeCodec(
+        CameraConfiguration camera,
+        VideoTranscodeCodec appDefault)
+    {
+        ArgumentNullException.ThrowIfNull(camera);
+        return camera.Overrides?.Recording.TranscodeVideoCodec ?? appDefault;
+    }
 }

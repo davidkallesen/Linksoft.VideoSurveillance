@@ -65,4 +65,68 @@ public class RecordingPolicyHelperTests
         // Assert
         act.Should().Throw<ArgumentNullException>();
     }
+
+    [Fact]
+    public void ResolveTranscodeCodec_Override_H264_AppDefault_None_Returns_H264()
+    {
+        // Arrange
+        var camera = new CameraConfiguration();
+        camera.Overrides.Recording.TranscodeVideoCodec = VideoTranscodeCodec.H264;
+
+        // Act
+        var result = RecordingPolicyHelper.ResolveTranscodeCodec(camera, appDefault: VideoTranscodeCodec.None);
+
+        // Assert
+        result.Should().Be(VideoTranscodeCodec.H264);
+    }
+
+    [Fact]
+    public void ResolveTranscodeCodec_Override_None_AppDefault_H264_Returns_None()
+    {
+        // Arrange
+        var camera = new CameraConfiguration();
+        camera.Overrides.Recording.TranscodeVideoCodec = VideoTranscodeCodec.None;
+
+        // Act
+        var result = RecordingPolicyHelper.ResolveTranscodeCodec(camera, appDefault: VideoTranscodeCodec.H264);
+
+        // Assert
+        result.Should().Be(VideoTranscodeCodec.None);
+    }
+
+    [Fact]
+    public void ResolveTranscodeCodec_Override_Null_AppDefault_H264_Returns_H264()
+    {
+        // Arrange
+        var camera = new CameraConfiguration();
+
+        // Act
+        var result = RecordingPolicyHelper.ResolveTranscodeCodec(camera, appDefault: VideoTranscodeCodec.H264);
+
+        // Assert
+        result.Should().Be(VideoTranscodeCodec.H264);
+    }
+
+    [Fact]
+    public void ResolveTranscodeCodec_Override_Null_AppDefault_None_Returns_None()
+    {
+        // Arrange
+        var camera = new CameraConfiguration();
+
+        // Act
+        var result = RecordingPolicyHelper.ResolveTranscodeCodec(camera, appDefault: VideoTranscodeCodec.None);
+
+        // Assert
+        result.Should().Be(VideoTranscodeCodec.None);
+    }
+
+    [Fact]
+    public void ResolveTranscodeCodec_Null_Camera_Throws()
+    {
+        // Act
+        var act = () => RecordingPolicyHelper.ResolveTranscodeCodec(null!, appDefault: VideoTranscodeCodec.None);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
 }

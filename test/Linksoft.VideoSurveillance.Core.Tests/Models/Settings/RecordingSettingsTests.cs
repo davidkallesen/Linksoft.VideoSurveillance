@@ -9,7 +9,8 @@ public class RecordingSettingsTests
         var settings = new RecordingSettings();
 
         // Assert
-        settings.RecordingFormat.Should().Be("mp4");
+        settings.RecordingFormat.Should().Be("mkv");
+        settings.TranscodeVideoCodec.Should().Be(VideoTranscodeCodec.None);
         settings.EnableRecordingOnMotion.Should().BeFalse();
         settings.EnableRecordingOnConnect.Should().BeFalse();
         settings.Cleanup.Should().NotBeNull();
