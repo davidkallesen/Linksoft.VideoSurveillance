@@ -1,0 +1,7 @@
+<MudCheckBox @bind-Value="State.EnableDebugLogging" Label="Enable debug logging" Class="mt-2" />
+<MudTextField @bind-Value="State.LogPath" Label="Log Path" Class="mt-2" />
+
+@code {
+    [Parameter, EditorRequired]
+    public SettingsState State { get; set; } = null!;
+}

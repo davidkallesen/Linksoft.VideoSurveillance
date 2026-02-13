@@ -1,0 +1,22 @@
+<MudCheckBox @bind-Value="State.ShowOverlayTitle" Label="Show overlay title" Class="mt-2" />
+<MudCheckBox @bind-Value="State.ShowOverlayDescription" Label="Show overlay description" Class="mt-2" />
+<MudCheckBox @bind-Value="State.ShowOverlayTime" Label="Show overlay time" Class="mt-2" />
+<MudCheckBox @bind-Value="State.ShowOverlayConnectionStatus" Label="Show overlay connection status" Class="mt-2" />
+
+<MudText Class="mt-4 mb-1">Overlay Opacity: @State.OverlayOpacity.ToString("P0")</MudText>
+<MudSlider @bind-Value="State.OverlayOpacity" Min="0.0" Max="1.0" Step="0.1" />
+
+<MudSelect @bind-Value="State.OverlayPosition" Label="Overlay Position" Class="mt-2">
+    <MudSelectItem Value="AppSettingsOverlayPosition.TopLeft">Top Left</MudSelectItem>
+    <MudSelectItem Value="AppSettingsOverlayPosition.TopRight">Top Right</MudSelectItem>
+    <MudSelectItem Value="AppSettingsOverlayPosition.BottomLeft">Bottom Left</MudSelectItem>
+    <MudSelectItem Value="AppSettingsOverlayPosition.BottomRight">Bottom Right</MudSelectItem>
+</MudSelect>
+<MudCheckBox @bind-Value="State.AllowDragAndDropReorder" Label="Allow drag and drop reorder" Class="mt-2" />
+<MudCheckBox @bind-Value="State.AutoSaveLayoutChanges" Label="Auto save layout changes" Class="mt-2" />
+<MudTextField @bind-Value="State.SnapshotPath" Label="Snapshot Path" Class="mt-2" />
+
+@code {
+    [Parameter, EditorRequired]
+    public SettingsState State { get; set; } = null!;
+}

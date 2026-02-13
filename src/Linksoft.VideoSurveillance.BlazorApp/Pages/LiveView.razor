@@ -5,6 +5,13 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
+<style>
+    @@keyframes pulse-motion {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+</style>
+
 <MudText Typo="Typo.h4" Class="mb-4">Live View</MudText>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
@@ -77,6 +84,22 @@
                     <div style="position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 4px;">
                         <MudText Typo="Typo.caption" Style="color: white;">@camera.DisplayName</MudText>
                     </div>
+                    @if (motionStates.TryGetValue(camera.Id, out var motion) && motion.IsActive)
+                    {
+                        <svg viewBox="0 0 @motion.AnalysisWidth @motion.AnalysisHeight"
+                             preserveAspectRatio="none"
+                             style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;">
+                            @foreach (var box in motion.BoundingBoxes)
+                            {
+                                <rect x="@box.X" y="@box.Y"
+                                      width="@box.Width" height="@box.Height"
+                                      fill="none" stroke="red" stroke-width="2" />
+                            }
+                        </svg>
+                        <div style="position: absolute; top: 4px; right: 4px; background: rgba(220,20,20,0.85); padding: 2px 8px; border-radius: 4px; animation: pulse-motion 1s ease-in-out infinite;">
+                            <MudText Typo="Typo.caption" Style="color: white; font-weight: bold;">MOTION</MudText>
+                        </div>
+                    }
                 }
                 else
                 {
@@ -105,11 +128,13 @@ else
     private bool isLoading = true;
     private readonly Dictionary<Guid, string> streamUrls = new();
     private readonly HashSet<Guid> pendingStreamInits = new();
+    private readonly Dictionary<Guid, MotionState> motionStates = new();
 
     protected override async Task OnInitializedAsync()
     {
         Hub.OnStreamStarted += OnStreamStarted;
         Hub.OnConnectionStateChanged += OnConnectionStateChanged;
+        Hub.OnMotionDetected += OnMotionDetected;
 
         await Hub.ConnectAsync();
 
@@ -230,14 +255,42 @@ else
         });
     }
 
+    private void OnMotionDetected(SurveillanceHubService.MotionDetectedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.IsMotionActive)
+            {
+                motionStates[e.CameraId] = new MotionState(
+                    true,
+                    e.BoundingBoxes,
+                    e.AnalysisWidth,
+                    e.AnalysisHeight);
+            }
+            else
+            {
+                motionStates.Remove(e.CameraId);
+            }
+
+            StateHasChanged();
+        });
+    }
+
     public async ValueTask DisposeAsync()
     {
         Hub.OnStreamStarted -= OnStreamStarted;
         Hub.OnConnectionStateChanged -= OnConnectionStateChanged;
+        Hub.OnMotionDetected -= OnMotionDetected;
 
         foreach (var cameraId in streamUrls.Keys)
         {
             await JS.InvokeVoidAsync("hlsInterop.destroyPlayer", $"video-{cameraId}");
         }
     }
+
+    private sealed record MotionState(
+        bool IsActive,
+        IReadOnlyList<SurveillanceHubService.MotionBoundingBox> BoundingBoxes,
+        int AnalysisWidth,
+        int AnalysisHeight);
 }

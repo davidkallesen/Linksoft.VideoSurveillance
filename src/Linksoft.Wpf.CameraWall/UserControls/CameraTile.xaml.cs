@@ -268,6 +268,12 @@ public partial class CameraTile : IDisposable
         => Camera?.Overrides?.MotionDetection.CooldownSeconds ?? MotionCooldownSeconds;
 
     /// <summary>
+    /// Gets the effective EnableRecordingOnConnect value, considering camera override.
+    /// </summary>
+    private bool GetEffectiveEnableRecordingOnConnect()
+        => Camera?.Overrides?.Recording.EnableRecordingOnConnect ?? EnableRecordingOnConnect;
+
+    /// <summary>
     /// Gets the effective AutoReconnectOnFailure value, considering camera override.
     /// </summary>
     private bool GetEffectiveAutoReconnectOnFailure()
@@ -1433,8 +1439,8 @@ public partial class CameraTile : IDisposable
             // Start stream health monitoring to detect if stream goes offline
             StartStreamHealthCheck();
 
-            // Auto-start recording on connect if enabled
-            if (EnableRecordingOnConnect &&
+            // Auto-start recording on connect if enabled (respects per-camera override)
+            if (GetEffectiveEnableRecordingOnConnect() &&
                 recordingService is not null &&
                 mediaPipeline is not null &&
                 Camera is not null &&

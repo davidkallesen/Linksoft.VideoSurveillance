@@ -104,13 +104,11 @@ public sealed class ServerMotionDetectionService : IMotionDetectionService, IDis
                     .CaptureFrameAsync(context.Cts.Token)
                     .ConfigureAwait(false);
 
-                if (frame is null)
+                if (frame is not null)
                 {
-                    continue;
+                    // TODO: Implement frame differencing for actual motion detection
+                    // For now, discard the frame and leave motion inactive
                 }
-
-                // TODO: Implement frame differencing for actual motion detection
-                // For now, discard the frame and leave motion inactive
             }
         }
         catch (OperationCanceledException)

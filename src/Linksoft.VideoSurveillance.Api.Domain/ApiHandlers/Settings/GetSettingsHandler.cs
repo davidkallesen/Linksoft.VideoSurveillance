@@ -11,9 +11,12 @@ public sealed class GetSettingsHandler(
     {
         var apiSettings = SettingsMappingExtensions.ToApiModel(
             settingsService.General,
+            settingsService.CameraDisplay,
+            settingsService.Connection,
+            settingsService.Performance,
+            settingsService.MotionDetection,
             settingsService.Recording,
-            settingsService.Advanced,
-            settingsService.CameraDisplay.SnapshotPath);
+            settingsService.Advanced);
 
         return Task.FromResult(GetSettingsResult.Ok(apiSettings));
     }

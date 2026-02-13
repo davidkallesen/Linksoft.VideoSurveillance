@@ -1,0 +1,17 @@
+<MudSelect @bind-Value="State.ThemeBase" Label="Theme" Class="mt-2">
+    <MudSelectItem Value="AppSettingsThemeBase.Dark">Dark</MudSelectItem>
+    <MudSelectItem Value="AppSettingsThemeBase.Light">Light</MudSelectItem>
+</MudSelect>
+<MudTextField @bind-Value="State.ThemeAccent" Label="Theme Accent" Class="mt-2" />
+<MudSelect @bind-Value="State.Language" Label="Language" Class="mt-2">
+    <MudSelectItem Value="@("1033")">English (en-US)</MudSelectItem>
+    <MudSelectItem Value="@("1030")">Danish (da-DK)</MudSelectItem>
+    <MudSelectItem Value="@("1031")">German (de-DE)</MudSelectItem>
+</MudSelect>
+<MudCheckBox @bind-Value="State.ConnectOnStartup" Label="Connect cameras on startup" Class="mt-2" />
+<MudCheckBox @bind-Value="State.StartMaximized" Label="Start maximized" Class="mt-2" />
+
+@code {
+    [Parameter, EditorRequired]
+    public SettingsState State { get; set; } = null!;
+}

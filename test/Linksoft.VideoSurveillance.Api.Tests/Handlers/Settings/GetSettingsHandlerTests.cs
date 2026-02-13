@@ -13,6 +13,13 @@ public class GetSettingsHandlerTests
             Language = "1033",
             ConnectCamerasOnStartup = true,
         });
+        settingsService.CameraDisplay.Returns(new CameraDisplayAppSettings
+        {
+            SnapshotPath = @"C:\snapshots",
+        });
+        settingsService.Connection.Returns(new ConnectionAppSettings());
+        settingsService.Performance.Returns(new PerformanceSettings());
+        settingsService.MotionDetection.Returns(new MotionDetectionSettings());
         settingsService.Recording.Returns(new RecordingSettings
         {
             RecordingPath = @"C:\recordings",
@@ -22,10 +29,6 @@ public class GetSettingsHandlerTests
         {
             EnableDebugLogging = false,
             LogPath = @"C:\logs",
-        });
-        settingsService.CameraDisplay.Returns(new CameraDisplayAppSettings
-        {
-            SnapshotPath = @"C:\snapshots",
         });
         var handler = new GetSettingsHandler(settingsService);
 

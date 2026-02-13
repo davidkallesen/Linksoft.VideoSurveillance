@@ -71,13 +71,9 @@ public partial class CameraWallApp
                 return new AdvancedSettings();
             }
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() },
-            };
-
-            var settings = JsonSerializer.Deserialize<ApplicationSettings>(json, options);
+            var settings = JsonSerializer.Deserialize<ApplicationSettings>(
+                json,
+                Atc.Serialization.JsonSerializerOptionsFactory.Create());
             return settings?.Advanced ?? new AdvancedSettings();
         }
         catch (JsonException)

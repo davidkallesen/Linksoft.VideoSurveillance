@@ -1,0 +1,17 @@
+<MudSelect @bind-Value="State.DefaultProtocol" Label="Default Protocol" Class="mt-2">
+    <MudSelectItem Value="AppSettingsDefaultProtocol.Rtsp">RTSP</MudSelectItem>
+    <MudSelectItem Value="AppSettingsDefaultProtocol.Http">HTTP</MudSelectItem>
+    <MudSelectItem Value="AppSettingsDefaultProtocol.Https">HTTPS</MudSelectItem>
+</MudSelect>
+<MudNumericField @bind-Value="State.DefaultPort" Label="Default Port" Min="1" Max="65535" Class="mt-2" />
+<MudNumericField @bind-Value="State.ConnectionTimeoutSeconds" Label="Connection Timeout (seconds)" Min="1" Max="120" Class="mt-2" />
+<MudNumericField @bind-Value="State.ReconnectDelaySeconds" Label="Reconnect Delay (seconds)" Min="1" Max="300" Class="mt-2" />
+<MudCheckBox @bind-Value="State.AutoReconnectOnFailure" Label="Auto reconnect on failure" Class="mt-2" />
+<MudCheckBox @bind-Value="State.ShowNotificationOnDisconnect" Label="Show notification on disconnect" Class="mt-2" />
+<MudCheckBox @bind-Value="State.ShowNotificationOnReconnect" Label="Show notification on reconnect" Class="mt-2" />
+<MudCheckBox @bind-Value="State.PlayNotificationSound" Label="Play notification sound" Class="mt-2" />
+
+@code {
+    [Parameter, EditorRequired]
+    public SettingsState State { get; set; } = null!;
+}

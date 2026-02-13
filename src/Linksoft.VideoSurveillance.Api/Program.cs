@@ -1,84 +1,174 @@
-var builder = WebApplication.CreateBuilder(args);
+// Load advanced settings early to configure logging before Host is built
+// ReSharper disable SeparateLocalFunctionsWithJumpStatement
+var advancedSettings = LoadAdvancedSettingsForLogging();
 
-// Configure OpenAPI document generation
-builder.Services.AddOpenApi();
+var loggerConfig = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console(formatProvider: System.Globalization.CultureInfo.InvariantCulture);
 
-// Register API handlers from the Domain project (source-generated)
-builder.Services.AddApiHandlersFromDomain();
-
-// Register Core service implementations for the server
-builder.Services.AddSingleton<ICameraStorageService, JsonCameraStorageService>();
-builder.Services.AddSingleton<IApplicationSettingsService, JsonApplicationSettingsService>();
-builder.Services.AddSingleton<IRecordingService, ServerRecordingService>();
-builder.Services.AddSingleton<IMotionDetectionService, ServerMotionDetectionService>();
-
-// Register server-specific services
-builder.Services.AddSingleton<IMediaPipelineFactory, FFmpegMediaPipelineFactory>();
-builder.Services.AddSingleton<StreamingService>();
-
-// Configure CORS for Blazor client (AllowCredentials required for SignalR WebSocket transport)
-builder.Services.AddCors(options =>
+if (advancedSettings.EnableDebugLogging)
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.SetIsOriginAllowed(_ => true)
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
-    });
-});
+    Directory.CreateDirectory(advancedSettings.LogPath);
 
-// Register SignalR for real-time events
-builder.Services.AddSignalR();
-
-// Register the event broadcaster hosted service
-builder.Services.AddHostedService<SurveillanceEventBroadcaster>();
-
-var app = builder.Build();
-
-app.UseCors();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
+    var logFile = Path.Combine(advancedSettings.LogPath, "video-surveillance-api-.log");
+    loggerConfig
+        .MinimumLevel.Debug()
+        .WriteTo.File(
+            logFile,
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 7,
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}",
+            formatProvider: System.Globalization.CultureInfo.InvariantCulture);
 }
 
-// Redirect root to Scalar API docs
-app
-    .MapGet("/", () => Results.Redirect("/scalar/v1"))
-    .ExcludeFromDescription();
+Log.Logger = loggerConfig.CreateLogger();
 
-// Map all generated REST endpoints
-app.MapEndpoints();
-
-// Serve HLS stream segments as static files
-app.UseStaticFiles(new StaticFileOptions
+try
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        app.Services.GetRequiredService<StreamingService>().HlsOutputRoot),
-    RequestPath = "/streams",
-    ServeUnknownFileTypes = true,
-});
+    var builder = WebApplication.CreateBuilder(args);
 
-// Serve recorded video files as static files
-var recordingPath = app.Services.GetRequiredService<IApplicationSettingsService>()
-    .Recording.RecordingPath;
-Directory.CreateDirectory(recordingPath);
-var recordingContentTypes = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
-recordingContentTypes.Mappings[".mp4"] = "video/mp4";
-recordingContentTypes.Mappings[".mkv"] = "video/x-matroska";
-app.UseStaticFiles(new StaticFileOptions
+    builder.Host.UseSerilog();
+
+    // Configure OpenAPI document generation
+    builder.Services.AddOpenApi();
+
+    // Register API handlers from the Domain project (source-generated)
+    builder.Services.AddApiHandlersFromDomain();
+
+    // Register Core service implementations for the server
+    builder.Services.AddSingleton<ICameraStorageService, JsonCameraStorageService>();
+    builder.Services.AddSingleton<IApplicationSettingsService, JsonApplicationSettingsService>();
+    builder.Services.AddSingleton<IRecordingService, ServerRecordingService>();
+    builder.Services.AddSingleton<IMotionDetectionService, ServerMotionDetectionService>();
+
+    // Register server-specific services
+    builder.Services.AddSingleton<IMediaPipelineFactory, FFmpegMediaPipelineFactory>();
+    builder.Services.AddSingleton<StreamingService>();
+
+    // Configure CORS for Blazor client (AllowCredentials required for SignalR WebSocket transport)
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+        {
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
+    });
+
+    // Register SignalR for real-time events
+    builder.Services.AddSignalR();
+
+    // Register the event broadcaster hosted service
+    builder.Services.AddHostedService<SurveillanceEventBroadcaster>();
+
+    // Register the camera connection manager for auto-recording on connect
+    builder.Services.AddSingleton<IBackgroundServiceOptions>(new DefaultBackgroundServiceOptions
+    {
+        ServiceName = nameof(CameraConnectionManager),
+        StartupDelaySeconds = 3,
+        RepeatIntervalSeconds = 30,
+    });
+
+    builder.Services.AddHostedService<CameraConnectionManager>();
+
+    var app = builder.Build();
+
+    app.UseCors();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+        app.MapScalarApiReference();
+    }
+
+    // Redirect root to Scalar API docs
+    app
+        .MapGet("/", () => Results.Redirect("/scalar/v1"))
+        .ExcludeFromDescription();
+
+    // Map all generated REST endpoints
+    app.MapEndpoints();
+
+    // Serve HLS stream segments as static files
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+            app.Services.GetRequiredService<StreamingService>().HlsOutputRoot),
+        RequestPath = "/streams",
+        ServeUnknownFileTypes = true,
+    });
+
+    // Serve recorded video files as static files
+    var recordingPath = app.Services.GetRequiredService<IApplicationSettingsService>()
+        .Recording.RecordingPath;
+
+    Directory.CreateDirectory(recordingPath);
+
+    var recordingContentTypes = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider
+    {
+        Mappings =
+        {
+            [".mp4"] = "video/mp4",
+            [".mkv"] = "video/x-matroska",
+        },
+    };
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(recordingPath),
+        RequestPath = "/recordings-files",
+        ServeUnknownFileTypes = false,
+        ContentTypeProvider = recordingContentTypes,
+    });
+
+    // Map SignalR hub for real-time surveillance events
+    app.MapHub<SurveillanceHub>("/hubs/surveillance");
+
+    Log.Information("Video Surveillance API starting");
+
+    await app
+        .RunAsync()
+        .ConfigureAwait(false);
+}
+catch (Exception ex)
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(recordingPath),
-    RequestPath = "/recordings-files",
-    ServeUnknownFileTypes = false,
-    ContentTypeProvider = recordingContentTypes,
-});
+    Log.Fatal(ex, "Video Surveillance API terminated unexpectedly");
+}
+finally
+{
+    await Log.CloseAndFlushAsync().ConfigureAwait(false);
+}
 
-// Map SignalR hub for real-time surveillance events
-app.MapHub<SurveillanceHub>("/hubs/surveillance");
+static AdvancedSettings LoadAdvancedSettingsForLogging()
+{
+    var settingsPath = ApplicationPaths.DefaultSettingsPath;
 
-await app
-    .RunAsync()
-    .ConfigureAwait(false);
+    if (!File.Exists(settingsPath))
+    {
+        return new AdvancedSettings();
+    }
+
+    try
+    {
+        var json = File.ReadAllText(settingsPath);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new AdvancedSettings();
+        }
+
+        var settings = JsonSerializer.Deserialize<ApplicationSettings>(
+            json,
+            Atc.Serialization.JsonSerializerOptionsFactory.Create());
+        return settings?.Advanced ?? new AdvancedSettings();
+    }
+    catch (JsonException)
+    {
+        return new AdvancedSettings();
+    }
+    catch (IOException)
+    {
+        return new AdvancedSettings();
+    }
+}

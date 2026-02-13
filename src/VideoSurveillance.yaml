@@ -443,6 +443,20 @@ components:
           type: string
         username:
           type: string
+        overlayPosition:
+          type: string
+          enum: [topLeft, topRight, bottomLeft, bottomRight]
+        streamUseLowLatencyMode:
+          type: boolean
+        streamMaxLatencyMs:
+          type: integer
+          format: int32
+        streamRtspTransport:
+          type: string
+          enum: [tcp, udp]
+        streamBufferDurationMs:
+          type: integer
+          format: int32
         connectionState:
           type: string
           enum: [disconnected, connecting, connected, reconnecting, error]
@@ -475,6 +489,20 @@ components:
           type: string
         password:
           type: string
+        overlayPosition:
+          type: string
+          enum: [topLeft, topRight, bottomLeft, bottomRight]
+        streamUseLowLatencyMode:
+          type: boolean
+        streamMaxLatencyMs:
+          type: integer
+          format: int32
+        streamRtspTransport:
+          type: string
+          enum: [tcp, udp]
+        streamBufferDurationMs:
+          type: integer
+          format: int32
 
     UpdateCameraRequest:
       type: object
@@ -497,6 +525,20 @@ components:
           type: string
         password:
           type: string
+        overlayPosition:
+          type: string
+          enum: [topLeft, topRight, bottomLeft, bottomRight]
+        streamUseLowLatencyMode:
+          type: boolean
+        streamMaxLatencyMs:
+          type: integer
+          format: int32
+        streamRtspTransport:
+          type: string
+          enum: [tcp, udp]
+        streamBufferDurationMs:
+          type: integer
+          format: int32
 
     RecordingStatus:
       type: object
@@ -613,20 +655,155 @@ components:
     AppSettings:
       type: object
       properties:
+        # General
         themeBase:
           type: string
           enum: [dark, light]
+        themeAccent:
+          type: string
         language:
           type: string
         connectOnStartup:
           type: boolean
+        startMaximized:
+          type: boolean
+        # Camera Display
+        showOverlayTitle:
+          type: boolean
+        showOverlayDescription:
+          type: boolean
+        showOverlayTime:
+          type: boolean
+        showOverlayConnectionStatus:
+          type: boolean
+        overlayOpacity:
+          type: number
+          format: double
+        overlayPosition:
+          type: string
+          enum: [topLeft, topRight, bottomLeft, bottomRight]
+        allowDragAndDropReorder:
+          type: boolean
+        autoSaveLayoutChanges:
+          type: boolean
+        snapshotPath:
+          type: string
+        # Connection
+        defaultProtocol:
+          type: string
+          enum: [rtsp, http, https]
+        defaultPort:
+          type: integer
+          format: int32
+        connectionTimeoutSeconds:
+          type: integer
+          format: int32
+        reconnectDelaySeconds:
+          type: integer
+          format: int32
+        autoReconnectOnFailure:
+          type: boolean
+        showNotificationOnDisconnect:
+          type: boolean
+        showNotificationOnReconnect:
+          type: boolean
+        playNotificationSound:
+          type: boolean
+        # Performance
+        videoQuality:
+          type: string
+          enum: [auto, low, medium, high, ultra]
+        hardwareAcceleration:
+          type: boolean
+        lowLatencyMode:
+          type: boolean
+        bufferDurationMs:
+          type: integer
+          format: int32
+        rtspTransport:
+          type: string
+          enum: [tcp, udp]
+        maxLatencyMs:
+          type: integer
+          format: int32
+        # Motion Detection
+        motionSensitivity:
+          type: integer
+          format: int32
+        minimumChangePercent:
+          type: number
+          format: double
+        analysisFrameRate:
+          type: integer
+          format: int32
+        analysisWidth:
+          type: integer
+          format: int32
+        analysisHeight:
+          type: integer
+          format: int32
+        postMotionDurationSeconds:
+          type: integer
+          format: int32
+        cooldownSeconds:
+          type: integer
+          format: int32
+        boundingBoxShowInGrid:
+          type: boolean
+        boundingBoxShowInFullScreen:
+          type: boolean
+        boundingBoxColor:
+          type: string
+        boundingBoxThickness:
+          type: integer
+          format: int32
+        boundingBoxMinArea:
+          type: integer
+          format: int32
+        boundingBoxPadding:
+          type: integer
+          format: int32
+        boundingBoxSmoothing:
+          type: number
+          format: double
+        # Recording
         recordingPath:
           type: string
         recordingFormat:
           type: string
           enum: [mp4, mkv, avi]
-        snapshotPath:
+        enableRecordingOnMotion:
+          type: boolean
+        enableRecordingOnConnect:
+          type: boolean
+        enableHourlySegmentation:
+          type: boolean
+        maxRecordingDurationMinutes:
+          type: integer
+          format: int32
+        thumbnailTileCount:
+          type: integer
+          format: int32
+        cleanupSchedule:
           type: string
+          enum: [disabled, onStartup, onStartupAndPeriodically]
+        recordingRetentionDays:
+          type: integer
+          format: int32
+        cleanupIncludeSnapshots:
+          type: boolean
+        snapshotRetentionDays:
+          type: integer
+          format: int32
+        playbackShowFilename:
+          type: boolean
+        playbackFilenameColor:
+          type: string
+        playbackShowTimestamp:
+          type: boolean
+        playbackTimestampColor:
+          type: string
+        # Advanced
         enableDebugLogging:
           type: boolean
         logPath:

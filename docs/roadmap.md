@@ -271,7 +271,7 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 ---
 
-## Phase 7: Blazor Web UI
+## Phase 7: Blazor Web UI - COMPLETED
 
 **Goal**: Browser-based camera wall consuming the REST API
 
@@ -279,14 +279,17 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Blazor Project | Blazor Server project referencing API | Planned |
-| Camera Grid | Responsive camera grid with HLS.js video player | Planned |
-| Camera Tile | HLS video player + overlay per camera | Planned |
-| Settings Page | Settings management via API | Planned |
-| Recordings Page | Recording browser via API | Planned |
-| SignalR Client | Real-time updates from server | Planned |
-| Theme System | CSS dark/light theme | Planned |
-| Aspire Integration | Blazor project orchestrated by Aspire AppHost | Planned |
+| Blazor Project | Blazor WebAssembly with MudBlazor v8 | Done |
+| Camera Grid | Responsive camera grid with HLS.js video player | Done |
+| Camera Tile | HLS video player + overlay per camera | Done |
+| Settings Page | 7 tabs covering all settings sections via API | Done |
+| Recordings Page | Recording browser with camera filter via API | Done |
+| SignalR Client | Real-time connection, motion, recording events | Done |
+| Theme System | MudBlazor dark/light mode toggle | Done |
+| Aspire Integration | Blazor project orchestrated by Aspire AppHost | Done |
+| Camera Management | CRUD table with edit/delete/record/snapshot | Done |
+| Layout Management | Create/apply/delete with grid config and drag-drop | Done |
+| Motion Visualization | SVG bounding box overlay + pulsing MOTION badge | Done |
 
 ---
 

@@ -1,0 +1,20 @@
+<MudSelect @bind-Value="State.VideoQuality" Label="Video Quality" Class="mt-2">
+    <MudSelectItem Value="AppSettingsVideoQuality.Auto">Auto</MudSelectItem>
+    <MudSelectItem Value="AppSettingsVideoQuality.Low">Low</MudSelectItem>
+    <MudSelectItem Value="AppSettingsVideoQuality.Medium">Medium</MudSelectItem>
+    <MudSelectItem Value="AppSettingsVideoQuality.High">High</MudSelectItem>
+    <MudSelectItem Value="AppSettingsVideoQuality.Ultra">Ultra</MudSelectItem>
+</MudSelect>
+<MudCheckBox @bind-Value="State.HardwareAcceleration" Label="Hardware acceleration" Class="mt-2" />
+<MudCheckBox @bind-Value="State.LowLatencyMode" Label="Low latency mode" Class="mt-2" />
+<MudNumericField @bind-Value="State.BufferDurationMs" Label="Buffer Duration (ms)" Min="100" Max="5000" Class="mt-2" />
+<MudSelect @bind-Value="State.RtspTransport" Label="RTSP Transport" Class="mt-2">
+    <MudSelectItem Value="AppSettingsRtspTransport.Tcp">TCP</MudSelectItem>
+    <MudSelectItem Value="AppSettingsRtspTransport.Udp">UDP</MudSelectItem>
+</MudSelect>
+<MudNumericField @bind-Value="State.MaxLatencyMs" Label="Max Latency (ms)" Min="100" Max="10000" Class="mt-2" />
+
+@code {
+    [Parameter, EditorRequired]
+    public SettingsState State { get; set; } = null!;
+}

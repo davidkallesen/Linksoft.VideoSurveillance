@@ -13,27 +13,38 @@ public sealed class UpdateSettingsHandler(
         ArgumentNullException.ThrowIfNull(parameters);
 
         var general = settingsService.General;
+        var cameraDisplay = settingsService.CameraDisplay;
+        var connection = settingsService.Connection;
+        var performance = settingsService.Performance;
+        var motionDetection = settingsService.MotionDetection;
         var recording = settingsService.Recording;
         var advanced = settingsService.Advanced;
 
-        parameters.Request.ApplyToCore(general, recording, advanced);
+        parameters.Request.ApplyToCore(
+            general,
+            cameraDisplay,
+            connection,
+            performance,
+            motionDetection,
+            recording,
+            advanced);
 
         settingsService.SaveGeneral(general);
+        settingsService.SaveCameraDisplay(cameraDisplay);
+        settingsService.SaveConnection(connection);
+        settingsService.SavePerformance(performance);
+        settingsService.SaveMotionDetection(motionDetection);
         settingsService.SaveRecording(recording);
         settingsService.SaveAdvanced(advanced);
 
-        if (!string.IsNullOrEmpty(parameters.Request.SnapshotPath))
-        {
-            var display = settingsService.CameraDisplay;
-            display.SnapshotPath = parameters.Request.SnapshotPath;
-            settingsService.SaveCameraDisplay(display);
-        }
-
         var updated = SettingsMappingExtensions.ToApiModel(
             settingsService.General,
+            settingsService.CameraDisplay,
+            settingsService.Connection,
+            settingsService.Performance,
+            settingsService.MotionDetection,
             settingsService.Recording,
-            settingsService.Advanced,
-            settingsService.CameraDisplay.SnapshotPath);
+            settingsService.Advanced);
 
         return Task.FromResult(UpdateSettingsResult.Ok(updated));
     }

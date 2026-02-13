@@ -160,7 +160,15 @@ public sealed class SurveillanceHubService : IAsyncDisposable
 
     public sealed record RecordingStateEvent(Guid CameraId, string NewState, string OldState, string? FilePath);
 
-    public sealed record MotionDetectedEvent(Guid CameraId, bool IsMotionActive);
+    public sealed record MotionDetectedEvent(
+        Guid CameraId,
+        bool IsMotionActive,
+        double ChangePercentage,
+        IReadOnlyList<MotionBoundingBox> BoundingBoxes,
+        int AnalysisWidth,
+        int AnalysisHeight);
+
+    public sealed record MotionBoundingBox(double X, double Y, double Width, double Height);
 
     public sealed record StreamStartedEvent(Guid CameraId, string PlaylistUrl);
 }

@@ -90,9 +90,17 @@ public sealed class FFmpegMediaPipeline : IMediaPipeline
         }
 
         var transport = settings.RtspTransport ?? "tcp";
-        var args = $"-rtsp_transport {transport} -i \"{streamUri}\" -c copy -f mp4 -y \"{outputFilePath}\"";
+
+        // -c:v copy: pass video through without re-encoding.
+        // -c:a aac: transcode audio to AAC (IP cameras often send pcm_mulaw
+        //           or pcm_alaw which the MP4 container does not support).
+        // -movflags frag_keyframe: write each keyframe as a self-contained
+        //           MP4 fragment so the file is playable even if FFmpeg is
+        //           killed without a graceful 'q' shutdown.
+        var args = $"-rtsp_transport {transport} -i \"{streamUri}\" -c:v copy -c:a aac -f mp4 -movflags frag_keyframe -y \"{outputFilePath}\"";
 
         recordProcess = StartFFmpegProcess(args);
+        BeginReadingStderr(recordProcess);
 
         logger.LogInformation(
             "FFmpeg recording started: {OutputFile}",
@@ -176,6 +184,7 @@ public sealed class FFmpegMediaPipeline : IMediaPipeline
         try
         {
             using var process = StartFFmpegProcess(args);
+            BeginReadingStderr(process);
 
             await process
                 .WaitForExitAsync(ct)
@@ -211,6 +220,23 @@ public sealed class FFmpegMediaPipeline : IMediaPipeline
                 // Best effort cleanup
             }
         }
+    }
+
+    /// <summary>
+    /// Asynchronously drains stderr from the FFmpeg process to prevent pipe
+    /// buffer deadlocks, and logs each line at Information level.
+    /// </summary>
+    private void BeginReadingStderr(Process process)
+    {
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                logger.LogInformation("FFmpeg: {Line}", e.Data);
+            }
+        };
+
+        process.BeginErrorReadLine();
     }
 
     private static Process StartFFmpegProcess(string arguments)

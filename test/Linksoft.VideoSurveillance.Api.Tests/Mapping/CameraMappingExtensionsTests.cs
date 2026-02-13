@@ -62,6 +62,11 @@ public class CameraMappingExtensionsTests
             Path: "/mjpeg",
             Username: "user",
             Password: "secret",
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0,
             Port: 8080);
 
         // Act
@@ -91,6 +96,11 @@ public class CameraMappingExtensionsTests
             Path: null!,
             Username: null!,
             Password: null!,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0,
             Port: 554);
 
         // Act
@@ -118,7 +128,12 @@ public class CameraMappingExtensionsTests
             Protocol: null,
             Path: null!,
             Username: null!,
-            Password: null!);
+            Password: null!,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0);
 
         // Act
         core.ApplyUpdate(request);

@@ -16,6 +16,11 @@ public class CreateCameraHandlerTests
             Path: "stream1",
             Username: "admin",
             Password: "pass",
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0,
             Port: 554);
         var parameters = new CreateCameraParameters(request);
 
@@ -45,6 +50,11 @@ public class CreateCameraHandlerTests
             Path: null!,
             Username: null!,
             Password: null!,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0,
             Port: 554);
         var parameters = new CreateCameraParameters(request);
 

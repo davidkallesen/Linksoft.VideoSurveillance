@@ -22,7 +22,12 @@ public class UpdateCameraHandlerTests
             Protocol: null,
             Path: null!,
             Username: null!,
-            Password: null!);
+            Password: null!,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0);
 
         // Act
         var result = await handler.ExecuteAsync(
@@ -54,7 +59,12 @@ public class UpdateCameraHandlerTests
             Protocol: null,
             Path: null!,
             Username: null!,
-            Password: null!);
+            Password: null!,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0);
 
         // Act
         var result = await handler.ExecuteAsync(
@@ -86,7 +96,12 @@ public class UpdateCameraHandlerTests
             Protocol: null,
             Path: null!,
             Username: null!,
-            Password: null!);
+            Password: null!,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0);
 
         // Act
         var result = await handler.ExecuteAsync(

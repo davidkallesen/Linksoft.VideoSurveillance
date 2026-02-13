@@ -14,42 +14,79 @@ else
 {
     <MudPaper Class="pa-4" MaxWidth="600px">
         <MudForm @ref="form">
-            <MudTextField @bind-Value="displayName"
-                          Label="Display Name"
-                          Required="true"
-                          RequiredError="Display name is required" />
-            <MudTextField @bind-Value="description"
-                          Label="Description"
-                          Lines="2"
-                          Class="mt-3" />
-            <MudTextField @bind-Value="ipAddress"
-                          Label="IP Address"
-                          Required="true"
-                          RequiredError="IP address is required"
-                          Class="mt-3" />
-            <MudNumericField @bind-Value="port"
-                             Label="Port"
-                             Min="1"
-                             Max="65535"
-                             Class="mt-3" />
-            <MudSelect @bind-Value="protocol"
-                       Label="Protocol"
-                       Class="mt-3">
-                <MudSelectItem Value="CameraProtocol.Rtsp">RTSP</MudSelectItem>
-                <MudSelectItem Value="CameraProtocol.Http">HTTP</MudSelectItem>
-                <MudSelectItem Value="CameraProtocol.Https">HTTPS</MudSelectItem>
-            </MudSelect>
-            <MudTextField @bind-Value="path"
-                          Label="Path"
-                          Placeholder="/stream1"
-                          Class="mt-3" />
-            <MudTextField @bind-Value="username"
-                          Label="Username"
-                          Class="mt-3" />
-            <MudTextField @bind-Value="password"
-                          Label="Password"
-                          InputType="InputType.Password"
-                          Class="mt-3" />
+            <MudExpansionPanels MultiExpansion="true">
+                <MudExpansionPanel Text="Connection" Expanded="true">
+                    <MudTextField @bind-Value="displayName"
+                                  Label="Display Name"
+                                  Required="true"
+                                  RequiredError="Display name is required" />
+                    <MudTextField @bind-Value="description"
+                                  Label="Description"
+                                  Lines="2"
+                                  Class="mt-3" />
+                    <MudTextField @bind-Value="ipAddress"
+                                  Label="IP Address"
+                                  Required="true"
+                                  RequiredError="IP address is required"
+                                  Class="mt-3" />
+                    <MudNumericField @bind-Value="port"
+                                     Label="Port"
+                                     Min="1"
+                                     Max="65535"
+                                     Class="mt-3" />
+                    <MudSelect @bind-Value="protocol"
+                               Label="Protocol"
+                               Class="mt-3">
+                        <MudSelectItem Value="CameraProtocol.Rtsp">RTSP</MudSelectItem>
+                        <MudSelectItem Value="CameraProtocol.Http">HTTP</MudSelectItem>
+                        <MudSelectItem Value="CameraProtocol.Https">HTTPS</MudSelectItem>
+                    </MudSelect>
+                    <MudTextField @bind-Value="path"
+                                  Label="Path"
+                                  Placeholder="/stream1"
+                                  Class="mt-3" />
+                    <MudTextField @bind-Value="username"
+                                  Label="Username"
+                                  Class="mt-3" />
+                    <MudTextField @bind-Value="password"
+                                  Label="Password"
+                                  InputType="InputType.Password"
+                                  Class="mt-3" />
+                </MudExpansionPanel>
+
+                <MudExpansionPanel Text="Display">
+                    <MudSelect @bind-Value="overlayPosition"
+                               Label="Overlay Position"
+                               Class="mt-2">
+                        <MudSelectItem Value="CameraOverlayPosition.TopLeft">Top Left</MudSelectItem>
+                        <MudSelectItem Value="CameraOverlayPosition.TopRight">Top Right</MudSelectItem>
+                        <MudSelectItem Value="CameraOverlayPosition.BottomLeft">Bottom Left</MudSelectItem>
+                        <MudSelectItem Value="CameraOverlayPosition.BottomRight">Bottom Right</MudSelectItem>
+                    </MudSelect>
+                </MudExpansionPanel>
+
+                <MudExpansionPanel Text="Stream Settings">
+                    <MudCheckBox @bind-Value="streamUseLowLatencyMode"
+                                 Label="Low latency mode"
+                                 Class="mt-2" />
+                    <MudNumericField @bind-Value="streamMaxLatencyMs"
+                                     Label="Max Latency (ms)"
+                                     Min="100"
+                                     Max="10000"
+                                     Class="mt-2" />
+                    <MudSelect @bind-Value="streamRtspTransport"
+                               Label="RTSP Transport"
+                               Class="mt-2">
+                        <MudSelectItem Value="CameraStreamRtspTransport.Tcp">TCP</MudSelectItem>
+                        <MudSelectItem Value="CameraStreamRtspTransport.Udp">UDP</MudSelectItem>
+                    </MudSelect>
+                    <MudNumericField @bind-Value="streamBufferDurationMs"
+                                     Label="Buffer Duration (ms)"
+                                     Min="0"
+                                     Max="5000"
+                                     Class="mt-2" />
+                </MudExpansionPanel>
+            </MudExpansionPanels>
 
             <MudStack Row="true" Class="mt-4" Spacing="2">
                 <MudButton Variant="Variant.Filled"
@@ -86,6 +123,12 @@ else
     private string username = string.Empty;
     private string password = string.Empty;
 
+    private CameraOverlayPosition overlayPosition = CameraOverlayPosition.TopLeft;
+    private bool streamUseLowLatencyMode = true;
+    private int streamMaxLatencyMs = 500;
+    private CameraStreamRtspTransport streamRtspTransport = CameraStreamRtspTransport.Tcp;
+    private int streamBufferDurationMs;
+
     protected override async Task OnInitializedAsync()
     {
         if (IsEdit)
@@ -101,6 +144,11 @@ else
                 protocol = camera.Protocol;
                 path = camera.Path ?? string.Empty;
                 username = camera.Username ?? string.Empty;
+                overlayPosition = camera.OverlayPosition ?? CameraOverlayPosition.TopLeft;
+                streamUseLowLatencyMode = camera.StreamUseLowLatencyMode;
+                streamMaxLatencyMs = camera.StreamMaxLatencyMs;
+                streamRtspTransport = camera.StreamRtspTransport ?? CameraStreamRtspTransport.Tcp;
+                streamBufferDurationMs = camera.StreamBufferDurationMs;
             }
 
             isLoading = false;
@@ -127,7 +175,12 @@ else
                 Protocol: protocol,
                 Path: path,
                 Username: username,
-                Password: password);
+                Password: password,
+                OverlayPosition: overlayPosition,
+                StreamUseLowLatencyMode: streamUseLowLatencyMode,
+                StreamMaxLatencyMs: streamMaxLatencyMs,
+                StreamRtspTransport: streamRtspTransport,
+                StreamBufferDurationMs: streamBufferDurationMs);
 
             var result = await Gateway.UpdateCameraAsync(CameraId!.Value, request);
             if (result is not null)
@@ -150,7 +203,12 @@ else
                 Protocol: protocol,
                 Path: path,
                 Username: username,
-                Password: password);
+                Password: password,
+                OverlayPosition: overlayPosition,
+                StreamUseLowLatencyMode: streamUseLowLatencyMode,
+                StreamMaxLatencyMs: streamMaxLatencyMs,
+                StreamRtspTransport: streamRtspTransport,
+                StreamBufferDurationMs: streamBufferDurationMs);
 
             var result = await Gateway.CreateCameraAsync(request);
             if (result is not null)
