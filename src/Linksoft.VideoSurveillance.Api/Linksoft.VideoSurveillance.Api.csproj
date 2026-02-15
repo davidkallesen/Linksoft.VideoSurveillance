@@ -9,7 +9,7 @@
     <PackageReference Include="Atc.Hosting" Version="2.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.12.00" />
-    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
@@ -17,6 +17,7 @@
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Api.Contracts\Linksoft.VideoSurveillance.Api.Contracts.csproj" />
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Api.Domain\Linksoft.VideoSurveillance.Api.Domain.csproj" />
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Core\Linksoft.VideoSurveillance.Core.csproj" />
+    <ProjectReference Include="..\Linksoft.VideoEngine\Linksoft.VideoEngine.csproj" />
   </ItemGroup>
 
 </Project>

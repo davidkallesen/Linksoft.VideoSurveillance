@@ -8,12 +8,13 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
 {
     private readonly CameraConfiguration camera;
     private readonly IMotionDetectionService? motionDetectionService;
+    private readonly IVideoPlayerFactory? videoPlayerFactory;
     private readonly bool ownsPlayer;
     private DispatcherTimer? overlayHideTimer;
     private bool disposed;
 
     [ObservableProperty]
-    private Player? player;
+    private IVideoPlayer? player;
 
     [ObservableProperty]
     private string cameraName = string.Empty;
@@ -80,12 +81,14 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         int boundingBoxThickness = 2,
         double boundingBoxSmoothing = 0.3,
         IMotionDetectionService? motionDetectionService = null,
-        Player? existingPlayer = null)
+        IVideoPlayer? existingPlayer = null,
+        IVideoPlayerFactory? videoPlayerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(camera);
 
         this.camera = camera;
         this.motionDetectionService = motionDetectionService;
+        this.videoPlayerFactory = videoPlayerFactory;
         CameraName = camera.Display.DisplayName;
         CameraDescription = camera.Display.Description ?? string.Empty;
 
@@ -116,18 +119,15 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         if (existingPlayer is not null)
         {
             Player = existingPlayer;
-            Player.PropertyChanged += OnPlayerPropertyChanged;
+            Player.StateChanged += OnPlayerStateChanged;
 
-            // Enable audio for fullscreen playback
-            existingPlayer.Config.Audio.Enabled = true;
-
-            // Update connection state based on current player status
-            ConnectionState = existingPlayer.Status switch
+            // Update connection state based on current player state
+            ConnectionState = existingPlayer.State switch
             {
-                Status.Playing or Status.Paused => ConnectionState.Connected,
-                Status.Opening => ConnectionState.Connecting,
-                Status.Stopped or Status.Ended => ConnectionState.Disconnected,
-                Status.Failed => ConnectionState.ConnectionFailed,
+                PlayerState.Playing => ConnectionState.Connected,
+                PlayerState.Opening => ConnectionState.Connecting,
+                PlayerState.Stopped => ConnectionState.Disconnected,
+                PlayerState.Error => ConnectionState.ConnectionFailed,
                 _ => ConnectionState.Disconnected,
             };
 
@@ -172,59 +172,47 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
 
     private void InitializePlayer()
     {
-        var config = new Config
+        if (videoPlayerFactory is null)
         {
-            Player =
-            {
-                AutoPlay = true,
-            },
-            Video =
-            {
-                BackColor = Colors.Black,
-            },
-            Audio =
-            {
-                Enabled = true, // Enable audio for fullscreen
-            },
-        };
+            return;
+        }
 
-        Player = new Player(config);
-        Player.PropertyChanged += OnPlayerPropertyChanged;
+        Player = videoPlayerFactory.Create();
+        Player.StateChanged += OnPlayerStateChanged;
 
         // Defer stream opening to avoid blocking UI during window creation
-        var uri = camera
-            .BuildUri()
-            .ToString();
+        var uri = camera.BuildUri();
+        var options = new StreamOptions
+        {
+            UseLowLatencyMode = camera.Stream.UseLowLatencyMode,
+            MaxLatencyMs = camera.Stream.MaxLatencyMs,
+            RtspTransport = camera.Stream.RtspTransport,
+            BufferDurationMs = camera.Stream.BufferDurationMs,
+        };
 
         _ = Task.Run(() =>
         {
             try
             {
-                Player?.Open(uri);
+                Player?.Open(uri, options);
             }
             catch
             {
-                // Status will be updated via PropertyChanged
+                // State will be updated via StateChanged
             }
         });
     }
 
-    private void OnPlayerPropertyChanged(
+    private void OnPlayerStateChanged(
         object? sender,
-        PropertyChangedEventArgs e)
+        PlayerStateChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(Player.Status))
+        ConnectionState = e.NewState switch
         {
-            return;
-        }
-
-        var status = Player?.Status;
-        ConnectionState = status switch
-        {
-            Status.Playing or Status.Paused => ConnectionState.Connected,
-            Status.Opening => ConnectionState.Connecting,
-            Status.Stopped or Status.Ended => ConnectionState.Disconnected,
-            Status.Failed => ConnectionState.ConnectionFailed,
+            PlayerState.Playing => ConnectionState.Connected,
+            PlayerState.Opening => ConnectionState.Connecting,
+            PlayerState.Stopped => ConnectionState.Disconnected,
+            PlayerState.Error => ConnectionState.ConnectionFailed,
             _ => ConnectionState.Disconnected,
         };
     }
@@ -288,7 +276,7 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
 
             if (Player is not null)
             {
-                Player.PropertyChanged -= OnPlayerPropertyChanged;
+                Player.StateChanged -= OnPlayerStateChanged;
 
                 // Only dispose the player if we own it (created it ourselves)
                 // If it was borrowed from CameraTile, it will be returned and reused

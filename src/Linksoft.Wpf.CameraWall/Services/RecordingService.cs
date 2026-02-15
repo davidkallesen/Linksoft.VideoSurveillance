@@ -2,7 +2,7 @@
 namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
-/// Service for managing camera recording sessions using FlyleafLib.
+/// Service for managing camera recording sessions.
 /// </summary>
 [Registration(Lifetime.Singleton)]
 public class RecordingService : IRecordingService, IDisposable

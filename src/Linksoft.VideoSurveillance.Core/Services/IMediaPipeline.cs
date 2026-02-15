@@ -2,7 +2,7 @@ namespace Linksoft.VideoSurveillance.Services;
 
 /// <summary>
 /// Abstraction over a media playback/capture pipeline.
-/// WPF implements via FlyleafLib; Server implements via FFmpeg subprocess.
+/// Both WPF and Server implement via Linksoft.VideoEngine (in-process FFmpeg).
 /// </summary>
 public interface IMediaPipeline : IDisposable
 {

@@ -4,6 +4,7 @@ global using System.Text.Json;
 global using System.Text.Json.Serialization;
 
 global using Atc.Hosting;
+global using Linksoft.VideoEngine;
 global using Linksoft.VideoSurveillance.Api.Hubs;
 global using Linksoft.VideoSurveillance.Api.Services;
 global using Linksoft.VideoSurveillance.Enums;

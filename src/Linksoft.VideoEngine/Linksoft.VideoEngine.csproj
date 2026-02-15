@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Description>Cross-platform video engine for RTSP/HTTP surveillance streams. FFmpeg-based demuxing, decoding, recording, and frame capture.</Description>
+    <PackageTags>video;engine;ffmpeg;rtsp;surveillance;streaming</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet Package Metadata">
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/davidkallesen/Linksoft.VideoEngine</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/davidkallesen/Linksoft.VideoEngine.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Flyleaf.FFmpeg.Bindings" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+  </ItemGroup>
+
+</Project>

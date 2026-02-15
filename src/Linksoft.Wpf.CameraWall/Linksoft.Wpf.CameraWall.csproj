@@ -6,7 +6,7 @@
     <IsPackable>true</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>A reusable WPF library for camera wall functionality, supporting multiple RTSP/HTTP camera streams in a dynamic grid layout.</Description>
-    <PackageTags>wpf;camera;surveillance;video;rtsp;flyleaf;camerawall</PackageTags>
+    <PackageTags>wpf;camera;surveillance;video;rtsp;camerawall</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet Package Metadata">
@@ -54,8 +54,7 @@
     <PackageReference Include="Atc.Wpf.Theming" Version="4.0.69" />
     <PackageReference Include="Atc.XamlToolkit" Version="3.0.6" />
     <PackageReference Include="Atc.XamlToolkit.Wpf" Version="3.0.6" />
-    <PackageReference Include="FlyleafLib" Version="3.10.2" />
-    <PackageReference Include="FlyleafLib.Controls.WPF" Version="1.6.2" />
+    <ProjectReference Include="..\Linksoft.Wpf.VideoPlayer\Linksoft.Wpf.VideoPlayer.csproj" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
   </ItemGroup>

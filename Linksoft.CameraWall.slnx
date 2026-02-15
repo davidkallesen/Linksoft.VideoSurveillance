@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Linksoft.VideoEngine/Linksoft.VideoEngine.csproj" />
+    <Project Path="src/Linksoft.VideoEngine.DirectX/Linksoft.VideoEngine.DirectX.csproj" />
+    <Project Path="src/Linksoft.Wpf.VideoPlayer/Linksoft.Wpf.VideoPlayer.csproj" />
     <Project Path="src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj" />
     <Project Path="src/Linksoft.VideoSurveillance.Api.Contracts/Linksoft.VideoSurveillance.Api.Contracts.csproj" />
     <Project Path="src/Linksoft.VideoSurveillance.Api.Domain/Linksoft.VideoSurveillance.Api.Domain.csproj" />
@@ -13,6 +16,7 @@
        Build via command line: dotnet build setup/Linksoft.CameraWall.Installer/Linksoft.CameraWall.Installer.wixproj
        GitHub Actions builds the installer automatically on release. -->
   <Folder Name="/test/">
+    <Project Path="test/Linksoft.VideoEngine.Tests/Linksoft.VideoEngine.Tests.csproj" />
     <Project Path="test/Linksoft.VideoSurveillance.Api.Tests/Linksoft.VideoSurveillance.Api.Tests.csproj" />
     <Project Path="test/Linksoft.VideoSurveillance.Core.Tests/Linksoft.VideoSurveillance.Core.Tests.csproj" />
   </Folder>

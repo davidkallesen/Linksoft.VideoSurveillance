@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Description>Direct3D 11 GPU rendering for Linksoft.VideoEngine. Hardware-accelerated decoding and rendering for Windows.</Description>
+    <PackageTags>video;engine;directx;d3d11;gpu;hardware-acceleration</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet Package Metadata">
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/davidkallesen/Linksoft.VideoEngine</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/davidkallesen/Linksoft.VideoEngine.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Linksoft.VideoEngine\Linksoft.VideoEngine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Vortice.D3DCompiler" Version="3.8.2" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.2" />
+    <PackageReference Include="Vortice.DirectComposition" Version="3.8.2" />
+    <PackageReference Include="Vortice.Mathematics" Version="2.1.0" />
+  </ItemGroup>
+
+</Project>

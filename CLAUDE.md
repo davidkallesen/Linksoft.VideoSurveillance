@@ -1,11 +1,14 @@
 # Linksoft.CameraWall - Claude Code Guidelines
 
 ## Project Overview
-A multi-assembly video surveillance platform with a WPF desktop app and a headless REST API + SignalR server, sharing a common Core library. Uses RTSP/HTTP protocols with FlyleafLib (WPF) and FFmpeg (server) for video.
+A multi-assembly video surveillance platform with a WPF desktop app and a headless REST API + SignalR server, sharing a common Core library. Uses RTSP/HTTP protocols with Linksoft.VideoEngine (in-process FFmpeg) for video on both WPF and server.
 
 ## Solution Structure
 - `Linksoft.VideoSurveillance.Core` - Shared library: models, enums, events, service interfaces, helpers (net10.0, no WPF)
-- `Linksoft.Wpf.CameraWall` - Reusable WPF library (NuGet package) with UI, dialogs, FlyleafLib integration
+- `Linksoft.VideoEngine` - Cross-platform video engine (net10.0): demux, decode, record, capture via in-process FFmpeg
+- `Linksoft.VideoEngine.DirectX` - D3D11VA GPU acceleration, Video Processor, swap chain (net10.0-windows)
+- `Linksoft.Wpf.VideoPlayer` - WPF VideoHost control with DComp surface + XAML overlay (net10.0-windows)
+- `Linksoft.Wpf.CameraWall` - Reusable WPF library (NuGet package) with UI, dialogs, VideoEngine integration
 - `Linksoft.Wpf.CameraWall.App` - Thin shell WPF application using the library
 - `Linksoft.VideoSurveillance.Api.Contracts` - Generated API models, endpoints, handler interfaces (OpenAPI-first via atc-rest-api-source-generator)
 - `Linksoft.VideoSurveillance.Api.Domain` - Handler implementations calling Core services
@@ -16,7 +19,8 @@ A multi-assembly video surveillance platform with a WPF desktop app and a headle
 ## Architecture
 The solution follows a layered architecture with Core at the base:
 - **Core** contains all shared models, enums, events, service interfaces, and helpers (zero UI dependencies)
-- **WPF library** references Core and adds UI controls, dialogs, FlyleafLib-based media pipeline
+- **VideoEngine** provides cross-platform video: demuxing, decoding (CPU/D3D11VA), recording, snapshots. DirectX project adds GPU rendering for WPF.
+- **WPF library** references Core and VideoEngine, adds UI controls, dialogs, VideoHost-based media pipeline
 - **WPF App** is a thin shell with Ribbon UI delegating to `ICameraWallManager`
 - **API** references Core and provides REST endpoints + SignalR real-time events
 - **Aspire** orchestrates the API (and future Blazor UI) with a developer dashboard
@@ -33,7 +37,8 @@ The REST API + SignalR server enables headless video surveillance:
 - **Atc.SourceGenerators** - Source generators for DI registration (`[Registration]`), options binding (`[OptionsBinding]`)
 - **Atc.Wpf.Controls** - UI controls (`LabelTextBox`, `LabelComboBox`, `LabelPasswordBox`, `GridEx`)
 - **Atc.Wpf.NetworkControls** - `NetworkScannerView` for discovering cameras
-- **FlyleafLib** - Video player for RTSP/HTTP streams
+- **Linksoft.VideoEngine** - In-process FFmpeg video engine for RTSP/HTTP streams (replaces FlyleafLib)
+- **Flyleaf.FFmpeg.Bindings** - FFmpeg P/Invoke bindings NuGet dependency
 - **Fluent.Ribbon** - Ribbon UI (App only)
 - **Serilog** - Structured logging with file sink (App only)
 

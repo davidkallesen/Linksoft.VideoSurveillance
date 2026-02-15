@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:fl="clr-namespace:FlyleafLib.Controls.WPF;assembly=FlyleafLib"
+    xmlns:lve="clr-namespace:Linksoft.Wpf.VideoPlayer;assembly=Linksoft.Wpf.VideoPlayer"
     xmlns:local="clr-namespace:Linksoft.Wpf.CameraWall.UserControls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="240"
@@ -34,16 +34,12 @@
         </Border>
 
         <!--  Video Player with Overlay Content  -->
-        <fl:FlyleafHost
+        <lve:VideoHost
             x:Name="VideoPlayer"
             DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-            KeyBindings="None"
-            ToggleFullScreenOnDoubleClick="None"
-            PanMoveOnCtrl="Overlay"
-            PanZoomOnCtrlWheel="Overlay"
             Player="{Binding Player}">
 
-            <!--  This content goes into FlyleafHost's overlay window  -->
+            <!--  This content goes into VideoHost's overlay window  -->
             <atc:GridEx Background="Transparent">
 
                 <!--  Drag capture layer - must be hit-test visible to capture mouse events  -->
@@ -75,6 +71,6 @@
                     BorderThickness="2"
                     IsHitTestVisible="False" />
             </atc:GridEx>
-        </fl:FlyleafHost>
+        </lve:VideoHost>
     </atc:GridEx>
 </UserControl>

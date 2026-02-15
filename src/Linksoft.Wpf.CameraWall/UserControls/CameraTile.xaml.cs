@@ -25,7 +25,7 @@ public partial class CameraTile : IDisposable
     private string cameraDescription = string.Empty;
 
     [DependencyProperty]
-    private Player? player;
+    private IVideoPlayer? player;
 
     [DependencyProperty(DefaultValue = false)]
     private bool isPlayerLent;
@@ -144,7 +144,8 @@ public partial class CameraTile : IDisposable
     private ITimelapseService? timelapseService;
     private IToastNotificationService? toastNotificationService;
     private DispatcherTimer? recordingDurationTimer;
-    private FlyleafLibMediaPipeline? mediaPipeline;
+    private IMediaPipeline? mediaPipeline;
+    private IVideoPlayerFactory? videoPlayerFactory;
 
     private bool disposed;
     private bool isReconnecting;
@@ -372,7 +373,8 @@ public partial class CameraTile : IDisposable
         IRecordingService? recordingService,
         IMotionDetectionService? motionDetectionService,
         ITimelapseService? timelapseService = null,
-        IToastNotificationService? toastNotificationService = null)
+        IToastNotificationService? toastNotificationService = null,
+        IVideoPlayerFactory? videoPlayerFactory = null)
     {
         // Unsubscribe from previous services
         if (this.recordingService is not null)
@@ -389,6 +391,7 @@ public partial class CameraTile : IDisposable
         this.motionDetectionService = motionDetectionService;
         this.timelapseService = timelapseService;
         this.toastNotificationService = toastNotificationService;
+        this.videoPlayerFactory = videoPlayerFactory;
 
         // Subscribe to new services
         if (this.recordingService is not null)
@@ -413,6 +416,12 @@ public partial class CameraTile : IDisposable
         {
             StartTimelapse();
         }
+
+        // Complete deferred player initialization if Camera was set before the factory was available
+        if (this.videoPlayerFactory is not null && Camera is not null && Player is null)
+        {
+            InitializePlayer(Camera);
+        }
     }
 
     /// <summary>
@@ -428,7 +437,8 @@ public partial class CameraTile : IDisposable
         try
         {
             var uri = Camera.BuildUri();
-            Player.Open(uri.ToString());
+            var options = BuildStreamOptions(Camera);
+            Player.Open(uri, options);
         }
         catch (Exception ex)
         {
@@ -441,7 +451,7 @@ public partial class CameraTile : IDisposable
     /// </summary>
     public void Stop()
     {
-        Player?.Stop();
+        Player?.Close();
     }
 
     /// <summary>
@@ -477,15 +487,15 @@ public partial class CameraTile : IDisposable
         var myPipeline = mediaPipeline;
         var otherPipeline = other.mediaPipeline;
 
-        // Detach PropertyChanged handlers from current players
+        // Detach StateChanged handlers from current players
         if (myPlayer is not null)
         {
-            myPlayer.PropertyChanged -= OnPlayerPropertyChanged;
+            myPlayer.StateChanged -= OnPlayerStateChanged;
         }
 
         if (otherPlayer is not null)
         {
-            otherPlayer.PropertyChanged -= other.OnPlayerPropertyChanged;
+            otherPlayer.StateChanged -= other.OnPlayerStateChanged;
         }
 
         // Stop stream health monitoring on both (will be restarted after swap)
@@ -505,15 +515,15 @@ public partial class CameraTile : IDisposable
         mediaPipeline = otherPipeline;
         other.mediaPipeline = myPipeline;
 
-        // Reattach PropertyChanged handlers to the new players
+        // Reattach StateChanged handlers to the new players
         if (Player is not null)
         {
-            Player.PropertyChanged += OnPlayerPropertyChanged;
+            Player.StateChanged += OnPlayerStateChanged;
         }
 
         if (other.Player is not null)
         {
-            other.Player.PropertyChanged += other.OnPlayerPropertyChanged;
+            other.Player.StateChanged += other.OnPlayerStateChanged;
         }
 
         // Swap recording state (tracked per camera by IRecordingService)
@@ -552,7 +562,7 @@ public partial class CameraTile : IDisposable
     /// The player is removed from this tile and the tile shows a placeholder.
     /// </summary>
     /// <returns>The player instance, or null if no player is available.</returns>
-    public Player? LendPlayer()
+    public IVideoPlayer? LendPlayer()
     {
         if (Player is null || IsPlayerLent)
         {
@@ -569,7 +579,7 @@ public partial class CameraTile : IDisposable
     /// Returns a previously lent player to this tile.
     /// </summary>
     /// <param name="returnedPlayer">The player to return.</param>
-    public void ReturnPlayer(Player? returnedPlayer)
+    public void ReturnPlayer(IVideoPlayer? returnedPlayer)
     {
         if (returnedPlayer is null)
         {
@@ -1088,19 +1098,19 @@ public partial class CameraTile : IDisposable
         var oldPipeline = mediaPipeline;
 
         // Create new player with updated settings FIRST
-        var newPlayer = CreatePlayer(Camera);
-        newPlayer.PropertyChanged += OnPlayerPropertyChanged;
+        var newPlayer = CreatePlayer();
+        newPlayer.StateChanged += OnPlayerStateChanged;
 
         // Swap to new player (without intermediate null state)
         Player = newPlayer;
-        mediaPipeline = new FlyleafLibMediaPipeline(newPlayer);
+        mediaPipeline = new VideoEngineMediaPipeline(newPlayer);
 
         // Now cleanup old player and pipeline
         oldPipeline?.Dispose();
 
         if (oldPlayer is not null)
         {
-            oldPlayer.PropertyChanged -= OnPlayerPropertyChanged;
+            oldPlayer.StateChanged -= OnPlayerStateChanged;
             oldPlayer.Dispose();
         }
 
@@ -1138,7 +1148,7 @@ public partial class CameraTile : IDisposable
 
         if (Player is not null)
         {
-            Player.PropertyChanged -= OnPlayerPropertyChanged;
+            Player.StateChanged -= OnPlayerStateChanged;
             Player.Dispose();
             Player = null;
         }
@@ -1171,11 +1181,24 @@ public partial class CameraTile : IDisposable
         CameraName = cameraConfig.Display.DisplayName;
         CameraDescription = cameraConfig.Display.Description ?? string.Empty;
 
-        Player = CreatePlayer(cameraConfig);
-        Player.PropertyChanged += OnPlayerPropertyChanged;
-        mediaPipeline = new FlyleafLibMediaPipeline(Player);
-
         UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
+
+        // Defer player creation if the factory hasn't been injected yet.
+        // InitializeServices will call InitializePlayer when the factory arrives.
+        if (videoPlayerFactory is null)
+        {
+            UpdateConnectionState(ConnectionState.Disconnected);
+            return;
+        }
+
+        InitializePlayer(cameraConfig);
+    }
+
+    private void InitializePlayer(CameraConfiguration cameraConfig)
+    {
+        Player = CreatePlayer();
+        Player.StateChanged += OnPlayerStateChanged;
+        mediaPipeline = new VideoEngineMediaPipeline(Player);
 
         // Only auto-connect if enabled
         if (AutoConnectOnLoad)
@@ -1191,66 +1214,40 @@ public partial class CameraTile : IDisposable
         }
     }
 
-    private Player CreatePlayer(CameraConfiguration camera)
-    {
-        var config = new Config
+    private IVideoPlayer CreatePlayer()
+        => videoPlayerFactory!.Create();
+
+    private StreamOptions BuildStreamOptions(CameraConfiguration camera)
+        => new()
         {
-            Player =
-            {
-                AutoPlay = true,
-                MaxLatency = camera.Stream.MaxLatencyMs * 10000L,
-                Stats = true, // Enable stats for stream health monitoring (FPSCurrent, FramesDisplayed, etc.)
-            },
-            Video =
-            {
-                BackColor = Colors.Black,
-                VideoAcceleration = HardwareAcceleration,
-                MaxVerticalResolutionCustom = DropDownItemsFactory.GetMaxResolutionFromQuality(VideoQuality),
-            },
-            Audio =
-            {
-                Enabled = false,
-            },
+            UseLowLatencyMode = camera.Stream.UseLowLatencyMode,
+            MaxLatencyMs = camera.Stream.MaxLatencyMs,
+            RtspTransport = camera.Stream.RtspTransport,
+            BufferDurationMs = camera.Stream.BufferDurationMs,
+            HardwareAcceleration = HardwareAcceleration,
+            MaxVerticalResolution = DropDownItemsFactory.GetMaxResolutionFromQuality(VideoQuality),
         };
 
-        if (camera.Stream.UseLowLatencyMode)
-        {
-            config.Demuxer.BufferDuration = camera.Stream.BufferDurationMs * 10000L;
-            config.Demuxer.FormatOpt["rtsp_transport"] = camera.Stream.RtspTransport;
-            config.Demuxer.FormatOpt["fflags"] = "nobuffer";
-        }
-
-        return new Player(config);
-    }
-
-    private void OnPlayerPropertyChanged(
+    private void OnPlayerStateChanged(
         object? sender,
-        PropertyChangedEventArgs e)
+        PlayerStateChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(Player.Status))
-        {
-            return;
-        }
-
-        // Capture status immediately - don't re-read inside BeginInvoke
-        var capturedStatus = Player?.Status;
+        // Capture state immediately - don't re-read inside BeginInvoke
+        var capturedState = e.NewState;
         var reconnecting = isReconnecting;
 
         _ = Dispatcher.BeginInvoke(() =>
         {
-            // Use captured status to avoid race conditions with rapid state changes
-            switch (capturedStatus)
+            switch (capturedState)
             {
-                case Status.Playing:
-                case Status.Paused:
+                case PlayerState.Playing:
                     isReconnecting = false;
                     UpdateConnectionState(ConnectionState.Connected);
                     break;
-                case Status.Opening:
+                case PlayerState.Opening:
                     UpdateConnectionState(ConnectionState.Connecting);
                     break;
-                case Status.Stopped:
-                case Status.Ended:
+                case PlayerState.Stopped:
                     // Skip Disconnected state during reconnection
                     // (player stops briefly before reopening)
                     if (!reconnecting)
@@ -1259,9 +1256,9 @@ public partial class CameraTile : IDisposable
                     }
 
                     break;
-                case Status.Failed:
+                case PlayerState.Error:
                     isReconnecting = false;
-                    UpdateConnectionState(ConnectionState.ConnectionFailed);
+                    UpdateConnectionState(ConnectionState.ConnectionFailed, e.ErrorMessage);
                     break;
             }
         });
@@ -1534,19 +1531,18 @@ public partial class CameraTile : IDisposable
         EventArgs e)
     {
         // Don't check during reconnection
-        if (Player?.Video is null || ConnectionState != ConnectionState.Connected || isReconnecting)
+        if (Player is null || ConnectionState != ConnectionState.Connected || isReconnecting)
         {
             StopStreamHealthCheck();
             return;
         }
 
-        var playerStatus = Player.Status;
-        var currentFps = Player.Video.FPSCurrent;
-        var currentFrames = (long)Player.Video.FramesDisplayed;
+        var playerState = Player.State;
+        var currentFps = Player.CurrentFps;
+        var currentFrames = Player.FramesDecoded;
 
         // Only check if player is in a state where we expect video
-        // Both Playing and Paused can have a frozen stream
-        if (playerStatus != Status.Playing && playerStatus != Status.Paused)
+        if (playerState != PlayerState.Playing)
         {
             return;
         }
@@ -1577,15 +1573,15 @@ public partial class CameraTile : IDisposable
             {
                 StopStreamHealthCheck();
 
-                // Set reconnecting flag to prevent OnPlayerPropertyChanged from
+                // Set reconnecting flag to prevent OnPlayerStateChanged from
                 // changing state when we stop the player. Keep it true until
-                // the auto-reconnect timer fires to ignore all FlyleafLib status changes.
+                // the auto-reconnect timer fires to ignore all state changes.
                 isReconnecting = true;
 
-                // Stop the player to prevent FlyleafLib from auto-recovering
+                // Stop the player to prevent auto-recovering
                 try
                 {
-                    Player?.Stop();
+                    Player?.Close();
                 }
                 catch
                 {
@@ -1702,15 +1698,19 @@ public partial class CameraTile : IDisposable
         var capturedPlayer = Player;
         var capturedCamera = Camera;
 
-        // Stop the player on the UI thread (FlyleafLib requires this)
+        // Close the player before reopening
         try
         {
-            capturedPlayer.Stop();
+            capturedPlayer.Close();
         }
         catch
         {
-            // Ignore Stop() errors - we'll try to Open() anyway
+            // Ignore Close() errors - we'll try to Open() anyway
         }
+
+        // Build URI and options on the UI thread (they access DependencyProperties)
+        var uri = capturedCamera.BuildUri();
+        var options = BuildStreamOptions(capturedCamera);
 
         // Start status check timer before background operation
         StartReconnectStatusCheck();
@@ -1720,8 +1720,7 @@ public partial class CameraTile : IDisposable
         {
             try
             {
-                var uri = capturedCamera.BuildUri();
-                capturedPlayer.Open(uri.ToString());
+                capturedPlayer.Open(uri, options);
             }
             catch (Exception ex)
             {
@@ -1768,7 +1767,7 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        if (Player?.Status == Status.Playing)
+        if (Player?.State == PlayerState.Playing)
         {
             isReconnecting = false;
             reconnectTimer?.Stop();
@@ -1776,7 +1775,7 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        if (Player?.Status == Status.Failed || reconnectCheckCount >= maxChecks)
+        if (Player?.State == PlayerState.Error || reconnectCheckCount >= maxChecks)
         {
             isReconnecting = false;
             reconnectTimer?.Stop();
@@ -1842,8 +1841,8 @@ public partial class CameraTile : IDisposable
         => Camera is not null &&
            ConnectionState == ConnectionState.Connected;
 
-    [RelayCommand(CanExecute = nameof(CanExecuteWhenConnected))]
-    private void Snapshot()
+    [RelayCommand("Snapshot", CanExecute = nameof(CanExecuteWhenConnected))]
+    private async Task SnapshotAsync()
     {
         if (Player is null || Camera is null)
         {
@@ -1883,7 +1882,11 @@ public partial class CameraTile : IDisposable
         {
             try
             {
-                Player.TakeSnapshotToFile(dialog.FileName);
+                var frameData = await Player.CaptureFrameAsync().ConfigureAwait(false);
+                if (frameData is not null)
+                {
+                    await File.WriteAllBytesAsync(dialog.FileName, frameData).ConfigureAwait(false);
+                }
             }
             catch (Exception ex)
             {
@@ -2161,10 +2164,11 @@ public partial class CameraTile : IDisposable
         motionOverlay.AnalysisHeight = analysisHeight;
 
         // Set the video stream dimensions for letterbox-aware coordinate mapping
-        if (Player?.Video is not null && Player.Video.Width > 0 && Player.Video.Height > 0)
+        var streamInfo = Player?.StreamInfo;
+        if (streamInfo is not null && streamInfo.Width > 0 && streamInfo.Height > 0)
         {
-            motionOverlay.VideoWidth = Player.Video.Width;
-            motionOverlay.VideoHeight = Player.Video.Height;
+            motionOverlay.VideoWidth = streamInfo.Width;
+            motionOverlay.VideoHeight = streamInfo.Height;
         }
 
         // Get the video container size for coordinate mapping

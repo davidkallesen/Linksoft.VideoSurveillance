@@ -86,7 +86,7 @@ A professional video surveillance platform for live monitoring of multiple RTSP/
 | Desktop UI | WPF with Fluent.Ribbon, Atc.Wpf.Controls |
 | Server | ASP.NET Core, SignalR |
 | API Definition | OpenAPI 3.0 (atc-rest-api-source-generator) |
-| Video Streaming | FlyleafLib (desktop), FFmpeg (server) |
+| Video Engine | Linksoft.VideoEngine (desktop + server, in-process FFmpeg) |
 | Orchestration | .NET Aspire |
 | MVVM | Atc.XamlToolkit |
 | Source Generators | Atc.SourceGenerators |
@@ -100,44 +100,60 @@ A professional video surveillance platform for live monitoring of multiple RTSP/
 Linksoft.CameraWall/
 ├── src/
 │   ├── Linksoft.VideoSurveillance.Core/       # Shared library: models, enums, events, service interfaces
+│   ├── Linksoft.VideoEngine/                  # Cross-platform video engine (FFmpeg in-process)
+│   ├── Linksoft.VideoEngine.DirectX/          # D3D11VA GPU acceleration for WPF
+│   ├── Linksoft.Wpf.VideoPlayer/              # WPF VideoHost control (DComp surface + overlay)
 │   ├── Linksoft.Wpf.CameraWall/               # Reusable WPF library (NuGet package)
 │   ├── Linksoft.Wpf.CameraWall.App/           # Thin shell WPF application (Fluent.Ribbon)
 │   ├── VideoSurveillance.yaml                 # OpenAPI 3.0 spec (shared contract)
 │   ├── Linksoft.VideoSurveillance.Api.Contracts/ # Generated: endpoints, models, handler interfaces
 │   ├── Linksoft.VideoSurveillance.Api.Domain/  # Handler implementations calling Core services
 │   ├── Linksoft.VideoSurveillance.Api/         # ASP.NET Core host with SignalR hub
+│   ├── Linksoft.VideoSurveillance.BlazorApp/   # Blazor WebAssembly UI (MudBlazor)
 │   └── Linksoft.VideoSurveillance.Aspire/      # Aspire AppHost (orchestration + dashboard)
 │
 ├── setup/
 │   └── Linksoft.CameraWall.Installer/         # WiX MSI installer project
 │
 ├── test/
-│   └── Linksoft.VideoSurveillance.Core.Tests/ # xUnit v3 tests (63 tests)
+│   ├── Linksoft.VideoSurveillance.Core.Tests/ # xUnit v3 tests for Core library
+│   └── Linksoft.VideoEngine.Tests/            # xUnit v3 tests for VideoEngine
 │
 └── docs/                                      # Documentation
     ├── architecture.md
     ├── roadmap.md
-    └── layered-architecture-plan.md
+    ├── roadmap_leave_FlyleafLib.md
+    ├── implementation-settings.md
+    └── motion-detection-plan.md
 ```
 
 ### Dependency Graph
 
 ```
-Linksoft.VideoSurveillance.Core  (net10.0, no WPF)
-    ^               ^                ^
-    |               |                |
-    |    Api.Contracts --> Api.Domain
-    |         ^                ^
-    |         |                |
-    |    VideoSurveillance.Api (host)
-    |         ^
-    |         |
-    |    VideoSurveillance.Aspire (orchestration)
+Linksoft.VideoSurveillance.Core                    (net10.0, no WPF)
+    ^                ^               ^
+    |                |               |
+    |     Api.Contracts -----> Api.Domain
+    |           ^                    ^
+    |           |                    |
+    |     Linksoft.VideoSurveillance.Api (host)
+    |        ^  ^
+    |        |  |
+    |        |  Linksoft.VideoEngine (net10.0, cross-platform)
+    |        |       ^
+    |        |       |
+    |     Linksoft.VideoSurveillance.Aspire (orchestration)
     |
-Linksoft.Wpf.CameraWall  (net10.0-windows, WPF)
+    |  Linksoft.VideoEngine -------> Linksoft.VideoEngine.DirectX (net10.0-windows)
+    |       ^                               ^
+    |       |                               |
+    |  Linksoft.Wpf.VideoPlayer (net10.0-windows)
+    |       ^
+    |       |
+Linksoft.Wpf.CameraWall (net10.0-windows, WPF)
     ^
     |
-Linksoft.Wpf.CameraWall.App  (WPF shell)
+Linksoft.Wpf.CameraWall.App (net10.0-windows, WPF shell)
 ```
 
 ## Services

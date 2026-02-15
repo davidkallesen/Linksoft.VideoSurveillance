@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>true</IsPackable>
+    <Description>WPF video player control powered by Linksoft.VideoEngine. Drop-in VideoHost control for RTSP/HTTP surveillance streams.</Description>
+    <PackageTags>wpf;video;player;control;surveillance;rtsp</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet Package Metadata">
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/davidkallesen/Linksoft.VideoEngine</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/davidkallesen/Linksoft.VideoEngine.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Linksoft.VideoEngine.DirectX\Linksoft.VideoEngine.DirectX.csproj" />
+  </ItemGroup>
+
+</Project>

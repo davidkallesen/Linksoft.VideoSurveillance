@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:fl="clr-namespace:FlyleafLib.Controls.WPF;assembly=FlyleafLib"
+    xmlns:lve="clr-namespace:Linksoft.Wpf.VideoPlayer;assembly=Linksoft.Wpf.VideoPlayer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:userControls="clr-namespace:Linksoft.Wpf.CameraWall.UserControls"
     xmlns:valueConverters="clr-namespace:Atc.Wpf.ValueConverters;assembly=Atc.Wpf"
@@ -28,9 +28,8 @@
     <!--  ReSharper disable Xaml.BindingWithContextNotResolved  -->
     <Grid x:Name="RootGrid">
         <!--  Video Player with visual overlay inside (required due to DirectX airspace)  -->
-        <fl:FlyleafHost
+        <lve:VideoHost
             x:Name="VideoPlayer"
-            KeyBindings="None"
             Player="{Binding Path=Player}">
 
             <!--  Visual overlay content - renders on top of video  -->
@@ -133,7 +132,7 @@
                     Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
                                                Key=PressEscToExit}" />
             </Grid>
-        </fl:FlyleafHost>
+        </lve:VideoHost>
     </Grid>
     <!--  ReSharper restore Xaml.BindingWithContextNotResolved  -->
 </Window>

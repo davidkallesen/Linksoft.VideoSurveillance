@@ -365,36 +365,7 @@ public partial class RecordingsBrowserDialogViewModel : ViewModelDialogBase
     }
 
     private static TimeSpan GetVideoDuration(string filePath)
-    {
-        try
-        {
-            var config = new FlyleafLib.Config();
-            var demuxer = new FlyleafLib.MediaFramework.MediaDemuxer.Demuxer(config.Demuxer);
-
-            try
-            {
-                // Open the file just for probing metadata
-                demuxer.Open(filePath);
-
-                // Get duration in ticks (100-nanosecond intervals)
-                var durationTicks = demuxer.Duration;
-                if (durationTicks > 0)
-                {
-                    return TimeSpan.FromTicks(durationTicks);
-                }
-            }
-            finally
-            {
-                demuxer.Stop();
-            }
-        }
-        catch
-        {
-            // If we can't read the duration, return zero
-        }
-
-        return TimeSpan.Zero;
-    }
+        => MediaProbe.GetDuration(filePath);
 
     private IEnumerable<RecordingEntry> ApplyDayFilter(
         IEnumerable<RecordingEntry> recordings)

@@ -45,8 +45,7 @@ global using Atc.XamlToolkit.Mvvm;
 
 global using ControlzEx.Theming;
 
-global using FlyleafLib;
-global using FlyleafLib.MediaPlayer;
+global using Linksoft.VideoEngine;
 
 global using Linksoft.VideoSurveillance.Enums;
 global using Linksoft.VideoSurveillance.Models.Overrides;

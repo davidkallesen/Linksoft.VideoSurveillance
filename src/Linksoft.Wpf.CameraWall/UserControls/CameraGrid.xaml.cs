@@ -80,6 +80,9 @@ public partial class CameraGrid
     [DependencyProperty(PropertyChangedCallback = nameof(OnToastNotificationServiceChanged))]
     private IToastNotificationService? toastNotificationService;
 
+    [DependencyProperty(PropertyChangedCallback = nameof(OnVideoPlayerFactoryChanged))]
+    private IVideoPlayerFactory? videoPlayerFactory;
+
     // Recording settings
     [DependencyProperty(DefaultValue = false)]
     private bool enableRecordingOnMotion;
@@ -293,10 +296,9 @@ public partial class CameraGrid
             }
             else
             {
-                // At least one not connected — re-open streams on the swapped players
-                var sourceUri = sourceCamera.BuildUri();
-                var targetUri = targetCamera.BuildUri();
-                OpenStreamsInParallel(sourceTile.Player, targetUri, targetTile.Player, sourceUri);
+                // At least one not connected — close then re-open streams with new camera configs
+                sourceTile.Reconnect();
+                targetTile.Reconnect();
             }
 
             sourceTile.CompleteSwap();
@@ -310,27 +312,6 @@ public partial class CameraGrid
 
         UpdateSwapCapabilities();
         PositionChanged?.Invoke(this, new CameraPositionChangedEventArgs(sourceCamera, sourceIndex, targetIndex));
-    }
-
-    /// <summary>
-    /// Opens streams on two players in parallel to minimize swap time.
-    /// </summary>
-    private static void OpenStreamsInParallel(
-        Player? player1,
-        Uri uri1,
-        Player? player2,
-        Uri uri2)
-    {
-        if (player1 is null || player2 is null)
-        {
-            return;
-        }
-
-        var uri1Str = uri1.ToString();
-        var uri2Str = uri2.ToString();
-
-        _ = Task.Run(() => player1.Open(uri1Str));
-        _ = Task.Run(() => player2.Open(uri2Str));
     }
 
     /// <summary>
@@ -461,11 +442,8 @@ public partial class CameraGrid
                 }
                 else
                 {
-                    OpenStreamsInParallel(
-                        tileA.Player,
-                        cameraB.BuildUri(),
-                        tileB.Player,
-                        cameraA.BuildUri());
+                    tileA.Reconnect();
+                    tileB.Reconnect();
                 }
 
                 tileA.CompleteSwap();
@@ -688,6 +666,16 @@ public partial class CameraGrid
         }
     }
 
+    private static void OnVideoPlayerFactoryChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraGrid grid)
+        {
+            grid.InitializeAllTileServices();
+        }
+    }
+
     /// <summary>
     /// Initializes all camera tiles with the recording, motion detection, and timelapse services.
     /// </summary>
@@ -701,7 +689,7 @@ public partial class CameraGrid
         for (var i = 0; i < CameraTiles.Count; i++)
         {
             var tile = GetCameraTileAt(i);
-            tile?.InitializeServices(RecordingService, MotionDetectionService, TimelapseService, ToastNotificationService);
+            tile?.InitializeServices(RecordingService, MotionDetectionService, TimelapseService, ToastNotificationService, VideoPlayerFactory);
         }
     }
 }

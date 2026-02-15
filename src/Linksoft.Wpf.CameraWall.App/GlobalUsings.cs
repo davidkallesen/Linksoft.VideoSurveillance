@@ -19,6 +19,9 @@ global using Atc.Wpf.Translation;
 global using Atc.XamlToolkit.Diagnostics;
 global using Atc.XamlToolkit.Mvvm;
 
+global using Linksoft.VideoEngine;
+global using Linksoft.VideoEngine.DirectX;
+
 global using Linksoft.VideoSurveillance.Models.Settings;
 
 global using Linksoft.Wpf.CameraWall.Events;

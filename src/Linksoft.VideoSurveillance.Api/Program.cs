@@ -41,8 +41,13 @@ try
     builder.Services.AddSingleton<IRecordingService, ServerRecordingService>();
     builder.Services.AddSingleton<IMotionDetectionService, ServerMotionDetectionService>();
 
-    // Register server-specific services
-    builder.Services.AddSingleton<IMediaPipelineFactory, FFmpegMediaPipelineFactory>();
+    // Initialize VideoEngine (FFmpeg in-process) and register services.
+    // DecoderThreads=1: headless server uses single-threaded decoding per camera
+    // to avoid thread_count=0 (auto) hanging in avcodec_open2 with certain codecs.
+    VideoEngineBootstrap.Initialize(new VideoEngineConfig { DecoderThreads = 1 });
+    builder.Services.AddSingleton<IVideoPlayerFactory>(sp =>
+        new VideoPlayerFactory(sp.GetRequiredService<ILoggerFactory>()));
+    builder.Services.AddSingleton<IMediaPipelineFactory, VideoEngineMediaPipelineFactory>();
     builder.Services.AddSingleton<StreamingService>();
 
     // Configure CORS for Blazor client (AllowCredentials required for SignalR WebSocket transport)

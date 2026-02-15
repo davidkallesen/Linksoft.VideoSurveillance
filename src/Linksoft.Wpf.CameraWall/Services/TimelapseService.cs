@@ -1,7 +1,7 @@
 namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
-/// Service for managing timelapse capture sessions using FlyleafLib.
+/// Service for managing timelapse capture sessions.
 /// Captures PNG snapshots at configurable intervals.
 /// </summary>
 [Registration(Lifetime.Singleton)]

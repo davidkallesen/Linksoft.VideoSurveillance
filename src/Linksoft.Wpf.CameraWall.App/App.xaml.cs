@@ -36,6 +36,10 @@ public partial class CameraWallApp
             .UseSerilog()
             .ConfigureServices((_, services) =>
             {
+                // Video engine services
+                services.AddSingleton<IGpuAcceleratorFactory, D3D11AcceleratorFactory>();
+                services.AddSingleton<IVideoPlayerFactory, VideoPlayerFactory>();
+
                 // Library services (auto-registered via [Registration] attribute)
                 services.AddDependencyRegistrationsFromCameraWall();
 

@@ -51,7 +51,7 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| FlyleafLib Integration | FFmpeg-based video streaming | Done |
+| Video Engine | In-process FFmpeg via Linksoft.VideoEngine (replaced FlyleafLib) | Done |
 | Connection State | Visual indicators (Connected, Connecting, Error) | Done |
 | Thread-safe Initialization | SemaphoreSlim for engine initialization | Done |
 
@@ -221,7 +221,7 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| WiX5 MSI Installer | Professional Windows installer | Planned |
+| WiX5 MSI Installer | Professional Windows installer | Done |
 | Silent Install | Command-line deployment option | Planned |
 | Update Checking | Check for new versions on GitHub | Done |
 | Update Installation | Download and install updates | Planned |
@@ -258,7 +258,7 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 | API Contracts | Generated models, endpoints, handler interfaces via atc-rest-api-source-generator | Done |
 | Handler Implementations | 16 handlers for cameras, layouts, recordings, settings | Done |
 | SignalR Hub | Real-time connection, motion, and recording events | Done |
-| FFmpeg Pipeline | Server-side IMediaPipeline using FFmpeg subprocess | Done |
+| In-Process Video Engine | Server-side IMediaPipeline using in-process Linksoft.VideoEngine (replaced FFmpeg subprocess) | Done |
 | Streaming Service | RTSP to HLS transcoding with viewer ref-counting | Done |
 | Event Broadcaster | IHostedService broadcasting events via SignalR | Done |
 
@@ -347,8 +347,9 @@ A professional-grade WPF camera wall application for live monitoring of multiple
 ## Research & References
 
 ### Video Libraries
-- [FlyleafLib](https://github.com/SuRGeoNix/Flyleaf) - Selected, FFmpeg-based
-- [LibVLCSharp](https://github.com/videolan/libvlcsharp) - Alternative option
+- Linksoft.VideoEngine - Custom in-process FFmpeg engine (replaced FlyleafLib in Phases 1-6)
+- [FlyleafLib](https://github.com/SuRGeoNix/Flyleaf) - Previously used, replaced by VideoEngine
+- [Flyleaf.FFmpeg.Bindings](https://www.nuget.org/packages/Flyleaf.FFmpeg.Bindings/) - Retained as FFmpeg P/Invoke bindings dependency
 
 ### Surveillance Software
 - [GeoVision Video Wall](https://www.geovision.com.tw/product/GV-Video%20Wall)

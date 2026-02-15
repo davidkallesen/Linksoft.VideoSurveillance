@@ -2,6 +2,7 @@ namespace Linksoft.Wpf.CameraWall.Windows;
 
 /// <summary>
 /// Fullscreen window for playing back recorded video files.
+/// Uses WPF MediaElement for local file playback.
 /// </summary>
 public partial class FullScreenRecordingWindow : IDisposable
 {
@@ -26,23 +27,16 @@ public partial class FullScreenRecordingWindow : IDisposable
         this.viewModel = viewModel;
         DataContext = viewModel;
 
-        // Set Player directly on FlyleafHost since the binding may not pick up
-        // the already-initialized Player from the ViewModel
-        if (viewModel.Player is not null)
-        {
-            VideoPlayer.Player = viewModel.Player;
-        }
-
-        // Subscribe to ViewModel property changes to update Player when it changes
-        viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        // Pass the MediaElement to the ViewModel for playback control
+        viewModel.SetMediaElement(VideoPlayer);
 
         viewModel.CloseRequested += OnCloseRequested;
         Closed += OnWindowClosed;
 
-        // Use InputManager to capture mouse input before FlyleafHost intercepts it
+        // Use InputManager to capture mouse input
         InputManager.Current.PreProcessInput += OnPreProcessInput;
 
-        // Use ComponentDispatcher to capture keyboard at Win32 level (FlyleafHost uses HwndHost)
+        // Use ComponentDispatcher to capture keyboard at Win32 level
         ComponentDispatcher.ThreadFilterMessage += OnThreadFilterMessage;
 
         // Setup seek slider event handlers
@@ -112,23 +106,12 @@ public partial class FullScreenRecordingWindow : IDisposable
 
             ComponentDispatcher.ThreadFilterMessage -= OnThreadFilterMessage;
             InputManager.Current.PreProcessInput -= OnPreProcessInput;
-            viewModel.PropertyChanged -= OnViewModelPropertyChanged;
             viewModel.CloseRequested -= OnCloseRequested;
             Closed -= OnWindowClosed;
             viewModel.Dispose();
         }
 
         disposed = true;
-    }
-
-    private void OnViewModelPropertyChanged(
-        object? sender,
-        PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(FullScreenRecordingWindowViewModel.Player))
-        {
-            VideoPlayer.Player = viewModel.Player;
-        }
     }
 
     private void OnCloseRequested(

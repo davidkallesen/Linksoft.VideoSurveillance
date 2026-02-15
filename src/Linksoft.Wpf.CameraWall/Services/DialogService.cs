@@ -9,18 +9,22 @@ public class DialogService : IDialogService
 {
     private readonly IApplicationSettingsService settingsService;
     private readonly IMotionDetectionService motionDetectionService;
+    private readonly IVideoPlayerFactory videoPlayerFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DialogService"/> class.
     /// </summary>
     /// <param name="settingsService">The application settings service.</param>
     /// <param name="motionDetectionService">The motion detection service.</param>
+    /// <param name="videoPlayerFactory">The video player factory.</param>
     public DialogService(
         IApplicationSettingsService settingsService,
-        IMotionDetectionService motionDetectionService)
+        IMotionDetectionService motionDetectionService,
+        IVideoPlayerFactory videoPlayerFactory)
     {
         this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         this.motionDetectionService = motionDetectionService ?? throw new ArgumentNullException(nameof(motionDetectionService));
+        this.videoPlayerFactory = videoPlayerFactory ?? throw new ArgumentNullException(nameof(videoPlayerFactory));
     }
 
     /// <inheritdoc />
@@ -37,7 +41,7 @@ public class DialogService : IDialogService
             settingsService.ApplyDefaultsToCamera(cameraConfig);
         }
 
-        var viewModel = new CameraConfigurationDialogViewModel(cameraConfig, isNew, existingEndpoints, settingsService);
+        var viewModel = new CameraConfigurationDialogViewModel(cameraConfig, isNew, existingEndpoints, settingsService, videoPlayerFactory);
         var dialog = new CameraConfigurationDialog(viewModel)
         {
             Owner = Application.Current.MainWindow,
@@ -222,7 +226,8 @@ public class DialogService : IDialogService
                 boundingBoxThickness,
                 boundingBoxSmoothing,
                 motionDetectionService,
-                borrowedPlayer);
+                borrowedPlayer,
+                videoPlayerFactory);
             using var window = new FullScreenCameraWindow(viewModel);
             window.Owner = Application.Current.MainWindow;
 
@@ -233,8 +238,6 @@ public class DialogService : IDialogService
             // Return the borrowed player to the source tile
             if (sourceTile is not null && borrowedPlayer is not null)
             {
-                // Disable audio when returning to grid view
-                borrowedPlayer.Config.Audio.Enabled = false;
                 sourceTile.ReturnPlayer(borrowedPlayer);
             }
         }

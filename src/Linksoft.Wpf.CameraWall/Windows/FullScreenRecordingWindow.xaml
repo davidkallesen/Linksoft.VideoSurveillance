@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:fl="clr-namespace:FlyleafLib.Controls.WPF;assembly=FlyleafLib"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:windows="clr-namespace:Linksoft.Wpf.CameraWall.Windows"
     Title="{Binding Path=FileName}"
@@ -23,235 +22,233 @@
         <ResourceDictionary Source="/Linksoft.Wpf.CameraWall;component/Themes/FullScreenStyles.xaml" />
     </Window.Resources>
 
-    <!--  ReSharper disable Xaml.BindingWithContextNotResolved  -->
     <Grid x:Name="RootGrid">
-        <!--  Video Player with visual overlay inside (required due to DirectX airspace)  -->
-        <fl:FlyleafHost
+        <!--  Video Player (MediaElement for local file playback)  -->
+        <MediaElement
             x:Name="VideoPlayer"
-            KeyBindings="None"
-            Player="{Binding Path=Player}">
+            LoadedBehavior="Manual"
+            UnloadedBehavior="Stop"
+            Stretch="Uniform" />
 
-            <!--  Visual overlay content - renders on top of video  -->
-            <Grid Background="Transparent">
-                <!--  Recording Info Overlay (Top-Left) - Always visible  -->
-                <Border
-                    x:Name="OverlayBorder"
-                    Margin="20"
-                    Padding="12,8"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Background="#B3000000"
-                    CornerRadius="4">
-                    <StackPanel>
-                        <TextBlock
-                            FontSize="16"
-                            FontWeight="SemiBold"
-                            Foreground="{Binding Path=HostDataContext.FilenameColor}"
-                            Text="{Binding Path=HostDataContext.FileName}"
-                            Visibility="{Binding Path=HostDataContext.ShowFilename, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <TextBlock
-                            Margin="0,4,0,0"
-                            FontFamily="Consolas"
-                            FontSize="20"
-                            FontWeight="Bold"
-                            Foreground="{Binding Path=HostDataContext.TimestampColor}"
-                            Text="{Binding Path=HostDataContext.RecordingTimeText}"
-                            Visibility="{Binding Path=HostDataContext.ShowTimestamp, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    </StackPanel>
-                </Border>
+        <!--  Overlay content (directly in visual tree - no airspace issue for MediaElement)  -->
+        <Grid Background="Transparent">
+            <!--  Recording Info Overlay (Top-Left) - Always visible  -->
+            <Border
+                x:Name="OverlayBorder"
+                Margin="20"
+                Padding="12,8"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Background="#B3000000"
+                CornerRadius="4">
+                <StackPanel>
+                    <TextBlock
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Foreground="{Binding Path=FilenameColor}"
+                        Text="{Binding Path=FileName}"
+                        Visibility="{Binding Path=ShowFilename, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        FontFamily="Consolas"
+                        FontSize="20"
+                        FontWeight="Bold"
+                        Foreground="{Binding Path=TimestampColor}"
+                        Text="{Binding Path=RecordingTimeText}"
+                        Visibility="{Binding Path=ShowTimestamp, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
+            </Border>
 
-                <!--  Close Button (Top-Right)  -->
-                <Button
-                    Width="40"
-                    Height="40"
-                    Margin="20"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Command="{Binding Path=HostDataContext.CloseCommand}"
-                    Opacity="{Binding Path=HostDataContext.IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}"
-                    Style="{StaticResource FullScreenCloseButtonStyle}"
-                    ToolTip="Close">
-                    <Path
-                        Width="14"
-                        Height="14"
-                        Data="M0,0 L14,14 M14,0 L0,14"
-                        Stroke="White"
-                        StrokeThickness="2" />
-                </Button>
+            <!--  Close Button (Top-Right)  -->
+            <Button
+                Width="40"
+                Height="40"
+                Margin="20"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Command="{Binding Path=CloseCommand}"
+                Opacity="{Binding Path=IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}"
+                Style="{StaticResource FullScreenCloseButtonStyle}"
+                ToolTip="Close">
+                <Path
+                    Width="14"
+                    Height="14"
+                    Data="M0,0 L14,14 M14,0 L0,14"
+                    Stroke="White"
+                    StrokeThickness="2" />
+            </Button>
 
-                <!--  Playback Controls Bar (Bottom)  -->
-                <Border
-                    x:Name="ControlsBar"
-                    Margin="20"
-                    Padding="16,12"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Bottom"
-                    Background="#B3000000"
-                    CornerRadius="8"
-                    Opacity="{Binding Path=HostDataContext.IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <!--  Play/Pause Button  -->
-                        <Button
-                            x:Name="PlayPauseButton"
-                            Width="40"
-                            Height="40"
-                            Margin="0,0,12,0"
-                            Command="{Binding Path=HostDataContext.PlayPauseCommand}"
-                            Cursor="Hand">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent" />
-                                    <Setter Property="BorderThickness" Value="0" />
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border
-                                                    Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="20">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#33FFFFFF" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <Grid>
-                                <!--  Play Icon (shown when paused)  -->
-                                <Path
-                                    x:Name="PlayIcon"
-                                    Width="20"
-                                    Height="20"
-                                    Data="M5,3 L19,12 L5,21 Z"
-                                    Fill="White"
-                                    Stretch="Uniform">
-                                    <Path.Style>
-                                        <Style TargetType="Path">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Path=HostDataContext.IsPlaying}" Value="True">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Path.Style>
-                                </Path>
-                                <!--  Pause Icon (shown when playing)  -->
-                                <Grid Width="20" Height="20">
-                                    <Grid.Style>
-                                        <Style TargetType="Grid">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Path=HostDataContext.IsPlaying}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Grid.Style>
-                                    <Rectangle
-                                        Width="6"
-                                        Height="18"
-                                        HorizontalAlignment="Left"
-                                        Fill="White" />
-                                    <Rectangle
-                                        Width="6"
-                                        Height="18"
-                                        HorizontalAlignment="Right"
-                                        Fill="White" />
-                                </Grid>
+            <!--  Playback Controls Bar (Bottom)  -->
+            <Border
+                x:Name="ControlsBar"
+                Margin="20"
+                Padding="16,12"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Background="#B3000000"
+                CornerRadius="8"
+                Opacity="{Binding Path=IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <!--  Play/Pause Button  -->
+                    <Button
+                        x:Name="PlayPauseButton"
+                        Width="40"
+                        Height="40"
+                        Margin="0,0,12,0"
+                        Command="{Binding Path=PlayPauseCommand}"
+                        Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="20">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#33FFFFFF" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Grid>
+                            <!--  Play Icon (shown when paused)  -->
+                            <Path
+                                x:Name="PlayIcon"
+                                Width="20"
+                                Height="20"
+                                Data="M5,3 L19,12 L5,21 Z"
+                                Fill="White"
+                                Stretch="Uniform">
+                                <Path.Style>
+                                    <Style TargetType="Path">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsPlaying}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Path.Style>
+                            </Path>
+                            <!--  Pause Icon (shown when playing)  -->
+                            <Grid Width="20" Height="20">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsPlaying}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <Rectangle
+                                    Width="6"
+                                    Height="18"
+                                    HorizontalAlignment="Left"
+                                    Fill="White" />
+                                <Rectangle
+                                    Width="6"
+                                    Height="18"
+                                    HorizontalAlignment="Right"
+                                    Fill="White" />
                             </Grid>
-                        </Button>
+                        </Grid>
+                    </Button>
 
-                        <!--  Speed Button  -->
-                        <Button
-                            Width="50"
-                            Height="40"
-                            Margin="0,0,12,0"
-                            Command="{Binding Path=HostDataContext.CycleSpeedCommand}"
-                            Cursor="Hand"
-                            ToolTip="Click to change playback speed">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent" />
-                                    <Setter Property="BorderThickness" Value="0" />
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border
-                                                    Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="4">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#33FFFFFF" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <TextBlock
-                                FontSize="14"
-                                FontWeight="SemiBold"
-                                Foreground="White"
-                                Text="{Binding Path=HostDataContext.SpeedText}" />
-                        </Button>
-
-                        <!--  Position Text  -->
+                    <!--  Speed Button  -->
+                    <Button
+                        Width="50"
+                        Height="40"
+                        Margin="0,0,12,0"
+                        Command="{Binding Path=CycleSpeedCommand}"
+                        Cursor="Hand"
+                        ToolTip="Click to change playback speed">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="4">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#33FFFFFF" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <TextBlock
-                            MinWidth="50"
-                            Margin="0,0,12,0"
-                            VerticalAlignment="Center"
                             FontSize="14"
+                            FontWeight="SemiBold"
                             Foreground="White"
-                            Text="{Binding Path=HostDataContext.PositionText}" />
+                            Text="{Binding Path=SpeedText}" />
+                    </Button>
 
-                        <!--  Seek Slider  -->
-                        <Slider
-                            x:Name="SeekSlider"
-                            Width="400"
-                            Margin="0,0,12,0"
-                            VerticalAlignment="Center"
-                            Focusable="True"
-                            IsEnabled="{Binding Path=HostDataContext.CanSeek}"
-                            IsMoveToPointEnabled="True"
-                            IsSnapToTickEnabled="False"
-                            Maximum="{Binding Path=HostDataContext.SeekMaximum}"
-                            Minimum="0"
-                            Value="{Binding Path=HostDataContext.SeekPosition, Mode=TwoWay}" />
+                    <!--  Position Text  -->
+                    <TextBlock
+                        MinWidth="50"
+                        Margin="0,0,12,0"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        Foreground="White"
+                        Text="{Binding Path=PositionText}" />
 
-                        <!--  Duration Text  -->
-                        <TextBlock
-                            MinWidth="50"
-                            VerticalAlignment="Center"
-                            FontSize="14"
-                            Foreground="White"
-                            Text="{Binding Path=HostDataContext.DurationText}" />
-                    </StackPanel>
-                </Border>
+                    <!--  Seek Slider  -->
+                    <Slider
+                        x:Name="SeekSlider"
+                        Width="400"
+                        Margin="0,0,12,0"
+                        VerticalAlignment="Center"
+                        Focusable="True"
+                        IsEnabled="{Binding Path=CanSeek}"
+                        IsMoveToPointEnabled="True"
+                        IsSnapToTickEnabled="False"
+                        Maximum="{Binding Path=SeekMaximum}"
+                        Minimum="0"
+                        Value="{Binding Path=SeekPosition, Mode=TwoWay}" />
 
-                <!--  ESC hint at bottom  -->
-                <TextBlock
-                    Margin="0,0,0,80"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Bottom"
-                    FontSize="12"
-                    Foreground="#66FFFFFF"
-                    Opacity="{Binding Path=HostDataContext.IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}"
-                    Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
-                                               Key=PressEscToExit}" />
-            </Grid>
-        </fl:FlyleafHost>
+                    <!--  Duration Text  -->
+                    <TextBlock
+                        MinWidth="50"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        Foreground="White"
+                        Text="{Binding Path=DurationText}" />
+                </StackPanel>
+            </Border>
+
+            <!--  ESC hint at bottom  -->
+            <TextBlock
+                Margin="0,0,0,80"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                FontSize="12"
+                Foreground="#66FFFFFF"
+                Opacity="{Binding Path=IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}"
+                Text="{atcTranslation:Resx ResxName=Linksoft.Wpf.CameraWall.Resources.Translations,
+                                           Key=PressEscToExit}" />
+        </Grid>
     </Grid>
-    <!--  ReSharper restore Xaml.BindingWithContextNotResolved  -->
 </Window>

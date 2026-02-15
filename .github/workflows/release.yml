@@ -95,9 +95,9 @@ jobs:
 
       - name: Download FFmpeg
         run: |
-          $ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-shared-7.1.zip"
-          Invoke-WebRequest -Uri $ffmpegUrl -OutFile ffmpeg.zip
-          Expand-Archive -Path ffmpeg.zip -DestinationPath ffmpeg-temp
+          $ffmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.0.1-full_build-shared.7z"
+          Invoke-WebRequest -Uri $ffmpegUrl -OutFile ffmpeg.7z
+          7z x ffmpeg.7z -offmpeg-temp
           $binDir = Get-ChildItem -Path ffmpeg-temp -Recurse -Directory -Filter "bin" | Select-Object -First 1
           New-Item -ItemType Directory -Path "./publish/ffmpeg" -Force
           Copy-Item "$($binDir.FullName)\*.dll" -Destination "./publish/ffmpeg/"

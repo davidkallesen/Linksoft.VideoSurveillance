@@ -542,7 +542,7 @@ public class MotionAnalysisScheduler
 
 | Question | Decision | Priority |
 |----------|----------|----------|
-| 1. Frame Source | ✅ **Yes** - Investigate FlyleafLib's frame callback API | P2 |
+| 1. Frame Source | ✅ **Yes** - Use `IMediaPipeline.CaptureFrameAsync()` (resolved via VideoEngine) | P2 |
 | 2. Multiple Regions | ✅ **Yes** - Support multiple bounding boxes per camera | P3 |
 | 3. Zone Masking | ✅ **Yes** - Allow users to define "ignore zones" | P3 |
 | 4. Sensitivity Presets | ✅ **Yes** - Add Low/Medium/High presets | P2 |
@@ -551,11 +551,11 @@ public class MotionAnalysisScheduler
 
 ## 🆕 Additional Features (Based on Decisions)
 
-### 🔟 FlyleafLib Frame Callback API (P2) — ✅ SUPERSEDED
+### 🔟 Frame Callback API (P2) — ✅ SUPERSEDED
 
 **Goal:** Replace temp file snapshots with direct frame access for better performance.
 
-**Resolution:** This is now handled by `IMediaPipeline.CaptureFrameAsync()` which returns `byte[]` (PNG bytes) directly. The WPF implementation (`FlyleafLibMediaPipeline`) uses `TakeSnapshotToFile` internally but manages the temp file lifecycle, while the server implementation (`FFmpegMediaPipeline`) uses FFmpeg subprocess. The separate `IFrameProvider` abstraction is no longer needed since `IMediaPipeline` covers this use case.
+**Resolution:** This is now handled by `IMediaPipeline.CaptureFrameAsync()` which returns `byte[]` (PNG bytes) directly. Both WPF and server implementations use `VideoEngineMediaPipeline` wrapping `IVideoPlayer` from `Linksoft.VideoEngine`. The separate `IFrameProvider` abstraction is no longer needed since `IMediaPipeline` covers this use case.
 
 The `MotionDetectionService` now:
 1. Calls `context.Pipeline.CaptureFrameAsync()` to get PNG bytes
@@ -771,7 +771,7 @@ private byte[] ApplyIgnoreZoneMask(byte[] motionMask, int width, int height, Lis
 
         <!-- Video preview with draggable zones overlay -->
         <Grid Grid.Column="0">
-            <fl:FlyleafHost Player="{Binding PreviewPlayer}" />
+            <lve:VideoHost Player="{Binding PreviewPlayer}" />
             <Canvas x:Name="ZoneCanvas" Background="Transparent">
                 <!-- Draggable/resizable rectangles for each zone -->
                 <ItemsControl ItemsSource="{Binding IgnoreZones}">
@@ -949,9 +949,9 @@ public MotionSensitivityPreset SensitivityPreset { get; set; } = MotionSensitivi
 
 ### Phase 6: Frame Provider Abstraction 🎬 — ✅ SUPERSEDED by IMediaPipeline
 - [x] **P2** ~~Create `IFrameProvider` interface~~ — Handled by `IMediaPipeline.CaptureFrameAsync()`
-- [x] **P2** ~~Implement `TempFileFrameProvider`~~ — `FlyleafLibMediaPipeline` handles temp files internally
-- [x] **P2** ~~Research FlyleafLib direct frame access~~ — Not needed; `IMediaPipeline` abstracts this
-- [x] **P2** ~~Implement `DirectFrameProvider`~~ — Server uses `FFmpegMediaPipeline` instead
+- [x] **P2** ~~Implement `TempFileFrameProvider`~~ — `VideoEngineMediaPipeline` captures in-process
+- [x] **P2** ~~Research direct frame access~~ — Not needed; `IMediaPipeline` abstracts this
+- [x] **P2** ~~Implement `DirectFrameProvider`~~ — Both WPF and server use `VideoEngineMediaPipeline`
 - [x] **P2** ~~Add fallback logic~~ — `MotionDetectionService` now uses `IMediaPipeline` directly
 
 ### Phase 7: Multiple Bounding Boxes 📦 (Priority: LOW)
@@ -982,7 +982,7 @@ public MotionSensitivityPreset SensitivityPreset { get; set; } = MotionSensitivi
 |------|-------------|
 | ~~`Services/FrameProviders/IFrameProvider.cs`~~ | ~~Frame provider interface~~ — Superseded by `IMediaPipeline.CaptureFrameAsync()` |
 | ~~`Services/FrameProviders/TempFileFrameProvider.cs`~~ | ~~Current temp file implementation~~ — Superseded |
-| ~~`Services/FrameProviders/DirectFrameProvider.cs`~~ | ~~Direct FlyleafLib access~~ — Superseded |
+| ~~`Services/FrameProviders/DirectFrameProvider.cs`~~ | ~~Direct frame access~~ — Superseded by `VideoEngineMediaPipeline` |
 | `Helpers/BoundingBoxExtensions.cs` | ✅ Created — Converts Core `BoundingBox` to WPF `Rect` at UI boundary |
 | `Models/MotionIgnoreZone.cs` | Ignore zone model |
 | `Models/Enums/MotionSensitivityPreset.cs` | Sensitivity preset enum |

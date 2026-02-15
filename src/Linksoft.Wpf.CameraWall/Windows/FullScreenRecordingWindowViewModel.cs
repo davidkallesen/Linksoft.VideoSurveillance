@@ -3,6 +3,7 @@ namespace Linksoft.Wpf.CameraWall.Windows;
 
 /// <summary>
 /// ViewModel for the fullscreen recording playback window.
+/// Uses WPF MediaElement for local file playback.
 /// </summary>
 public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialogBase, IDisposable
 {
@@ -11,15 +12,13 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
     private readonly string filePath;
     private readonly DateTime? recordingStartTime;
     private readonly PlaybackOverlaySettings overlaySettings;
+    private MediaElement? mediaElement;
     private DispatcherTimer? overlayHideTimer;
     private DispatcherTimer? positionUpdateTimer;
     private bool disposed;
     private bool isSeeking;
     private bool isUpdatingPositionFromPlayer;
     private int currentSpeedIndex;
-
-    [ObservableProperty]
-    private Player? player;
 
     [ObservableProperty]
     private string fileName = string.Empty;
@@ -93,7 +92,6 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
 
         UpdateRecordingTimeText(0);
 
-        InitializePlayer();
         StartOverlayHideTimer();
         StartPositionUpdateTimer();
     }
@@ -102,6 +100,23 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
     /// Occurs when the window requests to be closed.
     /// </summary>
     public event EventHandler<DialogClosedEventArgs>? CloseRequested;
+
+    /// <summary>
+    /// Sets the MediaElement for playback control.
+    /// Must be called from code-behind after the window is created.
+    /// </summary>
+    /// <param name="element">The MediaElement control.</param>
+    public void SetMediaElement(MediaElement element)
+    {
+        mediaElement = element;
+        mediaElement.MediaOpened += OnMediaOpened;
+        mediaElement.MediaEnded += OnMediaEnded;
+
+        // Open and play the recording
+        mediaElement.Source = new Uri(filePath);
+        mediaElement.Play();
+        IsPlaying = true;
+    }
 
     /// <summary>
     /// Called when the mouse moves in the window.
@@ -126,9 +141,9 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
     /// </summary>
     public void OnSeekCompleted()
     {
-        if (isSeeking && Player is not null)
+        if (isSeeking && mediaElement is not null)
         {
-            Player.CurTime = (long)SeekPosition;
+            mediaElement.Position = TimeSpan.FromTicks((long)SeekPosition);
             isSeeking = false;
         }
     }
@@ -139,9 +154,9 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
     public void OnSeekValueChanged()
     {
         // Only seek if the change came from user interaction, not from the timer
-        if (!isUpdatingPositionFromPlayer && Player is not null)
+        if (!isUpdatingPositionFromPlayer && mediaElement is not null)
         {
-            Player.CurTime = (long)SeekPosition;
+            mediaElement.Position = TimeSpan.FromTicks((long)SeekPosition);
             UpdateRecordingTimeText((long)SeekPosition);
         }
     }
@@ -220,18 +235,20 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
     [RelayCommand]
     private void PlayPause()
     {
-        if (Player is null)
+        if (mediaElement is null)
         {
             return;
         }
 
-        if (Player.Status == Status.Playing)
+        if (IsPlaying)
         {
-            Player.Pause();
+            mediaElement.Pause();
+            IsPlaying = false;
         }
         else
         {
-            Player.Play();
+            mediaElement.Play();
+            IsPlaying = true;
         }
     }
 
@@ -248,69 +265,30 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
         PlaybackSpeed = SpeedOptions[currentSpeedIndex];
         SpeedText = $"{PlaybackSpeed:G}x";
 
-        if (Player is not null)
+        if (mediaElement is not null)
         {
-            Player.Speed = PlaybackSpeed;
+            mediaElement.SpeedRatio = PlaybackSpeed;
         }
     }
 
-    private void InitializePlayer()
-    {
-        // Reset speed to 1x
-        currentSpeedIndex = 0;
-        PlaybackSpeed = 1.0;
-        SpeedText = "1x";
-
-        var config = new Config
-        {
-            Player =
-            {
-                AutoPlay = true,
-            },
-            Video =
-            {
-                BackColor = Colors.Black,
-            },
-            Audio =
-            {
-                Enabled = true,
-            },
-        };
-
-        Player = new Player(config);
-        Player.PropertyChanged += OnPlayerPropertyChanged;
-
-        // Defer file opening to avoid blocking UI during window creation
-        _ = Task.Run(() =>
-        {
-            try
-            {
-                Player?.Open(filePath);
-            }
-            catch
-            {
-                // Status will be updated via PropertyChanged
-            }
-        });
-    }
-
-    private void OnPlayerPropertyChanged(
+    private void OnMediaOpened(
         object? sender,
-        PropertyChangedEventArgs e)
+        RoutedEventArgs e)
     {
-        switch (e.PropertyName)
+        if (mediaElement?.NaturalDuration.HasTimeSpan == true)
         {
-            case nameof(Player.Status):
-                IsPlaying = Player?.Status == Status.Playing;
-                break;
-
-            case nameof(Player.Duration):
-                var duration = Player?.Duration ?? 0;
-                DurationText = FormatDuration(duration);
-                SeekMaximum = duration > 0 ? duration : 100;
-                CanSeek = duration > 0;
-                break;
+            var duration = mediaElement.NaturalDuration.TimeSpan.Ticks;
+            DurationText = FormatDuration(duration);
+            SeekMaximum = duration > 0 ? duration : 100;
+            CanSeek = duration > 0;
         }
+    }
+
+    private void OnMediaEnded(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        IsPlaying = false;
     }
 
     private void StartOverlayHideTimer()
@@ -338,9 +316,9 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
 
         positionUpdateTimer.Tick += (_, _) =>
         {
-            if (Player is not null)
+            if (mediaElement is not null)
             {
-                var position = Player.CurTime;
+                var position = mediaElement.Position.Ticks;
 
                 // Always update the recording time text
                 UpdateRecordingTimeText(position);
@@ -388,11 +366,12 @@ public sealed partial class FullScreenRecordingWindowViewModel : ViewModelDialog
             positionUpdateTimer?.Stop();
             positionUpdateTimer = null;
 
-            if (Player is not null)
+            if (mediaElement is not null)
             {
-                Player.PropertyChanged -= OnPlayerPropertyChanged;
-                Player.Dispose();
-                Player = null;
+                mediaElement.MediaOpened -= OnMediaOpened;
+                mediaElement.MediaEnded -= OnMediaEnded;
+                mediaElement.Stop();
+                mediaElement = null;
             }
         }
 

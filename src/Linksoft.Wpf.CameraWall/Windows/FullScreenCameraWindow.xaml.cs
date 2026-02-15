@@ -28,10 +28,10 @@ public partial class FullScreenCameraWindow : IDisposable
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
         Closed += OnWindowClosed;
 
-        // Use InputManager to capture mouse input before FlyleafHost intercepts it
+        // Use InputManager to capture mouse input before VideoHost intercepts it
         InputManager.Current.PreProcessInput += OnPreProcessInput;
 
-        // Use ComponentDispatcher to capture keyboard at Win32 level (FlyleafHost uses HwndHost)
+        // Use ComponentDispatcher to capture keyboard at Win32 level (VideoHost uses HwndHost)
         ComponentDispatcher.ThreadFilterMessage += OnThreadFilterMessage;
 
         // Start time update timer for overlay
@@ -111,10 +111,11 @@ public partial class FullScreenCameraWindow : IDisposable
         motionOverlay.AnalysisHeight = viewModel.AnalysisHeight;
 
         // Set the video stream dimensions for letterbox-aware coordinate mapping
-        if (viewModel.Player?.Video is not null && viewModel.Player.Video.Width > 0 && viewModel.Player.Video.Height > 0)
+        var streamInfo = viewModel.Player?.StreamInfo;
+        if (streamInfo is not null && streamInfo.Width > 0 && streamInfo.Height > 0)
         {
-            motionOverlay.VideoWidth = viewModel.Player.Video.Width;
-            motionOverlay.VideoHeight = viewModel.Player.Video.Height;
+            motionOverlay.VideoWidth = streamInfo.Width;
+            motionOverlay.VideoHeight = streamInfo.Height;
         }
 
         // Get the video container size for coordinate mapping

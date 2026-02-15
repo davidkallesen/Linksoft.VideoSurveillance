@@ -16,6 +16,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     private readonly ITimelapseService timelapseService;
     private readonly IGitHubReleaseService gitHubReleaseService;
     private readonly IToastNotificationService toastNotificationService;
+    private readonly IVideoPlayerFactory videoPlayerFactory;
 
     [ObservableProperty(DependentPropertyNames = [nameof(CanCreateNewLayout)])]
     private CameraGrid? cameraGrid;
@@ -57,6 +58,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <param name="timelapseService">The timelapse service.</param>
     /// <param name="gitHubReleaseService">The GitHub release service.</param>
     /// <param name="toastNotificationService">The toast notification service.</param>
+    /// <param name="videoPlayerFactory">The video player factory.</param>
     public CameraWallManager(
         ILogger<CameraWallManager> logger,
         ICameraStorageService storageService,
@@ -66,7 +68,8 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         IMotionDetectionService motionDetectionService,
         ITimelapseService timelapseService,
         IGitHubReleaseService gitHubReleaseService,
-        IToastNotificationService toastNotificationService)
+        IToastNotificationService toastNotificationService,
+        IVideoPlayerFactory videoPlayerFactory)
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(storageService);
@@ -77,6 +80,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         ArgumentNullException.ThrowIfNull(timelapseService);
         ArgumentNullException.ThrowIfNull(gitHubReleaseService);
         ArgumentNullException.ThrowIfNull(toastNotificationService);
+        ArgumentNullException.ThrowIfNull(videoPlayerFactory);
 
         this.logger = logger;
         this.storageService = storageService;
@@ -87,6 +91,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         this.timelapseService = timelapseService;
         this.gitHubReleaseService = gitHubReleaseService;
         this.toastNotificationService = toastNotificationService;
+        this.videoPlayerFactory = videoPlayerFactory;
 
         Layouts = new ObservableCollection<CameraLayout>(storageService.GetAllLayouts());
 
@@ -131,11 +136,12 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         CameraGrid = cameraGridControl;
 
-        // Inject recording, motion detection, timelapse, and toast notification services
+        // Inject services into the camera grid
         CameraGrid.RecordingService = recordingService;
         CameraGrid.MotionDetectionService = motionDetectionService;
         CameraGrid.TimelapseService = timelapseService;
         CameraGrid.ToastNotificationService = toastNotificationService;
+        CameraGrid.VideoPlayerFactory = videoPlayerFactory;
 
         ApplyDisplaySettings();
         LoadStartupCameras();

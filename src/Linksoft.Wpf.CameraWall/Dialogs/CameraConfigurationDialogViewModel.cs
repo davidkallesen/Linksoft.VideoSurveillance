@@ -8,6 +8,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     private readonly bool isNew;
     private readonly IReadOnlyCollection<(string IpAddress, string? Path)> existingEndpoints;
     private readonly IApplicationSettingsService settingsService;
+    private readonly IVideoPlayerFactory videoPlayerFactory;
 
     [ObservableProperty(AfterChangedCallback = nameof(OnIsTestingChanged))]
     private bool isTesting;
@@ -41,15 +42,18 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         CameraConfiguration camera,
         bool isNew,
         IReadOnlyCollection<(string IpAddress, string? Path)> existingEndpoints,
-        IApplicationSettingsService settingsService)
+        IApplicationSettingsService settingsService,
+        IVideoPlayerFactory videoPlayerFactory)
     {
         ArgumentNullException.ThrowIfNull(camera);
         ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(videoPlayerFactory);
 
         originalCamera = camera;
         this.isNew = isNew;
         this.existingEndpoints = existingEndpoints ?? [];
         this.settingsService = settingsService;
+        this.videoPlayerFactory = videoPlayerFactory;
 
         // Create a clone for editing - changes only apply when Save is clicked
         Camera = camera.Clone();
@@ -1301,70 +1305,37 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     private async Task TestStreamWithPlayerAsync(Uri uri)
     {
-        using var player = CreateTestPlayer();
+        using var player = videoPlayerFactory.Create();
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var tcs = new TaskCompletionSource<bool>();
 
-        SubscribeToPlayerStatus(player, tcs);
+        player.StateChanged += OnPlayerStateChanged;
 
         try
         {
-            player.Open(uri.ToString());
+            player.Open(uri);
             await WaitForConnectionResultAsync(tcs, cts.Token).ConfigureAwait(false);
         }
         finally
         {
-            player.PropertyChanged -= OnPlayerStatusChanged;
-            player.Stop();
+            player.StateChanged -= OnPlayerStateChanged;
+            player.Close();
         }
 
-        void OnPlayerStatusChanged(
+        void OnPlayerStateChanged(
             object? sender,
-            PropertyChangedEventArgs e)
+            PlayerStateChangedEventArgs e)
         {
-            if (e.PropertyName != nameof(Player.Status))
+            switch (e.NewState)
             {
-                return;
-            }
-
-            switch (player.Status)
-            {
-                case Status.Playing:
+                case PlayerState.Playing:
                     tcs.TrySetResult(true);
                     break;
-                case Status.Failed:
+                case PlayerState.Error:
                     tcs.TrySetResult(false);
                     break;
             }
         }
-
-        void SubscribeToPlayerStatus(
-            Player p,
-            TaskCompletionSource<bool> taskSource)
-        {
-            p.PropertyChanged += OnPlayerStatusChanged;
-        }
-    }
-
-    private static Player CreateTestPlayer()
-    {
-        var config = new Config
-        {
-            Player =
-            {
-                AutoPlay = true,
-            },
-            Video =
-            {
-                BackColor = Colors.Black,
-            },
-            Audio =
-            {
-                Enabled = false,
-            },
-        };
-
-        return new Player(config);
     }
 
     private async Task WaitForConnectionResultAsync(

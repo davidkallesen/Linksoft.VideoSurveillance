@@ -9,13 +9,18 @@ Linksoft.CameraWall is a multi-assembly video surveillance platform. A shared Co
 | Project | Framework | Role |
 |---------|-----------|------|
 | `Linksoft.VideoSurveillance.Core` | net10.0 | Shared models, enums, events, service interfaces, helpers |
-| `Linksoft.Wpf.CameraWall` | net10.0-windows | Reusable WPF library (NuGet) with UI, dialogs, FlyleafLib |
+| `Linksoft.VideoEngine` | net10.0 | Cross-platform video engine (FFmpeg in-process): demux, decode, record, capture |
+| `Linksoft.VideoEngine.DirectX` | net10.0-windows | D3D11VA GPU acceleration, Video Processor, swap chain |
+| `Linksoft.Wpf.VideoPlayer` | net10.0-windows | WPF `VideoHost` control (DComp surface + XAML overlay) |
+| `Linksoft.Wpf.CameraWall` | net10.0-windows | Reusable WPF library (NuGet) with UI, dialogs, video |
 | `Linksoft.Wpf.CameraWall.App` | net10.0-windows | Thin WPF shell with Fluent.Ribbon |
 | `Linksoft.VideoSurveillance.Api.Contracts` | net10.0 | Generated API models, endpoints, handler interfaces |
 | `Linksoft.VideoSurveillance.Api.Domain` | net10.0 | Handler implementations calling Core services |
 | `Linksoft.VideoSurveillance.Api` | net10.0 | ASP.NET Core host with SignalR hub |
+| `Linksoft.VideoSurveillance.BlazorApp` | net10.0 | Blazor WebAssembly UI with MudBlazor |
 | `Linksoft.VideoSurveillance.Aspire` | net10.0 | Aspire AppHost for orchestrated startup |
 | `Linksoft.VideoSurveillance.Core.Tests` | net10.0 | xUnit v3 tests for Core library |
+| `Linksoft.VideoEngine.Tests` | net10.0 | xUnit v3 tests for VideoEngine |
 
 ### Dependency Graph
 
@@ -27,22 +32,29 @@ Linksoft.VideoSurveillance.Core                    (net10.0, no WPF)
     |           ^                    ^
     |           |                    |
     |     Linksoft.VideoSurveillance.Api (host)
-    |           ^
-    |           |
+    |        ^  ^
+    |        |  |
+    |        |  Linksoft.VideoEngine (net10.0, cross-platform)
+    |        |       ^
+    |        |       |
     |     Linksoft.VideoSurveillance.Aspire (orchestration)
     |
-Linksoft.Wpf.CameraWall
-(net10.0-windows, WPF)
+    |  Linksoft.VideoEngine -------> Linksoft.VideoEngine.DirectX (net10.0-windows)
+    |       ^                               ^
+    |       |                               |
+    |  Linksoft.Wpf.VideoPlayer (net10.0-windows)
+    |       ^
+    |       |
+Linksoft.Wpf.CameraWall (net10.0-windows, WPF)
     ^
     |
-Linksoft.Wpf.CameraWall.App
-(net10.0-windows, WPF shell)
+Linksoft.Wpf.CameraWall.App (net10.0-windows, WPF shell)
 ```
 
 ## Architecture Philosophy
 
 - **Core** contains zero UI dependencies. All shared models, enums, events, service interfaces, and helpers live here. Both the WPF app and the API server reference Core.
-- **WPF library** provides the complete desktop experience: camera grid, dialogs, settings, FlyleafLib video playback. Apps inject `ICameraWallManager` and delegate all business logic.
+- **WPF library** provides the complete desktop experience: camera grid, dialogs, settings, VideoEngine-based video playback. Apps inject `ICameraWallManager` and delegate all business logic.
 - **WPF App** is a thin shell providing the Ribbon UI, status bar, and theme initialization.
 - **API** is OpenAPI-first: a YAML spec defines all endpoints, and `Atc.Rest.Api.SourceGenerator` generates the contracts. Handler implementations inject Core services.
 - **Aspire** orchestrates the API (and future Blazor UI) with a developer dashboard providing logs, traces, and metrics.
@@ -56,8 +68,8 @@ Linksoft.Wpf.CameraWall.App
 | Server | ASP.NET Core, SignalR |
 | API Definition | OpenAPI 3.0 (atc-rest-api-source-generator) |
 | Orchestration | .NET Aspire v13 |
-| Video (Desktop) | FlyleafLib (FFmpeg-based) |
-| Video (Server) | FFmpeg subprocess |
+| Video (Desktop) | Linksoft.VideoEngine + DirectX (D3D11VA GPU accel) |
+| Video (Server) | Linksoft.VideoEngine (CPU-only, in-process FFmpeg) |
 | MVVM | Atc.XamlToolkit |
 | Source Generators | Atc.SourceGenerators (`[Registration]`, `[MapTo]`, `[OptionsBinding]`) |
 | DI Container | Microsoft.Extensions.DependencyInjection |
@@ -77,7 +89,7 @@ The Core library contains everything that is shared between the WPF desktop app 
 - **Override Models**: `CameraOverrides`, `ConnectionOverrides`, `CameraDisplayOverrides`, `PerformanceOverrides`, `RecordingOverrides`, `MotionDetectionOverrides`, `BoundingBoxOverrides`
 - **Events**: `CameraConnectionChangedEventArgs`, `CameraPositionChangedEventArgs`, `RecordingStateChangedEventArgs`, `MotionDetectedEventArgs`, `RecordingSegmentedEventArgs`, `ConnectionStateChangedEventArgs`, etc.
 - **Service Interfaces**: `ICameraStorageService`, `IApplicationSettingsService`, `IRecordingService`, `IMotionDetectionService`, `ITimelapseService`, `IThumbnailGeneratorService`, `IMediaCleanupService`, `IGitHubReleaseService`, `IRecordingSegmentationService`
-- **Media Abstraction**: `IMediaPipeline`, `IMediaPipelineFactory` -- WPF uses FlyleafLib implementation, server uses FFmpeg subprocess
+- **Media Abstraction**: `IMediaPipeline`, `IMediaPipelineFactory` -- both WPF and server implement via Linksoft.VideoEngine
 - **Helpers**: `ApplicationPaths`, `CameraUriHelper`
 - **Factories**: `DropDownItemsFactory`
 
@@ -102,7 +114,7 @@ Most service interfaces and event types are defined in Core and aliased into the
 
 ### Media Pipeline
 
-The WPF library implements `IMediaPipeline` via `FlyleafLibMediaPipeline`, wrapping FlyleafLib's `Player` for video playback, recording, and frame capture. `FlyleafLibMediaPipelineFactory` creates configured pipeline instances.
+The WPF library implements `IMediaPipeline` via `VideoEngineMediaPipeline`, wrapping `IVideoPlayer` from `Linksoft.VideoEngine` for video playback, recording, and frame capture. `VideoEngineMediaPipelineFactory` creates configured pipeline instances with D3D11 GPU acceleration.
 
 ## API Architecture (Linksoft.VideoSurveillance.Api)
 
@@ -147,9 +159,9 @@ PUT    /api/settings                   # Update settings
 
 ### Server Services
 
-- `FFmpegMediaPipeline` -- implements `IMediaPipeline` using FFmpeg subprocess
-- `FFmpegMediaPipelineFactory` -- creates configured FFmpeg pipelines
-- `StreamingService` -- manages per-camera RTSP to HLS transcoding with viewer ref-counting
+- `VideoEngineMediaPipeline` -- implements `IMediaPipeline` using in-process `IVideoPlayer` (CPU-only)
+- `VideoEngineMediaPipelineFactory` -- creates configured VideoEngine pipelines
+- `StreamingService` -- manages per-camera RTSP to HLS transcoding with viewer ref-counting (FFmpeg subprocess, pending migration)
 - `SurveillanceEventBroadcaster` -- `IHostedService` that subscribes to recording/motion events and broadcasts via SignalR
 
 ## Aspire Orchestration
@@ -198,13 +210,33 @@ dotnet run --project src/Linksoft.VideoSurveillance.Aspire
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   CameraTile Control                        │
-│  - Creates FlyleafLibMediaPipeline per camera               │
+│  - Creates VideoEngineMediaPipeline per camera               │
 │  - Auto-starts streaming when Camera property is set        │
 │  - Handles connection/reconnection                          │
 │  - Displays overlay and bounding boxes                      │
 │  - Provides context menu actions                            │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### Layout Switching
+
+When switching between layouts, `CameraGrid.ApplyLayout()` preserves active streams for cameras that exist in both layouts:
+
+```
+LayoutA: Cam1, Cam2, Cam3  →  LayoutB: Cam1, Cam3, Cam4
+
+- Cam1: stays streaming (shared, same position — no action)
+- Cam2: closes stream (not in LayoutB — tile disposed)
+- Cam3: stays streaming (shared, reordered via swap — player preserved)
+- Cam4: starts new stream (new in LayoutB — tile created, player connects)
+```
+
+The algorithm:
+1. **Remove** cameras not in the target layout (iterating backwards to preserve indices)
+2. **Reorder** shared cameras using swap operations (selection sort with `PrepareForSwap`/`SwapPlayerWith`/`CompleteSwap`) to preserve player connections — same mechanism as drag-and-drop swaps
+3. **Insert** new cameras at their target positions
+
+Recording cameras that are removed from a layout should be stopped by the recording service before disposal. Cameras that are actively recording and exist in both layouts continue recording uninterrupted through the swap.
 
 ### Ribbon Menu (Fluent.Ribbon)
 

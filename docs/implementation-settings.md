@@ -363,8 +363,8 @@ This section documents whether each setting is actually used at runtime (not jus
 
 | Setting | Runtime Status | Usage Location | Notes |
 |---------|---------------|----------------|-------|
-| VideoQuality | ✅ | `CameraWallManager.cs`, `CameraTile.xaml.cs` | Maps to FlyleafLib `MaxVerticalResolutionCustom` (Auto=0, Low=480, Medium=720, High=1080, Ultra=2160); supports per-camera overrides |
-| HardwareAcceleration | ✅ | `CameraWallManager.cs`, `CameraTile.xaml.cs` | Applied to FlyleafLib `Config.Video.VideoAcceleration`; supports per-camera overrides |
+| VideoQuality | ✅ | `CameraWallManager.cs`, `CameraTile.xaml.cs` | Maps to max vertical resolution (Auto=0, Low=480, Medium=720, High=1080, Ultra=2160); supports per-camera overrides |
+| HardwareAcceleration | ✅ | `CameraWallManager.cs`, `CameraTile.xaml.cs` | Applied to VideoEngine D3D11VA acceleration config; supports per-camera overrides |
 | LowLatencyMode | ✅ | `ApplicationSettingsService.cs`, `CameraTile.xaml.cs` | Applied to stream settings; enables buffer/transport optimizations |
 | BufferDurationMs | ✅ | `ApplicationSettingsService.cs`, `CameraTile.xaml.cs` | Used in demuxer config when LowLatencyMode enabled |
 | RtspTransport | ✅ | `ApplicationSettingsService.cs`, `CameraTile.xaml.cs` | Used in demuxer format options (tcp/udp) |
@@ -541,7 +541,7 @@ This section documents whether each setting is actually used at runtime (not jus
 
 ### Recording System ✅ IMPLEMENTED
 
-- **Status:** Implemented using FlyleafLib recording APIs
+- **Status:** Implemented using Linksoft.VideoEngine recording APIs
 - **Settings:** RecordingPath, RecordingFormat, EnableRecordingOnMotion, EnableRecordingOnConnect, EnableHourlySegmentation, MaxRecordingDurationMinutes, ThumbnailTileCount
 - **Location:** `IRecordingService`, `RecordingService.cs`, `IMotionDetectionService` (Core, aliased in WPF), `MotionDetectionService.cs`
 - **Implementation:**
