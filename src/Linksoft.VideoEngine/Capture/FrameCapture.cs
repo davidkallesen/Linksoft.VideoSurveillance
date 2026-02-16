@@ -4,6 +4,7 @@ namespace Linksoft.VideoEngine.Capture;
 /// CPU-based frame capture: converts a decoded frame to RGB24 and encodes as PNG.
 /// Caches the SWS context and PNG encoder for repeated captures at the same resolution.
 /// </summary>
+[SuppressMessage("", "CA1806:calls av_*", Justification = "OK")]
 internal sealed unsafe class FrameCapture : IDisposable
 {
     private SwsContext* swsCtx;
@@ -90,10 +91,16 @@ internal sealed unsafe class FrameCapture : IDisposable
         FreeContexts();
 
         swsCtx = sws_getContext(
-            width, height, srcFormat,
-            width, height, AVPixelFormat.Rgb24,
+            width,
+            height,
+            srcFormat,
+            width,
+            height,
+            AVPixelFormat.Rgb24,
             SwsFlags.Bilinear,
-            null, null, null);
+            null,
+            null,
+            null);
 
         if (swsCtx is null)
         {
@@ -145,6 +152,7 @@ internal sealed unsafe class FrameCapture : IDisposable
         cachedSrcFormat = srcFormat;
     }
 
+    [SuppressMessage("", "SA1019:Member access symbol '->' should not be followed by a space", Justification = "OK")]
     private void ConvertToRgb24(
         AVFrame* srcFrame,
         int height)

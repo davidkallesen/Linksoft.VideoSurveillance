@@ -1,13 +1,15 @@
+// ReSharper disable StringLiteralTypo
 namespace Linksoft.VideoEngine.Demuxing;
 
 /// <summary>
 /// Wraps FFmpeg demuxing for RTSP/HTTP video streams with interrupt-based timeout.
 /// </summary>
+[SuppressMessage("", "CA1806:calls av_*", Justification = "OK")]
 internal sealed unsafe class Demuxer : IDisposable
 {
     private const int OpenTimeoutSeconds = 15;
     private const int ReadTimeoutSeconds = 10;
-    private const int AverrorExit = -1414092869;
+    private const int AvErrorExit = -1414092869;
 
     private readonly ILogger? logger;
     private readonly Stopwatch timeoutWatch = new();
@@ -85,7 +87,7 @@ internal sealed unsafe class Demuxer : IDisposable
 
         if (ret < 0)
         {
-            if (ret == AverrorExit)
+            if (ret == AvErrorExit)
             {
                 logger?.LogWarning(
                     "avformat_open_input returned AVERROR_EXIT: abortRequested={Abort}, ctCancelled={CtCancelled}, elapsed={Elapsed:F1}s, timeout={Timeout}s",

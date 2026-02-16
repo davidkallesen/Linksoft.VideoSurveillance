@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Linksoft.VideoSurveillance.Api.Services;
 
 /// <summary>
@@ -228,6 +230,10 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
         }
     }
 
+    [SuppressMessage(
+        "Usage",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "Pipeline is disposed immediately after removal from the dictionary, which ensures no further references and prevents self-join deadlocks on the demux thread.")]
     private void RemoveAndDisposePipeline(Guid cameraId)
     {
         if (managedPipelines.TryRemove(cameraId, out var pipeline))

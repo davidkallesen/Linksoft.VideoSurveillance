@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Description>Camera Wall application for monitoring multiple RTSP/HTTP camera streams in a dynamic grid layout.</Description>
+    <ApplicationIcon>..\Linksoft.CameraWall.Wpf\Resources\Images\cctv-camera.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Linksoft.CameraWall.Wpf\Linksoft.CameraWall.Wpf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- App-specific packages only; Atc.* packages come from the library -->
+    <PackageReference Include="Fluent.Ribbon" Version="11.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="..\Linksoft.CameraWall.Wpf\Resources\Images\cctv-camera.ico">
+      <Link>cctv-camera.ico</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

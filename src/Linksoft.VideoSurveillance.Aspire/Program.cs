@@ -5,7 +5,7 @@ var api = builder
     .WithHttpEndpoint(port: 5000, name: "public");
 
 builder
-    .AddProject<Projects.Linksoft_VideoSurveillance_BlazorApp>("blazor")
+    .AddProject<Projects.Linksoft_VideoSurveillance_Blazor_App>("blazor")
     .WithReference(api)
     .WaitFor(api)
     .WithExternalHttpEndpoints();

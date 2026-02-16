@@ -3,7 +3,7 @@
 A professional video surveillance platform for live monitoring of multiple RTSP/HTTP camera streams. Includes a WPF desktop application with an intuitive ribbon interface, a headless REST API + SignalR server edition, and Aspire orchestration.
 
 [![Release](https://img.shields.io/github/v/release/davidkallesen/Linksoft.VideoSurveillance?include_prereleases)](https://github.com/davidkallesen/Linksoft.VideoSurveillance/releases)
-[![NuGet](https://img.shields.io/nuget/v/Linksoft.Wpf.CameraWall)](https://www.nuget.org/packages/Linksoft.Wpf.CameraWall)
+[![NuGet](https://img.shields.io/nuget/v/Linksoft.CameraWall.Wpf)](https://www.nuget.org/packages/Linksoft.CameraWall.Wpf)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Features
@@ -102,14 +102,14 @@ Linksoft.VideoSurveillance/
 │   ├── Linksoft.VideoSurveillance.Core/       # Shared library: models, enums, events, service interfaces
 │   ├── Linksoft.VideoEngine/                  # Cross-platform video engine (FFmpeg in-process)
 │   ├── Linksoft.VideoEngine.DirectX/          # D3D11VA GPU acceleration for WPF
-│   ├── Linksoft.Wpf.VideoPlayer/              # WPF VideoHost control (DComp surface + overlay)
-│   ├── Linksoft.Wpf.CameraWall/               # Reusable WPF library (NuGet package)
-│   ├── Linksoft.Wpf.CameraWall.App/           # Thin shell WPF application (Fluent.Ribbon)
+│   ├── Linksoft.VideoPlayer.Wpf/              # WPF VideoHost control (DComp surface + overlay)
+│   ├── Linksoft.CameraWall.Wpf/               # Reusable WPF library (NuGet package)
+│   ├── Linksoft.CameraWall.Wpf.App/           # Thin shell WPF application (Fluent.Ribbon)
 │   ├── VideoSurveillance.yaml                 # OpenAPI 3.0 spec (shared contract)
 │   ├── Linksoft.VideoSurveillance.Api.Contracts/ # Generated: endpoints, models, handler interfaces
 │   ├── Linksoft.VideoSurveillance.Api.Domain/  # Handler implementations calling Core services
 │   ├── Linksoft.VideoSurveillance.Api/         # ASP.NET Core host with SignalR hub
-│   ├── Linksoft.VideoSurveillance.BlazorApp/   # Blazor WebAssembly UI (MudBlazor)
+│   ├── Linksoft.VideoSurveillance.Blazor.App/   # Blazor WebAssembly UI (MudBlazor)
 │   └── Linksoft.VideoSurveillance.Aspire/      # Aspire AppHost (orchestration + dashboard)
 │
 ├── setup/
@@ -147,13 +147,13 @@ Linksoft.VideoSurveillance.Core                    (net10.0, no WPF)
     |  Linksoft.VideoEngine -------> Linksoft.VideoEngine.DirectX (net10.0-windows)
     |       ^                               ^
     |       |                               |
-    |  Linksoft.Wpf.VideoPlayer (net10.0-windows)
+    |  Linksoft.VideoPlayer.Wpf (net10.0-windows)
     |       ^
     |       |
-Linksoft.Wpf.CameraWall (net10.0-windows, WPF)
+Linksoft.CameraWall.Wpf (net10.0-windows, WPF)
     ^
     |
-Linksoft.Wpf.CameraWall.App (net10.0-windows, WPF shell)
+Linksoft.CameraWall.Wpf.App (net10.0-windows, WPF shell)
 ```
 
 ## Services
@@ -176,7 +176,7 @@ Services are split between Core (shared) and WPF (UI-specific), all auto-registe
 | `IMediaPipeline` | Abstraction for video stream operations (record, capture frame) |
 | `IMediaPipelineFactory` | Creates `IMediaPipeline` instances per camera |
 
-### WPF Services (Linksoft.Wpf.CameraWall)
+### WPF Services (Linksoft.CameraWall.Wpf)
 
 | Service | Description |
 |---------|-------------|
@@ -212,7 +212,7 @@ Download the latest MSI installer from [GitHub Releases](https://github.com/davi
 
 ```bash
 dotnet build
-dotnet run --project src/Linksoft.Wpf.CameraWall.App
+dotnet run --project src/Linksoft.CameraWall.Wpf.App
 ```
 
 ### Run Server Edition with Aspire

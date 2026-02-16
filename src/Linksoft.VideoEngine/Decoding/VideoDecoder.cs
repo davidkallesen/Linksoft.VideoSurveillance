@@ -19,11 +19,20 @@ internal sealed unsafe class VideoDecoder : IDisposable
 
     public AVFrame* CurrentFrame => frame;
 
-    public int Width => codecCtx is not null ? codecCtx->width : 0;
+    public int Width
+        => codecCtx is not null
+            ? codecCtx->width
+            : 0;
 
-    public int Height => codecCtx is not null ? codecCtx->height : 0;
+    public int Height
+        => codecCtx is not null
+            ? codecCtx->height
+            : 0;
 
-    public AVPixelFormat PixelFormat => codecCtx is not null ? codecCtx->pix_fmt : AVPixelFormat.None;
+    public AVPixelFormat PixelFormat
+        => codecCtx is not null
+            ? codecCtx->pix_fmt
+            : AVPixelFormat.None;
 
     public string? CodecName => codec is not null
         ? Marshal.PtrToStringAnsi((IntPtr)codec->name)

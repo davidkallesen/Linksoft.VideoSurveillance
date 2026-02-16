@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Api\Linksoft.VideoSurveillance.Api.csproj" />
-    <ProjectReference Include="..\Linksoft.VideoSurveillance.BlazorApp\Linksoft.VideoSurveillance.BlazorApp.csproj" />
+    <ProjectReference Include="..\Linksoft.VideoSurveillance.Blazor.App\Linksoft.VideoSurveillance.Blazor.App.csproj" />
   </ItemGroup>
 
 </Project>

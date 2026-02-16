@@ -119,10 +119,13 @@ public sealed class SurveillanceHub : Hub
         {
             var playlistPath = streamingService.StartStream(cameraId);
 
-            // Wait for FFmpeg to create the playlist file (up to 30 seconds)
+            // Wait for FFmpeg to create the playlist and first segment (up to 30 seconds)
             var timeout = TimeSpan.FromSeconds(30);
             var start = DateTime.UtcNow;
-            while (!File.Exists(playlistPath))
+            var playlistDir = Path.GetDirectoryName(playlistPath)!;
+
+            while (!File.Exists(playlistPath)
+                   || !Directory.EnumerateFiles(playlistDir, "*.ts").Any())
             {
                 if (streamingService.HasProcessExited(cameraId))
                 {

@@ -1,12 +1,12 @@
 # Linksoft.VideoSurveillance Roadmap
 
-## Linksoft.VideoSurveillance.WpfApp
+## Linksoft.VideoSurveillance.Wpf.App
 
 A new WPF management application for the `Linksoft.VideoSurveillance.Api` server. Combines the management features of the existing Blazor WebAssembly UI with live multi-camera streaming and recording playback over HTTP.
 
 ### Motivation
 
-The existing `Linksoft.Wpf.CameraWall.App` is a standalone desktop application that connects directly to cameras via RTSP/HTTP. The new `WpfApp` is a **client** for the REST API server, enabling:
+The existing `Linksoft.CameraWall.Wpf.App` is a standalone desktop application that connects directly to cameras via RTSP/HTTP. The new `Wpf.App` is a **client** for the REST API server, enabling:
 
 - Centralized server-side camera management and recording
 - Live camera streaming over HTTP/HLS from the server
@@ -17,7 +17,7 @@ The existing `Linksoft.Wpf.CameraWall.App` is a standalone desktop application t
 
 ```mermaid
 graph TB
-    subgraph WpfApp["Linksoft.VideoSurveillance.WpfApp"]
+    subgraph WpfApp["Linksoft.VideoSurveillance.Wpf.App"]
         UI["WPF UI<br/><i>Fluent.Ribbon</i>"]
         Gateway["GatewayService<br/><i>REST Client</i>"]
         HubService["SurveillanceHubService<br/><i>SignalR Client</i>"]
@@ -41,8 +41,8 @@ graph TB
 
 ```
 src/
-└── Linksoft.VideoSurveillance.WpfApp/
-    ├── Linksoft.VideoSurveillance.WpfApp.csproj  (net10.0-windows, WPF)
+└── Linksoft.VideoSurveillance.Wpf.App/
+    ├── Linksoft.VideoSurveillance.Wpf.App.csproj  (net10.0-windows, WPF)
     ├── App.xaml / App.xaml.cs                     (Host, DI, Serilog)
     ├── MainWindow.xaml / MainWindow.xaml.cs        (Fluent.Ribbon shell)
     ├── Services/
@@ -78,12 +78,12 @@ src/
 ### Dependencies
 
 ```
-Linksoft.VideoSurveillance.WpfApp
+Linksoft.VideoSurveillance.Wpf.App
 ├── Linksoft.VideoSurveillance.Core          (models, enums, settings)
 ├── Linksoft.VideoSurveillance.Api.Contracts (generated API client types)
 ├── Linksoft.VideoEngine                     (HLS playback via FFmpeg)
 ├── Linksoft.VideoEngine.DirectX             (GPU-accelerated rendering)
-├── Linksoft.Wpf.VideoPlayer                 (VideoHost control for HLS)
+├── Linksoft.VideoPlayer.Wpf                 (VideoHost control for HLS)
 ├── Fluent.Ribbon                            (Ribbon UI)
 ├── Atc.XamlToolkit                          (MVVM source generators)
 ├── Atc.Wpf.Controls                         (UI controls)
@@ -100,7 +100,7 @@ Core infrastructure and basic camera management.
 
 ### 1.1 Project Setup
 
-- [ ] Create `Linksoft.VideoSurveillance.WpfApp` project (net10.0-windows, WPF)
+- [ ] Create `Linksoft.VideoSurveillance.Wpf.App` project (net10.0-windows, WPF)
 - [ ] Configure `Microsoft.Extensions.Hosting` with DI container
 - [ ] Configure Serilog with file sink (matching existing App patterns)
 - [ ] Add Fluent.Ribbon `MainWindow` shell with tab structure
@@ -138,7 +138,7 @@ Core infrastructure and basic camera management.
 
 ## Phase 2: Camera and Layout Management
 
-Full CRUD operations matching BlazorApp feature parity.
+Full CRUD operations matching Blazor.App feature parity.
 
 ### 2.1 Cameras View
 
@@ -181,7 +181,7 @@ The key differentiating feature: live camera streaming from the server over HTTP
 ### 3.1 HLS Stream Infrastructure
 
 - [ ] Integrate `Linksoft.VideoEngine` for HLS playback (FFmpeg demux + decode)
-- [ ] Use `Linksoft.Wpf.VideoPlayer.VideoHost` for GPU-accelerated rendering
+- [ ] Use `Linksoft.VideoPlayer.Wpf.VideoHost` for GPU-accelerated rendering
 - [ ] Handle `StreamStarted` SignalR events to receive HLS playlist URLs
 - [ ] Start/Stop stream via SignalR hub invocation (`StartStream`, `StopStream`)
 - [ ] Fallback to `MediaElement` for HLS if VideoEngine unavailable
@@ -299,7 +299,7 @@ Comprehensive settings management matching the 7-tab Settings dialog.
 
 ### 6.4 Aspire Integration
 
-- [ ] Add `WpfApp` to Aspire orchestration as optional client
+- [ ] Add `Wpf.App` to Aspire orchestration as optional client
 - [ ] Service discovery for API base URL
 - [ ] Health check integration
 
@@ -310,7 +310,7 @@ Comprehensive settings management matching the 7-tab Settings dialog.
 | Phase | Focus | Key Deliverable |
 |-------|-------|-----------------|
 | **Phase 1** | Foundation | Project scaffold, API client, SignalR, Dashboard |
-| **Phase 2** | Management | Camera CRUD, Layout editor, full BlazorApp parity |
+| **Phase 2** | Management | Camera CRUD, Layout editor, full Blazor.App parity |
 | **Phase 3** | Live Streaming | Multi-camera HLS grid, motion visualization |
 | **Phase 4** | Recordings | Browse, play, download server recordings |
 | **Phase 5** | Settings | 7-tab settings dialog via API |
@@ -318,7 +318,7 @@ Comprehensive settings management matching the 7-tab Settings dialog.
 
 ## Feature Comparison
 
-| Feature | BlazorApp | WpfApp (planned) |
+| Feature | Blazor.App | Wpf.App (planned) |
 |---------|-----------|-------------------|
 | Camera CRUD | Yes | Phase 2 |
 | Layout management | Yes | Phase 2 |

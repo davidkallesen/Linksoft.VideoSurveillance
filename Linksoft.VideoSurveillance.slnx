@@ -2,15 +2,17 @@
   <Folder Name="/src/">
     <Project Path="src/Linksoft.VideoEngine/Linksoft.VideoEngine.csproj" />
     <Project Path="src/Linksoft.VideoEngine.DirectX/Linksoft.VideoEngine.DirectX.csproj" />
-    <Project Path="src/Linksoft.Wpf.VideoPlayer/Linksoft.Wpf.VideoPlayer.csproj" />
-    <Project Path="src/Linksoft.Wpf.CameraWall/Linksoft.Wpf.CameraWall.csproj" />
+    <Project Path="src/Linksoft.VideoPlayer.Wpf/Linksoft.VideoPlayer.Wpf.csproj" />
+    <Project Path="src/Linksoft.CameraWall.Wpf/Linksoft.CameraWall.Wpf.csproj" />
     <Project Path="src/Linksoft.VideoSurveillance.Api.Contracts/Linksoft.VideoSurveillance.Api.Contracts.csproj" />
     <Project Path="src/Linksoft.VideoSurveillance.Api.Domain/Linksoft.VideoSurveillance.Api.Domain.csproj" />
     <Project Path="src/Linksoft.VideoSurveillance.Api/Linksoft.VideoSurveillance.Api.csproj" />
     <Project Path="src/Linksoft.VideoSurveillance.Core/Linksoft.VideoSurveillance.Core.csproj" />
-    <Project Path="src/Linksoft.Wpf.CameraWall.App/Linksoft.Wpf.CameraWall.App.csproj" />
+    <Project Path="src/Linksoft.CameraWall.Wpf.App/Linksoft.CameraWall.Wpf.App.csproj" />
     <Project Path="src/Linksoft.VideoSurveillance.Aspire/Linksoft.VideoSurveillance.Aspire.csproj" />
-    <Project Path="src/Linksoft.VideoSurveillance.BlazorApp/Linksoft.VideoSurveillance.BlazorApp.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.Blazor.App/Linksoft.VideoSurveillance.Blazor.App.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.Wpf/Linksoft.VideoSurveillance.Wpf.csproj" />
+    <Project Path="src/Linksoft.VideoSurveillance.Wpf.App/Linksoft.VideoSurveillance.Wpf.App.csproj" />
   </Folder>
   <!-- WiX installer excluded from VS solution due to SDK compatibility issues.
        Build via command line: dotnet build setup/Linksoft.CameraWall.Installer/Linksoft.CameraWall.Installer.wixproj

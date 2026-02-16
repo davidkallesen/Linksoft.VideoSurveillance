@@ -97,12 +97,21 @@ try
     app.MapEndpoints();
 
     // Serve HLS stream segments as static files
+    var hlsContentTypes = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider
+    {
+        Mappings =
+        {
+            [".m3u8"] = "application/vnd.apple.mpegurl",
+            [".ts"] = "video/mp2t",
+        },
+    };
+
     app.UseStaticFiles(new StaticFileOptions
     {
         FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
             app.Services.GetRequiredService<StreamingService>().HlsOutputRoot),
         RequestPath = "/streams",
-        ServeUnknownFileTypes = true,
+        ContentTypeProvider = hlsContentTypes,
     });
 
     // Serve recorded video files as static files
