@@ -123,6 +123,13 @@ public sealed class StreamingService : IDisposable
             ?? throw new InvalidOperationException($"Camera {cameraId} not found.");
 
         var outputDir = Path.Combine(hlsOutputRoot, cameraId.ToString("N"));
+
+        // Clean stale files from previous sessions (e.g. after Aspire restart)
+        if (Directory.Exists(outputDir))
+        {
+            Directory.Delete(outputDir, recursive: true);
+        }
+
         Directory.CreateDirectory(outputDir);
 
         var playlistPath = Path.Combine(outputDir, "stream.m3u8");
@@ -142,10 +149,9 @@ public sealed class StreamingService : IDisposable
             "-c:v libx264 -preset ultrafast -tune zerolatency -g 30",
             "-c:a aac -b:a 64k",
             "-f hls",
-            "-hls_time 1",
-            "-hls_list_size 3",
-            "-hls_flags delete_segments+append_list",
-            "-hls_init_time 0",
+            "-hls_time 2",
+            "-hls_list_size 5",
+            "-hls_flags delete_segments",
             $"\"{playlistPath}\"");
 
         var psi = new ProcessStartInfo

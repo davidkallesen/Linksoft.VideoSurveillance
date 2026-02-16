@@ -7,9 +7,9 @@ A multi-assembly video surveillance platform with a WPF desktop app and a headle
 - `Linksoft.VideoSurveillance.Core` - Shared library: models, enums, events, service interfaces, helpers (net10.0, no WPF)
 - `Linksoft.VideoEngine` - Cross-platform video engine (net10.0): demux, decode, record, capture via in-process FFmpeg
 - `Linksoft.VideoEngine.DirectX` - D3D11VA GPU acceleration, Video Processor, swap chain (net10.0-windows)
-- `Linksoft.Wpf.VideoPlayer` - WPF VideoHost control with DComp surface + XAML overlay (net10.0-windows)
-- `Linksoft.Wpf.CameraWall` - Reusable WPF library (NuGet package) with UI, dialogs, VideoEngine integration
-- `Linksoft.Wpf.CameraWall.App` - Thin shell WPF application using the library
+- `Linksoft.VideoPlayer.Wpf` - WPF VideoHost control with DComp surface + XAML overlay (net10.0-windows)
+- `Linksoft.CameraWall.Wpf` - Reusable WPF library (NuGet package) with UI, dialogs, VideoEngine integration
+- `Linksoft.CameraWall.Wpf.App` - Thin shell WPF application using the library
 - `Linksoft.VideoSurveillance.Api.Contracts` - Generated API models, endpoints, handler interfaces (OpenAPI-first via atc-rest-api-source-generator)
 - `Linksoft.VideoSurveillance.Api.Domain` - Handler implementations calling Core services
 - `Linksoft.VideoSurveillance.Api` - ASP.NET Core host with SignalR hub
@@ -56,10 +56,10 @@ public interface ICameraWallManager : INotifyPropertyChanged
     int CameraCount { get; }
     int ConnectedCount { get; }
     string StatusText { get; }
-    Linksoft.Wpf.CameraWall.UserControls.CameraGrid? CameraGrid { get; }
+    Linksoft.CameraWall.Wpf.UserControls.CameraGrid? CameraGrid { get; }
 
     // Initialization
-    void Initialize(Linksoft.Wpf.CameraWall.UserControls.CameraGrid cameraGridControl);
+    void Initialize(Linksoft.CameraWall.Wpf.UserControls.CameraGrid cameraGridControl);
 
     // Camera operations
     void AddCamera();
@@ -276,12 +276,12 @@ public static string ToScheme(this CameraProtocol protocol)
 Library services are auto-registered using the source-generated extension method:
 ```csharp
 // Auto-registers all services marked with [Registration] attribute
-services.AddDependencyRegistrationsFromCameraWall();
+services.AddDependencyRegistrationsFromWpf();
 ```
 
 For transitive registration of referenced assemblies:
 ```csharp
-services.AddDependencyRegistrationsFromCameraWall(includeReferencedAssemblies: true);
+services.AddDependencyRegistrationsFromWpf(includeReferencedAssemblies: true);
 ```
 
 ## Atc.Source.Generators
@@ -299,7 +299,7 @@ public class UserService : IUserService { }
 public class LoggerService { }
 ```
 
-The generator creates `AddDependencyRegistrationsFrom{AssemblySuffix}()` extension methods. For `Linksoft.Wpf.CameraWall`, this generates `AddDependencyRegistrationsFromCameraWall()`.
+The generator creates `AddDependencyRegistrationsFrom{AssemblySuffix}()` extension methods. For `Linksoft.CameraWall.Wpf`, this generates `AddDependencyRegistrationsFromWpf()`.
 
 Advanced options:
 ```csharp
@@ -473,5 +473,5 @@ Debug logging is configured via Serilog in `App.xaml.cs`:
 ## Build
 ```bash
 dotnet build
-dotnet run --project src/Linksoft.Wpf.CameraWall.App
+dotnet run --project src/Linksoft.CameraWall.Wpf.App
 ```

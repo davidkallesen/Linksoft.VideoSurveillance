@@ -1,0 +1,254 @@
+<Window
+    x:Class="Linksoft.CameraWall.Wpf.Windows.FullScreenRecordingWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:windows="clr-namespace:Linksoft.CameraWall.Wpf.Windows"
+    Title="{Binding Path=FileName}"
+    d:DataContext="{d:DesignInstance Type=windows:FullScreenRecordingWindowViewModel,
+                                     IsDesignTimeCreatable=False}"
+    AllowsTransparency="False"
+    Background="Black"
+    ResizeMode="NoResize"
+    ShowInTaskbar="True"
+    Topmost="True"
+    WindowState="Maximized"
+    WindowStyle="None"
+    mc:Ignorable="d">
+
+    <Window.Resources>
+        <ResourceDictionary Source="/Linksoft.CameraWall.Wpf;component/Themes/FullScreenStyles.xaml" />
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid">
+        <!--  Video Player (MediaElement for local file playback)  -->
+        <MediaElement
+            x:Name="VideoPlayer"
+            LoadedBehavior="Manual"
+            UnloadedBehavior="Stop"
+            Stretch="Uniform" />
+
+        <!--  Overlay content (directly in visual tree - no airspace issue for MediaElement)  -->
+        <Grid Background="Transparent">
+            <!--  Recording Info Overlay (Top-Left) - Always visible  -->
+            <Border
+                x:Name="OverlayBorder"
+                Margin="20"
+                Padding="12,8"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Background="#B3000000"
+                CornerRadius="4">
+                <StackPanel>
+                    <TextBlock
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Foreground="{Binding Path=FilenameColor}"
+                        Text="{Binding Path=FileName}"
+                        Visibility="{Binding Path=ShowFilename, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        FontFamily="Consolas"
+                        FontSize="20"
+                        FontWeight="Bold"
+                        Foreground="{Binding Path=TimestampColor}"
+                        Text="{Binding Path=RecordingTimeText}"
+                        Visibility="{Binding Path=ShowTimestamp, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
+            </Border>
+
+            <!--  Close Button (Top-Right)  -->
+            <Button
+                Width="40"
+                Height="40"
+                Margin="20"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Command="{Binding Path=CloseCommand}"
+                Opacity="{Binding Path=IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}"
+                Style="{StaticResource FullScreenCloseButtonStyle}"
+                ToolTip="Close">
+                <Path
+                    Width="14"
+                    Height="14"
+                    Data="M0,0 L14,14 M14,0 L0,14"
+                    Stroke="White"
+                    StrokeThickness="2" />
+            </Button>
+
+            <!--  Playback Controls Bar (Bottom)  -->
+            <Border
+                x:Name="ControlsBar"
+                Margin="20"
+                Padding="16,12"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Background="#B3000000"
+                CornerRadius="8"
+                Opacity="{Binding Path=IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <!--  Play/Pause Button  -->
+                    <Button
+                        x:Name="PlayPauseButton"
+                        Width="40"
+                        Height="40"
+                        Margin="0,0,12,0"
+                        Command="{Binding Path=PlayPauseCommand}"
+                        Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="20">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#33FFFFFF" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Grid>
+                            <!--  Play Icon (shown when paused)  -->
+                            <Path
+                                x:Name="PlayIcon"
+                                Width="20"
+                                Height="20"
+                                Data="M5,3 L19,12 L5,21 Z"
+                                Fill="White"
+                                Stretch="Uniform">
+                                <Path.Style>
+                                    <Style TargetType="Path">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsPlaying}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Path.Style>
+                            </Path>
+                            <!--  Pause Icon (shown when playing)  -->
+                            <Grid Width="20" Height="20">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsPlaying}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <Rectangle
+                                    Width="6"
+                                    Height="18"
+                                    HorizontalAlignment="Left"
+                                    Fill="White" />
+                                <Rectangle
+                                    Width="6"
+                                    Height="18"
+                                    HorizontalAlignment="Right"
+                                    Fill="White" />
+                            </Grid>
+                        </Grid>
+                    </Button>
+
+                    <!--  Speed Button  -->
+                    <Button
+                        Width="50"
+                        Height="40"
+                        Margin="0,0,12,0"
+                        Command="{Binding Path=CycleSpeedCommand}"
+                        Cursor="Hand"
+                        ToolTip="Click to change playback speed">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="4">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#33FFFFFF" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="White"
+                            Text="{Binding Path=SpeedText}" />
+                    </Button>
+
+                    <!--  Position Text  -->
+                    <TextBlock
+                        MinWidth="50"
+                        Margin="0,0,12,0"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        Foreground="White"
+                        Text="{Binding Path=PositionText}" />
+
+                    <!--  Seek Slider  -->
+                    <Slider
+                        x:Name="SeekSlider"
+                        Width="400"
+                        Margin="0,0,12,0"
+                        VerticalAlignment="Center"
+                        Focusable="True"
+                        IsEnabled="{Binding Path=CanSeek}"
+                        IsMoveToPointEnabled="True"
+                        IsSnapToTickEnabled="False"
+                        Maximum="{Binding Path=SeekMaximum}"
+                        Minimum="0"
+                        Value="{Binding Path=SeekPosition, Mode=TwoWay}" />
+
+                    <!--  Duration Text  -->
+                    <TextBlock
+                        MinWidth="50"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        Foreground="White"
+                        Text="{Binding Path=DurationText}" />
+                </StackPanel>
+            </Border>
+
+            <!--  ESC hint at bottom  -->
+            <TextBlock
+                Margin="0,0,0,80"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                FontSize="12"
+                Foreground="#66FFFFFF"
+                Opacity="{Binding Path=IsOverlayVisible, Converter={StaticResource BoolToOpacityConverter}}"
+                Text="{atcTranslation:Resx ResxName=Linksoft.CameraWall.Wpf.Resources.Translations,
+                                           Key=PressEscToExit}" />
+        </Grid>
+    </Grid>
+</Window>

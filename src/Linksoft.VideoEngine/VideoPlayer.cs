@@ -6,6 +6,7 @@ namespace Linksoft.VideoEngine;
 /// and captures frames from RTSP/HTTP streams.
 /// All pipeline work runs on a dedicated background thread.
 /// </summary>
+[SuppressMessage("", "CA1806:calls av_*", Justification = "OK")]
 public sealed unsafe class VideoPlayer : IVideoPlayer
 {
     private const int MaxConsecutiveReadErrors = 30;

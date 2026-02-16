@@ -1,8 +1,11 @@
+// ReSharper disable CommentTypo
+// ReSharper disable IdentifierTypo
 namespace Linksoft.VideoEngine.Recording;
 
 /// <summary>
 /// Records a video stream by remuxing (packet copy, no transcoding) to a container file.
 /// </summary>
+[SuppressMessage("", "CA1806:calls av_*", Justification = "OK")]
 internal sealed unsafe class Remuxer : IDisposable
 {
     private readonly Lock syncLock = new();
@@ -24,7 +27,8 @@ internal sealed unsafe class Remuxer : IDisposable
         lock (syncLock)
         {
             AVFormatContext* ctx = null;
-            int ret = avformat_alloc_output_context2(ref ctx, null, null, outputPath);
+
+            var ret = avformat_alloc_output_context2(ref ctx, null, null, outputPath);
             if (ret < 0 || ctx is null)
             {
                 throw new FFmpegException(ret, "Failed to allocate output context");
@@ -79,7 +83,7 @@ internal sealed unsafe class Remuxer : IDisposable
                 return;
             }
 
-            bool isKeyframe = (srcPacket->flags & PktFlags.Key) != 0;
+            var isKeyframe = (srcPacket->flags & PktFlags.Key) != PktFlags.None;
             if (!receivedKeyframe)
             {
                 if (!isKeyframe)
@@ -103,8 +107,8 @@ internal sealed unsafe class Remuxer : IDisposable
                     firstDts = clonedPkt->dts != AV_NOPTS_VALUE ? clonedPkt->dts : 0;
                 }
 
-                long dtsOffset = clonedPkt->dts != AV_NOPTS_VALUE ? clonedPkt->dts - firstDts : 0;
-                long ptsOffset = clonedPkt->pts != AV_NOPTS_VALUE ? clonedPkt->pts - firstDts : dtsOffset;
+                var dtsOffset = clonedPkt->dts != AV_NOPTS_VALUE ? clonedPkt->dts - firstDts : 0;
+                var ptsOffset = clonedPkt->pts != AV_NOPTS_VALUE ? clonedPkt->pts - firstDts : dtsOffset;
 
                 clonedPkt->dts = av_rescale_q(dtsOffset, srcTimeBase, outputTimeBase);
                 clonedPkt->pts = av_rescale_q(ptsOffset, srcTimeBase, outputTimeBase);

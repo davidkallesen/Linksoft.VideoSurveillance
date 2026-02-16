@@ -7,8 +7,8 @@ A multi-assembly video surveillance platform supporting both a WPF desktop appli
 ```mermaid
 graph TB
     subgraph Clients["Client Applications"]
-        WPF["Linksoft.Wpf.CameraWall.App<br/><i>WPF Desktop App</i>"]
-        Blazor["Linksoft.VideoSurveillance.BlazorApp<br/><i>Blazor WebAssembly</i>"]
+        WPF["Linksoft.CameraWall.Wpf.App<br/><i>WPF Desktop App</i>"]
+        Blazor["Linksoft.VideoSurveillance.Blazor.App<br/><i>Blazor WebAssembly</i>"]
     end
 
     subgraph Server["Server"]
@@ -34,13 +34,13 @@ graph BT
     Core["Linksoft.VideoSurveillance.Core<br/><i>net10.0</i>"]
     VE["Linksoft.VideoEngine<br/><i>net10.0</i>"]
     DX["Linksoft.VideoEngine.DirectX<br/><i>net10.0-windows</i>"]
-    VP["Linksoft.Wpf.VideoPlayer<br/><i>net10.0-windows</i>"]
-    CW["Linksoft.Wpf.CameraWall<br/><i>net10.0-windows</i>"]
-    App["Linksoft.Wpf.CameraWall.App<br/><i>net10.0-windows</i>"]
+    VP["Linksoft.VideoPlayer.Wpf<br/><i>net10.0-windows</i>"]
+    CW["Linksoft.CameraWall.Wpf<br/><i>net10.0-windows</i>"]
+    App["Linksoft.CameraWall.Wpf.App<br/><i>net10.0-windows</i>"]
     Contracts["Api.Contracts<br/><i>net10.0</i>"]
     Domain["Api.Domain<br/><i>net10.0</i>"]
     API["Api<br/><i>net10.0</i>"]
-    Blazor["BlazorApp<br/><i>net10.0</i>"]
+    Blazor["Blazor.App<br/><i>net10.0</i>"]
     Aspire["Aspire<br/><i>net10.0</i>"]
 
     DX --> VE
@@ -70,7 +70,7 @@ graph TB
     end
 
     subgraph Library["WPF Library Layer"]
-        CWLib["Linksoft.Wpf.CameraWall<br/><i>Dialogs, Services, UserControls</i>"]
+        CWLib["Linksoft.CameraWall.Wpf<br/><i>Dialogs, Services, UserControls</i>"]
     end
 
     subgraph VideoLayer["Video Layer"]
@@ -149,7 +149,7 @@ graph LR
     end
 
     subgraph ClientSide["Client-Side Generation"]
-        ClientCode["BlazorApp<br/><i>Typed API Client</i>"]
+        ClientCode["Blazor.App<br/><i>Typed API Client</i>"]
     end
 
     YAML -- "atc-rest-api-source-generator<br/>(server)" --> Contracts
@@ -199,9 +199,9 @@ sequenceDiagram
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
-| **Linksoft.Wpf.VideoPlayer** | net10.0-windows | WPF `VideoHost` control that displays video via DirectComposition surface with XAML overlay support. Uses native window hierarchy (Surface Window + Overlay Window as WS_CHILD). Provides `OverlayBridge` for connecting WPF XAML elements to the native overlay window. |
-| **Linksoft.Wpf.CameraWall** | net10.0-windows | Reusable WPF library (NuGet package) containing the complete camera wall implementation. Includes: `CameraWallManager` facade, service implementations (storage, settings, recording, motion detection, timelapse, media cleanup, segmentation, thumbnails, GitHub updates), 7+ dialog windows (CameraConfiguration, Settings, RecordingsBrowser, AssignCamera, CheckForUpdates, About, InputBox), 38+ dialog part UserControls for settings/configuration, camera grid and tile UserControls, motion bounding box overlay, and localization resources (en-US, da-DK, de-DE). |
-| **Linksoft.Wpf.CameraWall.App** | net10.0-windows | Thin shell WPF application. Provides `MainWindow` with Fluent.Ribbon UI (Layouts, Cameras, View, Help tabs). Configures `Microsoft.Extensions.Hosting`, Serilog file logging (daily rolling, 7-day retention), and DI registration via `AddDependencyRegistrationsFromCameraWall()`. |
+| **Linksoft.VideoPlayer.Wpf** | net10.0-windows | WPF `VideoHost` control that displays video via DirectComposition surface with XAML overlay support. Uses native window hierarchy (Surface Window + Overlay Window as WS_CHILD). Provides `OverlayBridge` for connecting WPF XAML elements to the native overlay window. |
+| **Linksoft.CameraWall.Wpf** | net10.0-windows | Reusable WPF library (NuGet package) containing the complete camera wall implementation. Includes: `CameraWallManager` facade, service implementations (storage, settings, recording, motion detection, timelapse, media cleanup, segmentation, thumbnails, GitHub updates), 7+ dialog windows (CameraConfiguration, Settings, RecordingsBrowser, AssignCamera, CheckForUpdates, About, InputBox), 38+ dialog part UserControls for settings/configuration, camera grid and tile UserControls, motion bounding box overlay, and localization resources (en-US, da-DK, de-DE). |
+| **Linksoft.CameraWall.Wpf.App** | net10.0-windows | Thin shell WPF application. Provides `MainWindow` with Fluent.Ribbon UI (Layouts, Cameras, View, Help tabs). Configures `Microsoft.Extensions.Hosting`, Serilog file logging (daily rolling, 7-day retention), and DI registration via `AddDependencyRegistrationsFromCameraWall()`. |
 
 ### Server Layer
 
@@ -215,13 +215,13 @@ sequenceDiagram
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
-| **Linksoft.VideoSurveillance.BlazorApp** | net10.0 | Blazor WebAssembly client with MudBlazor UI. Pages: Dashboard (live stats), Cameras (CRUD + snapshot/record), Layouts (drag-drop grid editor), Live View (HLS streaming with motion bounding boxes), Recordings (browse/playback/download), Settings (7-tab configuration). Uses `GatewayService` for API calls and `SurveillanceHubService` for SignalR real-time updates. Auto-generated API client from OpenAPI spec. |
+| **Linksoft.VideoSurveillance.Blazor.App** | net10.0 | Blazor WebAssembly client with MudBlazor UI. Pages: Dashboard (live stats), Cameras (CRUD + snapshot/record), Layouts (drag-drop grid editor), Live View (HLS streaming with motion bounding boxes), Recordings (browse/playback/download), Settings (7-tab configuration). Uses `GatewayService` for API calls and `SurveillanceHubService` for SignalR real-time updates. Auto-generated API client from OpenAPI spec. |
 
 ### Orchestration
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
-| **Linksoft.VideoSurveillance.Aspire** | net10.0 | .NET Aspire AppHost for distributed orchestration. Starts the API on port 5000, then the BlazorApp with API service reference. Provides Aspire dashboard for monitoring, logs, traces, and health checks. |
+| **Linksoft.VideoSurveillance.Aspire** | net10.0 | .NET Aspire AppHost for distributed orchestration. Starts the API on port 5000, then the Blazor.App with API service reference. Provides Aspire dashboard for monitoring, logs, traces, and health checks. |
 
 ### Testing
 
