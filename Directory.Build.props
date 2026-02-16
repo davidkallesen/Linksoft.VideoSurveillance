@@ -3,7 +3,7 @@
 
   <PropertyGroup Label="Metadata configuration">
     <OrganizationName>Linksoft</OrganizationName>
-    <RepositoryName>Linksoft.CameraWall</RepositoryName>
+    <RepositoryName>Linksoft.VideoSurveillance</RepositoryName>
   </PropertyGroup>
 
   <!-- Solution wide properties -->

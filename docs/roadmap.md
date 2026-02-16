@@ -1,364 +1,338 @@
-# Linksoft.CameraWall Feature Roadmap
+# Linksoft.VideoSurveillance Roadmap
 
-## Vision
+## Linksoft.VideoSurveillance.WpfApp
 
-A professional-grade WPF camera wall application for live monitoring of multiple RTSP/HTTP camera streams with an intuitive user interface and robust performance.
+A new WPF management application for the `Linksoft.VideoSurveillance.Api` server. Combines the management features of the existing Blazor WebAssembly UI with live multi-camera streaming and recording playback over HTTP.
 
----
+### Motivation
 
-## Phase 1: MVP (Minimum Viable Product) - COMPLETED
+The existing `Linksoft.Wpf.CameraWall.App` is a standalone desktop application that connects directly to cameras via RTSP/HTTP. The new `WpfApp` is a **client** for the REST API server, enabling:
 
-**Goal**: Core functionality for basic live monitoring
+- Centralized server-side camera management and recording
+- Live camera streaming over HTTP/HLS from the server
+- Remote management from any Windows machine on the network
+- Recording playback streamed from the server's recording archive
 
-### Core Features
+### Architecture
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Dynamic Grid Layout | Auto-calculate optimal grid based on camera count (1-30 cameras) | Done |
-| Camera Tile Overlay | Title/description overlay in configurable corner | Done |
-| Context Menu | Edit, Delete, Full Screen, Swap Left/Right, Snapshot, Reconnect | Done |
-| Drag-and-Drop | Reorder cameras by dragging tiles within grid | Done |
-| Auto-Save | Automatic persistence of camera positions | Done |
+```mermaid
+graph TB
+    subgraph WpfApp["Linksoft.VideoSurveillance.WpfApp"]
+        UI["WPF UI<br/><i>Fluent.Ribbon</i>"]
+        Gateway["GatewayService<br/><i>REST Client</i>"]
+        HubService["SurveillanceHubService<br/><i>SignalR Client</i>"]
+        HLS["HLS Player<br/><i>VideoEngine or MediaElement</i>"]
+    end
 
-### Camera Management
+    subgraph Server["Linksoft.VideoSurveillance.Api"]
+        API["REST Endpoints"]
+        Hub["SignalR Hub"]
+        Streams["/streams/{cameraId}/playlist.m3u8"]
+        Recordings["/recordings-files/{path}"]
+    end
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Add Camera Dialog | Configure RTSP/HTTP camera with credentials | Done |
-| Network Scanner | Auto-discover cameras on local network (integrated in dialog) | Done |
-| Edit Camera | Edit camera configurations via context menu | Done |
-| Delete Camera | Delete with confirmation via context menu | Done |
-| Test Connection | Validate camera connectivity before saving | Done |
+    Gateway -- "HTTP" --> API
+    HubService -- "WebSocket" --> Hub
+    HLS -- "HLS" --> Streams
+    HLS -- "HTTP" --> Recordings
+```
 
-### Layout Management
+### Project Structure
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Named Layouts | Create and save multiple layout configurations | Done |
-| Startup Layout | Designate a layout to load on application start | Done |
-| Layout Persistence | JSON-based storage in AppData | Done |
-| Default Layout | Auto-create default layout if none exists | Done |
+```
+src/
+└── Linksoft.VideoSurveillance.WpfApp/
+    ├── Linksoft.VideoSurveillance.WpfApp.csproj  (net10.0-windows, WPF)
+    ├── App.xaml / App.xaml.cs                     (Host, DI, Serilog)
+    ├── MainWindow.xaml / MainWindow.xaml.cs        (Fluent.Ribbon shell)
+    ├── Services/
+    │   ├── GatewayService.cs                      (REST API client)
+    │   ├── GatewayService.Cameras.cs
+    │   ├── GatewayService.Layouts.cs
+    │   ├── GatewayService.Recordings.cs
+    │   ├── GatewayService.Settings.cs
+    │   └── SurveillanceHubService.cs              (SignalR client)
+    ├── ViewModels/
+    │   ├── DashboardViewModel.cs
+    │   ├── CamerasViewModel.cs
+    │   ├── CameraFormViewModel.cs
+    │   ├── LayoutsViewModel.cs
+    │   ├── LiveViewModel.cs
+    │   ├── RecordingsViewModel.cs
+    │   └── SettingsViewModel.cs
+    ├── Views/
+    │   ├── DashboardView.xaml
+    │   ├── CamerasView.xaml
+    │   ├── CameraFormDialog.xaml
+    │   ├── LayoutsView.xaml
+    │   ├── LayoutEditorDialog.xaml
+    │   ├── LiveView.xaml
+    │   ├── RecordingsView.xaml
+    │   └── SettingsDialog.xaml
+    └── UserControls/
+        ├── LiveCameraTile.xaml                     (HLS stream tile)
+        ├── MotionBoundingBoxOverlay.xaml           (bounding box overlay)
+        └── RecordingPlayer.xaml                    (HTTP playback)
+```
 
-### UI/UX
+### Dependencies
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Fluent.Ribbon Menu | Modern ribbon interface with tabs | Done |
-| Dark/Light Theme | Theme toggle with Atc.Wpf.Theming | Done |
-| Snapshot Capture | Save current frame as image file | Done |
-
-### Technical
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Video Engine | In-process FFmpeg via Linksoft.VideoEngine (replaced FlyleafLib) | Done |
-| Connection State | Visual indicators (Connected, Connecting, Error) | Done |
-| Thread-safe Initialization | SemaphoreSlim for engine initialization | Done |
-
----
-
-## Phase 2: Enhanced User Experience
-
-**Goal**: Improved usability and reliability
-
-### Settings & Configuration
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Settings Dialog | Configure theme, language, startup behavior | Done |
-| Display Settings | Configure overlay visibility and opacity | Done |
-| Auto-Save Option | Toggle automatic layout persistence | Done |
-| Snapshot Directory | Configurable save location for snapshots | Done |
-| Start Maximized | Option to start app maximized | Done |
-| Ribbon Collapsed | Option to start with ribbon collapsed | Done |
-
-### Keyboard Navigation
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Arrow Keys | Navigate between camera tiles | Planned |
-| F11 | Toggle fullscreen mode | Planned |
-| Escape | Exit fullscreen, close dialogs | Done |
-| Number Keys (1-9) | Quick jump to camera position | Planned |
-| Ctrl+S | Save current layout | Planned |
-
-### Connection Reliability
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Auto-Reconnection | Exponential backoff (5s, 10s, 20s, max 120s) | Planned |
-| Health Monitoring | Periodic ping checks | Planned |
-| Connection Timeout | Configurable timeout settings | Planned |
-| Retry Limits | Maximum reconnection attempts | Planned |
-| Connect on Startup | Option to auto-connect cameras on app start | Done |
-
-### Enhanced Overlays
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Timestamp Overlay | Optional live timestamp on each tile | Done |
-| Overlay Opacity | Configurable background opacity (0.0-1.0) | Done |
-| Overlay Position | Choose corner (TopLeft, TopRight, BottomLeft, BottomRight) | Done |
-| Stream Statistics | Frame rate, resolution, bitrate display | Planned |
-
-### Data Management
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Layout Import/Export | JSON file for sharing configurations | Planned |
-| Camera Status Tooltips | Hover shows IP, status, uptime | Planned |
-| Configuration Backup | Export all settings to file | Planned |
-
-### Help & Information
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| About Dialog | Application version and information | Done |
-| Check for Updates | GitHub-based version checking | Done |
+```
+Linksoft.VideoSurveillance.WpfApp
+├── Linksoft.VideoSurveillance.Core          (models, enums, settings)
+├── Linksoft.VideoSurveillance.Api.Contracts (generated API client types)
+├── Linksoft.VideoEngine                     (HLS playback via FFmpeg)
+├── Linksoft.VideoEngine.DirectX             (GPU-accelerated rendering)
+├── Linksoft.Wpf.VideoPlayer                 (VideoHost control for HLS)
+├── Fluent.Ribbon                            (Ribbon UI)
+├── Atc.XamlToolkit                          (MVVM source generators)
+├── Atc.Wpf.Controls                         (UI controls)
+├── Microsoft.AspNetCore.SignalR.Client       (real-time events)
+├── Microsoft.Extensions.Hosting              (DI, configuration)
+└── Serilog                                   (logging)
+```
 
 ---
 
-## Phase 3: Advanced Features
+## Phase 1: Foundation
 
-**Goal**: Professional monitoring capabilities
+Core infrastructure and basic camera management.
 
-### Recording
+### 1.1 Project Setup
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Manual Recording | Start/stop recording per camera | Done |
-| Recording Format | MP4/MKV/AVI with H.264 passthrough | Done |
-| Auto-Record on Connect | Global setting with per-camera overrides | Done |
-| Recording Indicator | Visual indicator when recording active | Done |
-| Motion-Triggered Recording | Record on motion detection | Done |
-| Storage Management | Disk space monitoring, auto-cleanup | Planned |
+- [ ] Create `Linksoft.VideoSurveillance.WpfApp` project (net10.0-windows, WPF)
+- [ ] Configure `Microsoft.Extensions.Hosting` with DI container
+- [ ] Configure Serilog with file sink (matching existing App patterns)
+- [ ] Add Fluent.Ribbon `MainWindow` shell with tab structure
+- [ ] Add configurable API base URL (via appsettings.json or connection dialog)
+- [ ] Add project to `Linksoft.VideoSurveillance.slnx` solution
 
-### Display Modes
+### 1.2 API Client Layer
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Full Screen Camera | Single camera in full screen window | Done |
-| Picture-in-Picture | Floating always-on-top window | Planned |
-| Digital Zoom | Pause and zoom on frame (2x, 4x, 8x) | Planned |
-| Region Selection | Click-drag to zoom to area | Planned |
+- [ ] Implement `GatewayService` using `Atc.Rest.Client` and generated API contracts
+- [ ] Camera endpoints: List, Create, Get, Update, Delete, Snapshot, Start/Stop Recording
+- [ ] Layout endpoints: List, Create, Update, Delete, Apply
+- [ ] Recording endpoints: List (with optional camera filter)
+- [ ] Settings endpoints: Get, Update
+- [ ] Add HTTP resilience handler (retry, timeout)
+- [ ] Add error handling with user-friendly error messages
 
-### Audio
+### 1.3 SignalR Client Layer
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Per-Camera Audio | Mute/unmute individual streams | Planned |
-| Master Volume | Global volume control | Planned |
-| Audio Focus | Only selected camera plays audio | Planned |
+- [ ] Implement `SurveillanceHubService` connecting to `/hubs/surveillance`
+- [ ] Handle `ConnectionStateChanged` events
+- [ ] Handle `RecordingStateChanged` events
+- [ ] Handle `MotionDetected` events with bounding box data
+- [ ] Handle `StreamStarted` events with HLS playlist URLs
+- [ ] Auto-reconnect with connection state tracking
+- [ ] Connection status indicator in the Ribbon status bar
 
-### Performance
+### 1.4 Dashboard View
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Hardware Acceleration | GPU decoding (D3D11VA, DXVA2) | Done |
-| Video Quality Settings | Configurable resolution limits (Auto, 1080p, 720p, 480p, 360p) | Done |
-| Per-Camera Performance Overrides | Override VideoQuality/HardwareAcceleration per camera | Done |
-| Adaptive Quality | Auto-adjust based on system resources | Planned |
-| Memory Optimization | Efficient stream management | Planned |
+- [ ] Real-time statistics: total cameras, connected count, active recordings, layout count
+- [ ] Quick action buttons: Add Camera, Create Layout, Open Settings
+- [ ] Server connection status indicator
+- [ ] Auto-refresh via SignalR events
 
 ---
 
-## Phase 4: Professional Features
+## Phase 2: Camera and Layout Management
 
-**Goal**: Enterprise-grade functionality
+Full CRUD operations matching BlazorApp feature parity.
 
-### Multi-Monitor
+### 2.1 Cameras View
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Multi-Window Mode | Separate windows for different monitors | Planned |
-| Monitor Assignment | Drag cameras to specific monitors | Planned |
-| Layout Per Monitor | Independent layouts per display | Planned |
+- [ ] DataGrid listing all cameras (Name, IP, Port, Protocol, State, Recording)
+- [ ] Connection state with color-coded indicators (connected = green, error = red, etc.)
+- [ ] Real-time state updates via SignalR
+- [ ] Toolbar buttons: Add, Edit, Delete, Snapshot, Start/Stop Recording
+- [ ] Context menu on camera rows with all actions
+- [ ] Snapshot capture with save-to-file dialog
 
-### PTZ Control
+### 2.2 Camera Form Dialog
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| ONVIF Integration | Pan/Tilt/Zoom control protocol | Planned |
-| On-Screen Controls | Virtual joystick overlay | Planned |
-| Preset Positions | Save and recall camera positions | Planned |
-| PTZ Tour Mode | Automated position cycling | Planned |
+- [ ] Expandable sections: Connection, Authentication, Display, Stream Settings
+- [ ] Validation with error indicators (required fields, port range, etc.)
+- [ ] Test Connection button (via API)
+- [ ] Per-camera override tabs: Connection, Display, Performance, Motion Detection, Recording
+- [ ] Override toggle pattern: "Use Master Settings" / "Override Locally"
 
-### Intelligence
+### 2.3 Layouts View
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Motion Detection | Frame-based detection with grayscale pixel differencing | Done |
-| Multi-Bounding Box | Detect and highlight multiple motion regions via grid-based clustering | Done |
-| Sensitivity Config | Configurable sensitivity, min change %, analysis resolution | Done |
-| Bounding Box Visualization | Real-time colored bounding boxes with smoothing | Done |
-| Staggered Scheduling | Round-robin analysis across cameras to prevent CPU spikes | Done |
-| Visual Alerts | Border flash, notification badge | Planned |
+- [ ] DataGrid listing all layouts (Name, Grid Size, Camera Count)
+- [ ] Toolbar buttons: Create, Edit, Delete, Apply
+- [ ] Set Startup Layout action
 
-### Organization
+### 2.4 Layout Editor Dialog
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Camera Grouping | Hierarchical folder structure | Planned |
-| Group Views | Display all cameras in a group | Planned |
-| Group Operations | Bulk enable/disable, configuration | Planned |
-
-### Administration
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Event Logging | Connection events, user actions | Planned |
-| Audit Trail | Configuration change history | Planned |
-| Report Export | CSV/PDF report generation | Planned |
-| Full Backup/Restore | All settings in single file | Planned |
+- [ ] Grid configuration: Rows (1-8) and Columns (1-8)
+- [ ] Dual-panel drag-drop editor:
+  - Left panel: Available (unassigned) cameras
+  - Right panel: Grid positions with assigned cameras
+- [ ] Drag cameras between available and grid positions
+- [ ] Save layout via API
 
 ---
 
-## Phase 5: Distribution
+## Phase 3: Live Multi-Camera Streaming
 
-**Goal**: Production-ready deployment
+The key differentiating feature: live camera streaming from the server over HTTP/HLS.
 
-### Installer
+### 3.1 HLS Stream Infrastructure
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| WiX5 MSI Installer | Professional Windows installer | Done |
-| Silent Install | Command-line deployment option | Planned |
-| Update Checking | Check for new versions on GitHub | Done |
-| Update Installation | Download and install updates | Planned |
-| Uninstaller | Clean removal of all components | Planned |
+- [ ] Integrate `Linksoft.VideoEngine` for HLS playback (FFmpeg demux + decode)
+- [ ] Use `Linksoft.Wpf.VideoPlayer.VideoHost` for GPU-accelerated rendering
+- [ ] Handle `StreamStarted` SignalR events to receive HLS playlist URLs
+- [ ] Start/Stop stream via SignalR hub invocation (`StartStream`, `StopStream`)
+- [ ] Fallback to `MediaElement` for HLS if VideoEngine unavailable
 
-### NuGet Package
+### 3.2 Live View
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Linksoft.Wpf.CameraWall | Reusable library package | Planned |
-| Documentation | XML docs and README | Planned |
-| Samples | Example usage projects | Planned |
-| Symbol Package | Debugging support | Planned |
+- [ ] Layout selector dropdown (populated from API)
+- [ ] Dynamic camera grid based on selected layout (rows x columns)
+- [ ] `LiveCameraTile` UserControl per camera:
+  - Camera name overlay
+  - Connection status indicator
+  - Start/Stop stream button
+  - HLS video playback via VideoHost
+  - Recording indicator
+- [ ] Auto-start streams when layout is selected
+- [ ] Grid resize handling with aspect ratio preservation
 
----
+### 3.3 Motion Detection Visualization
 
-## Phase 6: Server Edition
+- [ ] `MotionBoundingBoxOverlay` UserControl on each live tile
+- [ ] Real-time bounding box rendering from SignalR `MotionDetected` events
+- [ ] Coordinate mapping from analysis resolution to display resolution
+- [ ] Smoothing algorithm for bounding box transitions (matching existing WPF implementation)
+- [ ] Configurable color, thickness, and visibility per bounding box settings
+- [ ] Motion indicator badge on camera tiles
 
-**Goal**: Headless video surveillance server with REST API and real-time events
+### 3.4 Live View Context Menu
 
-### Core Library
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Shared Core | Models, enums, events, service interfaces extracted to net10.0 library | Done |
-| IMediaPipeline | Abstraction for video stream operations (record, capture frame) | Done |
-| Core Tests | xUnit v3 tests (63 tests passing) | Done |
-
-### REST API
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| OpenAPI Spec | VideoSurveillance.yaml defining all endpoints | Done |
-| API Contracts | Generated models, endpoints, handler interfaces via atc-rest-api-source-generator | Done |
-| Handler Implementations | 16 handlers for cameras, layouts, recordings, settings | Done |
-| SignalR Hub | Real-time connection, motion, and recording events | Done |
-| In-Process Video Engine | Server-side IMediaPipeline using in-process Linksoft.VideoEngine (replaced FFmpeg subprocess) | Done |
-| Streaming Service | RTSP to HLS transcoding with viewer ref-counting | Done |
-| Event Broadcaster | IHostedService broadcasting events via SignalR | Done |
-
-### Orchestration
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Aspire AppHost | Orchestrated startup with developer dashboard | Done |
-| Aspire Dashboard | Resource monitoring, logs, traces | Done |
+- [ ] Full screen (single camera, Escape to exit)
+- [ ] Snapshot capture
+- [ ] Start/Stop recording
+- [ ] Start/Stop stream
+- [ ] Edit camera
+- [ ] Swap left/right positions
 
 ---
 
-## Phase 7: Blazor Web UI - COMPLETED
+## Phase 4: Recordings Management
 
-**Goal**: Browser-based camera wall consuming the REST API
+Browse, play, and download recordings streamed from the server.
 
-### Web UI
+### 4.1 Recordings View
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Blazor Project | Blazor WebAssembly with MudBlazor v8 | Done |
-| Camera Grid | Responsive camera grid with HLS.js video player | Done |
-| Camera Tile | HLS video player + overlay per camera | Done |
-| Settings Page | 7 tabs covering all settings sections via API | Done |
-| Recordings Page | Recording browser with camera filter via API | Done |
-| SignalR Client | Real-time connection, motion, recording events | Done |
-| Theme System | MudBlazor dark/light mode toggle | Done |
-| Aspire Integration | Blazor project orchestrated by Aspire AppHost | Done |
-| Camera Management | CRUD table with edit/delete/record/snapshot | Done |
-| Layout Management | Create/apply/delete with grid config and drag-drop | Done |
-| Motion Visualization | SVG bounding box overlay + pulsing MOTION badge | Done |
+- [ ] DataGrid listing recordings (Camera, File Path, Start Time, Duration, Size)
+- [ ] Camera filter dropdown
+- [ ] Date range filter
+- [ ] Refresh button
+- [ ] Real-time updates when `RecordingStateChanged` fires (new recording completed)
 
----
+### 4.2 Recording Playback
 
-## Technical Debt & Maintenance
+- [ ] `RecordingPlayer` UserControl with HTTP video playback
+- [ ] Stream recordings from server via `/recordings-files/{path}` endpoint
+- [ ] Playback controls: Play, Pause, Seek, Volume
+- [ ] Playback overlay showing filename and timestamp (per PlaybackOverlaySettings)
+- [ ] Full-screen playback mode (matching `FullScreenRecordingWindow` pattern)
 
-### Ongoing
+### 4.3 Recording Actions
 
-| Task | Description |
-|------|-------------|
-| Dependency Updates | Keep NuGet packages current |
-| Security Patches | Address vulnerabilities promptly |
-| Performance Profiling | Regular optimization reviews |
-| Code Quality | Maintain analyzer compliance |
-
-### Documentation
-
-| Task | Description |
-|------|-------------|
-| API Documentation | XML documentation for library |
-| User Guide | End-user documentation |
-| Developer Guide | Integration documentation |
-| Release Notes | Version changelog |
+- [ ] Play recording in embedded player
+- [ ] Full-screen playback
+- [ ] Download recording to local file (HTTP download with progress)
+- [ ] Delete recording (with confirmation)
 
 ---
 
-## Success Metrics
+## Phase 5: Settings and Configuration
 
-### Phase 1 (MVP) - Achieved
-- Successfully display 30 simultaneous RTSP streams
-- < 5 second stream initialization time
-- Configuration persists across restarts
-- Drag-and-drop works smoothly
+Comprehensive settings management matching the 7-tab Settings dialog.
 
-### Phase 2 (Enhanced) - Partially Achieved
-- Settings dialog with full theme and display configuration ✓
-- Configurable overlay (position, opacity, timestamp) ✓
-- Full screen camera mode ✓
-- GitHub update checking ✓
-- Auto-reconnection succeeds > 95% of the time (pending)
-- Keyboard navigation fully functional (pending)
+### 5.1 Settings Dialog
 
-### Phase 3 (Advanced) - Partially Achieved
-- Recording maintains stream quality ✓
-- Recording auto-starts on connect (configurable) ✓
-- Hardware acceleration reduces CPU by 50%+ ✓
-- Snapshots save in < 500ms ✓
+- [ ] **General** tab: Theme (Dark/Light), Accent, Language, Startup behavior
+- [ ] **Camera Display** tab: Overlay settings, Grid layout, Snapshot path
+- [ ] **Connection** tab: Default protocol/port, Timeout, Reconnect, Notifications
+- [ ] **Performance** tab: Video quality, Hardware acceleration, Buffer, RTSP transport
+- [ ] **Motion Detection** tab: Sensitivity, Analysis resolution/FPS, Post-motion, Cooldown, Bounding box settings
+- [ ] **Recording** tab: Path, Format, Segmentation, Timelapse, Cleanup, Playback overlay
+- [ ] **Advanced** tab: Debug logging, Log path
 
-### Phase 4 (Professional) - Partially Achieved
-- PTZ control responds in < 200ms (pending)
-- Motion detection with bounding boxes working ✓
-- Multi-monitor operates independently (pending)
+### 5.2 Settings Persistence
+
+- [ ] Load settings from API on dialog open (`GET /settings`)
+- [ ] Save settings to API on dialog OK (`PUT /settings`)
+- [ ] Per-section save support
+- [ ] Revert/Cancel without saving
 
 ---
 
-## Research & References
+## Phase 6: Polish and Advanced Features
 
-### Video Libraries
-- Linksoft.VideoEngine - Custom in-process FFmpeg engine (replaced FlyleafLib in Phases 1-6)
-- [FlyleafLib](https://github.com/SuRGeoNix/Flyleaf) - Previously used, replaced by VideoEngine
-- [Flyleaf.FFmpeg.Bindings](https://www.nuget.org/packages/Flyleaf.FFmpeg.Bindings/) - Retained as FFmpeg P/Invoke bindings dependency
+### 6.1 Connection Management
 
-### Surveillance Software
-- [GeoVision Video Wall](https://www.geovision.com.tw/product/GV-Video%20Wall)
-- [Camera.ui](https://github.com/seydx/camera.ui)
-- [Agent DVR](https://www.ispyconnect.com/)
+- [ ] Server connection dialog on startup (URL, optional auth)
+- [ ] Remember last server URL
+- [ ] Auto-reconnect to API on network recovery
+- [ ] Connection status in Ribbon status bar
+- [ ] Multiple server profiles (save/switch between servers)
 
-### UX Patterns
-- [Drag-and-Drop UX Guidelines](https://smart-interface-design-patterns.com/articles/drag-and-drop-ux/)
+### 6.2 Notifications
 
-### Protocols
-- [RTSP Streaming Protocol Guide](https://www.videosdk.live/developer-hub/rtmp/rtsp-streaming-protocol)
-- [ONVIF Specification](https://www.onvif.org/)
+- [ ] Toast notifications for camera disconnect/reconnect events
+- [ ] Toast notifications for motion detection events
+- [ ] Toast notifications for recording start/stop
+- [ ] Optional notification sounds (matching existing app behavior)
+- [ ] Notification history panel
+
+### 6.3 UI Enhancements
+
+- [ ] Dark/Light theme support (applied from server settings)
+- [ ] Multi-language support (loaded from server settings LCID)
+- [ ] Keyboard shortcuts for common actions
+- [ ] Ribbon quick access toolbar customization
+- [ ] Window state persistence (size, position, maximized)
+
+### 6.4 Aspire Integration
+
+- [ ] Add `WpfApp` to Aspire orchestration as optional client
+- [ ] Service discovery for API base URL
+- [ ] Health check integration
+
+---
+
+## Phase Summary
+
+| Phase | Focus | Key Deliverable |
+|-------|-------|-----------------|
+| **Phase 1** | Foundation | Project scaffold, API client, SignalR, Dashboard |
+| **Phase 2** | Management | Camera CRUD, Layout editor, full BlazorApp parity |
+| **Phase 3** | Live Streaming | Multi-camera HLS grid, motion visualization |
+| **Phase 4** | Recordings | Browse, play, download server recordings |
+| **Phase 5** | Settings | 7-tab settings dialog via API |
+| **Phase 6** | Polish | Notifications, themes, connection management |
+
+## Feature Comparison
+
+| Feature | BlazorApp | WpfApp (planned) |
+|---------|-----------|-------------------|
+| Camera CRUD | Yes | Phase 2 |
+| Layout management | Yes | Phase 2 |
+| Layout drag-drop editor | Yes | Phase 2 |
+| Dashboard with stats | Yes | Phase 1 |
+| Settings (7 tabs) | Yes | Phase 5 |
+| Live multi-camera grid | Yes (HLS.js) | Phase 3 (VideoEngine) |
+| Motion bounding boxes | Yes (SVG overlay) | Phase 3 (WPF overlay) |
+| Recording browser | Yes | Phase 4 |
+| Recording playback | Yes (HTML5 video) | Phase 4 (VideoHost) |
+| Recording download | Yes (JS interop) | Phase 4 (HTTP download) |
+| Real-time SignalR events | Yes | Phase 1 |
+| Dark/Light theme | Yes | Phase 6 |
+| GPU-accelerated rendering | No (browser) | Phase 3 (D3D11VA) |
+| Low-latency playback | No (HLS latency) | Phase 3 (VideoEngine) |
+| Notification sounds | No | Phase 6 |
+| Multiple server profiles | No | Phase 6 |

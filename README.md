@@ -1,8 +1,8 @@
-# Linksoft.CameraWall
+# Linksoft.VideoSurveillance
 
 A professional video surveillance platform for live monitoring of multiple RTSP/HTTP camera streams. Includes a WPF desktop application with an intuitive ribbon interface, a headless REST API + SignalR server edition, and Aspire orchestration.
 
-[![Release](https://img.shields.io/github/v/release/davidkallesen/Linksoft.CameraWall?include_prereleases)](https://github.com/davidkallesen/Linksoft.CameraWall/releases)
+[![Release](https://img.shields.io/github/v/release/davidkallesen/Linksoft.VideoSurveillance?include_prereleases)](https://github.com/davidkallesen/Linksoft.VideoSurveillance/releases)
 [![NuGet](https://img.shields.io/nuget/v/Linksoft.Wpf.CameraWall)](https://www.nuget.org/packages/Linksoft.Wpf.CameraWall)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -97,7 +97,7 @@ A professional video surveillance platform for live monitoring of multiple RTSP/
 ## Solution Structure
 
 ```
-Linksoft.CameraWall/
+Linksoft.VideoSurveillance/
 ├── src/
 │   ├── Linksoft.VideoSurveillance.Core/       # Shared library: models, enums, events, service interfaces
 │   ├── Linksoft.VideoEngine/                  # Cross-platform video engine (FFmpeg in-process)
@@ -113,7 +113,7 @@ Linksoft.CameraWall/
 │   └── Linksoft.VideoSurveillance.Aspire/      # Aspire AppHost (orchestration + dashboard)
 │
 ├── setup/
-│   └── Linksoft.CameraWall.Installer/         # WiX MSI installer project
+│   └── Linksoft.VideoSurveillance.Installer/   # WiX MSI installer project
 │
 ├── test/
 │   ├── Linksoft.VideoSurveillance.Core.Tests/ # xUnit v3 tests for Core library
@@ -206,7 +206,7 @@ Override categories: Connection, CameraDisplay, Performance, Recording, MotionDe
 
 ### Install
 
-Download the latest MSI installer from [GitHub Releases](https://github.com/davidkallesen/Linksoft.CameraWall/releases).
+Download the latest MSI installer from [GitHub Releases](https://github.com/davidkallesen/Linksoft.VideoSurveillance/releases).
 
 ### Build from Source
 

@@ -2,12 +2,12 @@
 namespace Linksoft.Wpf.CameraWall.Services;
 
 /// <summary>
-/// Service for checking GitHub releases for the Linksoft.CameraWall repository.
+/// Service for checking GitHub releases for the Linksoft.VideoSurveillance repository.
 /// </summary>
 [Registration(Lifetime.Singleton)]
 public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
 {
-    private const string GitHubApiUrl = "https://api.github.com/repos/davidkallesen/Linksoft.CameraWall/releases/latest";
+    private const string GitHubApiUrl = "https://api.github.com/repos/davidkallesen/Linksoft.VideoSurveillance/releases/latest";
     private const string UserAgent = "Linksoft-CameraWall";
 
     private readonly HttpClient httpClient;

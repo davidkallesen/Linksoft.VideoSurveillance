@@ -1,4 +1,4 @@
-# Linksoft.CameraWall - Claude Code Guidelines
+# Linksoft.VideoSurveillance - Claude Code Guidelines
 
 ## Project Overview
 A multi-assembly video surveillance platform with a WPF desktop app and a headless REST API + SignalR server, sharing a common Core library. Uses RTSP/HTTP protocols with Linksoft.VideoEngine (in-process FFmpeg) for video on both WPF and server.

@@ -11,8 +11,8 @@
 
   <PropertyGroup Label="NuGet Package Metadata">
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/davidkallesen/Linksoft.CameraWall</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/davidkallesen/Linksoft.CameraWall.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/davidkallesen/Linksoft.VideoSurveillance</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/davidkallesen/Linksoft.VideoSurveillance.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
