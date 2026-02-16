@@ -7,7 +7,8 @@ A multi-assembly video surveillance platform supporting both a WPF desktop appli
 ```mermaid
 graph TB
     subgraph Clients["Client Applications"]
-        WPF["Linksoft.CameraWall.Wpf.App<br/><i>WPF Desktop App</i>"]
+        WPF["Linksoft.CameraWall.Wpf.App<br/><i>WPF Desktop (Standalone)</i>"]
+        VSWpf["Linksoft.VideoSurveillance.Wpf.App<br/><i>WPF Desktop (API Client)</i>"]
         Blazor["Linksoft.VideoSurveillance.Blazor.App<br/><i>Blazor WebAssembly</i>"]
     end
 
@@ -19,9 +20,11 @@ graph TB
         Aspire["Linksoft.VideoSurveillance.Aspire<br/><i>.NET Aspire AppHost</i>"]
     end
 
+    VSWpf -- "REST + SignalR" --> API
     Blazor -- "REST + SignalR" --> API
     Aspire -- "orchestrates" --> API
     Aspire -- "orchestrates" --> Blazor
+    Aspire -- "orchestrates" --> VSWpf
 
     WPF -. "standalone desktop<br/>(no API dependency)" .-> Cameras["RTSP/HTTP Cameras"]
     API -- "RTSP/HTTP" --> Cameras
@@ -37,6 +40,8 @@ graph BT
     VP["Linksoft.VideoPlayer.Wpf<br/><i>net10.0-windows</i>"]
     CW["Linksoft.CameraWall.Wpf<br/><i>net10.0-windows</i>"]
     App["Linksoft.CameraWall.Wpf.App<br/><i>net10.0-windows</i>"]
+    VSWpf["VideoSurveillance.Wpf<br/><i>net10.0-windows</i>"]
+    VSApp["VideoSurveillance.Wpf.App<br/><i>net10.0-windows</i>"]
     Contracts["Api.Contracts<br/><i>net10.0</i>"]
     Domain["Api.Domain<br/><i>net10.0</i>"]
     API["Api<br/><i>net10.0</i>"]
@@ -48,6 +53,9 @@ graph BT
     CW --> Core
     CW --> VP
     App --> CW
+    VSWpf --> Core
+    VSWpf --> VP
+    VSApp --> VSWpf
     Contracts --> Core
     Domain --> Contracts
     Domain --> Core
@@ -57,6 +65,7 @@ graph BT
     API --> VE
     Aspire --> API
     Aspire --> Blazor
+    Aspire --> VSApp
 ```
 
 ## Layered Architecture
@@ -65,12 +74,15 @@ graph BT
 graph TB
     subgraph Presentation["Presentation Layer"]
         direction LR
-        AppShell["WPF App Shell<br/><i>Fluent.Ribbon, Serilog</i>"]
+        AppShell["CameraWall.Wpf.App<br/><i>Fluent.Ribbon, Serilog</i>"]
+        VSAppShell["VideoSurveillance.Wpf.App<br/><i>Fluent.Ribbon, Serilog</i>"]
         BlazorUI["Blazor WebAssembly<br/><i>MudBlazor, SignalR Client</i>"]
     end
 
     subgraph Library["WPF Library Layer"]
+        direction LR
         CWLib["Linksoft.CameraWall.Wpf<br/><i>Dialogs, Services, UserControls</i>"]
+        VSLib["VideoSurveillance.Wpf<br/><i>GatewayService, HubService</i>"]
     end
 
     subgraph VideoLayer["Video Layer"]
@@ -92,7 +104,9 @@ graph TB
     end
 
     AppShell --> CWLib
+    VSAppShell --> VSLib
     CWLib --> VideoPlayer
+    VSLib --> VideoPlayer
     CWLib --> Core
     VideoPlayer --> DirectX
     DirectX --> VideoEngine
@@ -149,11 +163,13 @@ graph LR
     end
 
     subgraph ClientSide["Client-Side Generation"]
-        ClientCode["Blazor.App<br/><i>Typed API Client</i>"]
+        BlazorClient["Blazor.App<br/><i>Typed API Client</i>"]
+        WpfClient["VideoSurveillance.Wpf<br/><i>Typed API Client</i>"]
     end
 
     YAML -- "atc-rest-api-source-generator<br/>(server)" --> Contracts
-    YAML -- "atc-rest-api-source-generator<br/>(client)" --> ClientCode
+    YAML -- "atc-rest-api-source-generator<br/>(client)" --> BlazorClient
+    YAML -- "atc-rest-api-source-generator<br/>(client)" --> WpfClient
     Contracts --> Domain
 ```
 
@@ -165,19 +181,23 @@ sequenceDiagram
     participant API as Api Server
     participant Hub as SignalR Hub
     participant Blazor as Blazor Client
+    participant WPF as WPF Client
 
     Camera ->> API: Video stream
     API ->> API: Motion detection
     API ->> Hub: MotionDetected event
     Hub ->> Blazor: MotionDetected broadcast
+    Hub ->> WPF: MotionDetected broadcast
 
     API ->> API: Recording state change
     API ->> Hub: RecordingStateChanged event
     Hub ->> Blazor: RecordingStateChanged broadcast
+    Hub ->> WPF: RecordingStateChanged broadcast
 
     API ->> API: Connection state change
     API ->> Hub: ConnectionStateChanged event
     Hub ->> Blazor: ConnectionStateChanged broadcast
+    Hub ->> WPF: ConnectionStateChanged broadcast
 ```
 
 ## Assembly Responsibilities
@@ -202,6 +222,8 @@ sequenceDiagram
 | **Linksoft.VideoPlayer.Wpf** | net10.0-windows | WPF `VideoHost` control that displays video via DirectComposition surface with XAML overlay support. Uses native window hierarchy (Surface Window + Overlay Window as WS_CHILD). Provides `OverlayBridge` for connecting WPF XAML elements to the native overlay window. |
 | **Linksoft.CameraWall.Wpf** | net10.0-windows | Reusable WPF library (NuGet package) containing the complete camera wall implementation. Includes: `CameraWallManager` facade, service implementations (storage, settings, recording, motion detection, timelapse, media cleanup, segmentation, thumbnails, GitHub updates), 7+ dialog windows (CameraConfiguration, Settings, RecordingsBrowser, AssignCamera, CheckForUpdates, About, InputBox), 38+ dialog part UserControls for settings/configuration, camera grid and tile UserControls, motion bounding box overlay, and localization resources (en-US, da-DK, de-DE). |
 | **Linksoft.CameraWall.Wpf.App** | net10.0-windows | Thin shell WPF application. Provides `MainWindow` with Fluent.Ribbon UI (Layouts, Cameras, View, Help tabs). Configures `Microsoft.Extensions.Hosting`, Serilog file logging (daily rolling, 7-day retention), and DI registration via `AddDependencyRegistrationsFromCameraWall()`. |
+| **Linksoft.VideoSurveillance.Wpf** | net10.0-windows | WPF library for the VideoSurveillance API client. Provides `GatewayService` (OpenAPI-generated REST client split by resource: Cameras, Layouts, Recordings, Settings) and `SurveillanceHubService` (SignalR client for real-time events). Uses `Atc.Rest.Api.SourceGenerator` for typed API client generation from `VideoSurveillance.yaml`. |
+| **Linksoft.VideoSurveillance.Wpf.App** | net10.0-windows | Thin shell WPF application for the VideoSurveillance API client. Provides `MainWindow` with Fluent.Ribbon UI (Home tab with Cameras, Layouts, Recordings buttons). Status bar shows server URL and SignalR hub connection state. Configures `Microsoft.Extensions.Hosting`, Serilog, splash screen, and DI for `GatewayService` + `SurveillanceHubService`. Reads `ApiBaseAddress` from `appsettings.json`. |
 
 ### Server Layer
 
@@ -221,7 +243,7 @@ sequenceDiagram
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
-| **Linksoft.VideoSurveillance.Aspire** | net10.0 | .NET Aspire AppHost for distributed orchestration. Starts the API on port 5000, then the Blazor.App with API service reference. Provides Aspire dashboard for monitoring, logs, traces, and health checks. |
+| **Linksoft.VideoSurveillance.Aspire** | net10.0 | .NET Aspire AppHost for distributed orchestration. Starts the API on port 5000, then the Blazor.App and Wpf.App with API service references. Provides Aspire dashboard for monitoring, logs, traces, and health checks. |
 
 ### Testing
 
