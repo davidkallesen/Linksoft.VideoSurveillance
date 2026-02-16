@@ -1,0 +1,206 @@
+<UserControl
+    x:Class="Linksoft.VideoSurveillance.Wpf.Views.CameraListView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:Linksoft.VideoSurveillance.Wpf.ValueConverters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:fontIcons="clr-namespace:Atc.Wpf.FontIcons;assembly=Atc.Wpf.FontIcons"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="clr-namespace:Linksoft.VideoSurveillance.Wpf.ViewModels"
+    d:DataContext="{d:DesignInstance Type=viewModels:CameraListViewModel}"
+    Loaded="OnLoaded"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:ConnectionStateToColorConverter x:Key="ConnectionStateToColorConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Title  -->
+        <TextBlock
+            Grid.Row="0"
+            Margin="0,0,0,16"
+            FontSize="24"
+            FontWeight="SemiBold"
+            Text="Cameras" />
+
+        <!--  Toolbar  -->
+        <ToolBar Grid.Row="1" Margin="0,0,0,8">
+            <Button Command="{Binding AddCameraCommand}" ToolTip="Add Camera">
+                <StackPanel Orientation="Horizontal">
+                    <fontIcons:ImageAwesomeSolid
+                        Width="16"
+                        Height="16"
+                        Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}"
+                        Icon="Plus" />
+                    <TextBlock Margin="6,0,0,0" Text="Add Camera" />
+                </StackPanel>
+            </Button>
+            <Separator />
+            <Button Command="{Binding LoadCommand}" ToolTip="Refresh">
+                <StackPanel Orientation="Horizontal">
+                    <fontIcons:ImageAwesomeSolid
+                        Width="16"
+                        Height="16"
+                        Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}"
+                        Icon="SyncAlt" />
+                    <TextBlock Margin="6,0,0,0" Text="Refresh" />
+                </StackPanel>
+            </Button>
+        </ToolBar>
+
+        <!--  Camera DataGrid  -->
+        <DataGrid
+            Grid.Row="2"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            CanUserDeleteRows="False"
+            IsReadOnly="True"
+            ItemsSource="{Binding Cameras}"
+            SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding DisplayName}"
+                    Header="Display Name" />
+                <DataGridTextColumn
+                    Width="120"
+                    Binding="{Binding IpAddress}"
+                    Header="IP Address" />
+                <DataGridTextColumn
+                    Width="60"
+                    Binding="{Binding Port}"
+                    Header="Port" />
+                <DataGridTextColumn
+                    Width="80"
+                    Binding="{Binding Protocol}"
+                    Header="Protocol" />
+
+                <!--  Connection State with color indicator  -->
+                <DataGridTemplateColumn Width="120" Header="Status">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse
+                                    Width="10"
+                                    Height="10"
+                                    Margin="0,0,6,0"
+                                    Fill="{Binding ConnectionState, Converter={StaticResource ConnectionStateToColorConverter}}" />
+                                <TextBlock Text="{Binding ConnectionState}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--  Recording indicator  -->
+                <DataGridTemplateColumn Width="90" Header="Recording">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding IsRecording, Converter={StaticResource BoolToVisibility}}">
+                                <Ellipse
+                                    Width="10"
+                                    Height="10"
+                                    Margin="0,0,6,0"
+                                    Fill="OrangeRed" />
+                                <TextBlock Foreground="OrangeRed" Text="Recording" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--  Action buttons  -->
+                <DataGridTemplateColumn Width="200" Header="Actions">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button
+                                    Margin="2"
+                                    Padding="4,2"
+                                    Command="{Binding DataContext.EditCameraCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="Edit">
+                                    <fontIcons:ImageAwesomeSolid
+                                        Width="14"
+                                        Height="14"
+                                        Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}"
+                                        Icon="Edit" />
+                                </Button>
+                                <Button
+                                    Margin="2"
+                                    Padding="4,2"
+                                    Command="{Binding DataContext.CaptureSnapshotCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="Capture Snapshot">
+                                    <fontIcons:ImageAwesomeSolid
+                                        Width="14"
+                                        Height="14"
+                                        Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}"
+                                        Icon="Camera" />
+                                </Button>
+                                <Button
+                                    Margin="2"
+                                    Padding="4,2"
+                                    Command="{Binding DataContext.StartRecordingCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="Start Recording">
+                                    <fontIcons:ImageAwesomeSolid
+                                        Width="14"
+                                        Height="14"
+                                        Foreground="OrangeRed"
+                                        Icon="Circle" />
+                                </Button>
+                                <Button
+                                    Margin="2"
+                                    Padding="4,2"
+                                    Command="{Binding DataContext.StopRecordingCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="Stop Recording">
+                                    <fontIcons:ImageAwesomeSolid
+                                        Width="14"
+                                        Height="14"
+                                        Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}"
+                                        Icon="Stop" />
+                                </Button>
+                                <Button
+                                    Margin="2"
+                                    Padding="4,2"
+                                    Command="{Binding DataContext.DeleteCameraCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="Delete">
+                                    <fontIcons:ImageAwesomeSolid
+                                        Width="14"
+                                        Height="14"
+                                        Foreground="OrangeRed"
+                                        Icon="TrashAlt" />
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!--  Loading overlay  -->
+        <Border
+            Grid.Row="2"
+            Background="#80000000"
+            Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="16"
+                Foreground="White"
+                Text="Loading cameras..." />
+        </Border>
+    </Grid>
+</UserControl>

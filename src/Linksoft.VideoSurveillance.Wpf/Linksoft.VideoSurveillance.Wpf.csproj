@@ -8,20 +8,39 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Core\Linksoft.VideoSurveillance.Core.csproj" />
-    <ProjectReference Include="..\Linksoft.VideoSurveillance.Api.Contracts\Linksoft.VideoSurveillance.Api.Contracts.csproj" />
     <ProjectReference Include="..\Linksoft.VideoPlayer.Wpf\Linksoft.VideoPlayer.Wpf.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Atc" Version="3.0.18" />
+    <PackageReference Include="Atc.Rest.Client" Version="2.0.26" />
+    <PackageReference Include="Atc.SourceGenerators" Version="0.1.49">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Atc.Wpf" Version="4.0.69" />
     <PackageReference Include="Atc.Wpf.Controls" Version="4.0.69" />
+    <PackageReference Include="Atc.Wpf.Forms" Version="4.0.69" />
+    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.0.69" />
     <PackageReference Include="Atc.Wpf.Theming" Version="4.0.69" />
     <PackageReference Include="Atc.XamlToolkit" Version="3.0.6" />
     <PackageReference Include="Atc.XamlToolkit.Wpf" Version="3.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.3.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Atc.Rest.Api.SourceGenerator" Version="1.0.87" OutputItemType="Analyzer" ReferenceOutputAssembly="false">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\VideoSurveillance.yaml" />
+    <AdditionalFiles Include=".atc-rest-api-client" />
   </ItemGroup>
 
 </Project>

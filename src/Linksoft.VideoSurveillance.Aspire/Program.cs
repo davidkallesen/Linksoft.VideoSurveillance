@@ -10,6 +10,11 @@ builder
     .WaitFor(api)
     .WithExternalHttpEndpoints();
 
+builder
+    .AddProject<Projects.Linksoft_VideoSurveillance_Wpf_App>("wpf")
+    .WithReference(api)
+    .WaitFor(api);
+
 await builder
     .Build()
     .RunAsync()

@@ -1,3 +1,3 @@
 [assembly: ThemeInfo(
     ResourceDictionaryLocation.None,
-    ResourceDictionaryLocation.SourceAssembly)]
+    ResourceDictionaryLocation.SourceAssembly)]

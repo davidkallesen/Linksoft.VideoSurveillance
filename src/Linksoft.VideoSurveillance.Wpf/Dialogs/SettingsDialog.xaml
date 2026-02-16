@@ -1,0 +1,290 @@
+<atc:NiceWindow
+    x:Class="Linksoft.VideoSurveillance.Wpf.Dialogs.SettingsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dialogs="clr-namespace:Linksoft.VideoSurveillance.Wpf.Dialogs"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Settings"
+    Width="700"
+    Height="550"
+    MinWidth="600"
+    MinHeight="450"
+    d:DataContext="{d:DesignInstance Type=dialogs:SettingsDialogViewModel,
+                                     IsDesignTimeCreatable=False}"
+    ResizeMode="CanResize"
+    ShowInTaskbar="False"
+    WindowStartupLocation="CenterOwner"
+    WindowStyle="ToolWindow"
+    mc:Ignorable="d">
+
+    <atc:NiceWindow.Resources>
+        <Style BasedOn="{StaticResource {x:Type GroupBox}}" TargetType="GroupBox">
+            <Setter Property="Padding" Value="10,10,20,20" />
+        </Style>
+    </atc:NiceWindow.Resources>
+
+    <atc:GridEx Margin="16" Rows="*,Auto">
+
+        <!--  Tabbed Settings  -->
+        <TabControl
+            Grid.Row="0"
+            BorderThickness="0"
+            TabStripPlacement="Left">
+
+            <!--  General Tab  -->
+            <TabItem Width="160" Header="General">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <GroupBox Header="Appearance">
+                            <StackPanel>
+                                <atc:LabelComboBox
+                                    Margin="0,0,0,8"
+                                    Items="{Binding Path=ThemeBaseItems}"
+                                    LabelText="Theme"
+                                    SelectedKey="{Binding Path=SelectedThemeBase, Mode=TwoWay}" />
+                                <atc:LabelTextBox
+                                    LabelText="Accent Color"
+                                    Text="{Binding Path=ThemeAccent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,12,0,0" Header="Startup">
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Connect cameras on startup"
+                                    IsChecked="{Binding Path=ConnectOnStartup}" />
+                                <CheckBox
+                                    Content="Start maximized"
+                                    IsChecked="{Binding Path=StartMaximized}" />
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Camera Display Tab  -->
+            <TabItem Header="Camera Display">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <GroupBox Header="Overlay">
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Show title"
+                                    IsChecked="{Binding Path=ShowOverlayTitle}" />
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Show description"
+                                    IsChecked="{Binding Path=ShowOverlayDescription}" />
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Show time"
+                                    IsChecked="{Binding Path=ShowOverlayTime}" />
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Show connection status"
+                                    IsChecked="{Binding Path=ShowOverlayConnectionStatus}" />
+                                <atc:LabelComboBox
+                                    Margin="0,0,0,8"
+                                    Items="{Binding Path=OverlayOpacityItems}"
+                                    LabelText="Overlay Opacity"
+                                    SelectedKey="{Binding Path=SelectedOverlayOpacity, Mode=TwoWay}" />
+                                <atc:LabelComboBox
+                                    Items="{Binding Path=OverlayPositionItems}"
+                                    LabelText="Overlay Position"
+                                    SelectedKey="{Binding Path=SelectedOverlayPosition, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,12,0,0" Header="Grid Layout">
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Allow drag and drop reorder"
+                                    IsChecked="{Binding Path=AllowDragAndDropReorder}" />
+                                <CheckBox
+                                    Content="Auto-save layout changes"
+                                    IsChecked="{Binding Path=AutoSaveLayoutChanges}" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,12,0,0" Header="Snapshots">
+                            <atc:LabelTextBox
+                                LabelText="Snapshot Path"
+                                Text="{Binding Path=SnapshotPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Connection Tab  -->
+            <TabItem Header="Connection">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <GroupBox Header="Default Camera Settings">
+                            <StackPanel>
+                                <atc:LabelComboBox
+                                    Margin="0,0,0,8"
+                                    Items="{Binding Path=DefaultProtocolItems}"
+                                    LabelText="Default Protocol"
+                                    SelectedKey="{Binding Path=SelectedDefaultProtocol, Mode=TwoWay}" />
+                                <atc:LabelIntegerBox
+                                    LabelText="Default Port"
+                                    Value="{Binding Path=DefaultPort, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,12,0,0" Header="Connection">
+                            <StackPanel>
+                                <atc:LabelIntegerBox
+                                    Margin="0,0,0,8"
+                                    LabelText="Connection Timeout (seconds)"
+                                    Value="{Binding Path=ConnectionTimeoutSeconds, Mode=TwoWay}" />
+                                <atc:LabelIntegerBox
+                                    Margin="0,0,0,8"
+                                    LabelText="Reconnect Delay (seconds)"
+                                    Value="{Binding Path=ReconnectDelaySeconds, Mode=TwoWay}" />
+                                <CheckBox
+                                    Content="Auto-reconnect on failure"
+                                    IsChecked="{Binding Path=AutoReconnectOnFailure}" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,12,0,0" Header="Notifications">
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Show notification on disconnect"
+                                    IsChecked="{Binding Path=ShowNotificationOnDisconnect}" />
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Show notification on reconnect"
+                                    IsChecked="{Binding Path=ShowNotificationOnReconnect}" />
+                                <CheckBox
+                                    Content="Play notification sound"
+                                    IsChecked="{Binding Path=PlayNotificationSound}" />
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Performance Tab  -->
+            <TabItem Header="Performance">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <GroupBox Header="Video">
+                            <StackPanel>
+                                <atc:LabelComboBox
+                                    Margin="0,0,0,8"
+                                    Items="{Binding Path=VideoQualityItems}"
+                                    LabelText="Video Quality"
+                                    SelectedKey="{Binding Path=SelectedVideoQuality, Mode=TwoWay}" />
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Hardware acceleration"
+                                    IsChecked="{Binding Path=HardwareAcceleration}" />
+                                <CheckBox
+                                    Content="Low latency mode"
+                                    IsChecked="{Binding Path=LowLatencyMode}" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,12,0,0" Header="Streaming">
+                            <StackPanel>
+                                <atc:LabelIntegerBox
+                                    Margin="0,0,0,8"
+                                    LabelText="Buffer Duration (ms)"
+                                    Value="{Binding Path=BufferDurationMs, Mode=TwoWay}" />
+                                <atc:LabelComboBox
+                                    Margin="0,0,0,8"
+                                    Items="{Binding Path=RtspTransportItems}"
+                                    LabelText="RTSP Transport"
+                                    SelectedKey="{Binding Path=SelectedRtspTransport, Mode=TwoWay}" />
+                                <atc:LabelIntegerBox
+                                    LabelText="Max Latency (ms)"
+                                    Value="{Binding Path=MaxLatencyMs, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Recording Tab  -->
+            <TabItem Header="Recording">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <GroupBox Header="Recording">
+                            <StackPanel>
+                                <atc:LabelTextBox
+                                    Margin="0,0,0,8"
+                                    LabelText="Recording Path"
+                                    Text="{Binding Path=RecordingPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <atc:LabelComboBox
+                                    Margin="0,0,0,8"
+                                    Items="{Binding Path=RecordingFormatItems}"
+                                    LabelText="Recording Format"
+                                    SelectedKey="{Binding Path=SelectedRecordingFormat, Mode=TwoWay}" />
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Enable recording on motion"
+                                    IsChecked="{Binding Path=EnableRecordingOnMotion}" />
+                                <CheckBox
+                                    Content="Enable recording on connect"
+                                    IsChecked="{Binding Path=EnableRecordingOnConnect}" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,12,0,0" Header="Segmentation">
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Enable hourly segmentation"
+                                    IsChecked="{Binding Path=EnableHourlySegmentation}" />
+                                <atc:LabelIntegerBox
+                                    LabelText="Max Recording Duration (minutes)"
+                                    Value="{Binding Path=MaxRecordingDurationMinutes, Mode=TwoWay}" />
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  Advanced Tab  -->
+            <TabItem Header="Advanced">
+                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <GroupBox Header="Logging">
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,0,0,8"
+                                    Content="Enable debug logging"
+                                    IsChecked="{Binding Path=EnableDebugLogging}" />
+                                <atc:LabelTextBox
+                                    LabelText="Log Path"
+                                    Text="{Binding Path=LogPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!--  Dialog Buttons  -->
+        <StackPanel
+            Grid.Row="1"
+            Margin="0,16,0,0"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <Button
+                MinWidth="80"
+                Margin="0,0,8,0"
+                Padding="16,8"
+                Command="{Binding Path=SaveCommand}"
+                Content="Save"
+                IsDefault="True" />
+            <Button
+                MinWidth="80"
+                Padding="16,8"
+                Command="{Binding Path=CancelCommand}"
+                Content="Cancel"
+                IsCancel="True" />
+        </StackPanel>
+    </atc:GridEx>
+</atc:NiceWindow>

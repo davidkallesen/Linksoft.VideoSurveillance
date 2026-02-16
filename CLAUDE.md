@@ -9,7 +9,9 @@ A multi-assembly video surveillance platform with a WPF desktop app and a headle
 - `Linksoft.VideoEngine.DirectX` - D3D11VA GPU acceleration, Video Processor, swap chain (net10.0-windows)
 - `Linksoft.VideoPlayer.Wpf` - WPF VideoHost control with DComp surface + XAML overlay (net10.0-windows)
 - `Linksoft.CameraWall.Wpf` - Reusable WPF library (NuGet package) with UI, dialogs, VideoEngine integration
-- `Linksoft.CameraWall.Wpf.App` - Thin shell WPF application using the library
+- `Linksoft.CameraWall.Wpf.App` - Thin shell WPF application using the library (standalone, connects directly to cameras)
+- `Linksoft.VideoSurveillance.Wpf` - WPF library for the VideoSurveillance API client (GatewayService, SurveillanceHubService, OpenAPI-generated client)
+- `Linksoft.VideoSurveillance.Wpf.App` - WPF management application for the API server (Fluent.Ribbon, Serilog, splash screen)
 - `Linksoft.VideoSurveillance.Api.Contracts` - Generated API models, endpoints, handler interfaces (OpenAPI-first via atc-rest-api-source-generator)
 - `Linksoft.VideoSurveillance.Api.Domain` - Handler implementations calling Core services
 - `Linksoft.VideoSurveillance.Api` - ASP.NET Core host with SignalR hub
@@ -20,10 +22,12 @@ A multi-assembly video surveillance platform with a WPF desktop app and a headle
 The solution follows a layered architecture with Core at the base:
 - **Core** contains all shared models, enums, events, service interfaces, and helpers (zero UI dependencies)
 - **VideoEngine** provides cross-platform video: demuxing, decoding (CPU/D3D11VA), recording, snapshots. DirectX project adds GPU rendering for WPF.
-- **WPF library** references Core and VideoEngine, adds UI controls, dialogs, VideoHost-based media pipeline
-- **WPF App** is a thin shell with Ribbon UI delegating to `ICameraWallManager`
+- **CameraWall WPF library** references Core and VideoEngine, adds UI controls, dialogs, VideoHost-based media pipeline
+- **CameraWall WPF App** is a standalone thin shell with Ribbon UI delegating to `ICameraWallManager` (connects directly to cameras)
+- **VideoSurveillance WPF library** references Core and VideoPlayer, provides `GatewayService` (OpenAPI REST client) and `SurveillanceHubService` (SignalR client)
+- **VideoSurveillance WPF App** is an API client thin shell with Ribbon UI, connects to the REST API + SignalR hub (not directly to cameras)
 - **API** references Core and provides REST endpoints + SignalR real-time events
-- **Aspire** orchestrates the API (and future Blazor UI) with a developer dashboard
+- **Aspire** orchestrates the API, Blazor.App, and Wpf.App with a developer dashboard
 
 ## Server Edition
 The REST API + SignalR server enables headless video surveillance:
