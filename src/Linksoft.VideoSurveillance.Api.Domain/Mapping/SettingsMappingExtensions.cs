@@ -68,6 +68,8 @@ internal static class SettingsMappingExtensions
             EnableHourlySegmentation: recording.EnableHourlySegmentation,
             MaxRecordingDurationMinutes: recording.MaxRecordingDurationMinutes,
             ThumbnailTileCount: recording.ThumbnailTileCount,
+            EnableTimelapse: recording.EnableTimelapse,
+            TimelapseInterval: recording.TimelapseInterval,
             CleanupSchedule: ParseCleanupSchedule(recording.Cleanup.Schedule),
             RecordingRetentionDays: recording.Cleanup.RecordingRetentionDays,
             CleanupIncludeSnapshots: recording.Cleanup.IncludeSnapshots,
@@ -259,6 +261,13 @@ internal static class SettingsMappingExtensions
         if (api.ThumbnailTileCount > 0)
         {
             recording.ThumbnailTileCount = api.ThumbnailTileCount;
+        }
+
+        recording.EnableTimelapse = api.EnableTimelapse;
+
+        if (!string.IsNullOrEmpty(api.TimelapseInterval))
+        {
+            recording.TimelapseInterval = api.TimelapseInterval;
         }
 
         if (api.CleanupSchedule is not null)

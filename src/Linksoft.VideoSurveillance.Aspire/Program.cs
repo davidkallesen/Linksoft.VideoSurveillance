@@ -15,6 +15,9 @@ builder
     .WithReference(api)
     .WaitFor(api);
 
+builder
+    .AddProject<Projects.Linksoft_CameraWall_Wpf_App>("CameraWall");
+
 await builder
     .Build()
     .RunAsync()

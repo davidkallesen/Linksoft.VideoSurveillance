@@ -3,6 +3,7 @@ global using System.Collections.Generic;
 global using System.Collections.ObjectModel;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Globalization;
+global using System.IO;
 global using System.Linq;
 global using System.Net.Http;
 global using System.Text.Json;
@@ -10,24 +11,33 @@ global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Windows;
 global using System.Windows.Controls;
-global using System.Windows.Data;
 global using System.Windows.Input;
 global using System.Windows.Interop;
 global using System.Windows.Media;
 global using System.Windows.Threading;
 
 global using Atc.Rest.Api.SourceGenerator;
+global using Atc.Wpf.Notifications;
 global using Atc.XamlToolkit.Controls.Attributes;
 global using Atc.XamlToolkit.Mvvm;
+
+global using Atc.Wpf.Translation;
 
 global using ControlzEx.Theming;
 
 global using Linksoft.VideoEngine;
 
+global using Linksoft.VideoSurveillance.Models.Settings;
 global using Linksoft.VideoSurveillance.Services;
 
+global using Linksoft.VideoSurveillance.Wpf.Core;
+global using Linksoft.VideoSurveillance.Wpf.Core.Events;
+global using Linksoft.VideoSurveillance.Wpf.Core.Factories;
+global using Linksoft.VideoSurveillance.Wpf.Core.Helpers;
+global using Linksoft.VideoSurveillance.Wpf.Core.UserControls;
+
 global using Linksoft.VideoSurveillance.Wpf.Dialogs;
-global using Linksoft.VideoSurveillance.Wpf.Events;
+global using Linksoft.VideoSurveillance.Wpf.Models;
 global using Linksoft.VideoSurveillance.Wpf.Services;
 global using Linksoft.VideoSurveillance.Wpf.UserControls;
 global using Linksoft.VideoSurveillance.Wpf.ViewModels;
@@ -47,3 +57,5 @@ global using VideoSurveillance.Generated.Recordings.Models;
 global using VideoSurveillance.Generated.Settings.Client;
 global using VideoSurveillance.Generated.Settings.Endpoints.Interfaces;
 global using VideoSurveillance.Generated.Settings.Models;
+
+global using IApplicationSettingsService = Linksoft.VideoSurveillance.Wpf.Core.Services.IApplicationSettingsService;

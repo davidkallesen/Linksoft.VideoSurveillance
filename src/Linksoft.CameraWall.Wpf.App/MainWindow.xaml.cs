@@ -9,9 +9,7 @@ public partial class MainWindow : Fluent.IRibbonWindow
     /// Gets the title bar. Returns null since NiceWindow doesn't use Fluent.Ribbon's title bar.
     /// Implementing IRibbonWindow prevents binding warnings from Ribbon's internal FindAncestor bindings.
     /// </summary>
-#pragma warning disable CS0109 // Member does not hide an inherited member; new keyword is not required
-    public new Fluent.RibbonTitleBar? TitleBar => null;
-#pragma warning restore CS0109 // Member does not hide an inherited member; new keyword is not required
+    public Fluent.RibbonTitleBar? TitleBar => null;
 
     private readonly MainWindowViewModel viewModel;
 
@@ -55,6 +53,17 @@ public partial class MainWindow : Fluent.IRibbonWindow
         KeyEventArgs e)
         => viewModel.OnKeyUp(this, e);
 
+    private void OnBackstageIsOpenChanged(
+        object sender,
+        DependencyPropertyChangedEventArgs e)
+    {
+        // Collapse the CameraGrid when Backstage opens so VideoHost's
+        // IsVisibleChanged fires and hides the native DComp surface windows.
+        CameraGridControl.Visibility = (bool)e.NewValue
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+    }
+
     private void CameraGrid_FullScreenRequested(
         object? sender,
         FullScreenRequestedEventArgs e)
@@ -89,12 +98,4 @@ public partial class MainWindow : Fluent.IRibbonWindow
     {
         viewModel.DeleteCamera(e);
     }
-
-    // Hide CameraGrid when Backstage opens to avoid z-order issues with hardware-accelerated video
-    private void OnBackstageIsOpenChanged(
-        object sender,
-        DependencyPropertyChangedEventArgs e)
-        => CameraGridControl.Visibility = (bool)e.NewValue
-            ? Visibility.Hidden
-            : Visibility.Visible;
 }

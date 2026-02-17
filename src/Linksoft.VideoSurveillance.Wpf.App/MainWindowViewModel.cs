@@ -8,11 +8,18 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly GatewayService gatewayService;
     private readonly SurveillanceHubService hubService;
     private readonly IGitHubReleaseService gitHubReleaseService;
+    private readonly IApplicationSettingsService settingsService;
     private readonly LiveViewViewModel liveViewViewModel;
     private readonly DashboardViewModel dashboardViewModel;
     private readonly CameraListViewModel cameraListViewModel;
     private readonly LayoutListViewModel layoutListViewModel;
     private readonly RecordingsViewModel recordingsViewModel;
+    private readonly NotificationHistoryViewModel notificationHistoryViewModel;
+
+    private WindowState previousWindowState = WindowState.Normal;
+    private WindowStyle previousWindowStyle = WindowStyle.SingleBorderWindow;
+    private ResizeMode previousResizeMode = ResizeMode.CanResize;
+    private DispatcherTimer? latencyTimer;
 
     [ObservableProperty]
     private string statusText = "Ready";
@@ -23,8 +30,23 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string hubConnectionState = "Disconnected";
 
+    [ObservableProperty(DependentPropertyNames = [nameof(ShowChangeServer)])]
+    private bool isAspireManaged;
+
     [ObservableProperty]
     private ViewModelBase? currentView;
+
+    [ObservableProperty]
+    private bool isFullScreen;
+
+    [ObservableProperty]
+    private int connectedCameras;
+
+    [ObservableProperty]
+    private int activeRecordings;
+
+    [ObservableProperty]
+    private string serverLatency = "--";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
@@ -33,31 +55,39 @@ public partial class MainWindowViewModel : ViewModelBase
         GatewayService gatewayService,
         SurveillanceHubService hubService,
         IGitHubReleaseService gitHubReleaseService,
+        IApplicationSettingsService settingsService,
         LiveViewViewModel liveViewViewModel,
         DashboardViewModel dashboardViewModel,
         CameraListViewModel cameraListViewModel,
         LayoutListViewModel layoutListViewModel,
         RecordingsViewModel recordingsViewModel,
-        string apiBaseAddress)
+        NotificationHistoryViewModel notificationHistoryViewModel,
+        string apiBaseAddress,
+        bool isAspireManaged)
     {
         ArgumentNullException.ThrowIfNull(gatewayService);
         ArgumentNullException.ThrowIfNull(hubService);
         ArgumentNullException.ThrowIfNull(gitHubReleaseService);
+        ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(liveViewViewModel);
         ArgumentNullException.ThrowIfNull(dashboardViewModel);
         ArgumentNullException.ThrowIfNull(cameraListViewModel);
         ArgumentNullException.ThrowIfNull(layoutListViewModel);
         ArgumentNullException.ThrowIfNull(recordingsViewModel);
+        ArgumentNullException.ThrowIfNull(notificationHistoryViewModel);
 
         this.gatewayService = gatewayService;
         this.hubService = hubService;
         this.gitHubReleaseService = gitHubReleaseService;
+        this.settingsService = settingsService;
         this.liveViewViewModel = liveViewViewModel;
         this.dashboardViewModel = dashboardViewModel;
         this.cameraListViewModel = cameraListViewModel;
         this.layoutListViewModel = layoutListViewModel;
         this.recordingsViewModel = recordingsViewModel;
+        this.notificationHistoryViewModel = notificationHistoryViewModel;
         serverUrl = apiBaseAddress;
+        this.isAspireManaged = isAspireManaged;
 
         // Default view
         CurrentView = liveViewViewModel;
@@ -69,6 +99,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 HubConnectionState = state;
             });
         };
+
+        hubService.OnConnectionStateChanged += OnConnectionStateChanged;
+        hubService.OnRecordingStateChanged += OnRecordingStateChanged;
     }
 
     [RelayCommand]
@@ -106,13 +139,17 @@ public partial class MainWindowViewModel : ViewModelBase
         recordingsViewModel.LoadCommand.Execute(parameter: null);
     }
 
+    [RelayCommand]
+    private void ViewNotifications()
+        => CurrentView = notificationHistoryViewModel;
+
     [RelayCommand("ShowSettings")]
     private async Task ShowSettingsAsync()
     {
-        var viewModel = new SettingsDialogViewModel(gatewayService);
+        var viewModel = new Linksoft.VideoSurveillance.Wpf.Dialogs.SettingsDialogViewModel(gatewayService, settingsService);
         await viewModel.LoadSettingsAsync().ConfigureAwait(true);
 
-        var dialog = new SettingsDialog(viewModel)
+        var dialog = new Linksoft.VideoSurveillance.Wpf.Dialogs.SettingsDialog(viewModel)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -147,7 +184,201 @@ public partial class MainWindowViewModel : ViewModelBase
         dialog.ShowDialog();
     }
 
+    /// <summary>
+    /// Gets whether the "Change Server" button should be visible.
+    /// </summary>
+    public Visibility ShowChangeServer
+        => IsAspireManaged ? Visibility.Collapsed : Visibility.Visible;
+
+    [RelayCommand]
+    private static void ChangeServer()
+    {
+        var exePath = Environment.ProcessPath;
+        if (!string.IsNullOrEmpty(exePath))
+        {
+            Process.Start(exePath, "--choose-server");
+            Application.Current.Shutdown();
+        }
+    }
+
     [RelayCommand]
     private static void Exit()
         => Application.Current.Shutdown();
+
+    [RelayCommand]
+    private void ToggleFullScreen()
+    {
+        var mainWindow = Application.Current.MainWindow;
+        if (mainWindow is null)
+        {
+            return;
+        }
+
+        if (IsFullScreen)
+        {
+            RestoreFromFullScreen(mainWindow);
+        }
+        else
+        {
+            previousWindowState = mainWindow.WindowState;
+            previousWindowStyle = mainWindow.WindowStyle;
+            previousResizeMode = mainWindow.ResizeMode;
+
+            mainWindow.WindowStyle = WindowStyle.None;
+            mainWindow.ResizeMode = ResizeMode.NoResize;
+            mainWindow.WindowState = WindowState.Maximized;
+            IsFullScreen = true;
+        }
+    }
+
+    [RelayCommand]
+    private void RefreshCurrentView()
+    {
+        switch (CurrentView)
+        {
+            case LiveViewViewModel vm:
+                vm.LoadCommand.Execute(parameter: null);
+                break;
+            case DashboardViewModel vm:
+                vm.LoadCommand.Execute(parameter: null);
+                break;
+            case CameraListViewModel vm:
+                vm.LoadCommand.Execute(parameter: null);
+                break;
+            case LayoutListViewModel vm:
+                vm.LoadCommand.Execute(parameter: null);
+                break;
+            case RecordingsViewModel vm:
+                vm.LoadCommand.Execute(parameter: null);
+                break;
+        }
+    }
+
+    [RelayCommand]
+    private static void ShowKeyboardShortcuts()
+    {
+        var dialog = new Dialogs.KeyboardShortcutsDialog
+        {
+            Owner = Application.Current.MainWindow,
+        };
+
+        dialog.ShowDialog();
+    }
+
+    /// <summary>
+    /// Restores the window from full-screen mode.
+    /// </summary>
+    internal void RestoreFromFullScreen(Window window)
+    {
+        window.WindowStyle = previousWindowStyle;
+        window.ResizeMode = previousResizeMode;
+        window.WindowState = previousWindowState;
+        IsFullScreen = false;
+    }
+
+    /// <summary>
+    /// Loads initial camera and recording stats from the API.
+    /// </summary>
+    public async Task LoadInitialStatsAsync()
+    {
+        try
+        {
+            var cameras = await gatewayService
+                .GetCamerasAsync()
+                .ConfigureAwait(true);
+
+            if (cameras is not null)
+            {
+                ConnectedCameras = cameras.Count(c =>
+                    c.ConnectionState == CameraConnectionState.Connected);
+                ActiveRecordings = cameras.Count(c => c.IsRecording);
+            }
+        }
+        catch (HttpRequestException)
+        {
+            ConnectedCameras = 0;
+            ActiveRecordings = 0;
+        }
+    }
+
+    /// <summary>
+    /// Starts periodic latency monitoring (every 30 seconds).
+    /// </summary>
+    public void StartLatencyMonitoring()
+    {
+        latencyTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(30),
+        };
+        latencyTimer.Tick += async (_, _) => await MeasureLatencyAsync().ConfigureAwait(false);
+        latencyTimer.Start();
+
+        // Fire initial measurement
+        _ = MeasureLatencyAsync();
+    }
+
+    /// <summary>
+    /// Stops the latency monitoring timer.
+    /// </summary>
+    public void StopLatencyMonitoring()
+    {
+        latencyTimer?.Stop();
+        latencyTimer = null;
+    }
+
+    private async Task MeasureLatencyAsync()
+    {
+        try
+        {
+            var sw = Stopwatch.StartNew();
+            await gatewayService.GetSettingsAsync().ConfigureAwait(false);
+            sw.Stop();
+
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                ServerLatency = $"{sw.ElapsedMilliseconds} ms";
+            });
+        }
+        catch
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                ServerLatency = "N/A";
+            });
+        }
+    }
+
+    private void OnConnectionStateChanged(
+        SurveillanceHubService.ConnectionStateEvent e)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (string.Equals(e.NewState, "connected", StringComparison.OrdinalIgnoreCase))
+            {
+                ConnectedCameras++;
+            }
+            else
+            {
+                ConnectedCameras = Math.Max(0, ConnectedCameras - 1);
+            }
+        });
+    }
+
+    private void OnRecordingStateChanged(
+        SurveillanceHubService.RecordingStateEvent e)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (string.Equals(e.NewState, "recording", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(e.NewState, "recordingMotion", StringComparison.OrdinalIgnoreCase))
+            {
+                ActiveRecordings++;
+            }
+            else if (string.Equals(e.OldState, "recording", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(e.OldState, "recordingMotion", StringComparison.OrdinalIgnoreCase))
+            {
+                ActiveRecordings = Math.Max(0, ActiveRecordings - 1);
+            }
+        });
+    }
 }

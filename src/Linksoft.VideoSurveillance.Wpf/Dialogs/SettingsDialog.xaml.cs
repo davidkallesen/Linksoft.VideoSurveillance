@@ -21,15 +21,5 @@ public partial class SettingsDialog
             DialogResult = e.DialogResult;
             Close();
         };
-
-        // Live theme preview when theme base changes
-        viewModel.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName is nameof(SettingsDialogViewModel.SelectedThemeBase)
-                or nameof(SettingsDialogViewModel.ThemeAccent))
-            {
-                viewModel.ApplyThemePreview();
-            }
-        };
     }
 }

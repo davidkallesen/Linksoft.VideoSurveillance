@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Linksoft.CameraWall.Wpf.App\Linksoft.CameraWall.Wpf.App.csproj" />
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Api\Linksoft.VideoSurveillance.Api.csproj" />
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Blazor.App\Linksoft.VideoSurveillance.Blazor.App.csproj" />
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Wpf.App\Linksoft.VideoSurveillance.Wpf.App.csproj" />

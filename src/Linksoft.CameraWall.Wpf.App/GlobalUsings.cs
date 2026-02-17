@@ -19,18 +19,21 @@ global using Atc.Wpf.Translation;
 global using Atc.XamlToolkit.Diagnostics;
 global using Atc.XamlToolkit.Mvvm;
 
-global using Linksoft.CameraWall.Wpf.Events;
-global using Linksoft.CameraWall.Wpf.Helpers;
-global using Linksoft.CameraWall.Wpf.Models;
-global using Linksoft.CameraWall.Wpf.Resources;
 global using Linksoft.CameraWall.Wpf.Services;
 global using Linksoft.CameraWall.Wpf.SplashScreens;
-global using Linksoft.CameraWall.Wpf.UserControls;
 
 global using Linksoft.VideoEngine;
 global using Linksoft.VideoEngine.DirectX;
 
 global using Linksoft.VideoSurveillance.Models.Settings;
+
+global using Linksoft.VideoSurveillance.Wpf.Core;
+global using Linksoft.VideoSurveillance.Wpf.Core.Events;
+global using Linksoft.VideoSurveillance.Wpf.Core.Helpers;
+global using Linksoft.VideoSurveillance.Wpf.Core.Models;
+global using Linksoft.VideoSurveillance.Wpf.Core.Resources;
+global using Linksoft.VideoSurveillance.Wpf.Core.Services;
+global using Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;

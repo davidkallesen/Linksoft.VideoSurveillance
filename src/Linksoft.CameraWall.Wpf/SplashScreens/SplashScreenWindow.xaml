@@ -29,7 +29,7 @@
             Width="64"
             Height="64"
             HorizontalAlignment="Center"
-            Source="/Linksoft.CameraWall.Wpf;component/Resources/Images/cctv-camera.png" />
+            Source="/Linksoft.VideoSurveillance.Wpf.Core;component/Resources/Images/cctv-camera.png" />
 
         <!--  Header  -->
         <TextBlock

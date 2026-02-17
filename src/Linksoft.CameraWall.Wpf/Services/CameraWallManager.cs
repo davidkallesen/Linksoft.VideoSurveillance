@@ -294,7 +294,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     /// <inheritdoc />
     public void ShowFullScreen(
         CameraConfiguration camera,
-        UserControls.CameraTile? sourceTile = null)
+        CameraTile? sourceTile = null)
     {
         ArgumentNullException.ThrowIfNull(camera);
 

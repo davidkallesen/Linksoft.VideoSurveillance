@@ -41,7 +41,7 @@ public partial class CameraWallApp
                 services.AddSingleton<IVideoPlayerFactory, VideoPlayerFactory>();
 
                 // Library services (auto-registered via [Registration] attribute)
-                services.AddDependencyRegistrationsFromWpf();
+                services.AddDependencyRegistrationsFromWpf(includeReferencedAssemblies: true);
 
                 // Toast notification service (used by library and app)
                 services.AddSingleton<IToastNotificationService, ToastNotificationService>();

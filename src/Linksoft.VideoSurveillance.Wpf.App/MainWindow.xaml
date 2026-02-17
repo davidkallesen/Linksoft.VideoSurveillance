@@ -14,23 +14,104 @@
     MinWidth="700"
     MinHeight="400"
     d:DataContext="{d:DesignInstance Type=app:MainWindowViewModel}"
-    WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
+    <atcTheming:NiceWindow.InputBindings>
+        <KeyBinding
+            Key="D1"
+            Command="{Binding Path=ViewLiveViewCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="D2"
+            Command="{Binding Path=ViewDashboardCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="D3"
+            Command="{Binding Path=ViewCamerasCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="D4"
+            Command="{Binding Path=ViewLayoutsCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="D5"
+            Command="{Binding Path=ViewRecordingsCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="D6"
+            Command="{Binding Path=ViewNotificationsCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="N"
+            Command="{Binding Path=ViewCamerasCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="OemComma"
+            Command="{Binding Path=ShowSettingsCommand}"
+            Modifiers="Ctrl" />
+        <KeyBinding Key="F5" Command="{Binding Path=RefreshCurrentViewCommand}" />
+        <KeyBinding Key="F11" Command="{Binding Path=ToggleFullScreenCommand}" />
+        <KeyBinding Key="F1" Command="{Binding Path=ShowKeyboardShortcutsCommand}" />
+    </atcTheming:NiceWindow.InputBindings>
+
+    <AdornerDecorator>
     <atcTheming:GridEx Rows="Auto,*,Auto">
 
         <!--  Ribbon  -->
         <fluent:Ribbon
             Grid.Row="0"
             AutomaticStateManagement="False"
-            CanCustomizeQuickAccessToolBar="False"
-            IsQuickAccessToolBarMenuDropDownVisible="False"
-            IsQuickAccessToolBarVisible="False">
+            CanCustomizeQuickAccessToolBar="True"
+            IsQuickAccessToolBarMenuDropDownVisible="True"
+            IsQuickAccessToolBarVisible="True">
+
+            <!--  Quick Access Toolbar  -->
+            <fluent:Ribbon.QuickAccessItems>
+                <fluent:QuickAccessMenuItem IsChecked="True">
+                    <fluent:Button
+                        Command="{Binding Path=ViewLiveViewCommand}"
+                        Header="Live View"
+                        Size="Small">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Video" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
+                </fluent:QuickAccessMenuItem>
+                <fluent:QuickAccessMenuItem IsChecked="True">
+                    <fluent:Button
+                        Command="{Binding Path=RefreshCurrentViewCommand}"
+                        Header="Refresh"
+                        Size="Small">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="SyncAlt" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
+                </fluent:QuickAccessMenuItem>
+                <fluent:QuickAccessMenuItem IsChecked="True">
+                    <fluent:Button
+                        Command="{Binding Path=ShowSettingsCommand}"
+                        Header="Settings"
+                        Size="Small">
+                        <fluent:Button.Icon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Cog" />
+                        </fluent:Button.Icon>
+                    </fluent:Button>
+                </fluent:QuickAccessMenuItem>
+            </fluent:Ribbon.QuickAccessItems>
 
             <!--  Backstage  -->
             <fluent:Ribbon.Menu>
-                <fluent:Backstage>
+                <fluent:Backstage x:Name="Backstage" IsOpenChanged="OnBackstageIsOpenChanged">
                     <fluent:BackstageTabControl>
+                        <fluent:Button
+                            Command="{Binding Path=ChangeServerCommand}"
+                            Header="Change Server"
+                            KeyTip="V"
+                            Visibility="{Binding Path=ShowChangeServer}">
+                            <fluent:Button.Icon>
+                                <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Server" />
+                            </fluent:Button.Icon>
+                        </fluent:Button>
                         <fluent:Button
                             Command="{Binding Path=ShowSettingsCommand}"
                             Header="Settings"
@@ -125,11 +206,25 @@
                         </fluent:Button.LargeIcon>
                     </fluent:Button>
                 </fluent:RibbonGroupBox>
+
+                <fluent:RibbonGroupBox Header="Notifications">
+                    <fluent:Button
+                        Command="{Binding Path=ViewNotificationsCommand}"
+                        Header="Notifications"
+                        Size="Large">
+                        <fluent:Button.LargeIcon>
+                            <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Bell" />
+                        </fluent:Button.LargeIcon>
+                    </fluent:Button>
+                </fluent:RibbonGroupBox>
             </fluent:RibbonTabItem>
         </fluent:Ribbon>
 
         <!--  Main Content  -->
-        <ContentControl Grid.Row="1" Content="{Binding CurrentView}" />
+        <ContentControl
+            x:Name="MainContent"
+            Grid.Row="1"
+            Content="{Binding CurrentView}" />
 
         <!--  Status Bar  -->
         <StatusBar Grid.Row="2">
@@ -148,7 +243,26 @@
                     <Run Text="Hub: " /><Run Text="{Binding Path=HubConnectionState, Mode=OneWay}" />
                 </TextBlock>
             </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Cameras: " /><Run Text="{Binding Path=ConnectedCameras, Mode=OneWay}" />
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Recordings: " /><Run Text="{Binding Path=ActiveRecordings, Mode=OneWay}" />
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock>
+                    <Run Text="Latency: " /><Run Text="{Binding Path=ServerLatency, Mode=OneWay}" />
+                </TextBlock>
+            </StatusBarItem>
         </StatusBar>
     </atcTheming:GridEx>
+    </AdornerDecorator>
 
 </atcTheming:NiceWindow>

@@ -3,23 +3,27 @@ namespace Linksoft.VideoSurveillance.Wpf.Dialogs;
 /// <summary>
 /// View model for the settings dialog.
 /// Loads/saves settings via REST API (flat AppSettings record).
+/// General settings are stored locally via IApplicationSettingsService.
 /// </summary>
 [SuppressMessage("", "SA1124: Do not use regions", Justification = "OK")]
 [SuppressMessage("", "S2325:Make properties static", Justification = "XAML binding requires instance properties")]
 public partial class SettingsDialogViewModel : ViewModelBase
 {
     private readonly GatewayService gatewayService;
+    private readonly IApplicationSettingsService settingsService;
 
     // Snapshot of full API settings for preserving server-only fields on save
     private AppSettings? originalApiSettings;
 
-    // Original theme values for restoration on cancel
+    // Original theme/language values for restoration on cancel
     private string originalThemeBase = "Dark";
     private string originalThemeAccent = "Blue";
+    private string originalLanguage = "1033";
 
-    public SettingsDialogViewModel(GatewayService gatewayService)
+    public SettingsDialogViewModel(GatewayService gatewayService, IApplicationSettingsService settingsService)
     {
         this.gatewayService = gatewayService ?? throw new ArgumentNullException(nameof(gatewayService));
+        this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
     }
 
     public event EventHandler<DialogClosedEventArgs>? CloseRequested;
@@ -27,67 +31,44 @@ public partial class SettingsDialogViewModel : ViewModelBase
     #region General Tab
 
     [ObservableProperty]
-    private string selectedThemeBase = "Dark";
-
-    public IDictionary<string, string> ThemeBaseItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Dark"] = "Dark",
-        ["Light"] = "Light",
-    };
+    private string selectedLanguage = "1033";
 
     [ObservableProperty]
-    private string themeAccent = "Blue";
-
-    [ObservableProperty]
-    private bool connectOnStartup = true;
+    private bool connectCamerasOnStartup = true;
 
     [ObservableProperty]
     private bool startMaximized;
+
+    [ObservableProperty]
+    private bool startRibbonCollapsed;
 
     #endregion
 
     #region Camera Display Tab
 
     [ObservableProperty]
-    private bool showOverlayTitle = true;
+    private bool showCameraOverlayTitle = true;
 
     [ObservableProperty]
-    private bool showOverlayDescription = true;
+    private bool showCameraOverlayDescription = true;
 
     [ObservableProperty]
-    private bool showOverlayTime;
+    private bool showCameraOverlayTime;
 
     [ObservableProperty]
-    private bool showOverlayConnectionStatus = true;
+    private bool showCameraOverlayConnectionStatus = true;
 
     [ObservableProperty]
-    private string selectedOverlayOpacity = "0.7";
+    private string selectedOverlayOpacity = DropDownItemsFactory.DefaultOverlayOpacity;
 
-    public IDictionary<string, string> OverlayOpacityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["0.0"] = "0%",
-        ["0.1"] = "10%",
-        ["0.2"] = "20%",
-        ["0.3"] = "30%",
-        ["0.4"] = "40%",
-        ["0.5"] = "50%",
-        ["0.6"] = "60%",
-        ["0.7"] = "70%",
-        ["0.8"] = "80%",
-        ["0.9"] = "90%",
-        ["1.0"] = "100%",
-    };
+    public IDictionary<string, string> OverlayOpacityItems
+        => DropDownItemsFactory.OverlayOpacityItems;
 
     [ObservableProperty]
-    private string selectedOverlayPosition = "TopLeft";
+    private string selectedOverlayPosition = DropDownItemsFactory.DefaultOverlayPosition;
 
-    public IDictionary<string, string> OverlayPositionItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["TopLeft"] = "Top Left",
-        ["TopRight"] = "Top Right",
-        ["BottomLeft"] = "Bottom Left",
-        ["BottomRight"] = "Bottom Right",
-    };
+    public IDictionary<string, string> OverlayPositionItems
+        => DropDownItemsFactory.OverlayPositionItems;
 
     [ObservableProperty]
     private bool allowDragAndDropReorder = true;
@@ -96,21 +77,17 @@ public partial class SettingsDialogViewModel : ViewModelBase
     private bool autoSaveLayoutChanges = true;
 
     [ObservableProperty]
-    private string snapshotPath = string.Empty;
+    private DirectoryInfo? snapshotPath;
 
     #endregion
 
     #region Connection Tab
 
     [ObservableProperty]
-    private string selectedDefaultProtocol = "Rtsp";
+    private string selectedDefaultProtocol = DropDownItemsFactory.DefaultProtocol;
 
-    public IDictionary<string, string> DefaultProtocolItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Rtsp"] = "RTSP",
-        ["Http"] = "HTTP",
-        ["Https"] = "HTTPS",
-    };
+    public IDictionary<string, string> DefaultProtocolItems
+        => DropDownItemsFactory.ProtocolItems;
 
     [ObservableProperty]
     private int defaultPort = 554;
@@ -119,7 +96,7 @@ public partial class SettingsDialogViewModel : ViewModelBase
     private int connectionTimeoutSeconds = 10;
 
     [ObservableProperty]
-    private int reconnectDelaySeconds = 5;
+    private int reconnectDelaySeconds = 10;
 
     [ObservableProperty]
     private bool autoReconnectOnFailure = true;
@@ -138,16 +115,10 @@ public partial class SettingsDialogViewModel : ViewModelBase
     #region Performance Tab
 
     [ObservableProperty]
-    private string selectedVideoQuality = "Auto";
+    private string selectedVideoQuality = DropDownItemsFactory.DefaultVideoQuality;
 
-    public IDictionary<string, string> VideoQualityItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Auto"] = "Auto",
-        ["Low"] = "Low",
-        ["Medium"] = "Medium",
-        ["High"] = "High",
-        ["Ultra"] = "Ultra",
-    };
+    public IDictionary<string, string> VideoQualityItems
+        => DropDownItemsFactory.VideoQualityItems;
 
     [ObservableProperty]
     private bool hardwareAcceleration = true;
@@ -159,33 +130,69 @@ public partial class SettingsDialogViewModel : ViewModelBase
     private int bufferDurationMs = 500;
 
     [ObservableProperty]
-    private string selectedRtspTransport = "Tcp";
+    private string selectedRtspTransport = DropDownItemsFactory.DefaultRtspTransport;
 
-    public IDictionary<string, string> RtspTransportItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Tcp"] = "TCP",
-        ["Udp"] = "UDP",
-    };
+    public IDictionary<string, string> RtspTransportItems
+        => DropDownItemsFactory.RtspTransportItems;
 
     [ObservableProperty]
-    private int maxLatencyMs = 1000;
+    private int maxLatencyMs = 500;
 
     #endregion
 
-    #region Recording Tab
+    #region Motion Detection Tab
 
     [ObservableProperty]
-    private string recordingPath = string.Empty;
+    private int motionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
 
     [ObservableProperty]
-    private string selectedRecordingFormat = "Mp4";
+    private int postMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
 
-    public IDictionary<string, string> RecordingFormatItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["Mp4"] = "MP4",
-        ["Mkv"] = "MKV",
-        ["Avi"] = "AVI",
-    };
+    [ObservableProperty]
+    private int analysisFrameRate = 2;
+
+    [ObservableProperty]
+    private string selectedAnalysisResolution = DropDownItemsFactory.DefaultMotionAnalysisResolution;
+
+    public IDictionary<string, string> AnalysisResolutionItems
+        => DropDownItemsFactory.MotionAnalysisResolutionItems;
+
+    [ObservableProperty]
+    private int cooldownSeconds = 5;
+
+    [ObservableProperty]
+    private bool showBoundingBoxInGrid;
+
+    [ObservableProperty]
+    private bool showBoundingBoxInFullScreen;
+
+    [ObservableProperty]
+    private string selectedBoundingBoxColor = DropDownItemsFactory.DefaultBoundingBoxColor;
+
+    [ObservableProperty]
+    private string selectedBoundingBoxThickness = DropDownItemsFactory.DefaultBoundingBoxThickness.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> BoundingBoxThicknessItems
+        => DropDownItemsFactory.BoundingBoxThicknessItems;
+
+    [ObservableProperty]
+    private string selectedBoundingBoxMinArea = DropDownItemsFactory.DefaultBoundingBoxMinArea.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> BoundingBoxMinAreaItems
+        => DropDownItemsFactory.BoundingBoxMinAreaItems;
+
+    #endregion
+
+    #region Capture Tab
+
+    [ObservableProperty]
+    private DirectoryInfo? recordingPath;
+
+    [ObservableProperty]
+    private string selectedRecordingFormat = DropDownItemsFactory.DefaultRecordingFormat;
+
+    public IDictionary<string, string> RecordingFormatItems
+        => DropDownItemsFactory.RecordingFormatItems;
 
     [ObservableProperty]
     private bool enableRecordingOnMotion;
@@ -193,11 +200,92 @@ public partial class SettingsDialogViewModel : ViewModelBase
     [ObservableProperty]
     private bool enableRecordingOnConnect;
 
+    // Segmentation
     [ObservableProperty]
-    private bool enableHourlySegmentation;
+    private bool enableHourlySegmentation = true;
 
     [ObservableProperty]
-    private int maxRecordingDurationMinutes = 60;
+    private string selectedMaxRecordingDuration = DropDownItemsFactory.DefaultMaxRecordingDuration.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> MaxRecordingDurationItems
+        => DropDownItemsFactory.MaxRecordingDurationItems;
+
+    // Thumbnails
+    [ObservableProperty]
+    private string selectedThumbnailTileCount = DropDownItemsFactory.DefaultThumbnailTileCount.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> ThumbnailTileCountItems
+        => DropDownItemsFactory.ThumbnailTileCountItems;
+
+    #endregion
+
+    #region Timelapse Tab
+
+    [ObservableProperty(DependentPropertyNames = [nameof(IsTimelapseIntervalEnabled)])]
+    private bool enableTimelapse;
+
+    [ObservableProperty]
+    private string selectedTimelapseInterval = DropDownItemsFactory.DefaultTimelapseInterval;
+
+    public IDictionary<string, string> TimelapseIntervalItems
+        => DropDownItemsFactory.TimelapseIntervalItems;
+
+    /// <summary>
+    /// Gets a value indicating whether the timelapse interval dropdown should be enabled.
+    /// </summary>
+    public bool IsTimelapseIntervalEnabled
+        => EnableTimelapse;
+
+    #endregion
+
+    #region Storage Tab
+
+    // Media Cleanup
+    [ObservableProperty(DependentPropertyNames = [nameof(IsCleanupEnabled), nameof(IsSnapshotRetentionEnabled)])]
+    private string selectedCleanupSchedule = DropDownItemsFactory.DefaultMediaCleanupSchedule;
+
+    public IDictionary<string, string> CleanupScheduleItems
+        => DropDownItemsFactory.MediaCleanupScheduleItems;
+
+    [ObservableProperty]
+    private string selectedRecordingRetention = DropDownItemsFactory.DefaultRecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> RecordingRetentionItems
+        => DropDownItemsFactory.MediaRetentionPeriodItems;
+
+    [ObservableProperty(DependentPropertyNames = [nameof(IsSnapshotRetentionEnabled)])]
+    private bool includeSnapshotsInCleanup;
+
+    [ObservableProperty]
+    private string selectedSnapshotRetention = DropDownItemsFactory.DefaultSnapshotRetentionDays.ToString(CultureInfo.InvariantCulture);
+
+    public IDictionary<string, string> SnapshotRetentionItems
+        => DropDownItemsFactory.MediaRetentionPeriodItems;
+
+    /// <summary>
+    /// Gets a value indicating whether cleanup is enabled (schedule is not Disabled).
+    /// </summary>
+    public bool IsCleanupEnabled
+        => !string.Equals(SelectedCleanupSchedule, "Disabled", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Gets a value indicating whether snapshot retention dropdown should be enabled.
+    /// </summary>
+    public bool IsSnapshotRetentionEnabled
+        => IsCleanupEnabled && IncludeSnapshotsInCleanup;
+
+    // Playback Overlay
+    [ObservableProperty]
+    private bool showPlaybackFilename = true;
+
+    [ObservableProperty]
+    private string selectedPlaybackFilenameColor = "White";
+
+    [ObservableProperty]
+    private bool showPlaybackTimestamp = true;
+
+    [ObservableProperty]
+    private string selectedPlaybackTimestampColor = "White";
 
     #endregion
 
@@ -207,17 +295,27 @@ public partial class SettingsDialogViewModel : ViewModelBase
     private bool enableDebugLogging;
 
     [ObservableProperty]
-    private string logPath = string.Empty;
+    private DirectoryInfo? logPath;
 
     #endregion
 
     #region Load / Save
 
     /// <summary>
-    /// Loads settings from the API server.
+    /// Loads settings from the local service (General) and API server (everything else).
     /// </summary>
     public async Task LoadSettingsAsync()
     {
+        // Load general settings from local service
+        var general = settingsService.General;
+        originalThemeBase = general.ThemeBase;
+        originalThemeAccent = general.ThemeAccent;
+        originalLanguage = general.Language;
+        SelectedLanguage = general.Language;
+        ConnectCamerasOnStartup = general.ConnectCamerasOnStartup;
+        StartMaximized = general.StartMaximized;
+        StartRibbonCollapsed = general.StartRibbonCollapsed;
+
         try
         {
             var settings = await gatewayService
@@ -231,26 +329,16 @@ public partial class SettingsDialogViewModel : ViewModelBase
 
             originalApiSettings = settings;
 
-            // Store original theme for cancel restoration
-            originalThemeBase = settings.ThemeBase?.ToString() ?? "Dark";
-            originalThemeAccent = settings.ThemeAccent ?? "Blue";
-
-            // General
-            SelectedThemeBase = settings.ThemeBase?.ToString() ?? "Dark";
-            ThemeAccent = settings.ThemeAccent ?? "Blue";
-            ConnectOnStartup = settings.ConnectOnStartup;
-            StartMaximized = settings.StartMaximized;
-
             // Camera Display
-            ShowOverlayTitle = settings.ShowOverlayTitle;
-            ShowOverlayDescription = settings.ShowOverlayDescription;
-            ShowOverlayTime = settings.ShowOverlayTime;
-            ShowOverlayConnectionStatus = settings.ShowOverlayConnectionStatus;
+            ShowCameraOverlayTitle = settings.ShowOverlayTitle;
+            ShowCameraOverlayDescription = settings.ShowOverlayDescription;
+            ShowCameraOverlayTime = settings.ShowOverlayTime;
+            ShowCameraOverlayConnectionStatus = settings.ShowOverlayConnectionStatus;
             SelectedOverlayOpacity = settings.OverlayOpacity.ToString("F1", CultureInfo.InvariantCulture);
             SelectedOverlayPosition = settings.OverlayPosition?.ToString() ?? "TopLeft";
             AllowDragAndDropReorder = settings.AllowDragAndDropReorder;
             AutoSaveLayoutChanges = settings.AutoSaveLayoutChanges;
-            SnapshotPath = settings.SnapshotPath ?? string.Empty;
+            SnapshotPath = !string.IsNullOrEmpty(settings.SnapshotPath) ? new DirectoryInfo(settings.SnapshotPath) : null;
 
             // Connection
             SelectedDefaultProtocol = settings.DefaultProtocol?.ToString() ?? "Rtsp";
@@ -270,17 +358,44 @@ public partial class SettingsDialogViewModel : ViewModelBase
             SelectedRtspTransport = settings.RtspTransport?.ToString() ?? "Tcp";
             MaxLatencyMs = settings.MaxLatencyMs;
 
-            // Recording
-            RecordingPath = settings.RecordingPath ?? string.Empty;
+            // Motion Detection
+            MotionSensitivity = settings.MotionSensitivity;
+            PostMotionDurationSeconds = settings.PostMotionDurationSeconds;
+            AnalysisFrameRate = settings.AnalysisFrameRate;
+            SelectedAnalysisResolution = DropDownItemsFactory.FormatAnalysisResolution(settings.AnalysisWidth, settings.AnalysisHeight);
+            CooldownSeconds = settings.CooldownSeconds;
+            ShowBoundingBoxInGrid = settings.BoundingBoxShowInGrid;
+            ShowBoundingBoxInFullScreen = settings.BoundingBoxShowInFullScreen;
+            SelectedBoundingBoxColor = settings.BoundingBoxColor ?? DropDownItemsFactory.DefaultBoundingBoxColor;
+            SelectedBoundingBoxThickness = settings.BoundingBoxThickness.ToString(CultureInfo.InvariantCulture);
+            SelectedBoundingBoxMinArea = settings.BoundingBoxMinArea.ToString(CultureInfo.InvariantCulture);
+
+            // Capture
+            RecordingPath = !string.IsNullOrEmpty(settings.RecordingPath) ? new DirectoryInfo(settings.RecordingPath) : null;
             SelectedRecordingFormat = settings.RecordingFormat?.ToString() ?? "Mp4";
             EnableRecordingOnMotion = settings.EnableRecordingOnMotion;
             EnableRecordingOnConnect = settings.EnableRecordingOnConnect;
             EnableHourlySegmentation = settings.EnableHourlySegmentation;
-            MaxRecordingDurationMinutes = settings.MaxRecordingDurationMinutes;
+            SelectedMaxRecordingDuration = settings.MaxRecordingDurationMinutes.ToString(CultureInfo.InvariantCulture);
+            SelectedThumbnailTileCount = settings.ThumbnailTileCount.ToString(CultureInfo.InvariantCulture);
+
+            // Timelapse
+            EnableTimelapse = settings.EnableTimelapse;
+            SelectedTimelapseInterval = settings.TimelapseInterval ?? DropDownItemsFactory.DefaultTimelapseInterval;
+
+            // Storage
+            SelectedCleanupSchedule = settings.CleanupSchedule?.ToString() ?? DropDownItemsFactory.DefaultMediaCleanupSchedule;
+            SelectedRecordingRetention = settings.RecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
+            IncludeSnapshotsInCleanup = settings.CleanupIncludeSnapshots;
+            SelectedSnapshotRetention = settings.SnapshotRetentionDays.ToString(CultureInfo.InvariantCulture);
+            ShowPlaybackFilename = settings.PlaybackShowFilename;
+            SelectedPlaybackFilenameColor = settings.PlaybackFilenameColor ?? "White";
+            ShowPlaybackTimestamp = settings.PlaybackShowTimestamp;
+            SelectedPlaybackTimestampColor = settings.PlaybackTimestampColor ?? "White";
 
             // Advanced
             EnableDebugLogging = settings.EnableDebugLogging;
-            LogPath = settings.LogPath ?? string.Empty;
+            LogPath = !string.IsNullOrEmpty(settings.LogPath) ? new DirectoryInfo(settings.LogPath) : null;
         }
         catch
         {
@@ -297,6 +412,10 @@ public partial class SettingsDialogViewModel : ViewModelBase
     {
         try
         {
+            // Save general settings locally
+            SaveGeneralSettings();
+
+            // Save remaining settings to API
             var settings = BuildApiSettings();
             await gatewayService
                 .UpdateSettingsAsync(settings)
@@ -313,45 +432,125 @@ public partial class SettingsDialogViewModel : ViewModelBase
     [RelayCommand]
     private void Cancel()
     {
-        // Restore original theme on cancel
-        RestoreOriginalTheme();
+        RestoreOriginalThemeAndLanguage();
         CloseRequested?.Invoke(this, new DialogClosedEventArgs(dialogResult: false));
+    }
+
+    [RelayCommand]
+    private void RestoreDefaults()
+    {
+        // General Tab
+        SelectedLanguage = "1033";
+        ConnectCamerasOnStartup = true;
+        StartMaximized = false;
+        StartRibbonCollapsed = false;
+
+        ThemeManager.Current.ChangeThemeBaseColor(Application.Current, "Dark");
+        ThemeManager.Current.ChangeThemeColorScheme(Application.Current, "Blue");
+        CultureManager.UiCulture = new CultureInfo(1033);
+
+        // Camera Display Tab
+        ShowCameraOverlayTitle = true;
+        ShowCameraOverlayDescription = true;
+        ShowCameraOverlayTime = false;
+        ShowCameraOverlayConnectionStatus = true;
+        SelectedOverlayOpacity = "0.7";
+        SelectedOverlayPosition = "TopLeft";
+        AllowDragAndDropReorder = true;
+        AutoSaveLayoutChanges = true;
+        SnapshotPath = new DirectoryInfo(ApplicationPaths.DefaultSnapshotsPath);
+
+        // Connection Tab
+        SelectedDefaultProtocol = "Rtsp";
+        DefaultPort = 554;
+        ConnectionTimeoutSeconds = 10;
+        ReconnectDelaySeconds = 10;
+        AutoReconnectOnFailure = true;
+        ShowNotificationOnDisconnect = true;
+        ShowNotificationOnReconnect = false;
+        PlayNotificationSound = false;
+
+        // Performance Tab
+        SelectedVideoQuality = "Auto";
+        HardwareAcceleration = true;
+        LowLatencyMode = false;
+        BufferDurationMs = 500;
+        SelectedRtspTransport = "tcp";
+        MaxLatencyMs = 500;
+
+        // Motion Detection Tab
+        MotionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
+        PostMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
+        AnalysisFrameRate = 30;
+        SelectedAnalysisResolution = DropDownItemsFactory.DefaultMotionAnalysisResolution;
+        CooldownSeconds = 5;
+        ShowBoundingBoxInGrid = false;
+        ShowBoundingBoxInFullScreen = false;
+        SelectedBoundingBoxColor = DropDownItemsFactory.DefaultBoundingBoxColor;
+        SelectedBoundingBoxThickness = DropDownItemsFactory.DefaultBoundingBoxThickness.ToString(CultureInfo.InvariantCulture);
+        SelectedBoundingBoxMinArea = DropDownItemsFactory.DefaultBoundingBoxMinArea.ToString(CultureInfo.InvariantCulture);
+
+        // Capture Tab
+        RecordingPath = new DirectoryInfo(ApplicationPaths.DefaultRecordingsPath);
+        SelectedRecordingFormat = "mp4";
+        EnableRecordingOnMotion = false;
+        EnableRecordingOnConnect = false;
+        EnableHourlySegmentation = true;
+        SelectedMaxRecordingDuration = DropDownItemsFactory.DefaultMaxRecordingDuration.ToString(CultureInfo.InvariantCulture);
+        SelectedThumbnailTileCount = DropDownItemsFactory.DefaultThumbnailTileCount.ToString(CultureInfo.InvariantCulture);
+
+        // Timelapse Tab
+        EnableTimelapse = false;
+        SelectedTimelapseInterval = DropDownItemsFactory.DefaultTimelapseInterval;
+
+        // Storage Tab
+        SelectedCleanupSchedule = DropDownItemsFactory.DefaultMediaCleanupSchedule;
+        SelectedRecordingRetention = DropDownItemsFactory.DefaultRecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
+        IncludeSnapshotsInCleanup = false;
+        SelectedSnapshotRetention = DropDownItemsFactory.DefaultSnapshotRetentionDays.ToString(CultureInfo.InvariantCulture);
+        ShowPlaybackFilename = true;
+        SelectedPlaybackFilenameColor = "White";
+        ShowPlaybackTimestamp = true;
+        SelectedPlaybackTimestampColor = "White";
+
+        // Advanced Tab
+        EnableDebugLogging = false;
+        LogPath = new DirectoryInfo(ApplicationPaths.DefaultLogsPath);
     }
 
     #endregion
 
-    #region Theme Preview
+    #region General Settings
 
-    /// <summary>
-    /// Applies theme preview. Called from code-behind when theme selection changes.
-    /// </summary>
-    public void ApplyThemePreview()
+    private void SaveGeneralSettings()
     {
-        var themeBase = SelectedThemeBase;
-        var accent = ThemeAccent;
+        var currentTheme = ThemeManager.Current.DetectTheme(Application.Current);
+        var themeBase = currentTheme?.BaseColorScheme ?? "Dark";
+        var themeAccent = currentTheme?.ColorScheme ?? "Blue";
+        var language = CultureManager.UiCulture.LCID.ToString(CultureInfo.InvariantCulture);
 
-        if (string.IsNullOrEmpty(themeBase) || string.IsNullOrEmpty(accent))
+        settingsService.SaveGeneral(new GeneralSettings
         {
-            return;
-        }
-
-        try
-        {
-            ThemeManager.Current.ChangeThemeBaseColor(Application.Current, themeBase);
-            ThemeManager.Current.ChangeThemeColorScheme(Application.Current, accent);
-        }
-        catch
-        {
-            // Theme change failed - ignore
-        }
+            ThemeBase = themeBase,
+            ThemeAccent = themeAccent,
+            Language = language,
+            ConnectCamerasOnStartup = ConnectCamerasOnStartup,
+            StartMaximized = StartMaximized,
+            StartRibbonCollapsed = StartRibbonCollapsed,
+        });
     }
 
-    private void RestoreOriginalTheme()
+    private void RestoreOriginalThemeAndLanguage()
     {
         try
         {
             ThemeManager.Current.ChangeThemeBaseColor(Application.Current, originalThemeBase);
             ThemeManager.Current.ChangeThemeColorScheme(Application.Current, originalThemeAccent);
+
+            if (int.TryParse(originalLanguage, NumberStyles.Integer, CultureInfo.InvariantCulture, out var lcid))
+            {
+                CultureManager.UiCulture = new CultureInfo(lcid);
+            }
         }
         catch
         {
@@ -365,33 +564,45 @@ public partial class SettingsDialogViewModel : ViewModelBase
 
     private AppSettings BuildApiSettings()
     {
+        // Get current theme/accent/language from live state (Atc controls update these directly)
+        var currentTheme = ThemeManager.Current.DetectTheme(Application.Current);
+        var apiThemeBase = currentTheme?.BaseColorScheme ?? "Dark";
+        var apiThemeAccent = currentTheme?.ColorScheme ?? "Blue";
+        var apiLanguage = CultureManager.UiCulture.LCID.ToString(CultureInfo.InvariantCulture);
+
         // Parse enum values from string selections
-        _ = Enum.TryParse<AppSettingsThemeBase>(SelectedThemeBase, out var themeBase);
+        _ = Enum.TryParse<AppSettingsThemeBase>(apiThemeBase, out var themeBase);
         _ = Enum.TryParse<AppSettingsOverlayPosition>(SelectedOverlayPosition, out var overlayPosition);
         _ = Enum.TryParse<AppSettingsDefaultProtocol>(SelectedDefaultProtocol, out var protocol);
         _ = Enum.TryParse<AppSettingsVideoQuality>(SelectedVideoQuality, out var videoQuality);
         _ = Enum.TryParse<AppSettingsRtspTransport>(SelectedRtspTransport, out var rtspTransport);
         _ = Enum.TryParse<AppSettingsRecordingFormat>(SelectedRecordingFormat, out var recordingFormat);
+        _ = Enum.TryParse<AppSettingsCleanupSchedule>(SelectedCleanupSchedule, out var cleanupSchedule);
         _ = double.TryParse(SelectedOverlayOpacity, NumberStyles.Float, CultureInfo.InvariantCulture, out var opacity);
+        _ = int.TryParse(SelectedMaxRecordingDuration, NumberStyles.Integer, CultureInfo.InvariantCulture, out var maxRecordingDuration);
+        _ = int.TryParse(SelectedThumbnailTileCount, NumberStyles.Integer, CultureInfo.InvariantCulture, out var thumbnailTileCount);
+        _ = int.TryParse(SelectedRecordingRetention, NumberStyles.Integer, CultureInfo.InvariantCulture, out var recordingRetention);
+        _ = int.TryParse(SelectedSnapshotRetention, NumberStyles.Integer, CultureInfo.InvariantCulture, out var snapshotRetention);
+        _ = int.TryParse(SelectedBoundingBoxThickness, NumberStyles.Integer, CultureInfo.InvariantCulture, out var boundingBoxThickness);
+        _ = int.TryParse(SelectedBoundingBoxMinArea, NumberStyles.Integer, CultureInfo.InvariantCulture, out var boundingBoxMinArea);
 
-        // Preserve server-only fields from original settings
-        var orig = originalApiSettings;
+        var (analysisWidth, analysisHeight) = DropDownItemsFactory.ParseAnalysisResolution(SelectedAnalysisResolution);
 
         return new AppSettings(
             ThemeBase: themeBase,
-            ThemeAccent: ThemeAccent,
-            Language: orig?.Language ?? "1033",
-            ConnectOnStartup: ConnectOnStartup,
+            ThemeAccent: apiThemeAccent,
+            Language: apiLanguage,
+            ConnectOnStartup: ConnectCamerasOnStartup,
             StartMaximized: StartMaximized,
-            ShowOverlayTitle: ShowOverlayTitle,
-            ShowOverlayDescription: ShowOverlayDescription,
-            ShowOverlayTime: ShowOverlayTime,
-            ShowOverlayConnectionStatus: ShowOverlayConnectionStatus,
+            ShowOverlayTitle: ShowCameraOverlayTitle,
+            ShowOverlayDescription: ShowCameraOverlayDescription,
+            ShowOverlayTime: ShowCameraOverlayTime,
+            ShowOverlayConnectionStatus: ShowCameraOverlayConnectionStatus,
             OverlayOpacity: opacity,
             OverlayPosition: overlayPosition,
             AllowDragAndDropReorder: AllowDragAndDropReorder,
             AutoSaveLayoutChanges: AutoSaveLayoutChanges,
-            SnapshotPath: SnapshotPath,
+            SnapshotPath: SnapshotPath?.FullName ?? string.Empty,
             DefaultProtocol: protocol,
             DefaultPort: DefaultPort,
             ConnectionTimeoutSeconds: ConnectionTimeoutSeconds,
@@ -406,37 +617,39 @@ public partial class SettingsDialogViewModel : ViewModelBase
             BufferDurationMs: BufferDurationMs,
             RtspTransport: rtspTransport,
             MaxLatencyMs: MaxLatencyMs,
-            MotionSensitivity: orig?.MotionSensitivity ?? 30,
-            MinimumChangePercent: orig?.MinimumChangePercent ?? 0.5,
-            AnalysisFrameRate: orig?.AnalysisFrameRate ?? 5,
-            AnalysisWidth: orig?.AnalysisWidth ?? 320,
-            AnalysisHeight: orig?.AnalysisHeight ?? 240,
-            PostMotionDurationSeconds: orig?.PostMotionDurationSeconds ?? 5,
-            CooldownSeconds: orig?.CooldownSeconds ?? 3,
-            BoundingBoxShowInGrid: orig?.BoundingBoxShowInGrid ?? false,
-            BoundingBoxShowInFullScreen: orig?.BoundingBoxShowInFullScreen ?? true,
-            BoundingBoxColor: orig?.BoundingBoxColor ?? "#FF0000",
-            BoundingBoxThickness: orig?.BoundingBoxThickness ?? 2,
-            BoundingBoxMinArea: orig?.BoundingBoxMinArea ?? 500,
-            BoundingBoxPadding: orig?.BoundingBoxPadding ?? 10,
-            BoundingBoxSmoothing: orig?.BoundingBoxSmoothing ?? 0.3,
-            RecordingPath: RecordingPath,
+            MotionSensitivity: MotionSensitivity,
+            MinimumChangePercent: originalApiSettings?.MinimumChangePercent ?? 0.5,
+            AnalysisFrameRate: AnalysisFrameRate,
+            AnalysisWidth: analysisWidth,
+            AnalysisHeight: analysisHeight,
+            PostMotionDurationSeconds: PostMotionDurationSeconds,
+            CooldownSeconds: CooldownSeconds,
+            BoundingBoxShowInGrid: ShowBoundingBoxInGrid,
+            BoundingBoxShowInFullScreen: ShowBoundingBoxInFullScreen,
+            BoundingBoxColor: SelectedBoundingBoxColor,
+            BoundingBoxThickness: boundingBoxThickness,
+            BoundingBoxMinArea: boundingBoxMinArea,
+            BoundingBoxPadding: originalApiSettings?.BoundingBoxPadding ?? 10,
+            BoundingBoxSmoothing: originalApiSettings?.BoundingBoxSmoothing ?? 0.3,
+            RecordingPath: RecordingPath?.FullName ?? string.Empty,
             RecordingFormat: recordingFormat,
             EnableRecordingOnMotion: EnableRecordingOnMotion,
             EnableRecordingOnConnect: EnableRecordingOnConnect,
             EnableHourlySegmentation: EnableHourlySegmentation,
-            MaxRecordingDurationMinutes: MaxRecordingDurationMinutes,
-            ThumbnailTileCount: orig?.ThumbnailTileCount ?? 4,
-            CleanupSchedule: orig?.CleanupSchedule,
-            RecordingRetentionDays: orig?.RecordingRetentionDays ?? 30,
-            CleanupIncludeSnapshots: orig?.CleanupIncludeSnapshots ?? false,
-            SnapshotRetentionDays: orig?.SnapshotRetentionDays ?? 30,
-            PlaybackShowFilename: orig?.PlaybackShowFilename ?? true,
-            PlaybackFilenameColor: orig?.PlaybackFilenameColor ?? "#FFFFFF",
-            PlaybackShowTimestamp: orig?.PlaybackShowTimestamp ?? true,
-            PlaybackTimestampColor: orig?.PlaybackTimestampColor ?? "#FFFFFF",
+            MaxRecordingDurationMinutes: maxRecordingDuration > 0 ? maxRecordingDuration : DropDownItemsFactory.DefaultMaxRecordingDuration,
+            ThumbnailTileCount: thumbnailTileCount == 1 || thumbnailTileCount == 4 ? thumbnailTileCount : DropDownItemsFactory.DefaultThumbnailTileCount,
+            EnableTimelapse: EnableTimelapse,
+            TimelapseInterval: SelectedTimelapseInterval,
+            CleanupSchedule: cleanupSchedule,
+            RecordingRetentionDays: recordingRetention > 0 ? recordingRetention : DropDownItemsFactory.DefaultRecordingRetentionDays,
+            CleanupIncludeSnapshots: IncludeSnapshotsInCleanup,
+            SnapshotRetentionDays: snapshotRetention > 0 ? snapshotRetention : DropDownItemsFactory.DefaultSnapshotRetentionDays,
+            PlaybackShowFilename: ShowPlaybackFilename,
+            PlaybackFilenameColor: SelectedPlaybackFilenameColor,
+            PlaybackShowTimestamp: ShowPlaybackTimestamp,
+            PlaybackTimestampColor: SelectedPlaybackTimestampColor,
             EnableDebugLogging: EnableDebugLogging,
-            LogPath: LogPath);
+            LogPath: LogPath?.FullName ?? string.Empty);
     }
 
     #endregion
