@@ -79,7 +79,7 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
                 }
 
                 // Calculate grid dimensions
-                var (rows, columns) = Helpers.GridLayoutHelper.CalculateGridDimensions(CameraTiles.Count);
+                var (rows, columns) = GridLayoutHelper.CalculateGridDimensions(CameraTiles.Count);
                 GridRows = rows;
                 GridColumns = columns;
             });

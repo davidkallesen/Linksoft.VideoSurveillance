@@ -100,6 +100,10 @@ public sealed class SettingsState
 
     public int ThumbnailTileCount { get; set; } = 4;
 
+    public bool EnableTimelapse { get; set; }
+
+    public string TimelapseInterval { get; set; } = "5m";
+
     public AppSettingsCleanupSchedule CleanupSchedule { get; set; } = AppSettingsCleanupSchedule.Disabled;
 
     public int RecordingRetentionDays { get; set; } = 30;
@@ -178,6 +182,8 @@ public sealed class SettingsState
         EnableHourlySegmentation = settings.EnableHourlySegmentation;
         MaxRecordingDurationMinutes = settings.MaxRecordingDurationMinutes;
         ThumbnailTileCount = settings.ThumbnailTileCount;
+        EnableTimelapse = settings.EnableTimelapse;
+        TimelapseInterval = settings.TimelapseInterval ?? "5m";
         CleanupSchedule = settings.CleanupSchedule ?? AppSettingsCleanupSchedule.Disabled;
         RecordingRetentionDays = settings.RecordingRetentionDays;
         CleanupIncludeSnapshots = settings.CleanupIncludeSnapshots;
@@ -242,6 +248,8 @@ public sealed class SettingsState
             EnableHourlySegmentation: EnableHourlySegmentation,
             MaxRecordingDurationMinutes: MaxRecordingDurationMinutes,
             ThumbnailTileCount: ThumbnailTileCount,
+            EnableTimelapse: EnableTimelapse,
+            TimelapseInterval: TimelapseInterval,
             CleanupSchedule: CleanupSchedule,
             RecordingRetentionDays: RecordingRetentionDays,
             CleanupIncludeSnapshots: CleanupIncludeSnapshots,

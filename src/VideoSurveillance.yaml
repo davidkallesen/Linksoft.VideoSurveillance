@@ -784,6 +784,10 @@ components:
         thumbnailTileCount:
           type: integer
           format: int32
+        enableTimelapse:
+          type: boolean
+        timelapseInterval:
+          type: string
         cleanupSchedule:
           type: string
           enum: [disabled, onStartup, onStartupAndPeriodically]

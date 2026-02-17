@@ -219,6 +219,8 @@ public class SettingsMappingExtensionsTests
             EnableHourlySegmentation: false,
             MaxRecordingDurationMinutes: 60,
             ThumbnailTileCount: 4,
+            EnableTimelapse: false,
+            TimelapseInterval: "5m",
             CleanupSchedule: AppSettingsCleanupSchedule.Disabled,
             RecordingRetentionDays: 30,
             CleanupIncludeSnapshots: false,

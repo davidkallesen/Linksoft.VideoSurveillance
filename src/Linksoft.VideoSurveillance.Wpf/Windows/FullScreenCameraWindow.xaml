@@ -5,7 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:lve="clr-namespace:Linksoft.VideoPlayer.Wpf;assembly=Linksoft.VideoPlayer.Wpf"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:userControls="clr-namespace:Linksoft.VideoSurveillance.Wpf.UserControls"
+    xmlns:coreControls="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.UserControls;assembly=Linksoft.VideoSurveillance.Wpf.Core"
     xmlns:windows="clr-namespace:Linksoft.VideoSurveillance.Wpf.Windows"
     Title="{Binding Path=CameraName}"
     d:DataContext="{d:DesignInstance Type=windows:FullScreenCameraWindowViewModel,
@@ -20,7 +20,7 @@
     mc:Ignorable="d">
 
     <Window.Resources>
-        <ResourceDictionary Source="/Linksoft.VideoSurveillance.Wpf;component/Themes/FullScreenStyles.xaml" />
+        <ResourceDictionary Source="/Linksoft.VideoSurveillance.Wpf.Core;component/Themes/FullScreenStyles.xaml" />
     </Window.Resources>
 
     <!--  ReSharper disable Xaml.BindingWithContextNotResolved  -->
@@ -120,7 +120,7 @@
                 </Border>
 
                 <!--  Motion Bounding Box Overlay  -->
-                <userControls:MotionBoundingBoxOverlay
+                <coreControls:MotionBoundingBoxOverlay
                     x:Name="MotionOverlay"
                     AnalysisHeight="{Binding Path=HostDataContext.AnalysisHeight}"
                     AnalysisWidth="{Binding Path=HostDataContext.AnalysisWidth}"

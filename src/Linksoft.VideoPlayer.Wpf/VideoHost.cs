@@ -28,6 +28,9 @@ public partial class VideoHost : ContentControl, IDisposable
     private const uint SwpNoActivate = 0x0010;
     private const uint SwpShowWindow = 0x0040;
 
+    private const int SwHide = 0;
+    private const int SwShow = 5;
+
     /// <summary>
     /// Identifies the <see cref="Player"/> dependency property.
     /// </summary>
@@ -71,6 +74,7 @@ public partial class VideoHost : ContentControl, IDisposable
     {
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        IsVisibleChanged += OnIsVisibleChanged;
         DataContextChanged += OnDataContextChanged;
     }
 
@@ -241,6 +245,26 @@ public partial class VideoHost : ContentControl, IDisposable
         surfaceHwnd = nint.Zero;
     }
 
+    private void OnIsVisibleChanged(
+        object sender,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (surfaceHwnd == nint.Zero)
+        {
+            return;
+        }
+
+        if ((bool)e.NewValue)
+        {
+            ShowWindow(surfaceHwnd, SwShow);
+            UpdateWindowPositions();
+        }
+        else
+        {
+            ShowWindow(surfaceHwnd, SwHide);
+        }
+    }
+
     private void CreateSurfaceWindow()
     {
         surfaceWindow = new Window
@@ -312,6 +336,12 @@ public partial class VideoHost : ContentControl, IDisposable
     private void UpdateWindowPositions()
     {
         if (surfaceWindow is null || ownerWindow is null)
+        {
+            return;
+        }
+
+        // Don't reposition (with SWP_SHOWWINDOW) while native windows are hidden.
+        if (!IsVisible)
         {
             return;
         }
@@ -485,4 +515,11 @@ public partial class VideoHost : ContentControl, IDisposable
         int cx,
         int cy,
         uint uFlags);
+
+    [LibraryImport("user32.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool ShowWindow(
+        nint hWnd,
+        int nCmdShow);
 }

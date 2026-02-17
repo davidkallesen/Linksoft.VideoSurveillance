@@ -5,7 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:lve="clr-namespace:Linksoft.VideoPlayer.Wpf;assembly=Linksoft.VideoPlayer.Wpf"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:userControls="clr-namespace:Linksoft.VideoSurveillance.Wpf.UserControls"
+    xmlns:coreControls="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.UserControls;assembly=Linksoft.VideoSurveillance.Wpf.Core"
     xmlns:viewModels="clr-namespace:Linksoft.VideoSurveillance.Wpf.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewModels:CameraTileViewModel}"
     mc:Ignorable="d">
@@ -109,7 +109,7 @@
                 </Border>
 
                 <!--  Motion bounding box overlay  -->
-                <userControls:MotionBoundingBoxOverlay
+                <coreControls:MotionBoundingBoxOverlay
                     AnalysisHeight="{Binding Path=HostDataContext.AnalysisHeight}"
                     AnalysisWidth="{Binding Path=HostDataContext.AnalysisWidth}"
                     IsHitTestVisible="False" />
