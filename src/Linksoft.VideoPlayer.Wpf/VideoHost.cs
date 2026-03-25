@@ -55,6 +55,8 @@ public partial class VideoHost : ContentControl, IDisposable
                 Colors.Black,
                 OnBackColorChanged));
 
+    private readonly OverlayBridge bridge = new();
+
     private Window? ownerWindow;
     private Window? surfaceWindow;
     private Window? overlayWindow;
@@ -63,7 +65,6 @@ public partial class VideoHost : ContentControl, IDisposable
 
     private SwapChainPresenter? presenter;
     private D3D11Accelerator? boundAccelerator;
-    private readonly OverlayBridge bridge = new();
     private int lastX;
     private int lastY;
     private int lastW;

@@ -15,6 +15,7 @@ internal sealed unsafe class VideoDecoder : IDisposable
     private bool hwAccelActive;
 
     // Prevent GC of the delegate while it's registered with FFmpeg.
+    [SuppressMessage("CodeQuality", "S1450", Justification = "Field prevents GC of delegate registered with FFmpeg")]
     private AVCodecContext_get_format? getFormatDelegate;
 
     public AVFrame* CurrentFrame => frame;

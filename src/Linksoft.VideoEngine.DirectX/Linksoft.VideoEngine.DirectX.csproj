@@ -20,10 +20,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Vortice.D3DCompiler" Version="3.8.2" />
-    <PackageReference Include="Vortice.Direct3D11" Version="3.8.2" />
-    <PackageReference Include="Vortice.DirectComposition" Version="3.8.2" />
+    <PackageReference Include="Vortice.D3DCompiler" Version="3.8.3" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.DirectComposition" Version="3.8.3" />
     <PackageReference Include="Vortice.Mathematics" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
   </ItemGroup>
 
 </Project>

@@ -9,6 +9,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Services;
 public abstract class JsonFileServiceBase<T>
     where T : new()
 {
+    [SuppressMessage("Design", "S2743", Justification = "Intentional: each closed generic type gets its own static options instance")]
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,

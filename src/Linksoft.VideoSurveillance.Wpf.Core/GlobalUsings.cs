@@ -1,5 +1,4 @@
 global using System;
-global using System.Collections.Concurrent;
 global using System.Collections.Generic;
 global using System.Collections.ObjectModel;
 global using System.ComponentModel;
@@ -11,7 +10,6 @@ global using System.Linq;
 global using System.Media;
 global using System.Net.Http;
 global using System.Reflection;
-global using System.Text;
 global using System.Text.Json;
 global using System.Text.Json.Serialization;
 global using System.Threading;
@@ -30,13 +28,12 @@ global using Atc;
 global using Atc.DependencyInjection;
 global using Atc.Helpers;
 global using Atc.Network.Helpers;
-global using Atc.SourceGenerators.Annotations;
 global using Atc.Wpf.Components.Dialogs;
 global using Atc.Wpf.Components.Selectors;
 global using Atc.Wpf.DependencyObjects;
 global using Atc.Wpf.Forms;
 global using Atc.Wpf.Helpers;
-global using Atc.Wpf.Network;
+global using Atc.Wpf.Network.Scanner;
 global using Atc.Wpf.Notifications;
 global using Atc.Wpf.Translation;
 global using Atc.XamlToolkit.Controls.Attributes;
@@ -46,14 +43,11 @@ global using Atc.XamlToolkit.Mvvm;
 global using ControlzEx.Theming;
 
 global using Linksoft.VideoEngine;
-
 global using Linksoft.VideoSurveillance.Enums;
 global using Linksoft.VideoSurveillance.Models.Overrides;
 global using Linksoft.VideoSurveillance.Models.Settings;
-
 global using Linksoft.VideoSurveillance.Wpf.Core.Dialogs;
 global using Linksoft.VideoSurveillance.Wpf.Core.Events;
-global using Linksoft.VideoSurveillance.Wpf.Core.Extensions;
 global using Linksoft.VideoSurveillance.Wpf.Core.Factories;
 global using Linksoft.VideoSurveillance.Wpf.Core.Helpers;
 global using Linksoft.VideoSurveillance.Wpf.Core.Messages;
@@ -63,31 +57,23 @@ global using Linksoft.VideoSurveillance.Wpf.Core.Services;
 global using Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 global using Linksoft.VideoSurveillance.Wpf.Core.ValueConverters;
 global using Linksoft.VideoSurveillance.Wpf.Core.Windows;
-
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Win32;
 
 // Type aliases to resolve ambiguities between Core and Wpf.Core namespaces
 global using AuthenticationSettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.AuthenticationSettings;
-global using CameraDisplaySettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.CameraDisplaySettings;
-global using ConnectionSettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.ConnectionSettings;
-global using StreamSettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.StreamSettings;
 global using BoundingBox = Linksoft.VideoSurveillance.Models.BoundingBox;
+global using CameraDisplaySettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.CameraDisplaySettings;
 global using CameraLayoutItem = Linksoft.VideoSurveillance.Models.CameraLayoutItem;
 global using CameraOverrides = Linksoft.VideoSurveillance.Models.CameraOverrides;
+global using ConnectionSettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.ConnectionSettings;
 global using ConnectionState = Atc.Network.ConnectionState;
 global using IGitHubReleaseService = Linksoft.VideoSurveillance.Services.IGitHubReleaseService;
-global using IMediaCleanupService = Linksoft.VideoSurveillance.Services.IMediaCleanupService;
 global using IMediaPipeline = Linksoft.VideoSurveillance.Services.IMediaPipeline;
 global using IMotionDetectionService = Linksoft.VideoSurveillance.Services.IMotionDetectionService;
-global using IRecordingSegmentationService = Linksoft.VideoSurveillance.Services.IRecordingSegmentationService;
-global using IThumbnailGeneratorService = Linksoft.VideoSurveillance.Services.IThumbnailGeneratorService;
-global using MediaCleanupCompletedEventArgs = Linksoft.VideoSurveillance.Events.MediaCleanupCompletedEventArgs;
-global using MediaCleanupResult = Linksoft.VideoSurveillance.Models.MediaCleanupResult;
 global using MotionDetectedEventArgs = Linksoft.VideoSurveillance.Events.MotionDetectedEventArgs;
-global using RecordingSegmentedEventArgs = Linksoft.VideoSurveillance.Events.RecordingSegmentedEventArgs;
 global using RecordingSession = Linksoft.VideoSurveillance.Models.RecordingSession;
 global using RecordingStateChangedEventArgs = Linksoft.VideoSurveillance.Events.RecordingStateChangedEventArgs;
-global using SegmentationReason = Linksoft.VideoSurveillance.Events.SegmentationReason;
 global using SmoothedBox = Linksoft.VideoSurveillance.Models.SmoothedBox;
+global using StreamSettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.StreamSettings;
 global using TimelapseFrameCapturedEventArgs = Linksoft.VideoSurveillance.Events.TimelapseFrameCapturedEventArgs;

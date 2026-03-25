@@ -27,8 +27,8 @@ public partial class CameraListViewModel : ViewModelBase
         this.gatewayService = gatewayService;
         this.hubService = hubService;
 
-        hubService.OnConnectionStateChanged += OnConnectionStateChanged;
-        hubService.OnRecordingStateChanged += OnRecordingStateChanged;
+        this.hubService.OnConnectionStateChanged += OnConnectionStateChanged;
+        this.hubService.OnRecordingStateChanged += OnRecordingStateChanged;
     }
 
     [RelayCommand("Load")]
@@ -42,7 +42,7 @@ public partial class CameraListViewModel : ViewModelBase
                 .GetCamerasAsync()
                 .ConfigureAwait(false);
 
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 Cameras.Clear();
 
@@ -57,11 +57,11 @@ public partial class CameraListViewModel : ViewModelBase
         }
         catch (HttpRequestException)
         {
-            Application.Current.Dispatcher.Invoke(() => Cameras.Clear());
+            await Application.Current.Dispatcher.InvokeAsync(() => Cameras.Clear());
         }
         finally
         {
-            Application.Current.Dispatcher.Invoke(() => IsLoading = false);
+            await Application.Current.Dispatcher.InvokeAsync(() => IsLoading = false);
         }
     }
 
@@ -89,7 +89,7 @@ public partial class CameraListViewModel : ViewModelBase
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to create camera: {ex.Message}",
                     "Error",
@@ -115,7 +115,7 @@ public partial class CameraListViewModel : ViewModelBase
         }
         catch (HttpRequestException)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     "Failed to load camera details.",
                     "Error",
@@ -132,7 +132,7 @@ public partial class CameraListViewModel : ViewModelBase
         var result = false;
         CameraEditDialogViewModel? viewModel = null;
 
-        Application.Current.Dispatcher.Invoke(() =>
+        await Application.Current.Dispatcher.InvokeAsync(() =>
         {
             viewModel = new CameraEditDialogViewModel(camera);
             var dialog = new CameraEditDialog(viewModel)
@@ -158,7 +158,7 @@ public partial class CameraListViewModel : ViewModelBase
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to update camera: {ex.Message}",
                     "Error",
@@ -196,7 +196,7 @@ public partial class CameraListViewModel : ViewModelBase
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to delete camera: {ex.Message}",
                     "Error",
@@ -219,11 +219,11 @@ public partial class CameraListViewModel : ViewModelBase
                 .StartRecordingAsync(item.Id)
                 .ConfigureAwait(false);
 
-            Application.Current.Dispatcher.Invoke(() => item.IsRecording = true);
+            await Application.Current.Dispatcher.InvokeAsync(() => item.IsRecording = true);
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to start recording: {ex.Message}",
                     "Error",
@@ -246,11 +246,11 @@ public partial class CameraListViewModel : ViewModelBase
                 .StopRecordingAsync(item.Id)
                 .ConfigureAwait(false);
 
-            Application.Current.Dispatcher.Invoke(() => item.IsRecording = false);
+            await Application.Current.Dispatcher.InvokeAsync(() => item.IsRecording = false);
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to stop recording: {ex.Message}",
                     "Error",
@@ -275,7 +275,7 @@ public partial class CameraListViewModel : ViewModelBase
 
             if (string.IsNullOrEmpty(snapshotData))
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                await Application.Current.Dispatcher.InvokeAsync(() =>
                     MessageBox.Show(
                         "No snapshot data returned.",
                         "Snapshot",
@@ -284,7 +284,7 @@ public partial class CameraListViewModel : ViewModelBase
                 return;
             }
 
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 var saveDialog = new Microsoft.Win32.SaveFileDialog
                 {
@@ -308,7 +308,7 @@ public partial class CameraListViewModel : ViewModelBase
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to capture snapshot: {ex.Message}",
                     "Error",
@@ -320,7 +320,7 @@ public partial class CameraListViewModel : ViewModelBase
     private void OnConnectionStateChanged(
         SurveillanceHubService.ConnectionStateEvent e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             var camera = Cameras.FirstOrDefault(c => c.Id == e.CameraId);
             if (camera is not null)
@@ -333,7 +333,7 @@ public partial class CameraListViewModel : ViewModelBase
     private void OnRecordingStateChanged(
         SurveillanceHubService.RecordingStateEvent e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             var camera = Cameras.FirstOrDefault(c => c.Id == e.CameraId);
             if (camera is not null)

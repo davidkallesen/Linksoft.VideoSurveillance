@@ -10,7 +10,9 @@ public partial class CameraListView
         InitializeComponent();
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private void OnLoaded(
+        object sender,
+        RoutedEventArgs e)
     {
         if (DataContext is CameraListViewModel viewModel)
         {

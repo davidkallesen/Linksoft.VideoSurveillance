@@ -10,7 +10,9 @@ public partial class LayoutListView
         InitializeComponent();
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private void OnLoaded(
+        object sender,
+        RoutedEventArgs e)
     {
         if (DataContext is LayoutListViewModel viewModel)
         {

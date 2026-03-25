@@ -281,7 +281,7 @@ public partial class App
                     apiBaseAddress));
                 services.AddSingleton(sp => new RecordingsViewModel(
                     sp.GetRequiredService<GatewayService>(),
-                    apiBaseAddress));
+                    new Uri(apiBaseAddress)));
                 services.AddSingleton<NotificationHistoryViewModel>();
 
                 // App

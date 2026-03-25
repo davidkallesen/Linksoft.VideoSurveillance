@@ -3,7 +3,7 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// <summary>
 /// Service for automatically cleaning up old recordings and snapshots.
 /// </summary>
-[Registration(Lifetime.Singleton)]
+[Registration]
 public class MediaCleanupService : IMediaCleanupService, IDisposable
 {
     private static readonly string[] RecordingExtensions = [".mp4", ".mkv", ".avi"];

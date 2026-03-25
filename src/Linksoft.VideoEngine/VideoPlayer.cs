@@ -7,6 +7,7 @@ namespace Linksoft.VideoEngine;
 /// All pipeline work runs on a dedicated background thread.
 /// </summary>
 [SuppressMessage("", "CA1806:calls av_*", Justification = "OK")]
+[SuppressMessage("IDisposableAnalyzers", "CA2213", Justification = "Disposable fields are cleaned up by DemuxLoop's finally block on the demux thread")]
 public sealed unsafe class VideoPlayer : IVideoPlayer
 {
     private const int MaxConsecutiveReadErrors = 30;

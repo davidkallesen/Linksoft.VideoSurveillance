@@ -12,17 +12,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Atc.Rest.Client" Version="2.0.26" />
-    <PackageReference Include="Atc.SourceGenerators" Version="0.1.49">
+    <PackageReference Include="Atc.Rest.Client" Version="2.0.32" />
+    <PackageReference Include="Atc.SourceGenerators" Version="0.1.66">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.4.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Atc.Rest.Api.SourceGenerator" Version="1.0.87" OutputItemType="Analyzer" ReferenceOutputAssembly="false">
+    <PackageReference Include="Atc.Rest.Api.SourceGenerator" Version="1.0.136" OutputItemType="Analyzer" ReferenceOutputAssembly="false">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -31,6 +31,10 @@
   <ItemGroup>
     <AdditionalFiles Include="..\VideoSurveillance.yaml" />
     <AdditionalFiles Include=".atc-rest-api-client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
   </ItemGroup>
 
 </Project>

@@ -29,7 +29,7 @@ public partial class LayoutEditDialogViewModel : ViewModelBase
     public string DialogTitle => IsEdit ? "Edit Layout" : "Add Layout";
 
     /// <summary>
-    /// Initializes a new instance for adding a new layout.
+    /// Initializes a new instance of the <see cref="LayoutEditDialogViewModel"/> class for adding a new layout.
     /// </summary>
     public LayoutEditDialogViewModel()
     {
@@ -37,7 +37,7 @@ public partial class LayoutEditDialogViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Initializes a new instance for editing an existing layout.
+    /// Initializes a new instance of the <see cref="LayoutEditDialogViewModel"/> class for editing an existing layout.
     /// </summary>
     public LayoutEditDialogViewModel(Layout layout)
     {

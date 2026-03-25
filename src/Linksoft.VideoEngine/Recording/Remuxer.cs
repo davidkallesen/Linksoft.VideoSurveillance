@@ -10,7 +10,6 @@ internal sealed unsafe class Remuxer : IDisposable
 {
     private readonly Lock syncLock = new();
     private AVFormatContext* outputCtx;
-    private AVRational inputTimeBase;
     private AVRational outputTimeBase;
     private long firstDts = AV_NOPTS_VALUE;
     private long lastDts = AV_NOPTS_VALUE;
@@ -49,7 +48,6 @@ internal sealed unsafe class Remuxer : IDisposable
             }
 
             outStream->codecpar->codec_tag = 0;
-            this.inputTimeBase = inputTimeBase;
             outputTimeBase = outStream->time_base;
 
             ret = avio_open(ref outputCtx->pb, outputPath, IOFlags.Write);

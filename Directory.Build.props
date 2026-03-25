@@ -20,7 +20,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- NU1503: Suppressed for nanoFramework ESP32 project (uses packages.config, not PackageReference) -->
-    <NoWarn>1573;1591;1712;CA1014;NU1503</NoWarn>
+    <NoWarn>1573;1591;1712;CA1014;NU1503;CS0436</NoWarn>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1503</WarningsNotAsErrors>
 
     <!-- Used by code coverage -->
@@ -48,7 +48,7 @@
     <PackageReference Include="Meziantou.Analyzer" Version="2.0.302" PrivateAssets="All" />
     <PackageReference Include="SecurityCodeScan.VS2019" Version="5.6.7" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435" PrivateAssets="All" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793" PrivateAssets="All" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.21.0.135717" PrivateAssets="All" />
   </ItemGroup>
 
   <!-- Version management -->

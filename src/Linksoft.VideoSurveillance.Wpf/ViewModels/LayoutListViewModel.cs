@@ -34,7 +34,7 @@ public partial class LayoutListViewModel : ViewModelBase
                 .GetLayoutsAsync()
                 .ConfigureAwait(false);
 
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 Layouts.Clear();
 
@@ -49,11 +49,11 @@ public partial class LayoutListViewModel : ViewModelBase
         }
         catch (HttpRequestException)
         {
-            Application.Current.Dispatcher.Invoke(() => Layouts.Clear());
+            await Application.Current.Dispatcher.InvokeAsync(() => Layouts.Clear());
         }
         finally
         {
-            Application.Current.Dispatcher.Invoke(() => IsLoading = false);
+            await Application.Current.Dispatcher.InvokeAsync(() => IsLoading = false);
         }
     }
 
@@ -81,7 +81,7 @@ public partial class LayoutListViewModel : ViewModelBase
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to create layout: {ex.Message}",
                     "Error",
@@ -109,7 +109,7 @@ public partial class LayoutListViewModel : ViewModelBase
         var result = false;
         LayoutEditDialogViewModel? viewModel = null;
 
-        Application.Current.Dispatcher.Invoke(() =>
+        await Application.Current.Dispatcher.InvokeAsync(() =>
         {
             viewModel = new LayoutEditDialogViewModel(layout);
             var dialog = new LayoutEditDialog(viewModel)
@@ -135,7 +135,7 @@ public partial class LayoutListViewModel : ViewModelBase
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to update layout: {ex.Message}",
                     "Error",
@@ -173,7 +173,7 @@ public partial class LayoutListViewModel : ViewModelBase
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to delete layout: {ex.Message}",
                     "Error",
@@ -196,7 +196,7 @@ public partial class LayoutListViewModel : ViewModelBase
                 .ApplyLayoutAsync(item.Id)
                 .ConfigureAwait(false);
 
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Layout '{item.Name}' applied successfully.",
                     "Layout Applied",
@@ -205,7 +205,7 @@ public partial class LayoutListViewModel : ViewModelBase
         }
         catch (HttpRequestException ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
                 MessageBox.Show(
                     $"Failed to apply layout: {ex.Message}",
                     "Error",

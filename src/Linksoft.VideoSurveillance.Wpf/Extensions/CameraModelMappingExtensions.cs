@@ -1,12 +1,12 @@
-using WpfCoreModels = Linksoft.VideoSurveillance.Wpf.Core.Models;
-
 using ApiCamera = VideoSurveillance.Generated.Cameras.Models.Camera;
-using ApiCameraProtocol = VideoSurveillance.Generated.Cameras.Models.CameraProtocol;
 using ApiCameraOverlayPosition = VideoSurveillance.Generated.Cameras.Models.CameraOverlayPosition;
+using ApiCameraProtocol = VideoSurveillance.Generated.Cameras.Models.CameraProtocol;
 using ApiCameraStreamRtspTransport = VideoSurveillance.Generated.Cameras.Models.CameraStreamRtspTransport;
 
 using CoreCameraProtocol = Linksoft.VideoSurveillance.Enums.CameraProtocol;
 using CoreOverlayPosition = Linksoft.VideoSurveillance.Enums.OverlayPosition;
+
+using WpfCoreModels = Linksoft.VideoSurveillance.Wpf.Core.Models;
 
 namespace Linksoft.VideoSurveillance.Wpf.Extensions;
 
@@ -18,7 +18,8 @@ public static class CameraModelMappingExtensions
     /// <summary>
     /// Converts an API <see cref="ApiCamera"/> to a Wpf.Core <see cref="WpfCoreModels.CameraConfiguration"/>.
     /// </summary>
-    public static WpfCoreModels.CameraConfiguration ToCameraConfiguration(this ApiCamera camera)
+    public static WpfCoreModels.CameraConfiguration ToCameraConfiguration(
+        this ApiCamera camera)
     {
         ArgumentNullException.ThrowIfNull(camera);
 
@@ -54,17 +55,23 @@ public static class CameraModelMappingExtensions
     {
         ArgumentNullException.ThrowIfNull(config);
 
+        var username = string.IsNullOrEmpty(config.Authentication.UserName)
+            ? string.Empty
+            : config.Authentication.UserName;
+
+        var pwd = string.IsNullOrEmpty(password)
+            ? string.Empty
+            : password;
+
         return new CreateCameraRequest(
             DisplayName: config.Display.DisplayName,
-            Description: config.Display.Description,
+            Description: config.Display.Description ?? string.Empty,
             IpAddress: config.Connection.IpAddress,
             Port: config.Connection.Port,
             Protocol: config.Connection.Protocol.ToApiProtocol(),
-            Path: null,
-            Username: string.IsNullOrEmpty(config.Authentication.UserName)
-                ? null!
-                : config.Authentication.UserName,
-            Password: string.IsNullOrEmpty(password) ? null! : password,
+            Path: string.Empty,
+            Username: username,
+            Password: pwd,
             OverlayPosition: config.Display.OverlayPosition.ToApiOverlayPosition(),
             StreamUseLowLatencyMode: config.Stream.UseLowLatencyMode,
             StreamMaxLatencyMs: config.Stream.MaxLatencyMs,
@@ -81,17 +88,23 @@ public static class CameraModelMappingExtensions
     {
         ArgumentNullException.ThrowIfNull(config);
 
+        var username = string.IsNullOrEmpty(config.Authentication.UserName)
+            ? string.Empty
+            : config.Authentication.UserName;
+
+        var pwd = string.IsNullOrEmpty(password)
+            ? string.Empty
+            : password;
+
         return new UpdateCameraRequest(
             DisplayName: config.Display.DisplayName,
-            Description: config.Display.Description,
+            Description: config.Display.Description ?? string.Empty,
             IpAddress: config.Connection.IpAddress,
             Port: config.Connection.Port,
             Protocol: config.Connection.Protocol.ToApiProtocol(),
-            Path: null,
-            Username: string.IsNullOrEmpty(config.Authentication.UserName)
-                ? null!
-                : config.Authentication.UserName,
-            Password: string.IsNullOrEmpty(password) ? null! : password,
+            Path: string.Empty,
+            Username: username,
+            Password: pwd,
             OverlayPosition: config.Display.OverlayPosition.ToApiOverlayPosition(),
             StreamUseLowLatencyMode: config.Stream.UseLowLatencyMode,
             StreamMaxLatencyMs: config.Stream.MaxLatencyMs,
@@ -102,7 +115,8 @@ public static class CameraModelMappingExtensions
     /// <summary>
     /// Converts an API <see cref="ApiCameraProtocol"/> to a Core <see cref="CoreCameraProtocol"/>.
     /// </summary>
-    public static CoreCameraProtocol ToCoreProtocol(this ApiCameraProtocol protocol)
+    public static CoreCameraProtocol ToCoreProtocol(
+        this ApiCameraProtocol protocol)
         => protocol switch
         {
             ApiCameraProtocol.Rtsp => CoreCameraProtocol.Rtsp,
@@ -114,7 +128,8 @@ public static class CameraModelMappingExtensions
     /// <summary>
     /// Converts a Core <see cref="CoreCameraProtocol"/> to an API <see cref="ApiCameraProtocol"/>.
     /// </summary>
-    public static ApiCameraProtocol ToApiProtocol(this CoreCameraProtocol protocol)
+    public static ApiCameraProtocol ToApiProtocol(
+        this CoreCameraProtocol protocol)
         => protocol switch
         {
             CoreCameraProtocol.Rtsp => ApiCameraProtocol.Rtsp,
@@ -126,7 +141,8 @@ public static class CameraModelMappingExtensions
     /// <summary>
     /// Converts an API <see cref="ApiCameraOverlayPosition"/> to a Core <see cref="CoreOverlayPosition"/>.
     /// </summary>
-    public static CoreOverlayPosition ToCoreOverlayPosition(this ApiCameraOverlayPosition position)
+    public static CoreOverlayPosition ToCoreOverlayPosition(
+        this ApiCameraOverlayPosition position)
         => position switch
         {
             ApiCameraOverlayPosition.TopLeft => CoreOverlayPosition.TopLeft,
@@ -139,7 +155,8 @@ public static class CameraModelMappingExtensions
     /// <summary>
     /// Converts a Core <see cref="CoreOverlayPosition"/> to an API <see cref="ApiCameraOverlayPosition"/>.
     /// </summary>
-    public static ApiCameraOverlayPosition ToApiOverlayPosition(this CoreOverlayPosition position)
+    public static ApiCameraOverlayPosition ToApiOverlayPosition(
+        this CoreOverlayPosition position)
         => position switch
         {
             CoreOverlayPosition.TopLeft => ApiCameraOverlayPosition.TopLeft,
@@ -152,7 +169,8 @@ public static class CameraModelMappingExtensions
     /// <summary>
     /// Converts a string RTSP transport value to an API <see cref="ApiCameraStreamRtspTransport"/>.
     /// </summary>
-    public static ApiCameraStreamRtspTransport ToApiRtspTransport(this string? transport)
+    public static ApiCameraStreamRtspTransport ToApiRtspTransport(
+        this string? transport)
         => string.Equals(transport, "udp", StringComparison.OrdinalIgnoreCase)
             ? ApiCameraStreamRtspTransport.Udp
             : ApiCameraStreamRtspTransport.Tcp;

@@ -85,7 +85,7 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
             });
 
             // Start all streams (off UI thread)
-            var tiles = Application.Current.Dispatcher.Invoke(() => CameraTiles.ToList());
+            var tiles = await Application.Current.Dispatcher.InvokeAsync(() => CameraTiles.ToList());
             foreach (var tile in tiles)
             {
                 try
@@ -100,7 +100,7 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
         }
         catch (HttpRequestException)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 StopAndDisposeTiles();
                 GridRows = 0;
@@ -109,14 +109,14 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
         }
         finally
         {
-            Application.Current.Dispatcher.Invoke(() => IsLoading = false);
+            await Application.Current.Dispatcher.InvokeAsync(() => IsLoading = false);
         }
     }
 
     [RelayCommand("StopAll")]
     private async Task StopAllAsync()
     {
-        var tiles = Application.Current.Dispatcher.Invoke(() => CameraTiles.ToList());
+        var tiles = await Application.Current.Dispatcher.InvokeAsync(() => CameraTiles.ToList());
 
         foreach (var tile in tiles)
         {
@@ -130,7 +130,7 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
             }
         }
 
-        Application.Current.Dispatcher.Invoke(StopAndDisposeTiles);
+        await Application.Current.Dispatcher.InvokeAsync(StopAndDisposeTiles);
     }
 
     public void OpenFullScreen(CameraTileViewModel tile)

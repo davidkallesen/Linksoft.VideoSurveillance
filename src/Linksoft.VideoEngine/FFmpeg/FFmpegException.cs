@@ -5,6 +5,22 @@ namespace Linksoft.VideoEngine.FFmpeg;
 /// </summary>
 public sealed class FFmpegException : Exception
 {
+    public FFmpegException()
+    {
+    }
+
+    public FFmpegException(string message)
+        : base(message)
+    {
+    }
+
+    public FFmpegException(
+        string message,
+        Exception innerException)
+        : base(message, innerException)
+    {
+    }
+
     public FFmpegException(
         int errorCode,
         string? messagePrefix = null)

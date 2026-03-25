@@ -9,8 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
-    <PackageReference Include="Atc.Rest.Api.SourceGenerator" Version="1.0.87" OutputItemType="Analyzer" ReferenceOutputAssembly="false">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+    <PackageReference Include="Atc.Rest.Api.SourceGenerator" Version="1.0.136" OutputItemType="Analyzer" ReferenceOutputAssembly="false">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -23,6 +23,10 @@
   <ItemGroup>
     <AdditionalFiles Include="..\VideoSurveillance.yaml" />
     <AdditionalFiles Include=".atc-rest-api-server" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
   </ItemGroup>
 
 </Project>

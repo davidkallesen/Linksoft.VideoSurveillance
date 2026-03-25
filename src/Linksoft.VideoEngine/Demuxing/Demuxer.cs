@@ -26,6 +26,8 @@ internal sealed unsafe class Demuxer : IDisposable
     private volatile bool abortRequested;
     private CancellationToken cancellationToken;
     private GCHandle gcHandle;
+
+    [SuppressMessage("CodeQuality", "S1450", Justification = "Field prevents GC of delegate registered with FFmpeg")]
     private AVIOInterruptCB_callback? interruptDelegate;
 
     internal Demuxer()
