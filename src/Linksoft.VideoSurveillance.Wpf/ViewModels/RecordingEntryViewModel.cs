@@ -6,14 +6,14 @@ namespace Linksoft.VideoSurveillance.Wpf.ViewModels;
 public sealed class RecordingEntryViewModel
 {
     private readonly Recording recording;
-    private readonly string apiBaseUrl;
+    private readonly Uri apiBaseUrl;
 
     public RecordingEntryViewModel(
         Recording recording,
-        string apiBaseUrl)
+        Uri apiBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(recording);
-        ArgumentException.ThrowIfNullOrWhiteSpace(apiBaseUrl);
+        ArgumentNullException.ThrowIfNull(apiBaseUrl);
 
         this.recording = recording;
         this.apiBaseUrl = apiBaseUrl;
@@ -35,7 +35,8 @@ public sealed class RecordingEntryViewModel
 
     public bool HasThumbnail => recording.HasThumbnail;
 
-    public string PlaybackUrl => $"{apiBaseUrl}/recordings-files/{recording.FilePath}";
+    public Uri PlaybackUrl
+        => new($"{apiBaseUrl.GetLeftPart(UriPartial.Authority)}/recordings-files/{recording.FilePath}");
 
     public string FormattedFileSize => FormatFileSize(FileSizeBytes);
 

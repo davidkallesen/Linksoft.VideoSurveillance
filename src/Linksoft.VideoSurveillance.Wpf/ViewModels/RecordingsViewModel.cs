@@ -1,4 +1,6 @@
+#pragma warning disable ATC220 // Cannot be global — conflicts with Linksoft.VideoSurveillance.Wpf.Windows namespace
 using Linksoft.VideoSurveillance.Wpf.Core.Windows;
+#pragma warning restore ATC220
 
 namespace Linksoft.VideoSurveillance.Wpf.ViewModels;
 
@@ -11,7 +13,7 @@ public sealed partial class RecordingsViewModel : ViewModelBase
     private const string AllCamerasKey = "_ALL_";
 
     private readonly GatewayService gatewayService;
-    private readonly string apiBaseAddress;
+    private readonly Uri apiBaseUri;
 
     [ObservableProperty(AfterChangedCallback = nameof(OnFilterChanged))]
     private string selectedCameraFilter = AllCamerasKey;
@@ -39,13 +41,13 @@ public sealed partial class RecordingsViewModel : ViewModelBase
     /// </summary>
     public RecordingsViewModel(
         GatewayService gatewayService,
-        string apiBaseAddress)
+        Uri apiBaseUri)
     {
         ArgumentNullException.ThrowIfNull(gatewayService);
-        ArgumentException.ThrowIfNullOrWhiteSpace(apiBaseAddress);
+        ArgumentNullException.ThrowIfNull(apiBaseUri);
 
         this.gatewayService = gatewayService;
-        this.apiBaseAddress = apiBaseAddress;
+        this.apiBaseUri = apiBaseUri;
     }
 
     /// <summary>
@@ -56,7 +58,7 @@ public sealed partial class RecordingsViewModel : ViewModelBase
     /// <summary>
     /// Gets the day filter items.
     /// </summary>
-    public IDictionary<string, string> DayFilterItems { get; } = new Dictionary<string, string>
+    public IDictionary<string, string> DayFilterItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["_ALL_"] = "All Days",
         ["TODAY"] = "Today",
@@ -70,7 +72,7 @@ public sealed partial class RecordingsViewModel : ViewModelBase
     /// <summary>
     /// Gets the time filter items.
     /// </summary>
-    public IDictionary<string, string> TimeFilterItems { get; } = new Dictionary<string, string>
+    public IDictionary<string, string> TimeFilterItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["_ALL_"] = "All Times",
         ["0_6"] = "00:00 - 06:00",
@@ -124,7 +126,7 @@ public sealed partial class RecordingsViewModel : ViewModelBase
                 {
                     Recordings = new ObservableCollection<RecordingEntryViewModel>(
                         apiRecordings
-                            .Select(r => new RecordingEntryViewModel(r, apiBaseAddress))
+                            .Select(r => new RecordingEntryViewModel(r, apiBaseUri))
                             .OrderByDescending(r => r.RecordingTime));
                 }
                 else
@@ -162,19 +164,20 @@ public sealed partial class RecordingsViewModel : ViewModelBase
             return;
         }
 
+        // Window self-disposes on close (via Closed event handler)
+#pragma warning disable CA2000
         var vm = new FullScreenRecordingWindowViewModel(
-            SelectedRecording.PlaybackUrl,
+            SelectedRecording.PlaybackUrl.AbsoluteUri,
             SelectedRecording.FileName);
 
         var window = new FullScreenRecordingWindow(vm);
         window.Show();
+#pragma warning restore CA2000
     }
 
     [RelayCommand]
-    private async Task Refresh()
-    {
-        await LoadAsync().ConfigureAwait(false);
-    }
+    private Task Refresh()
+        => LoadAsync();
 
     private void OnFilterChanged()
     {

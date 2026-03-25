@@ -1,5 +1,3 @@
-using Linksoft.VideoSurveillance.Wpf.Models;
-
 namespace Linksoft.VideoSurveillance.Wpf.ViewModels;
 
 /// <summary>

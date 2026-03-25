@@ -7,7 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dialogs="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.Dialogs"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:network="clr-namespace:Atc.Wpf.Network;assembly=Atc.Wpf.Network"
+    xmlns:scanner="clr-namespace:Atc.Wpf.Network.Scanner;assembly=Atc.Wpf.Network"
     d:DataContext="{d:DesignInstance Type=dialogs:CameraConfigurationDialogViewModel,
                                      IsDesignTimeCreatable=False}"
     d:DesignWidth="600"
@@ -20,14 +20,14 @@
                                      Key=NetworkScannerHeader}">
         <atc:GridEx Rows="Auto,Auto,*">
             <!--  Scanner Settings  -->
-            <network:NetworkScannerSettingsView Grid.Row="1" DataContext="{Binding Path=NetworkScanner}" />
+            <scanner:NetworkScannerSettingsView Grid.Row="1" DataContext="{Binding Path=NetworkScanner}" />
 
             <!--  Scanner Results  -->
             <Border
                 Grid.Row="2"
                 MinHeight="250"
                 BorderBrush="{DynamicResource AtcApps.Brushes.Control.Border}">
-                <network:NetworkScannerView DataContext="{Binding Path=NetworkScanner}" />
+                <scanner:NetworkScannerView DataContext="{Binding Path=NetworkScanner}" />
             </Border>
         </atc:GridEx>
     </atc:GroupBoxExpander>

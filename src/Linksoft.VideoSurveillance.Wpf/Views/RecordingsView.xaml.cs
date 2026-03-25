@@ -10,7 +10,9 @@ public partial class RecordingsView
         InitializeComponent();
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private void OnLoaded(
+        object sender,
+        RoutedEventArgs e)
     {
         if (DataContext is RecordingsViewModel viewModel)
         {

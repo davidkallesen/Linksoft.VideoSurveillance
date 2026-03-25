@@ -10,7 +10,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Dialogs;
 public partial class SettingsDialogViewModel : ViewModelBase
 {
     private readonly GatewayService gatewayService;
-    private readonly IApplicationSettingsService settingsService;
+    private readonly Linksoft.VideoSurveillance.Wpf.Core.Services.IApplicationSettingsService settingsService;
 
     // Snapshot of full API settings for preserving server-only fields on save
     private AppSettings? originalApiSettings;
@@ -20,7 +20,9 @@ public partial class SettingsDialogViewModel : ViewModelBase
     private string originalThemeAccent = "Blue";
     private string originalLanguage = "1033";
 
-    public SettingsDialogViewModel(GatewayService gatewayService, IApplicationSettingsService settingsService)
+    public SettingsDialogViewModel(
+        GatewayService gatewayService,
+        Linksoft.VideoSurveillance.Wpf.Core.Services.IApplicationSettingsService settingsService)
     {
         this.gatewayService = gatewayService ?? throw new ArgumentNullException(nameof(gatewayService));
         this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));

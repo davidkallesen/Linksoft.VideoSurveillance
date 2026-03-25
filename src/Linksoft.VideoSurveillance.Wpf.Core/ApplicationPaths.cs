@@ -14,27 +14,32 @@ public static class ApplicationPaths
     /// <summary>
     /// Gets the default path for log files.
     /// </summary>
-    public static string DefaultLogsPath => Path.Combine(baseDataPath, "logs");
+    public static string DefaultLogsPath
+        => Path.Combine(baseDataPath, "logs");
 
     /// <summary>
     /// Gets the default path for snapshots.
     /// </summary>
-    public static string DefaultSnapshotsPath => Path.Combine(baseDataPath, "snapshots");
+    public static string DefaultSnapshotsPath
+        => Path.Combine(baseDataPath, "snapshots");
 
     /// <summary>
     /// Gets the default path for recordings.
     /// </summary>
-    public static string DefaultRecordingsPath => Path.Combine(baseDataPath, "recordings");
+    public static string DefaultRecordingsPath
+        => Path.Combine(baseDataPath, "recordings");
 
     /// <summary>
     /// Gets the default path for settings file.
     /// </summary>
-    public static string DefaultSettingsPath => Path.Combine(baseDataPath, "settings.json");
+    public static string DefaultSettingsPath
+        => Path.Combine(baseDataPath, "settings.json");
 
     /// <summary>
     /// Gets the default path for camera data file.
     /// </summary>
-    public static string DefaultCameraDataPath => Path.Combine(baseDataPath, "cameras.json");
+    public static string DefaultCameraDataPath
+        => Path.Combine(baseDataPath, "cameras.json");
 
     /// <summary>
     /// Configures the application folder name under Linksoft in ProgramData.

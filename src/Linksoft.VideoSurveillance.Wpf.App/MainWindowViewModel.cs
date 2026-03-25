@@ -6,7 +6,7 @@ namespace Linksoft.VideoSurveillance.Wpf.App;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly GatewayService gatewayService;
-    private readonly SurveillanceHubService hubService;
+    private readonly SurveillanceHubService hubService; // Used for event subscriptions in constructor
     private readonly IGitHubReleaseService gitHubReleaseService;
     private readonly IApplicationSettingsService settingsService;
     private readonly LiveViewViewModel liveViewViewModel;
@@ -92,16 +92,16 @@ public partial class MainWindowViewModel : ViewModelBase
         // Default view
         CurrentView = liveViewViewModel;
 
-        hubService.OnHubConnectionStateChanged += state =>
+        this.hubService.OnHubConnectionStateChanged += state =>
         {
-            Application.Current?.Dispatcher.Invoke(() =>
+            _ = Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 HubConnectionState = state;
             });
         };
 
-        hubService.OnConnectionStateChanged += OnConnectionStateChanged;
-        hubService.OnRecordingStateChanged += OnRecordingStateChanged;
+        this.hubService.OnConnectionStateChanged += OnConnectionStateChanged;
+        this.hubService.OnRecordingStateChanged += OnRecordingStateChanged;
     }
 
     [RelayCommand]
@@ -232,6 +232,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    [SuppressMessage("Design", "S1871", Justification = "Each case calls LoadCommand on a different type — no shared interface")]
     private void RefreshCurrentView()
     {
         switch (CurrentView)
@@ -334,14 +335,14 @@ public partial class MainWindowViewModel : ViewModelBase
             await gatewayService.GetSettingsAsync().ConfigureAwait(false);
             sw.Stop();
 
-            Application.Current?.Dispatcher.Invoke(() =>
+            _ = Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 ServerLatency = $"{sw.ElapsedMilliseconds} ms";
             });
         }
         catch
         {
-            Application.Current?.Dispatcher.Invoke(() =>
+            _ = Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 ServerLatency = "N/A";
             });
@@ -351,7 +352,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OnConnectionStateChanged(
         SurveillanceHubService.ConnectionStateEvent e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             if (string.Equals(e.NewState, "connected", StringComparison.OrdinalIgnoreCase))
             {
@@ -367,7 +368,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OnRecordingStateChanged(
         SurveillanceHubService.RecordingStateEvent e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             if (string.Equals(e.NewState, "recording", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(e.NewState, "recordingMotion", StringComparison.OrdinalIgnoreCase))

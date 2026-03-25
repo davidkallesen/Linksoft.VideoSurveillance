@@ -1,3 +1,4 @@
+#pragma warning disable MA0048 // File name must match type name — Aspire convention uses AppHost.cs for top-level Program
 var builder = DistributedApplication.CreateBuilder(args);
 
 var api = builder

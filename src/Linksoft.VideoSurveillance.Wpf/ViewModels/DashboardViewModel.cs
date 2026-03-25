@@ -36,8 +36,8 @@ public partial class DashboardViewModel : ViewModelBase
         this.gatewayService = gatewayService;
         this.hubService = hubService;
 
-        hubService.OnConnectionStateChanged += OnConnectionStateChanged;
-        hubService.OnRecordingStateChanged += OnRecordingStateChanged;
+        this.hubService.OnConnectionStateChanged += OnConnectionStateChanged;
+        this.hubService.OnRecordingStateChanged += OnRecordingStateChanged;
     }
 
     [RelayCommand("Load")]
@@ -55,7 +55,7 @@ public partial class DashboardViewModel : ViewModelBase
                 .GetLayoutsAsync()
                 .ConfigureAwait(false);
 
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 if (cameras is not null)
                 {
@@ -76,7 +76,7 @@ public partial class DashboardViewModel : ViewModelBase
         }
         catch (HttpRequestException)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 TotalCameras = 0;
                 ConnectedCameras = 0;
@@ -86,14 +86,14 @@ public partial class DashboardViewModel : ViewModelBase
         }
         finally
         {
-            Application.Current.Dispatcher.Invoke(() => IsLoading = false);
+            await Application.Current.Dispatcher.InvokeAsync(() => IsLoading = false);
         }
     }
 
     private void OnConnectionStateChanged(
         SurveillanceHubService.ConnectionStateEvent e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             if (string.Equals(e.NewState, "connected", StringComparison.OrdinalIgnoreCase))
             {
@@ -109,7 +109,7 @@ public partial class DashboardViewModel : ViewModelBase
     private void OnRecordingStateChanged(
         SurveillanceHubService.RecordingStateEvent e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             if (string.Equals(e.NewState, "recording", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(e.NewState, "recordingMotion", StringComparison.OrdinalIgnoreCase))

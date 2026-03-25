@@ -18,8 +18,12 @@
 
   <ItemGroup>
     <PackageReference Include="Atc" Version="3.0.18" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
   </ItemGroup>
 
 </Project>

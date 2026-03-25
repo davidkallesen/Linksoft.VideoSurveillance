@@ -39,7 +39,9 @@ public partial class MainWindow : Fluent.IRibbonWindow
             : Visibility.Visible;
     }
 
-    private void OnClosing(object? sender, CancelEventArgs e)
+    private void OnClosing(
+        object? sender,
+        CancelEventArgs e)
     {
         // Restore from full screen before capturing state
         if (viewModel.IsFullScreen)

@@ -63,22 +63,16 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
         hubService.OnMotionDetected += OnHubMotionDetected;
     }
 
-    public async Task StartStreamAsync()
-    {
-        await hubService
-            .StartStreamAsync(CameraId)
-            .ConfigureAwait(false);
-    }
+    public Task StartStreamAsync()
+        => hubService.StartStreamAsync(CameraId);
 
-    public async Task StopStreamAsync()
+    public Task StopStreamAsync()
     {
         Player?.Close();
 
-        Application.Current?.Dispatcher.Invoke(() => IsStreaming = false);
+        _ = Application.Current?.Dispatcher.InvokeAsync(() => IsStreaming = false);
 
-        await hubService
-            .StopStreamAsync(CameraId)
-            .ConfigureAwait(false);
+        return hubService.StopStreamAsync(CameraId);
     }
 
     public void Dispose()
@@ -130,14 +124,14 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
             }
         });
 
-        Application.Current?.Dispatcher.Invoke(() => IsStreaming = true);
+        _ = Application.Current?.Dispatcher.InvokeAsync(() => IsStreaming = true);
     }
 
     private void OnPlayerStateChanged(
         object? sender,
         PlayerStateChangedEventArgs e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             ConnectionState = e.NewState switch
             {
@@ -163,7 +157,7 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             ConnectionState = e.NewState.ToLowerInvariant();
         });
@@ -177,7 +171,7 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             IsRecording = string.Equals(e.NewState, "recording", StringComparison.OrdinalIgnoreCase) ||
                           string.Equals(e.NewState, "recordingMotion", StringComparison.OrdinalIgnoreCase);
@@ -192,7 +186,7 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             IsMotionDetected = e.IsMotionActive;
             AnalysisWidth = e.AnalysisWidth;

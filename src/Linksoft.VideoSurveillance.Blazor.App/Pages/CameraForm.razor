@@ -157,7 +157,7 @@ else
 
     private async Task SaveAsync()
     {
-        await form.Validate();
+        await form.ValidateAsync();
         if (!form.IsValid)
         {
             return;

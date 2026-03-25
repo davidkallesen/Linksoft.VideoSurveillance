@@ -19,7 +19,6 @@ global using Atc.Wpf.Translation;
 global using Atc.XamlToolkit.Diagnostics;
 global using Atc.XamlToolkit.Mvvm;
 
-global using Linksoft.CameraWall.Wpf.Services;
 global using Linksoft.CameraWall.Wpf.SplashScreens;
 
 global using Linksoft.VideoEngine;

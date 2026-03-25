@@ -25,6 +25,8 @@ public partial class KeyboardShortcutsDialog
         };
     }
 
-    private void OkButton_Click(object sender, RoutedEventArgs e)
+    private void OkButton_Click(
+        object sender,
+        RoutedEventArgs e)
         => Close();
 }

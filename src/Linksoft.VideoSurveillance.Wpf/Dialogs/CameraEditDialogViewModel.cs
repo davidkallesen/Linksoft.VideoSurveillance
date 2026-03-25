@@ -89,7 +89,7 @@ public partial class CameraEditDialogViewModel : ViewModelBase
     };
 
     /// <summary>
-    /// Initializes a new instance for adding a new camera.
+    /// Initializes a new instance of the <see cref="CameraEditDialogViewModel"/> class for adding a new camera.
     /// </summary>
     public CameraEditDialogViewModel()
     {
@@ -97,7 +97,7 @@ public partial class CameraEditDialogViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Initializes a new instance for editing an existing camera.
+    /// Initializes a new instance of the <see cref="CameraEditDialogViewModel"/> class for editing an existing camera.
     /// </summary>
     public CameraEditDialogViewModel(Camera camera)
     {

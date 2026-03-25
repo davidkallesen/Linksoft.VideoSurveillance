@@ -1,8 +1,3 @@
-using System.Collections.Concurrent;
-using System.Media;
-
-using Linksoft.VideoSurveillance.Wpf.Models;
-
 namespace Linksoft.VideoSurveillance.Wpf.Services;
 
 /// <summary>
@@ -117,33 +112,31 @@ public sealed class NotificationCoordinator : IDisposable
         }
     }
 
-    private void OnConnectionStateChanged(SurveillanceHubService.ConnectionStateEvent e)
+    private void OnConnectionStateChanged(
+        SurveillanceHubService.ConnectionStateEvent e)
     {
         var cameraName = GetCameraName(e.CameraId);
 
-        if (string.Equals(e.NewState, "disconnected", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(e.NewState, "disconnected", StringComparison.OrdinalIgnoreCase) &&
+            Preferences.NotifyOnDisconnect)
         {
-            if (Preferences.NotifyOnDisconnect)
-            {
-                ShowNotification(
-                    cameraName,
-                    "Camera disconnected",
-                    NotificationEventType.CameraDisconnected);
-            }
+            ShowNotification(
+                cameraName,
+                "Camera disconnected",
+                NotificationEventType.CameraDisconnected);
         }
-        else if (string.Equals(e.NewState, "connected", StringComparison.OrdinalIgnoreCase))
+        else if (string.Equals(e.NewState, "connected", StringComparison.OrdinalIgnoreCase) &&
+                 Preferences.NotifyOnReconnect)
         {
-            if (Preferences.NotifyOnReconnect)
-            {
-                ShowNotification(
-                    cameraName,
-                    "Camera connected",
-                    NotificationEventType.CameraReconnected);
-            }
+            ShowNotification(
+                cameraName,
+                "Camera connected",
+                NotificationEventType.CameraReconnected);
         }
     }
 
-    private void OnRecordingStateChanged(SurveillanceHubService.RecordingStateEvent e)
+    private void OnRecordingStateChanged(
+        SurveillanceHubService.RecordingStateEvent e)
     {
         var cameraName = GetCameraName(e.CameraId);
 
@@ -227,9 +220,7 @@ public sealed class NotificationCoordinator : IDisposable
     }
 
     private string GetCameraName(Guid cameraId)
-    {
-        return cameraNameCache.TryGetValue(cameraId, out var name)
+        => cameraNameCache.TryGetValue(cameraId, out var name)
             ? name
             : $"Camera {cameraId.ToString()[..8]}";
-    }
 }

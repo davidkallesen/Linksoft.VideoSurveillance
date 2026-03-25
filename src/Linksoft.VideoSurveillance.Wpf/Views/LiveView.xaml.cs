@@ -10,7 +10,9 @@ public partial class LiveView
         InitializeComponent();
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private void OnLoaded(
+        object sender,
+        RoutedEventArgs e)
     {
         if (DataContext is LiveViewViewModel viewModel)
         {
@@ -18,7 +20,9 @@ public partial class LiveView
         }
     }
 
-    private void OnUnloaded(object sender, RoutedEventArgs e)
+    private void OnUnloaded(
+        object sender,
+        RoutedEventArgs e)
     {
         if (DataContext is LiveViewViewModel viewModel)
         {

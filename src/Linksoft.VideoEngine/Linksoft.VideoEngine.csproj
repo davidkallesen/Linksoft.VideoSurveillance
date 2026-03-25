@@ -17,7 +17,11 @@
 
   <ItemGroup>
     <PackageReference Include="Flyleaf.FFmpeg.Bindings" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
   </ItemGroup>
 
 </Project>
