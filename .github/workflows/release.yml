@@ -32,7 +32,7 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Test
-        run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal
+        run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --tl:off
 
   publish-nuget:
     name: Publish NuGet Package
@@ -108,22 +108,73 @@ jobs:
       - name: Upload MSI Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: msi-installer
+          name: msi-installer-camerawall
           path: setup/Linksoft.CameraWall.Installer/bin/${{ env.CONFIGURATION }}/*.msi
+          retention-days: 5
+
+  build-installer-videosurveillance:
+    name: Build VideoSurveillance MSI Installer
+    runs-on: windows-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Get Version
+        id: version
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag -replace '^v', ''
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Publish Application
+        run: dotnet publish src/Linksoft.VideoSurveillance.Wpf.App/Linksoft.VideoSurveillance.Wpf.App.csproj --configuration ${{ env.CONFIGURATION }} --output ./publish-vs
+
+      - name: Download FFmpeg
+        run: |
+          $ffmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.0.1-full_build-shared.7z"
+          Invoke-WebRequest -Uri $ffmpegUrl -OutFile ffmpeg.7z
+          7z x ffmpeg.7z -offmpeg-temp
+          $binDir = Get-ChildItem -Path ffmpeg-temp -Recurse -Directory -Filter "bin" | Select-Object -First 1
+          New-Item -ItemType Directory -Path "./publish-vs/ffmpeg" -Force
+          Copy-Item "$($binDir.FullName)\*.dll" -Destination "./publish-vs/ffmpeg/"
+
+      - name: Build Installer
+        run: dotnet build setup/Linksoft.VideoSurveillance.Installer/Linksoft.VideoSurveillance.Installer.wixproj --configuration ${{ env.CONFIGURATION }} -p:ProductVersion=${{ steps.version.outputs.version }} -p:PublishDir=${{ github.workspace }}/publish-vs
+
+      - name: Upload MSI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msi-installer-videosurveillance
+          path: setup/Linksoft.VideoSurveillance.Installer/bin/${{ env.CONFIGURATION }}/*.msi
           retention-days: 5
 
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [publish-nuget, build-installer]
+    needs: [publish-nuget, build-installer, build-installer-videosurveillance]
     permissions:
       contents: write
 
     steps:
-      - name: Download MSI Artifact
+      - name: Download CameraWall MSI Artifact
         uses: actions/download-artifact@v4
         with:
-          name: msi-installer
+          name: msi-installer-camerawall
+          path: ./msi
+
+      - name: Download VideoSurveillance MSI Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: msi-installer-videosurveillance
           path: ./msi
 
       - name: Create GitHub Release
