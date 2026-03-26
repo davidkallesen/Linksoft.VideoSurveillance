@@ -5,6 +5,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <Description>WPF management application for the Linksoft VideoSurveillance API server.</Description>
+    <ApplicationIcon>..\Linksoft.VideoSurveillance.Wpf.Core\Resources\Images\cctv-camera.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\Linksoft.VideoSurveillance.Wpf.Core\Resources\Images\cctv-camera.ico">
+      <Link>cctv-camera.ico</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

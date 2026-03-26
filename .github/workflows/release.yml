@@ -32,7 +32,7 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Test
-        run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --tl:off
+        run: dotnet test --no-build --configuration ${{ env.CONFIGURATION }}
 
   publish-nuget:
     name: Publish NuGet Package
