@@ -36,10 +36,7 @@ public sealed partial class CheckForUpdatesDialogViewModel : ViewModelDialogBase
 
         this.gitHubReleaseService = gitHubReleaseService;
 
-        // Get current version from assembly
-        var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
-        var version = assembly.GetName().Version;
-        CurrentVersion = version?.ToString(3) ?? "1.0.0";
+        CurrentVersion = ApplicationHelper.GetVersion();
 
         StatusMessage = Translations.CheckingForUpdates;
     }

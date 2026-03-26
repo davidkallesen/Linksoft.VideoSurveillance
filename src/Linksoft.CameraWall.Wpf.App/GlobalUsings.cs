@@ -4,7 +4,6 @@ global using System.ComponentModel;
 global using System.Diagnostics;
 global using System.Globalization;
 global using System.IO;
-global using System.Reflection;
 global using System.Text.Json;
 global using System.Windows;
 global using System.Windows.Input;
@@ -40,5 +39,6 @@ global using Microsoft.Extensions.Logging;
 
 global using Serilog;
 
+global using ApplicationHelper = Linksoft.VideoSurveillance.Helpers.ApplicationHelper;
 global using IMediaCleanupService = Linksoft.VideoSurveillance.Services.IMediaCleanupService;
 global using IRecordingSegmentationService = Linksoft.VideoSurveillance.Services.IRecordingSegmentationService;

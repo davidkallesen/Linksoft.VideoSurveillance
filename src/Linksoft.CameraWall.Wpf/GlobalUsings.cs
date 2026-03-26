@@ -7,7 +7,6 @@ global using System.Diagnostics.CodeAnalysis;
 global using System.Globalization;
 global using System.IO;
 global using System.Linq;
-global using System.Reflection;
 global using System.Text;
 global using System.Threading;
 global using System.Threading.Tasks;
@@ -35,6 +34,7 @@ global using Linksoft.VideoSurveillance.Wpf.Core.Services;
 global using Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 global using Microsoft.Extensions.Logging;
 
+global using ApplicationHelper = Linksoft.VideoSurveillance.Helpers.ApplicationHelper;
 global using BoundingBox = Linksoft.VideoSurveillance.Models.BoundingBox;
 global using CameraLayoutItem = Linksoft.VideoSurveillance.Models.CameraLayoutItem;
 global using ConnectionState = Atc.Network.ConnectionState;

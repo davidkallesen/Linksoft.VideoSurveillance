@@ -164,7 +164,7 @@ public partial class CameraWallApp
         var splashScreen = new SplashScreenWindow
         {
             Header = Translations.ApplicationTitle,
-            VersionText = $"Version {Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(1, 0)}",
+            VersionText = $"Version {ApplicationHelper.GetVersion()}",
         };
 
         splashScreen.Show();
