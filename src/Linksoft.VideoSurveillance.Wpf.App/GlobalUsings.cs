@@ -8,7 +8,6 @@ global using System.Globalization;
 global using System.IO;
 global using System.Linq;
 global using System.Net.Http;
-global using System.Reflection;
 global using System.Windows;
 global using System.Windows.Input;
 global using System.Windows.Threading;
@@ -44,4 +43,5 @@ global using Serilog;
 global using VideoSurveillance.Generated;
 global using VideoSurveillance.Generated.Cameras.Models;
 
+global using ApplicationHelper = Linksoft.VideoSurveillance.Helpers.ApplicationHelper;
 global using IApplicationSettingsService = Linksoft.VideoSurveillance.Wpf.Core.Services.IApplicationSettingsService;

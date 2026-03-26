@@ -107,7 +107,7 @@ public partial class App
         var splashScreen = new SplashScreenWindow
         {
             Header = "Linksoft Video Surveillance",
-            VersionText = $"Version {Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(1, 0)}",
+            VersionText = $"Version {ApplicationHelper.GetVersion()}",
         };
 
         splashScreen.Show();

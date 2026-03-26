@@ -632,10 +632,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
                 return;
             }
 
-            var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
-            var currentVersion = assembly.GetName().Version;
-
-            if (currentVersion is null || latest <= currentVersion)
+            if (!Version.TryParse(ApplicationHelper.GetVersion(), out var currentVersion) || latest <= currentVersion)
             {
                 return;
             }

@@ -160,7 +160,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private static void ShowAbout()
     {
-        var version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "1.0.0";
+        var version = ApplicationHelper.GetVersion();
         var year = DateTime.Now.Year;
 
         var dialog = new AboutDialog(version, year)

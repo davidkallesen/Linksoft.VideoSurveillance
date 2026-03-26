@@ -61,6 +61,7 @@ global using Microsoft.Extensions.Logging;
 global using Microsoft.Win32;
 
 // Type aliases to resolve ambiguities between Core and Wpf.Core namespaces
+global using ApplicationHelper = Linksoft.VideoSurveillance.Helpers.ApplicationHelper;
 global using AuthenticationSettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.AuthenticationSettings;
 global using BoundingBox = Linksoft.VideoSurveillance.Models.BoundingBox;
 global using CameraDisplaySettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.CameraDisplaySettings;
