@@ -3,7 +3,7 @@
 A professional video surveillance platform for live monitoring of multiple RTSP/HTTP camera streams. Includes a WPF desktop application with an intuitive ribbon interface, a headless REST API + SignalR server edition, and Aspire orchestration.
 
 [![Release](https://img.shields.io/github/v/release/davidkallesen/Linksoft.VideoSurveillance?include_prereleases)](https://github.com/davidkallesen/Linksoft.VideoSurveillance/releases)
-[![NuGet](https://img.shields.io/nuget/v/Linksoft.CameraWall.Wpf)](https://www.nuget.org/packages/Linksoft.CameraWall.Wpf)
+[![NuGet](https://img.shields.io/nuget/v/Linksoft.Wpf.CameraWall)](https://www.nuget.org/packages/Linksoft.Wpf.CameraWall)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Features
