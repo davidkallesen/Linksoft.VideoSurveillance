@@ -31,7 +31,7 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Test
-        run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --tl:off
+        run: dotnet test --no-build --configuration ${{ env.CONFIGURATION }}
 
   build-installer:
     name: Build Installer (Validation)

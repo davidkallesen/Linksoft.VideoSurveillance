@@ -34,7 +34,7 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Test
-        run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --tl:off --logger trx --results-directory ./test-results
+        run: dotnet test --no-build --configuration ${{ env.CONFIGURATION }} --report-trx --results-directory ./test-results
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
