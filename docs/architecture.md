@@ -1,8 +1,8 @@
-# Linksoft.VideoSurveillance Architecture
+# 🏛️ Linksoft.VideoSurveillance Architecture
 
 A multi-assembly video surveillance platform supporting both a WPF desktop application and a headless REST API + Blazor Web UI, sharing a common Core library. Built on .NET 10.0 with in-process FFmpeg via Linksoft.VideoEngine.
 
-## High-Level Architecture
+## 🌐 High-Level Architecture
 
 ```mermaid
 graph TB
@@ -30,7 +30,7 @@ graph TB
     API -- "RTSP/HTTP" --> Cameras
 ```
 
-## Assembly Dependency Graph
+## 🔗 Assembly Dependency Graph
 
 ```mermaid
 graph BT
@@ -68,7 +68,7 @@ graph BT
     Aspire --> VSApp
 ```
 
-## Layered Architecture
+## 📊 Layered Architecture
 
 ```mermaid
 graph TB
@@ -118,7 +118,7 @@ graph TB
     ContractsGen --> Core
 ```
 
-## Video Pipeline Architecture
+## 🎬 Video Pipeline Architecture
 
 ```mermaid
 graph LR
@@ -151,7 +151,7 @@ graph LR
     SCP --> VideoHost
 ```
 
-## OpenAPI-First API Design
+## 📝 OpenAPI-First API Design
 
 ```mermaid
 graph LR
@@ -173,7 +173,7 @@ graph LR
     Contracts --> Domain
 ```
 
-## Real-Time Event Flow
+## ⚡ Real-Time Event Flow
 
 ```mermaid
 sequenceDiagram
@@ -200,22 +200,22 @@ sequenceDiagram
     Hub ->> WPF: ConnectionStateChanged broadcast
 ```
 
-## Assembly Responsibilities
+## 📦 Assembly Responsibilities
 
-### Core Layer
+### 📚 Core Layer
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
 | **Linksoft.VideoSurveillance.Core** | net10.0 | Shared domain library with zero UI dependencies. Contains all models (camera configuration, layouts, settings, overrides, recording entries), enums (ConnectionState, RecordingState, CameraProtocol, etc.), events (motion detected, recording state changed, connection changed), service interfaces (ICameraStorageService, IApplicationSettingsService, IRecordingService, IMotionDetectionService, ITimelapseService, IMediaCleanupService, etc.), helpers (ApplicationPaths, CameraUriHelper, RecordingPolicyHelper), and factories (DropDownItemsFactory). |
 
-### Video Engine Layer
+### 🎬 Video Engine Layer
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
 | **Linksoft.VideoEngine** | net10.0 | Cross-platform video engine using in-process FFmpeg via Flyleaf.FFmpeg.Bindings. Provides `Demuxer` for packet extraction, `VideoDecoder` for CPU/GPU decoding, `Remuxer` for recording to file (MP4/MKV), `FrameCapture` for PNG snapshots, and `MediaProbe` for stream metadata. Exposes `IVideoPlayer` and `IVideoPlayerFactory` interfaces. Defines `IGpuAccelerator` for pluggable hardware acceleration. |
 | **Linksoft.VideoEngine.DirectX** | net10.0-windows | Windows-specific GPU acceleration using Direct3D 11. Implements `IGpuAccelerator` via `D3D11Accelerator` for D3D11VA hardware-accelerated decoding. Provides `VideoProcessorRenderer` (NV12 to BGRA conversion), `SwapChainPresenter` (DirectComposition swap chain rendering), `HwAccelContext` (FFmpeg hardware device setup), and `GpuSnapshotCapture` (GPU-surface PNG capture). Uses Vortice bindings. |
 
-### WPF Presentation Layer
+### 🖥️ WPF Presentation Layer
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
@@ -225,7 +225,7 @@ sequenceDiagram
 | **Linksoft.VideoSurveillance.Wpf** | net10.0-windows | WPF library for the VideoSurveillance API client. Provides `GatewayService` (OpenAPI-generated REST client split by resource: Cameras, Layouts, Recordings, Settings) and `SurveillanceHubService` (SignalR client for real-time events). Uses `Atc.Rest.Api.SourceGenerator` for typed API client generation from `VideoSurveillance.yaml`. |
 | **Linksoft.VideoSurveillance.Wpf.App** | net10.0-windows | Thin shell WPF application for the VideoSurveillance API client. Provides `MainWindow` with Fluent.Ribbon UI (Home tab with Cameras, Layouts, Recordings buttons). Status bar shows server URL and SignalR hub connection state. Configures `Microsoft.Extensions.Hosting`, Serilog, splash screen, and DI for `GatewayService` + `SurveillanceHubService`. Reads `ApiBaseAddress` from `appsettings.json`. |
 
-### Server Layer
+### 🌍 Server Layer
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
@@ -233,19 +233,19 @@ sequenceDiagram
 | **Linksoft.VideoSurveillance.Api.Domain** | net10.0 | Handler implementations for all API endpoints. 16 handlers covering Cameras CRUD (8), Layouts CRUD + Apply (5), Recordings (1), Settings (2). Includes mapping extensions for domain-to-DTO conversions. |
 | **Linksoft.VideoSurveillance.Api** | net10.0 | ASP.NET Core host application. Registers all services (JsonCameraStorageService, JsonApplicationSettingsService, ServerRecordingService, ServerMotionDetectionService, VideoPlayerFactory, StreamingService). Configures CORS, SignalR hub at `/hubs/surveillance`, static file serving for HLS streams (`/streams`) and recordings (`/recordings-files`), OpenAPI docs via Scalar. Runs `CameraConnectionManager` and `SurveillanceEventBroadcaster` as hosted services. |
 
-### Web UI
+### 🌐 Web UI
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
 | **Linksoft.VideoSurveillance.Blazor.App** | net10.0 | Blazor WebAssembly client with MudBlazor UI. Pages: Dashboard (live stats), Cameras (CRUD + snapshot/record), Layouts (drag-drop grid editor), Live View (HLS streaming with motion bounding boxes), Recordings (browse/playback/download), Settings (7-tab configuration). Uses `GatewayService` for API calls and `SurveillanceHubService` for SignalR real-time updates. Auto-generated API client from OpenAPI spec. |
 
-### Orchestration
+### ☁️ Orchestration
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
 | **Linksoft.VideoSurveillance.Aspire** | net10.0 | .NET Aspire AppHost for distributed orchestration. Starts the API on port 5000, then the Blazor.App and Wpf.App with API service references. Provides Aspire dashboard for monitoring, logs, traces, and health checks. |
 
-### Testing
+### ✅ Testing
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
@@ -253,13 +253,13 @@ sequenceDiagram
 | **Linksoft.VideoEngine.Tests** | net10.0 | xUnit v3 unit tests for VideoEngine. Tests FFmpeg integration, video player, and frame capture. |
 | **Linksoft.VideoSurveillance.Api.Tests** | net10.0 | xUnit v3 unit tests for API handlers and domain logic. Tests CRUD operations and mapping extensions. |
 
-### Installer
+### 📦 Installer
 
 | Assembly | SDK | Description |
 |----------|-----|-------------|
 | **Linksoft.VideoSurveillance.Installer** | WixToolset.Sdk 5.0.2 | WiX MSI installer for the desktop application. Auto-harvests published binaries via WiX Heat. Produces x64 Windows Installer package with Start Menu and Desktop shortcuts. Built via command line only (excluded from Visual Studio solution). |
 
-## Key Technology Stack
+## 🛠️ Key Technology Stack
 
 | Component | Technology |
 |-----------|------------|
@@ -281,7 +281,7 @@ sequenceDiagram
 | Code Analysis | StyleCop, Meziantou, SonarAnalyzer, SecurityCodeScan |
 | Installer | WiX Toolset v5 |
 
-## Data Storage
+## 💾 Data Storage
 
 ```mermaid
 graph LR
@@ -296,7 +296,7 @@ graph LR
 
 Both the WPF app and the API server use the same JSON-based storage format under `%ProgramData%\Linksoft\CameraWall\`. The `ApplicationPaths` helper in Core provides default paths.
 
-## Per-Camera Override System
+## 🔀 Per-Camera Override System
 
 Every application-level setting can be overridden on a per-camera basis. Override models use nullable properties where `null` means "use application default":
 
@@ -312,7 +312,7 @@ graph TB
 
 Override categories: Connection, CameraDisplay, Performance, Recording, MotionDetection (with nested BoundingBox).
 
-## Service Registration
+## 🔧 Service Registration
 
 Services are auto-registered using `[Registration]` source-generated attributes:
 
