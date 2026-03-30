@@ -1,0 +1,27 @@
+namespace Linksoft.VideoSurveillance.Wpf.App;
+
+#pragma warning disable MA0049, CA1724 // Type name matches containing namespace
+public partial class App
+#pragma warning restore MA0049, CA1724
+{
+    [LoggerMessage(Level = LogLevel.Error, Message = "CurrentDomain Unhandled Exception: {Message}")]
+    private partial void LogCurrentDomainUnhandledException(string message);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Dispatcher Unhandled Exception: {Message}")]
+    private partial void LogDispatcherUnhandledException(string message);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "App starting")]
+    private partial void LogAppStarting();
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to connect to SignalR hub during startup")]
+    private partial void LogSignalRConnectionFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "App started")]
+    private partial void LogAppStarted();
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "App closing")]
+    private partial void LogAppClosing();
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "App closed")]
+    private partial void LogAppClosed();
+}

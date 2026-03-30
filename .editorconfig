@@ -583,9 +583,6 @@ dotnet_diagnostic.CA1002.severity = none            # Change 'List<T>' to use 'C
 dotnet_diagnostic.CA1003.severity = none            # Use generic event handler instances
 dotnet_diagnostic.CA1031.severity = none            # Catch general exception types
 dotnet_diagnostic.CA1823.severity = none            # Unused field - DependencyPropertys - Used by WPF/WinUI
-dotnet_diagnostic.CA1848.severity = none            # Logging performance
-dotnet_diagnostic.CA1873.severity = none            # Logging performance
-dotnet_diagnostic.CA2254.severity = none            # Logging performance
 
 dotnet_diagnostic.IDE0044.severity = none           # Make field readonly - DependencyPropertys - Used by WPF/WinUI
 dotnet_diagnostic.IDE0051.severity = none           # Type member is never used - DependencyPropertys - Used by WPF/WinUI

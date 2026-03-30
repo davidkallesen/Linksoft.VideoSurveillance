@@ -149,7 +149,7 @@ public partial class CameraTile : IDisposable
     private IMotionDetectionService? motionDetectionService;
     private ITimelapseService? timelapseService;
     private IToastNotificationService? toastNotificationService;
-    private ILogger? logger;
+    private ILogger logger = NullLogger.Instance;
     private DispatcherTimer? recordingDurationTimer;
     private IMediaPipeline? mediaPipeline;
     private IVideoPlayerFactory? videoPlayerFactory;
@@ -388,7 +388,7 @@ public partial class CameraTile : IDisposable
         Func<IVideoPlayer, IMediaPipeline>? mediaPipelineFactory = null,
         ILogger? logger = null)
     {
-        this.logger = logger;
+        this.logger = logger ?? NullLogger.Instance;
 
         // Unsubscribe from previous services
         if (this.recordingService is not null)
@@ -1472,19 +1472,12 @@ public partial class CameraTile : IDisposable
                 Camera is not null &&
                 RecordingState == RecordingState.Idle)
             {
-                logger?.LogInformation(
-                    "Recording-on-connect starting for camera '{CameraName}'",
-                    Camera.Display.DisplayName);
+                LogRecordingOnConnectStarting(Camera.Display.DisplayName);
                 recordingService.StartRecording(Camera, mediaPipeline);
             }
             else if (GetEffectiveEnableRecordingOnConnect() && Camera is not null)
             {
-                logger?.LogWarning(
-                    "Recording-on-connect enabled but skipped for camera '{CameraName}' (pipeline={HasPipeline}, service={HasService}, state={RecordingState})",
-                    Camera.Display.DisplayName,
-                    mediaPipeline is not null,
-                    recordingService is not null,
-                    RecordingState);
+                LogRecordingOnConnectSkipped(Camera.Display.DisplayName, mediaPipeline is not null, recordingService is not null, RecordingState);
             }
 
             // Auto-start motion detection if enabled (for motion-triggered recording or bounding box display)
@@ -1510,10 +1503,7 @@ public partial class CameraTile : IDisposable
         // When AutoReconnectOnFailure is true, retry forever with configured delay
         var delaySeconds = GetEffectiveReconnectDelaySeconds();
 
-        logger?.LogInformation(
-            "Auto-reconnect scheduled for camera '{CameraName}' in {DelaySeconds}s",
-            Camera.Display.DisplayName,
-            delaySeconds);
+        LogAutoReconnectScheduled(Camera.Display.DisplayName, delaySeconds);
 
         // Schedule auto-reconnect after delay (use effective value for per-camera override)
         autoReconnectTimer?.Stop();
@@ -1529,9 +1519,7 @@ public partial class CameraTile : IDisposable
             // Only reconnect if still in failed state
             if (ConnectionState == ConnectionState.ConnectionFailed && Camera is not null)
             {
-                logger?.LogInformation(
-                    "Auto-reconnect attempting for camera '{CameraName}'",
-                    Camera.Display.DisplayName);
+                LogAutoReconnectAttempting(Camera.Display.DisplayName);
                 Reconnect();
             }
         };
@@ -1620,9 +1608,7 @@ public partial class CameraTile : IDisposable
             // If stale for 3 consecutive checks (15 seconds), trigger reconnect
             if (staleStreamCheckCount >= 3)
             {
-                logger?.LogWarning(
-                    "Stream stale detected for camera '{CameraName}' (no frames for 15s), triggering reconnect",
-                    Camera?.Display.DisplayName ?? "Unknown");
+                LogStreamStaleDetected(Camera?.Display.DisplayName ?? "Unknown");
 
                 StopStreamHealthCheck();
 
@@ -1830,10 +1816,7 @@ public partial class CameraTile : IDisposable
 
         if (Player?.State == PlayerState.Error || reconnectCheckCount >= maxChecks)
         {
-            logger?.LogWarning(
-                "Connection timeout for camera '{CameraName}' after {Seconds}s",
-                Camera?.Display.DisplayName ?? "Unknown",
-                reconnectCheckCount / 2);
+            LogConnectionTimeout(Camera?.Display.DisplayName ?? "Unknown", reconnectCheckCount / 2);
 
             isReconnecting = false;
             reconnectTimer?.Stop();

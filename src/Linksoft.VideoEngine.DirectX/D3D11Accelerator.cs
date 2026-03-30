@@ -5,7 +5,7 @@ namespace Linksoft.VideoEngine.DirectX;
 /// Composes <see cref="D3D11Device"/>, <see cref="HwAccelContext"/>,
 /// <see cref="VideoProcessorRenderer"/>, and <see cref="GpuSnapshotCapture"/>.
 /// </summary>
-public sealed unsafe class D3D11Accelerator : IGpuAccelerator
+public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
 {
     private readonly ILogger logger;
     private readonly D3D11Device d3d11Device;
@@ -28,7 +28,7 @@ public sealed unsafe class D3D11Accelerator : IGpuAccelerator
         renderer = new VideoProcessorRenderer(d3d11Device);
         snapshotCapture = new GpuSnapshotCapture(d3d11Device);
 
-        logger.LogInformation("D3D11 GPU accelerator initialized");
+        LogGpuAcceleratorInitialized();
     }
 
     public AVHWDeviceType HwDeviceType => AVHWDeviceType.D3d11va;
@@ -86,7 +86,7 @@ public sealed unsafe class D3D11Accelerator : IGpuAccelerator
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "GPU frame processing failed");
+            LogGpuFrameProcessingFailed(ex);
         }
     }
 
@@ -126,7 +126,7 @@ public sealed unsafe class D3D11Accelerator : IGpuAccelerator
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "GPU snapshot capture failed");
+                LogGpuSnapshotCaptureFailed(ex);
                 return null;
             }
         }
@@ -151,6 +151,6 @@ public sealed unsafe class D3D11Accelerator : IGpuAccelerator
         hwAccelContext.Dispose();
         d3d11Device.Dispose();
 
-        logger.LogInformation("D3D11 GPU accelerator disposed");
+        LogGpuAcceleratorDisposed();
     }
 }

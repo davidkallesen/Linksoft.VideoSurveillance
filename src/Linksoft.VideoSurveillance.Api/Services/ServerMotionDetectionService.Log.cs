@@ -1,0 +1,13 @@
+namespace Linksoft.VideoSurveillance.Api.Services;
+
+public sealed partial class ServerMotionDetectionService
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Motion detection started for camera {CameraId}")]
+    private partial void LogMotionDetectionStarted(Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Motion detection stopped for camera {CameraId}")]
+    private partial void LogMotionDetectionStopped(Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Motion detection loop error for camera {CameraId}")]
+    private partial void LogMotionDetectionLoopError(Exception ex, Guid cameraId);
+}

@@ -3,8 +3,8 @@ namespace Linksoft.CameraWall.Wpf.App;
 
 public partial class CameraWallApp
 {
-    private readonly ILogger<CameraWallApp>? logger;
     private readonly IHost host;
+    private ILogger<CameraWallApp> logger;
 
     public CameraWallApp()
     {
@@ -96,7 +96,7 @@ public partial class CameraWallApp
     {
         ArgumentNullException.ThrowIfNull(e);
 
-        logger!.LogInformation("App initializing");
+        LogAppInitializing();
 
         // Hook on error before app really starts
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainUnhandledException;
@@ -120,7 +120,7 @@ public partial class CameraWallApp
 
         var exceptionMessage = ex.GetMessage(true);
 
-        logger!.LogError($"CurrentDomain Unhandled Exception: {exceptionMessage}");
+        LogCurrentDomainUnhandledException(exceptionMessage);
 
         MessageBox.Show(
             exceptionMessage,
@@ -142,7 +142,7 @@ public partial class CameraWallApp
             return;
         }
 
-        logger!.LogError($"Dispatcher Unhandled Exception: {exceptionMessage}");
+        LogDispatcherUnhandledException(exceptionMessage);
 
         MessageBox.Show(
             exceptionMessage,
@@ -158,7 +158,7 @@ public partial class CameraWallApp
         object sender,
         StartupEventArgs args)
     {
-        logger!.LogInformation("App starting");
+        LogAppStarting();
 
         // Show splash screen
         var splashScreen = new SplashScreenWindow
@@ -213,7 +213,7 @@ public partial class CameraWallApp
         MainWindow = mainWindow;
         splashScreen.Close();
 
-        logger!.LogInformation("App started");
+        LogAppStarted();
 
         _ = CheckForUpdatesAndNotifyAsync();
     }
@@ -273,14 +273,14 @@ public partial class CameraWallApp
         object sender,
         ExitEventArgs args)
     {
-        logger!.LogInformation("App closing");
+        LogAppClosing();
 
         // Stop all active recordings to properly finalize recording files
         var recordingService = host.Services.GetService<IRecordingService>();
         if (recordingService is not null)
         {
             recordingService.StopAllRecordings();
-            logger!.LogInformation("All recordings stopped");
+            LogAllRecordingsStopped();
         }
 
         // Stop recording segmentation service
@@ -297,7 +297,7 @@ public partial class CameraWallApp
 
         host.Dispose();
 
-        logger!.LogInformation("App closed");
+        LogAppClosed();
 
         await Log.CloseAndFlushAsync().ConfigureAwait(false);
     }

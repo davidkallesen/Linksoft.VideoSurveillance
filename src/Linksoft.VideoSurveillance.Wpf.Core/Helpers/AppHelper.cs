@@ -3,7 +3,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Helpers;
 /// <summary>
 /// Helper methods for application initialization.
 /// </summary>
-public static class AppHelper
+public static partial class AppHelper
 {
     /// <summary>
     /// Renders a loading initialization message to the splash screen.
@@ -19,6 +19,9 @@ public static class AppHelper
         var msg = Translations.InitializePrefix + " " + message;
         MessageListener.Instance.ReceiveMessage(msg);
         PercentListener.Instance.ReceivePercent(percentage);
-        logger?.LogDebug("{Message} - {Percentage}%", msg, percentage);
+        if (logger is not null)
+        {
+            LogInitMessage(logger, msg, percentage);
+        }
     }
 }

@@ -3,7 +3,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// <summary>
 /// Server-side implementation of <see cref="IRecordingService"/> using FFmpeg media pipelines.
 /// </summary>
-public sealed class ServerRecordingService : IRecordingService, IDisposable
+public sealed partial class ServerRecordingService : IRecordingService, IDisposable
 {
     private readonly IApplicationSettingsService settingsService;
     private readonly ILogger<ServerRecordingService> logger;
@@ -58,7 +58,7 @@ public sealed class ServerRecordingService : IRecordingService, IDisposable
         sessions[camera.Id] = session;
 
         RaiseStateChanged(camera.Id, RecordingState.Idle, RecordingState.Recording, filePath);
-        logger.LogInformation("Recording started for camera {CameraId}: {FilePath}", camera.Id, filePath);
+        LogRecordingStarted(camera.Id, filePath);
 
         return true;
     }
@@ -78,7 +78,7 @@ public sealed class ServerRecordingService : IRecordingService, IDisposable
 #pragma warning restore CA2000
 
         RaiseStateChanged(cameraId, RecordingState.Recording, RecordingState.Idle, session.CurrentFilePath);
-        logger.LogInformation("Recording stopped for camera {CameraId}", cameraId);
+        LogRecordingStopped(cameraId);
     }
 
     /// <inheritdoc/>

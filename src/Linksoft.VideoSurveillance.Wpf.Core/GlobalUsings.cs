@@ -59,6 +59,7 @@ global using Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 global using Linksoft.VideoSurveillance.Wpf.Core.ValueConverters;
 global using Linksoft.VideoSurveillance.Wpf.Core.Windows;
 global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Logging.Abstractions;
 global using Microsoft.Win32;
 
 // Type aliases to resolve ambiguities between Core and Wpf.Core namespaces

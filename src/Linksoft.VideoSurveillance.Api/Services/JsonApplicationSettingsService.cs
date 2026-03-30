@@ -3,7 +3,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// <summary>
 /// JSON file-based implementation of <see cref="IApplicationSettingsService"/> for the server edition.
 /// </summary>
-public sealed class JsonApplicationSettingsService : IApplicationSettingsService
+public sealed partial class JsonApplicationSettingsService : IApplicationSettingsService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -161,11 +161,11 @@ public sealed class JsonApplicationSettingsService : IApplicationSettingsService
             var json = File.ReadAllText(storagePath);
             appSettings = JsonSerializer.Deserialize<ApplicationSettings>(json, JsonOptions) ?? new ApplicationSettings();
 
-            logger.LogInformation("Loaded application settings from {Path}", storagePath);
+            LogSettingsLoaded(storagePath);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to load application settings from {Path}", storagePath);
+            LogSettingsLoadFailed(ex, storagePath);
             appSettings = new ApplicationSettings();
         }
     }
@@ -186,7 +186,7 @@ public sealed class JsonApplicationSettingsService : IApplicationSettingsService
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to save application settings to {Path}", storagePath);
+            LogSettingsSaveFailed(ex, storagePath);
         }
     }
 
@@ -208,11 +208,11 @@ public sealed class JsonApplicationSettingsService : IApplicationSettingsService
             var json = JsonSerializer.Serialize(new ApplicationSettings(), JsonOptions);
             File.WriteAllText(storagePath, json);
 
-            logger.LogInformation("Created default settings file at {Path}", storagePath);
+            LogDefaultSettingsCreated(storagePath);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to create default settings file at {Path}", storagePath);
+            LogDefaultSettingsCreateFailed(ex, storagePath);
         }
     }
 }
