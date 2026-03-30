@@ -377,7 +377,8 @@ public partial class CameraTile : IDisposable
         IMotionDetectionService? motionDetectionService,
         ITimelapseService? timelapseService = null,
         IToastNotificationService? toastNotificationService = null,
-        IVideoPlayerFactory? videoPlayerFactory = null)
+        IVideoPlayerFactory? videoPlayerFactory = null,
+        Func<IVideoPlayer, IMediaPipeline>? mediaPipelineFactory = null)
     {
         // Unsubscribe from previous services
         if (this.recordingService is not null)
@@ -395,6 +396,13 @@ public partial class CameraTile : IDisposable
         this.timelapseService = timelapseService;
         this.toastNotificationService = toastNotificationService;
         this.videoPlayerFactory = videoPlayerFactory;
+        MediaPipelineFactory = mediaPipelineFactory;
+
+        // Create media pipeline if the player already exists but pipeline was not yet created
+        if (mediaPipeline is null && Player is not null && MediaPipelineFactory is not null)
+        {
+            mediaPipeline = MediaPipelineFactory.Invoke(Player);
+        }
 
         // Subscribe to new services
         if (this.recordingService is not null)
@@ -405,6 +413,18 @@ public partial class CameraTile : IDisposable
         if (this.motionDetectionService is not null)
         {
             this.motionDetectionService.MotionDetected += OnMotionDetected;
+        }
+
+        // Auto-start recording if camera is already connected and settings require it
+        // This handles the race condition where camera connects before services are initialized
+        if (ConnectionState == ConnectionState.Connected &&
+            GetEffectiveEnableRecordingOnConnect() &&
+            recordingService is not null &&
+            mediaPipeline is not null &&
+            Camera is not null &&
+            RecordingState == RecordingState.Idle)
+        {
+            recordingService.StartRecording(Camera, mediaPipeline);
         }
 
         // Start motion detection if camera is already connected and settings require it

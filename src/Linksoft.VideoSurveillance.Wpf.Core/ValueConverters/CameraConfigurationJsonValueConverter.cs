@@ -296,10 +296,12 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
     {
         var overrides = new CameraOverrides();
 
-        // Detect nested vs legacy flat format by checking for sub-objects
-        var hasNestedFormat =
-            (element.TryGetProperty("connection", out var connEl) || element.TryGetProperty("Connection", out connEl)) &&
-            connEl.ValueKind == JsonValueKind.Object;
+        // Detect nested vs legacy flat format by checking for any known sub-object
+        var hasNestedFormat = HasObjectProperty(element, "connection", "Connection") ||
+                              HasObjectProperty(element, "cameraDisplay", "CameraDisplay") ||
+                              HasObjectProperty(element, "performance", "Performance") ||
+                              HasObjectProperty(element, "recording", "Recording") ||
+                              HasObjectProperty(element, "motionDetection", "MotionDetection");
 
         if (hasNestedFormat)
         {
@@ -1162,6 +1164,13 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
         value = null;
         return false;
     }
+
+    private static bool HasObjectProperty(
+        JsonElement element,
+        string camelName,
+        string pascalName)
+        => (element.TryGetProperty(camelName, out var prop) || element.TryGetProperty(pascalName, out prop)) &&
+           prop.ValueKind == JsonValueKind.Object;
 
     private static bool TryGetNullableBoolProperty(
         JsonElement element,
