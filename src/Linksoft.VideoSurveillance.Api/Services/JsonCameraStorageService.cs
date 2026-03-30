@@ -3,7 +3,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// <summary>
 /// JSON file-based implementation of <see cref="ICameraStorageService"/> for the server edition.
 /// </summary>
-public sealed class JsonCameraStorageService : ICameraStorageService
+public sealed partial class JsonCameraStorageService : ICameraStorageService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -150,7 +150,7 @@ public sealed class JsonCameraStorageService : ICameraStorageService
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to save camera storage to {Path}", storagePath);
+            LogStorageSaveFailed(ex, storagePath);
         }
     }
 
@@ -168,15 +168,11 @@ public sealed class JsonCameraStorageService : ICameraStorageService
             var json = File.ReadAllText(storagePath);
             data = JsonSerializer.Deserialize<CameraStorageData>(json, JsonOptions) ?? new CameraStorageData();
 
-            logger.LogInformation(
-                "Loaded {CameraCount} cameras and {LayoutCount} layouts from {Path}",
-                data.Cameras.Count,
-                data.Layouts.Count,
-                storagePath);
+            LogStorageLoaded(data.Cameras.Count, data.Layouts.Count, storagePath);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to load camera storage from {Path}", storagePath);
+            LogStorageLoadFailed(ex, storagePath);
             data = new CameraStorageData();
         }
     }

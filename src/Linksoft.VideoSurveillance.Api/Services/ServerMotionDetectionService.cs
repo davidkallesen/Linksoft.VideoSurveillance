@@ -4,7 +4,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// Server-side implementation of <see cref="IMotionDetectionService"/>.
 /// Uses <see cref="IMediaPipeline.CaptureFrameAsync"/> for frame-based motion detection.
 /// </summary>
-public sealed class ServerMotionDetectionService : IMotionDetectionService, IDisposable
+public sealed partial class ServerMotionDetectionService : IMotionDetectionService, IDisposable
 {
     private readonly ILogger<ServerMotionDetectionService> logger;
     private readonly ConcurrentDictionary<Guid, DetectionContext> contexts = new();
@@ -40,7 +40,7 @@ public sealed class ServerMotionDetectionService : IMotionDetectionService, IDis
             if (contexts.TryAdd(cameraId, context))
             {
                 _ = RunDetectionLoopAsync(cameraId, context);
-                logger.LogInformation("Motion detection started for camera {CameraId}", cameraId);
+                LogMotionDetectionStarted(cameraId);
                 cts = null;
             }
         }
@@ -57,7 +57,7 @@ public sealed class ServerMotionDetectionService : IMotionDetectionService, IDis
         {
             context.Cts.Cancel();
             context.Cts.Dispose();
-            logger.LogInformation("Motion detection stopped for camera {CameraId}", cameraId);
+            LogMotionDetectionStopped(cameraId);
         }
     }
 
@@ -117,7 +117,7 @@ public sealed class ServerMotionDetectionService : IMotionDetectionService, IDis
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Motion detection loop error for camera {CameraId}", cameraId);
+            LogMotionDetectionLoopError(ex, cameraId);
         }
     }
 

@@ -4,7 +4,7 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// Service for automatically cleaning up old recordings and snapshots.
 /// </summary>
 [Registration]
-public class MediaCleanupService : IMediaCleanupService, IDisposable
+public partial class MediaCleanupService : IMediaCleanupService, IDisposable
 {
     private static readonly string[] RecordingExtensions = [".mp4", ".mkv", ".avi"];
     private static readonly string[] SnapshotExtensions = [".png", ".jpg", ".jpeg", ".bmp"];
@@ -50,14 +50,12 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
     {
         var settings = settingsService.Recording.Cleanup;
 
-        logger.LogInformation(
-            "Media cleanup service initializing with schedule: {Schedule}",
-            settings.Schedule);
+        LogCleanupInitializing(settings.Schedule);
 
         switch (settings.Schedule)
         {
             case MediaCleanupSchedule.Disabled:
-                logger.LogDebug("Media cleanup is disabled");
+                LogCleanupDisabled();
                 break;
 
             case MediaCleanupSchedule.OnStartup:
@@ -75,7 +73,7 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
     public void StopService()
     {
         StopPeriodicTimer();
-        logger.LogInformation("Media cleanup service stopped");
+        LogCleanupStopped();
     }
 
     /// <inheritdoc/>
@@ -85,7 +83,7 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
         {
             if (isRunning)
             {
-                logger.LogDebug("Cleanup already in progress, skipping");
+                LogCleanupAlreadyInProgress();
                 return new MediaCleanupResult();
             }
 
@@ -97,8 +95,7 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
             var settings = settingsService.Recording.Cleanup;
             var result = new MediaCleanupResult();
 
-            logger.LogInformation(
-                "Starting media cleanup - Recording retention: {RecordingDays} days, Include snapshots: {IncludeSnapshots}, Snapshot retention: {SnapshotDays} days",
+            LogCleanupStarting(
                 settings.RecordingRetentionDays,
                 settings.IncludeSnapshots,
                 settings.SnapshotRetentionDays);
@@ -141,8 +138,7 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
                 }
             }
 
-            logger.LogInformation(
-                "Media cleanup completed - Recordings: {Recordings}, Snapshots: {Snapshots}, Thumbnails: {Thumbnails}, Directories: {Directories}, Bytes freed: {Bytes}, Errors: {Errors}",
+            LogCleanupCompleted(
                 result.RecordingsDeleted,
                 result.SnapshotsDeleted,
                 result.ThumbnailsDeleted,
@@ -196,7 +192,7 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
         periodicTimer.Tick += async (_, _) => await RunCleanupAsync().ConfigureAwait(false);
         periodicTimer.Start();
 
-        logger.LogDebug("Periodic cleanup timer started with interval: {Interval}", PeriodicInterval);
+        LogPeriodicTimerStarted(PeriodicInterval);
     }
 
     private void StopPeriodicTimer()
@@ -205,7 +201,7 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
         {
             periodicTimer.Stop();
             periodicTimer = null;
-            logger.LogDebug("Periodic cleanup timer stopped");
+            LogPeriodicTimerStopped();
         }
     }
 
@@ -248,7 +244,7 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
                                     thumbInfo.Delete();
                                     result.ThumbnailsDeleted++;
                                     result.BytesFreed += thumbSize;
-                                    logger.LogDebug("Deleted thumbnail: {File}", thumbnailPath);
+                                    LogDeletedThumbnail(thumbnailPath);
                                 }
                             }
                             else
@@ -257,18 +253,18 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
                             }
 
                             result.BytesFreed += fileSize;
-                            logger.LogDebug("Deleted old media file: {File}", file);
+                            LogDeletedOldMediaFile(file);
                         }
                     }
                     catch (IOException ex)
                     {
                         result.ErrorCount++;
-                        logger.LogWarning(ex, "Failed to delete file: {File}", file);
+                        LogFailedToDeleteFile(ex, file);
                     }
                     catch (UnauthorizedAccessException ex)
                     {
                         result.ErrorCount++;
-                        logger.LogWarning(ex, "Access denied deleting file: {File}", file);
+                        LogAccessDeniedDeletingFile(ex, file);
                     }
                 }
             }
@@ -312,16 +308,16 @@ public class MediaCleanupService : IMediaCleanupService, IDisposable
                         {
                             Directory.Delete(dir);
                             result.DirectoriesRemoved++;
-                            logger.LogDebug("Removed empty directory: {Directory}", dir);
+                            LogRemovedEmptyDirectory(dir);
                         }
                     }
                     catch (IOException ex)
                     {
-                        logger.LogDebug(ex, "Could not remove directory: {Directory}", dir);
+                        LogCouldNotRemoveDirectory(ex, dir);
                     }
                     catch (UnauthorizedAccessException ex)
                     {
-                        logger.LogDebug(ex, "Access denied removing directory: {Directory}", dir);
+                        LogAccessDeniedRemovingDirectory(ex, dir);
                     }
                 }
             }

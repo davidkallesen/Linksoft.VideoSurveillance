@@ -4,7 +4,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// Manages per-camera FFmpeg transcoding processes that convert RTSP streams
 /// to HLS segments for browser consumption.
 /// </summary>
-public sealed class StreamingService : IDisposable
+public sealed partial class StreamingService : IDisposable
 {
     private readonly ICameraStorageService storage;
     private readonly ILogger<StreamingService> logger;
@@ -57,9 +57,7 @@ public sealed class StreamingService : IDisposable
         if (remaining <= 0 && sessions.TryRemove(cameraId, out var removed))
         {
             removed.Dispose();
-            logger.LogInformation(
-                "HLS stream stopped for camera {CameraId} (no viewers)",
-                cameraId);
+            LogHlsStreamStopped(cameraId);
         }
     }
 
@@ -164,10 +162,7 @@ public sealed class StreamingService : IDisposable
             RedirectStandardError = true,
         };
 
-        logger.LogInformation(
-            "Starting FFmpeg for camera {CameraId}: ffmpeg {Args}",
-            cameraId,
-            args);
+        LogStartingFfmpeg(cameraId, args);
 
         var process = Process.Start(psi)
             ?? throw new InvalidOperationException("Failed to start FFmpeg HLS process.");
@@ -180,15 +175,12 @@ public sealed class StreamingService : IDisposable
             if (!string.IsNullOrEmpty(e.Data))
             {
                 session.AddErrorLine(e.Data);
-                logger.LogInformation("[FFmpeg {CameraId}] {Line}", cameraId, e.Data);
+                LogFfmpegOutput(cameraId, e.Data);
             }
         };
         process.BeginErrorReadLine();
 
-        logger.LogInformation(
-            "HLS stream started for camera {CameraId} -> {PlaylistPath}",
-            cameraId,
-            playlistPath);
+        LogHlsStreamStarted(cameraId, playlistPath);
 
         return session;
     }

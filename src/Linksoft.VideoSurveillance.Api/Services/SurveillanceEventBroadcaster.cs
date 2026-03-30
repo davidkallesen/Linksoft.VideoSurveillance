@@ -4,7 +4,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// Background service that subscribes to Core service events and broadcasts them
 /// to connected SignalR clients via the <see cref="SurveillanceHub"/>.
 /// </summary>
-public sealed class SurveillanceEventBroadcaster : IHostedService
+public sealed partial class SurveillanceEventBroadcaster : IHostedService
 {
     private readonly IHubContext<SurveillanceHub> hubContext;
     private readonly IRecordingService recordingService;
@@ -29,7 +29,7 @@ public sealed class SurveillanceEventBroadcaster : IHostedService
         recordingService.RecordingStateChanged += OnRecordingStateChanged;
         motionDetectionService.MotionDetected += OnMotionDetected;
 
-        logger.LogInformation("Surveillance event broadcaster started");
+        LogBroadcasterStarted();
 
         return Task.CompletedTask;
     }
@@ -40,7 +40,7 @@ public sealed class SurveillanceEventBroadcaster : IHostedService
         recordingService.RecordingStateChanged -= OnRecordingStateChanged;
         motionDetectionService.MotionDetected -= OnMotionDetected;
 
-        logger.LogInformation("Surveillance event broadcaster stopped");
+        LogBroadcasterStopped();
 
         return Task.CompletedTask;
     }
@@ -66,7 +66,7 @@ public sealed class SurveillanceEventBroadcaster : IHostedService
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to broadcast RecordingStateChanged for camera {CameraId}", e.CameraId);
+            LogBroadcastRecordingFailed(ex, e.CameraId);
         }
     }
 
@@ -99,7 +99,7 @@ public sealed class SurveillanceEventBroadcaster : IHostedService
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to broadcast MotionDetected for camera {CameraId}", e.CameraId);
+            LogBroadcastMotionFailed(ex, e.CameraId);
         }
     }
 }

@@ -8,7 +8,7 @@ namespace Linksoft.VideoEngine;
 /// </summary>
 [SuppressMessage("", "CA1806:calls av_*", Justification = "OK")]
 [SuppressMessage("IDisposableAnalyzers", "CA2213", Justification = "Disposable fields are cleaned up by DemuxLoop's finally block on the demux thread")]
-public sealed unsafe class VideoPlayer : IVideoPlayer
+public sealed unsafe partial class VideoPlayer : IVideoPlayer
 {
     private const int MaxConsecutiveReadErrors = 30;
     private const int FpsUpdateIntervalMs = 1000;
@@ -128,7 +128,7 @@ public sealed unsafe class VideoPlayer : IVideoPlayer
         }
 
         remuxer.Open(outputFilePath, demuxer.VideoCodecParameters, demuxer.VideoTimeBase);
-        logger.LogInformation("Recording started: {Path}", outputFilePath);
+        LogRecordingStarted(outputFilePath);
     }
 
     public void StopRecording()
@@ -139,7 +139,7 @@ public sealed unsafe class VideoPlayer : IVideoPlayer
         }
 
         remuxer.Close();
-        logger.LogInformation("Recording stopped");
+        LogRecordingStopped();
     }
 
     public Task<byte[]?> CaptureFrameAsync(CancellationToken ct = default)
@@ -225,9 +225,9 @@ public sealed unsafe class VideoPlayer : IVideoPlayer
             localDemuxer = new Demuxer(logger);
             localDecoder = new VideoDecoder();
 
-            logger.LogInformation("Opening stream: {Uri}", streamUri.AbsoluteUri);
+            LogOpeningStream(streamUri.AbsoluteUri);
             localDemuxer.Open(streamUri, options, ct);
-            logger.LogInformation("Stream demuxer opened successfully");
+            LogStreamDemuxerOpened();
 
             var threadCount = VideoEngineBootstrap.Config?.DecoderThreads ?? 0;
             var useHwAccel = options.HardwareAcceleration
@@ -237,9 +237,7 @@ public sealed unsafe class VideoPlayer : IVideoPlayer
                 : null;
 
             localDecoder.Open(localDemuxer.VideoCodecParameters, threadCount, hwDeviceCtx);
-            logger.LogInformation(
-                "Decoder opened: HwAccel={HwAccel}",
-                localDecoder.IsHardwareAccelerated);
+            LogDecoderOpened(localDecoder.IsHardwareAccelerated);
 
             demuxer = localDemuxer;
             decoder = localDecoder;
@@ -255,10 +253,7 @@ public sealed unsafe class VideoPlayer : IVideoPlayer
                 IsHardwareAccelerated = localDecoder.IsHardwareAccelerated,
             };
 
-            logger.LogInformation(
-                "Stream opened: {StreamInfo} from {Uri}",
-                StreamInfo,
-                streamUri.AbsoluteUri);
+            LogStreamOpened(StreamInfo, streamUri.AbsoluteUri);
 
             SetState(PlayerState.Playing);
 
@@ -268,7 +263,7 @@ public sealed unsafe class VideoPlayer : IVideoPlayer
         {
             if (!stopRequested)
             {
-                logger.LogError(ex, "Demux loop failed");
+                LogDemuxLoopFailed(ex);
                 SetState(PlayerState.Error, ex.Message);
             }
         }
@@ -321,7 +316,7 @@ public sealed unsafe class VideoPlayer : IVideoPlayer
 
             if (ret == AVERROR_EOF)
             {
-                logger.LogInformation("End of stream reached");
+                LogEndOfStreamReached();
                 break;
             }
 
@@ -330,7 +325,7 @@ public sealed unsafe class VideoPlayer : IVideoPlayer
                 consecutiveErrors++;
                 if (consecutiveErrors > MaxConsecutiveReadErrors)
                 {
-                    logger.LogError("Exceeded {Max} consecutive read errors", MaxConsecutiveReadErrors);
+                    LogExceededConsecutiveReadErrors(MaxConsecutiveReadErrors);
                     break;
                 }
 

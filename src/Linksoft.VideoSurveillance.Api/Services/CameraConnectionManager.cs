@@ -5,7 +5,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// when <see cref="RecordingSettings.EnableRecordingOnConnect"/> is enabled
 /// (respecting per-camera overrides).
 /// </summary>
-public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnectionManager>
+public sealed partial class CameraConnectionManager : BackgroundServiceBase<CameraConnectionManager>
 {
     private readonly ICameraStorageService storageService;
     private readonly IApplicationSettingsService settingsService;
@@ -45,10 +45,7 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
             {
                 if (!RecordingPolicyHelper.ShouldRecordOnConnect(camera, appDefault))
                 {
-                    logger.LogDebug(
-                        "Camera {CameraId} ({DisplayName}) - recording-on-connect disabled, skipping",
-                        camera.Id,
-                        camera.Display.DisplayName);
+                    LogRecordingOnConnectDisabled(camera.Id, camera.Display.DisplayName);
                     continue;
                 }
 
@@ -57,10 +54,7 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
                     managedPipelines.TryGetValue(camera.Id, out var existingPipeline) &&
                     !existingPipeline.IsRecordingActive)
                 {
-                    logger.LogWarning(
-                        "Dead recording pipeline detected for camera {CameraId} ({DisplayName}), cleaning up",
-                        camera.Id,
-                        camera.Display.DisplayName);
+                    LogDeadPipelineDetected(camera.Id, camera.Display.DisplayName);
 
                     recordingService.StopRecording(camera.Id);
                     RemoveAndDisposePipeline(camera.Id);
@@ -78,10 +72,7 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
                     continue;
                 }
 
-                logger.LogInformation(
-                    "Starting recording-on-connect for camera {CameraId} ({DisplayName})",
-                    camera.Id,
-                    camera.Display.DisplayName);
+                LogStartingRecordingOnConnect(camera.Id, camera.Display.DisplayName);
 
                 var pipeline = pipelineFactory.Create(camera);
                 managedPipelines[camera.Id] = pipeline;
@@ -93,11 +84,7 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
             }
             catch (Exception ex)
             {
-                logger.LogWarning(
-                    ex,
-                    "Failed to start recording for camera {CameraId} ({DisplayName}), will retry next iteration",
-                    camera.Id,
-                    camera.Display.DisplayName);
+                LogStartRecordingFailed(ex, camera.Id, camera.Display.DisplayName);
 
                 RemoveAndDisposePipeline(camera.Id);
             }
@@ -131,7 +118,7 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error disposing pipeline for camera {CameraId}", kvp.Key);
+                LogDisposePipelineError(ex, kvp.Key);
             }
         }
 
@@ -145,12 +132,12 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
         {
             try
             {
-                logger.LogInformation("Stopping managed recording for camera {CameraId}", cameraId);
+                LogStoppingManagedRecording(cameraId);
                 recordingService.StopRecording(cameraId);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error stopping recording for camera {CameraId} during shutdown", cameraId);
+                LogStopRecordingShutdownError(ex, cameraId);
             }
         }
     }
@@ -168,18 +155,11 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
         try
         {
             recordingService.StartRecording(camera, pipeline);
-            logger.LogInformation(
-                "Recording-on-connect started (fallback) for camera {CameraId} ({DisplayName})",
-                camera.Id,
-                camera.Display.DisplayName);
+            LogRecordingOnConnectStartedFallback(camera.Id, camera.Display.DisplayName);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(
-                ex,
-                "Failed to start recording (fallback) for camera {CameraId} ({DisplayName})",
-                camera.Id,
-                camera.Display.DisplayName);
+            LogStartRecordingFallbackFailed(ex, camera.Id, camera.Display.DisplayName);
         }
     }
 
@@ -194,10 +174,7 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
     {
         if (e.NewState == ConnectionState.Connected)
         {
-            logger.LogInformation(
-                "Camera {CameraId} ({DisplayName}) connected",
-                camera.Id,
-                camera.Display.DisplayName);
+            LogCameraConnected(camera.Id, camera.Display.DisplayName);
 
             if (recordingService.IsRecording(camera.Id) ||
                 !managedPipelines.TryGetValue(camera.Id, out var pipeline))
@@ -208,18 +185,11 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
             try
             {
                 recordingService.StartRecording(camera, pipeline);
-                logger.LogInformation(
-                    "Recording-on-connect started for camera {CameraId} ({DisplayName})",
-                    camera.Id,
-                    camera.Display.DisplayName);
+                LogRecordingOnConnectStarted(camera.Id, camera.Display.DisplayName);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(
-                    ex,
-                    "Failed to start recording after connect for camera {CameraId} ({DisplayName})",
-                    camera.Id,
-                    camera.Display.DisplayName);
+                LogStartRecordingAfterConnectFailed(ex, camera.Id, camera.Display.DisplayName);
 
                 // Defer disposal — this handler runs on the demux thread,
                 // and Dispose joins that thread (self-join deadlock).
@@ -228,17 +198,11 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
         }
         else if (e.NewState == ConnectionState.Disconnected)
         {
-            logger.LogInformation(
-                "Camera {CameraId} ({DisplayName}) disconnected",
-                camera.Id,
-                camera.Display.DisplayName);
+            LogCameraDisconnected(camera.Id, camera.Display.DisplayName);
         }
         else if (e.NewState == ConnectionState.Error)
         {
-            logger.LogWarning(
-                "Pipeline connection failed for camera {CameraId} ({DisplayName}), cleaning up",
-                camera.Id,
-                camera.Display.DisplayName);
+            LogPipelineConnectionFailed(camera.Id, camera.Display.DisplayName);
 
             ScheduleDeferredDisposal(camera.Id);
         }
@@ -258,7 +222,7 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error disposing dead pipeline for camera {CameraId}", cameraId);
+                LogDisposeDeadPipelineError(ex, cameraId);
             }
         }
     }
@@ -281,7 +245,7 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Error disposing pipeline for camera {CameraId} (deferred)", cameraId);
+                    LogDisposePipelineDeferredError(ex, cameraId);
                 }
             });
         }

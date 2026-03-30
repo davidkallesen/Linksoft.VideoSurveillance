@@ -47,7 +47,7 @@ public partial class App
 
         var exceptionMessage = ex.GetMessage(true);
 
-        logger?.LogError("CurrentDomain Unhandled Exception: {Message}", exceptionMessage);
+        LogCurrentDomainUnhandledException(exceptionMessage);
 
         MessageBox.Show(
             exceptionMessage,
@@ -69,7 +69,7 @@ public partial class App
             return;
         }
 
-        logger?.LogError("Dispatcher Unhandled Exception: {Message}", exceptionMessage);
+        LogDispatcherUnhandledException(exceptionMessage);
 
         MessageBox.Show(
             exceptionMessage,
@@ -101,7 +101,7 @@ public partial class App
         host = BuildHost(apiBaseAddress);
         logger = host.Services.GetService<ILoggerFactory>()!.CreateLogger<App>();
 
-        logger.LogInformation("App starting");
+        LogAppStarting();
 
         // 3. Show splash screen
         var splashScreen = new SplashScreenWindow
@@ -138,7 +138,7 @@ public partial class App
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to connect to SignalR hub during startup");
+            LogSignalRConnectionFailed(ex);
         }
 
         // Load main window (80%)
@@ -177,7 +177,7 @@ public partial class App
         await mainViewModel.LoadInitialStatsAsync().ConfigureAwait(true);
         mainViewModel.StartLatencyMonitoring();
 
-        logger.LogInformation("App started");
+        LogAppStarted();
     }
 
     private string? ResolveApiBaseAddress(string[] commandLineArgs)
@@ -322,7 +322,7 @@ public partial class App
             return;
         }
 
-        logger?.LogInformation("App closing");
+        LogAppClosing();
 
         // Stop latency monitoring
         var mainViewModel = host.Services.GetService<MainWindowViewModel>();
@@ -341,7 +341,7 @@ public partial class App
 
         host.Dispose();
 
-        logger?.LogInformation("App closed");
+        LogAppClosed();
 
         await Log.CloseAndFlushAsync().ConfigureAwait(false);
     }

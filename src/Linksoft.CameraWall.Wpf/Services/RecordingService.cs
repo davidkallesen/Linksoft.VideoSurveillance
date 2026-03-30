@@ -5,7 +5,7 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// Service for managing camera recording sessions.
 /// </summary>
 [Registration(Lifetime.Singleton)]
-public class RecordingService : IRecordingService, IDisposable
+public partial class RecordingService : IRecordingService, IDisposable
 {
     private readonly ILogger<RecordingService> logger;
     private readonly IApplicationSettingsService settingsService;
@@ -97,10 +97,7 @@ public class RecordingService : IRecordingService, IDisposable
             // Store pipeline reference for later stop
             pipelines[camera.Id] = pipeline;
 
-            logger.LogInformation(
-                "Recording started for camera: '{CameraName}', file: {FilePath}",
-                camera.Display.DisplayName,
-                filePath);
+            LogRecordingStarted(camera.Display.DisplayName, filePath);
 
             // Raise event
             OnRecordingStateChanged(camera.Id, RecordingState.Idle, RecordingState.Recording, filePath);
@@ -113,7 +110,7 @@ public class RecordingService : IRecordingService, IDisposable
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to start recording for camera: {CameraName}", camera.Display.DisplayName);
+            LogRecordingStartFailed(ex, camera.Display.DisplayName);
             return false;
         }
     }
@@ -143,14 +140,11 @@ public class RecordingService : IRecordingService, IDisposable
             try
             {
                 pipeline.StopRecording();
-                logger.LogInformation(
-                    "Recording stopped for camera ID: {CameraId}, file: {FilePath}",
-                    cameraId,
-                    session.CurrentFilePath);
+                LogRecordingStopped(cameraId, session.CurrentFilePath);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error stopping recording for camera ID: {CameraId}", cameraId);
+                LogRecordingStopError(ex, cameraId);
             }
         }
 
@@ -232,10 +226,7 @@ public class RecordingService : IRecordingService, IDisposable
             // Start post-motion timer
             StartPostMotionTimer(camera);
 
-            logger.LogInformation(
-                "Motion recording started for camera: {CameraName}, file: {FilePath}",
-                camera.Display.DisplayName,
-                filePath);
+            LogMotionRecordingStarted(camera.Display.DisplayName, filePath);
 
             // Raise event
             OnRecordingStateChanged(camera.Id, RecordingState.Idle, RecordingState.RecordingMotion, filePath);
@@ -248,7 +239,7 @@ public class RecordingService : IRecordingService, IDisposable
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to start motion recording for camera: {CameraName}", camera.Display.DisplayName);
+            LogMotionRecordingStartFailed(ex, camera.Display.DisplayName);
             return false;
         }
     }
@@ -300,7 +291,7 @@ public class RecordingService : IRecordingService, IDisposable
 
         if (cameraIds.Count > 0)
         {
-            logger.LogInformation("Stopping all recordings ({Count} active sessions)", cameraIds.Count);
+            LogStoppingAllRecordings(cameraIds.Count);
         }
 
         foreach (var cameraId in cameraIds)
@@ -323,14 +314,14 @@ public class RecordingService : IRecordingService, IDisposable
         // Get the current session
         if (!sessions.TryGetValue(cameraId, out var session))
         {
-            logger.LogDebug("No active session for camera ID: {CameraId}, cannot segment", cameraId);
+            LogNoActiveSessionForSegment(cameraId);
             return false;
         }
 
         // Get the pipeline
         if (!pipelines.TryGetValue(cameraId, out var pipeline))
         {
-            logger.LogWarning("No pipeline found for camera ID: {CameraId}, cannot segment", cameraId);
+            LogNoPipelineForSegment(cameraId);
             return false;
         }
 
@@ -338,7 +329,7 @@ public class RecordingService : IRecordingService, IDisposable
         var camera = cameraStorageService.GetCameraById(cameraId);
         if (camera is null)
         {
-            logger.LogWarning("Camera not found for ID: {CameraId}, cannot segment", cameraId);
+            LogCameraNotFoundForSegment(cameraId);
             return false;
         }
 
@@ -348,10 +339,7 @@ public class RecordingService : IRecordingService, IDisposable
         var oldState = session.State;
         var oldFilePath = session.CurrentFilePath;
 
-        logger.LogInformation(
-            "Segmenting recording for camera: {CameraName}, old file: {OldFilePath}",
-            camera.Display.DisplayName,
-            oldFilePath);
+        LogSegmentingRecording(camera.Display.DisplayName, oldFilePath);
 
         try
         {
@@ -392,17 +380,14 @@ public class RecordingService : IRecordingService, IDisposable
             if (!sessions.TryAdd(cameraId, newSession))
             {
                 pipeline.StopRecording();
-                logger.LogError("Failed to add new session for camera ID: {CameraId}", cameraId);
+                LogFailedToAddNewSession(cameraId);
                 return false;
             }
 
             // Keep pipeline reference
             pipelines[cameraId] = pipeline;
 
-            logger.LogInformation(
-                "Recording segmented for camera: {CameraName}, new file: {NewFilePath}",
-                camera.Display.DisplayName,
-                newFilePath);
+            LogRecordingSegmented(camera.Display.DisplayName, newFilePath);
 
             // 8. Fire state changed events for new segment start
             OnRecordingStateChanged(cameraId, RecordingState.Idle, newState, newFilePath);
@@ -415,7 +400,7 @@ public class RecordingService : IRecordingService, IDisposable
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to segment recording for camera: {CameraName}", camera.Display.DisplayName);
+            LogSegmentRecordingFailed(ex, camera.Display.DisplayName);
             return false;
         }
     }
@@ -552,9 +537,7 @@ public class RecordingService : IRecordingService, IDisposable
         if (elapsed >= postMotionSeconds)
         {
             // Post-motion period elapsed, stop recording
-            logger.LogInformation(
-                "Post-motion period elapsed for camera ID: {CameraId}, stopping recording",
-                cameraId);
+            LogPostMotionPeriodElapsed(cameraId);
             StopRecording(cameraId);
         }
         else if (session.State == RecordingState.RecordingMotion && elapsed >= 1)
@@ -562,10 +545,9 @@ public class RecordingService : IRecordingService, IDisposable
             // Motion stopped (no update for 1+ second), transition to post-motion state
             var oldState = session.State;
             session.State = RecordingState.RecordingPostMotion;
-            logger.LogDebug(
-                "Transitioning to post-motion state for camera ID: {CameraId}, {Remaining:F0}s remaining",
+            LogTransitioningToPostMotion(
                 cameraId,
-                postMotionSeconds - elapsed);
+                (postMotionSeconds - elapsed).ToString("F0", CultureInfo.InvariantCulture));
             OnRecordingStateChanged(cameraId, oldState, RecordingState.RecordingPostMotion, session.CurrentFilePath);
         }
     }

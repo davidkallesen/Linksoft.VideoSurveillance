@@ -5,7 +5,7 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// Captures PNG snapshots at configurable intervals.
 /// </summary>
 [Registration(Lifetime.Singleton)]
-public class TimelapseService : ITimelapseService, IDisposable
+public partial class TimelapseService : ITimelapseService, IDisposable
 {
     private readonly ILogger<TimelapseService> logger;
     private readonly IApplicationSettingsService settingsService;
@@ -39,9 +39,7 @@ public class TimelapseService : ITimelapseService, IDisposable
         // Check if timelapse is enabled for this camera
         if (!GetEffectiveEnabled(camera))
         {
-            logger.LogDebug(
-                "Timelapse not enabled for camera: {CameraName}",
-                camera.Display.DisplayName);
+            LogTimelapseNotEnabled(camera.Display.DisplayName);
             return;
         }
 
@@ -53,9 +51,7 @@ public class TimelapseService : ITimelapseService, IDisposable
 
         if (!contexts.TryAdd(camera.Id, context))
         {
-            logger.LogWarning(
-                "Failed to add timelapse context for camera: {CameraName}",
-                camera.Display.DisplayName);
+            LogFailedToAddTimelapseContext(camera.Display.DisplayName);
             return;
         }
 
@@ -66,10 +62,7 @@ public class TimelapseService : ITimelapseService, IDisposable
         // Capture first frame immediately
         _ = CaptureFrameAsync(camera.Id);
 
-        logger.LogInformation(
-            "Timelapse capture started for camera: {CameraName}, interval: {Interval}",
-            camera.Display.DisplayName,
-            interval);
+        LogTimelapseCaptureStarted(camera.Display.DisplayName, interval);
     }
 
     /// <inheritdoc/>
@@ -83,9 +76,7 @@ public class TimelapseService : ITimelapseService, IDisposable
         context.Timer.Stop();
         context.Dispose();
 
-        logger.LogInformation(
-            "Timelapse capture stopped for camera: {CameraName}",
-            context.Camera.Display.DisplayName);
+        LogTimelapseCaptureStopped(context.Camera.Display.DisplayName);
     }
 
     /// <inheritdoc/>
@@ -95,7 +86,7 @@ public class TimelapseService : ITimelapseService, IDisposable
 
         if (cameraIds.Count > 0)
         {
-            logger.LogInformation("Stopping all timelapse captures ({Count} active)", cameraIds.Count);
+            LogStoppingAllTimelapseCaptures(cameraIds.Count);
         }
 
         foreach (var cameraId in cameraIds)
@@ -183,9 +174,7 @@ public class TimelapseService : ITimelapseService, IDisposable
             var pngBytes = await context.Pipeline.CaptureFrameAsync().ConfigureAwait(false);
             if (pngBytes is null || pngBytes.Length == 0)
             {
-                logger.LogWarning(
-                    "Timelapse snapshot returned no data for camera: {CameraName}",
-                    context.Camera.Display.DisplayName);
+                LogTimelapseSnapshotNoData(context.Camera.Display.DisplayName);
                 return;
             }
 
@@ -193,10 +182,7 @@ public class TimelapseService : ITimelapseService, IDisposable
 
             var capturedAt = DateTime.Now;
 
-            logger.LogDebug(
-                "Timelapse frame captured for camera: {CameraName}, file: {FilePath}",
-                context.Camera.Display.DisplayName,
-                filePath);
+            LogTimelapseFrameCaptured(context.Camera.Display.DisplayName, filePath);
 
             // Raise event
             FrameCaptured?.Invoke(
@@ -205,10 +191,7 @@ public class TimelapseService : ITimelapseService, IDisposable
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Failed to capture timelapse frame for camera: {CameraName}",
-                context.Camera.Display.DisplayName);
+            LogTimelapseFrameCaptureFailed(ex, context.Camera.Display.DisplayName);
         }
     }
 

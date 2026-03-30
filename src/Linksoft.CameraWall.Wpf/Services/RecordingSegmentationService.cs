@@ -5,7 +5,7 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// (e.g., every 15 minutes at :00, :15, :30, :45).
 /// </summary>
 [Registration(Lifetime.Singleton)]
-public class RecordingSegmentationService : IRecordingSegmentationService, IDisposable
+public partial class RecordingSegmentationService : IRecordingSegmentationService, IDisposable
 {
     private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(30);
 
@@ -56,13 +56,11 @@ public class RecordingSegmentationService : IRecordingSegmentationService, IDisp
 
         if (!settings.EnableHourlySegmentation)
         {
-            logger.LogInformation("Recording segmentation service is disabled");
+            LogSegmentationDisabled();
             return;
         }
 
-        logger.LogInformation(
-            "Recording segmentation service initializing - Interval: {Interval} minutes",
-            settings.MaxRecordingDurationMinutes);
+        LogSegmentationInitializing(settings.MaxRecordingDurationMinutes);
 
         // Initialize last processed slot based on current time and interval
         var intervalMinutes = settings.MaxRecordingDurationMinutes;
@@ -76,7 +74,7 @@ public class RecordingSegmentationService : IRecordingSegmentationService, IDisp
             isRunning = true;
         }
 
-        logger.LogInformation("Recording segmentation service started");
+        LogSegmentationStarted();
     }
 
     /// <inheritdoc/>
@@ -89,7 +87,7 @@ public class RecordingSegmentationService : IRecordingSegmentationService, IDisp
             isRunning = false;
         }
 
-        logger.LogInformation("Recording segmentation service stopped");
+        LogSegmentationStopped();
     }
 
     /// <summary>
@@ -126,7 +124,7 @@ public class RecordingSegmentationService : IRecordingSegmentationService, IDisp
         checkTimer.Tick += (_, _) => PerformSegmentationCheck();
         checkTimer.Start();
 
-        logger.LogDebug("Segmentation check timer started with interval: {Interval}", CheckInterval);
+        LogSegmentationTimerStarted(CheckInterval);
     }
 
     private void StopCheckTimer()
@@ -135,7 +133,7 @@ public class RecordingSegmentationService : IRecordingSegmentationService, IDisp
         {
             checkTimer.Stop();
             checkTimer = null;
-            logger.LogDebug("Segmentation check timer stopped");
+            LogSegmentationTimerStopped();
         }
     }
 
@@ -175,30 +173,20 @@ public class RecordingSegmentationService : IRecordingSegmentationService, IDisp
             {
                 shouldSegment = true;
                 reason = SegmentationReason.IntervalBoundary;
-                logger.LogDebug(
-                    "Interval boundary detected for camera ID: {CameraId}, slot: {CurrentSlot} (interval: {Interval} min)",
-                    session.CameraId,
-                    currentSlot,
-                    intervalMinutes);
+                LogIntervalBoundaryDetected(session.CameraId, currentSlot, intervalMinutes);
             }
             else if (session.Duration >= maxDuration)
             {
                 shouldSegment = true;
                 reason = SegmentationReason.MaxDurationReached;
-                logger.LogDebug(
-                    "Max duration reached for camera ID: {CameraId}, duration: {Duration}",
-                    session.CameraId,
-                    session.Duration);
+                LogMaxDurationReached(session.CameraId, session.Duration);
             }
 
             if (shouldSegment)
             {
                 var previousFilePath = session.CurrentFilePath;
 
-                logger.LogInformation(
-                    "Segmenting recording for camera ID: {CameraId}, reason: {Reason}",
-                    session.CameraId,
-                    reason);
+                LogSegmentingRecording(session.CameraId, reason);
 
                 var success = recordingService.SegmentRecording(session.CameraId);
 
@@ -212,9 +200,7 @@ public class RecordingSegmentationService : IRecordingSegmentationService, IDisp
                 }
                 else
                 {
-                    logger.LogWarning(
-                        "Failed to segment recording for camera ID: {CameraId}",
-                        session.CameraId);
+                    LogSegmentingFailed(session.CameraId);
                 }
             }
         }

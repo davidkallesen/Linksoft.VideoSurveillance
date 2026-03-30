@@ -5,13 +5,13 @@ namespace Linksoft.VideoEngine.Demuxing;
 /// Wraps FFmpeg demuxing for RTSP/HTTP video streams with interrupt-based timeout.
 /// </summary>
 [SuppressMessage("", "CA1806:calls av_*", Justification = "OK")]
-internal sealed unsafe class Demuxer : IDisposable
+internal sealed unsafe partial class Demuxer : IDisposable
 {
     private const int OpenTimeoutSeconds = 15;
     private const int ReadTimeoutSeconds = 10;
     private const int AvErrorExit = -1414092869;
 
-    private readonly ILogger? logger;
+    private readonly ILogger logger;
     private readonly Stopwatch timeoutWatch = new();
 
     private AVFormatContext* fmtCtx;
@@ -37,7 +37,7 @@ internal sealed unsafe class Demuxer : IDisposable
 
     internal Demuxer(ILogger? logger)
     {
-        this.logger = logger;
+        this.logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
     }
 
     public int VideoStreamIndex => videoStreamIndex;
@@ -91,8 +91,7 @@ internal sealed unsafe class Demuxer : IDisposable
         {
             if (ret == AvErrorExit)
             {
-                logger?.LogWarning(
-                    "avformat_open_input returned AVERROR_EXIT: abortRequested={Abort}, ctCancelled={CtCancelled}, elapsed={Elapsed:F1}s, timeout={Timeout}s",
+                LogAvformatOpenInputAborted(
                     abortRequested,
                     cancellationToken.IsCancellationRequested,
                     timeoutWatch.Elapsed.TotalSeconds,

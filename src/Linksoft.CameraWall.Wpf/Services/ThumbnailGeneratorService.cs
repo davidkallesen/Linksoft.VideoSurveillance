@@ -8,7 +8,7 @@ using DrawingImaging = System.Drawing.Imaging;
 /// Service for generating recording thumbnails by capturing frames and creating a grid layout.
 /// </summary>
 [Registration(Lifetime.Singleton)]
-public class ThumbnailGeneratorService : IThumbnailGeneratorService
+public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
 {
     private const int FrameWidth = 320;
     private const int FrameHeight = 240;
@@ -51,11 +51,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
             return;
         }
 
-        logger.LogDebug(
-            "Starting thumbnail capture for camera {CameraId}, output: {ThumbnailPath}, tiles: {TileCount}",
-            cameraId,
-            thumbnailPath,
-            tileCount);
+        LogStartingThumbnailCapture(cameraId, thumbnailPath, tileCount);
 
         // Capture first frame immediately
         _ = CaptureFrameAsync(cameraId, context);
@@ -141,7 +137,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
 
             if (pngBytes is null || pngBytes.Length == 0)
             {
-                logger.LogWarning("Snapshot capture returned no data for camera {CameraId}", cameraId);
+                LogSnapshotCaptureNoData(cameraId);
                 context.CapturedFrames.Add(null);
                 return;
             }
@@ -150,14 +146,11 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
             var bitmap = new Drawing.Bitmap(memoryStream);
             context.CapturedFrames.Add(bitmap);
 
-            logger.LogDebug(
-                "Captured frame {FrameIndex} for camera {CameraId}",
-                context.CapturedFrames.Count - 1,
-                cameraId);
+            LogCapturedFrame(context.CapturedFrames.Count - 1, cameraId);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to capture frame for camera {CameraId}", cameraId);
+            LogFrameCaptureFailed(ex, cameraId);
             context.CapturedFrames.Add(null);
         }
     }
@@ -168,9 +161,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
     {
         if (context.CapturedFrames.Count == 0)
         {
-            logger.LogWarning(
-                "No frames captured for camera {CameraId}, skipping thumbnail generation",
-                cameraId);
+            LogNoFramesCaptured(cameraId);
             return;
         }
 
@@ -248,8 +239,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
             // Save thumbnail
             thumbnail.Save(context.ThumbnailPath, DrawingImaging.ImageFormat.Png);
 
-            logger.LogInformation(
-                "Generated thumbnail for camera {CameraId} with {FrameCount}/{TotalFrames} frames ({TileCount} tiles): {ThumbnailPath}",
+            LogGeneratedThumbnail(
                 cameraId,
                 context.CapturedFrames.Count(f => f is not null),
                 context.TileCount,
@@ -258,7 +248,7 @@ public class ThumbnailGeneratorService : IThumbnailGeneratorService
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to generate thumbnail for camera {CameraId}", cameraId);
+            LogThumbnailGenerationFailed(ex, cameraId);
         }
     }
 

@@ -11,7 +11,7 @@ namespace Linksoft.VideoSurveillance.Api.Hubs;
 /// - MotionDetected { CameraId, IsMotionActive, BoundingBoxes[], AnalysisWidth, AnalysisHeight }
 /// - RecordingStateChanged { CameraId, NewState, OldState, FilePath }
 /// </remarks>
-public sealed class SurveillanceHub : Hub
+public sealed partial class SurveillanceHub : Hub
 {
     private readonly ICameraStorageService storage;
     private readonly IRecordingService recordingService;
@@ -38,9 +38,7 @@ public sealed class SurveillanceHub : Hub
     /// </summary>
     public override Task OnConnectedAsync()
     {
-        logger.LogInformation(
-            "Client connected: {ConnectionId}",
-            Context.ConnectionId);
+        LogClientConnected(Context.ConnectionId);
         return base.OnConnectedAsync();
     }
 
@@ -49,9 +47,7 @@ public sealed class SurveillanceHub : Hub
     /// </summary>
     public override Task OnDisconnectedAsync(Exception? exception)
     {
-        logger.LogInformation(
-            "Client disconnected: {ConnectionId}",
-            Context.ConnectionId);
+        LogClientDisconnected(Context.ConnectionId);
         return base.OnDisconnectedAsync(exception);
     }
 
@@ -80,10 +76,7 @@ public sealed class SurveillanceHub : Hub
         var pipeline = pipelineFactory.Create(camera);
         var started = recordingService.StartRecording(camera, pipeline);
 
-        logger.LogInformation(
-            "Recording {Result} for camera {CameraId} via SignalR",
-            started ? "started" : "failed to start",
-            cameraId);
+        LogRecordingResult(started ? "started" : "failed to start", cameraId);
     }
 
     /// <summary>
@@ -93,9 +86,7 @@ public sealed class SurveillanceHub : Hub
     {
         recordingService.StopRecording(cameraId);
 
-        logger.LogInformation(
-            "Recording stopped for camera {CameraId} via SignalR",
-            cameraId);
+        LogRecordingStopped(cameraId);
 
         return Task.CompletedTask;
     }
@@ -156,7 +147,7 @@ public sealed class SurveillanceHub : Hub
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to start stream for camera {CameraId}", cameraId);
+            LogStartStreamFailed(ex, cameraId);
             throw new HubException($"Failed to start stream: {ex.Message}");
         }
     }

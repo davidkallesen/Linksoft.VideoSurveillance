@@ -575,8 +575,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     {
         ArgumentNullException.ThrowIfNull(e);
 
-        logger.LogInformation(
-            "Camera connection state changed: '{CameraName}' - '{OldState}' -> '{NewState}'",
+        LogCameraConnectionStateChanged(
             e.Camera.Display.DisplayName,
             e.PreviousState.ToString(),
             e.NewState.ToString());
@@ -585,8 +584,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         {
             var recordOnConnect = e.Camera.Overrides?.Recording.EnableRecordingOnConnect
                                   ?? settingsService.Recording.EnableRecordingOnConnect;
-            logger.LogInformation(
-                "Camera '{CameraName}' connected - RecordOnConnect: {RecordOnConnect}",
+            LogCameraConnectedRecordOnConnect(
                 e.Camera.Display.DisplayName,
                 recordOnConnect);
         }
@@ -656,8 +654,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             UpdateVersion = latest.ToString(3);
             IsUpdateAvailable = true;
 
-            logger.LogInformation(
-                "Update available: current {CurrentVersion}, latest {LatestVersion}",
+            LogUpdateAvailable(
                 currentVersion.ToString(3),
                 UpdateVersion);
         }
@@ -702,8 +699,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CameraGrid.ApplyLayout(CurrentLayout, allCameras);
         CameraCount = CameraGrid.CameraTiles?.Count ?? 0;
 
-        logger.LogInformation(
-            "Layout changed to: '{LayoutName}' with {CameraCount} cameras",
+        LogLayoutChanged(
             CurrentLayout.Name,
             CurrentLayout.Items.Count);
 
@@ -720,8 +716,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             var recordOnConnect = camera.Overrides?.Recording.EnableRecordingOnConnect ?? recording.EnableRecordingOnConnect;
             var recordOnMotion = camera.Overrides?.Recording.EnableRecordingOnMotion ?? recording.EnableRecordingOnMotion;
 
-            logger.LogInformation(
-                "Camera: '{CameraName}' - RecordOnConnect: {RecordOnConnect}, RecordOnMotion: {RecordOnMotion}",
+            LogCameraRecordingSettings(
                 camera.Display.DisplayName,
                 recordOnConnect,
                 recordOnMotion);
@@ -756,8 +751,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
             if (SelectedStartupLayout is not null)
             {
-                logger.LogInformation(
-                    "Loading startup layout: '{LayoutName}' with {CameraCount} cameras",
+                LogLoadingStartupLayout(
                     SelectedStartupLayout.Name,
                     SelectedStartupLayout.Items.Count);
             }
@@ -766,9 +760,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         {
             // If no startup layout is set, use the first layout
             CurrentLayout = Layouts[0];
-            logger.LogInformation(
-                "No startup layout configured, using first layout: '{LayoutName}'",
-                CurrentLayout.Name);
+            LogNoStartupLayoutUsingFirst(CurrentLayout.Name);
         }
     }
 
@@ -810,8 +802,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
         // Log recording settings
         var recording = settingsService.Recording;
-        logger.LogInformation(
-            "Recording settings - EnableRecordingOnConnect: {RecordOnConnect}, EnableRecordingOnMotion: {RecordOnMotion}",
+        LogRecordingSettings(
             recording.EnableRecordingOnConnect,
             recording.EnableRecordingOnMotion);
 
@@ -821,8 +812,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             var recordOnConnect = camera.Overrides?.Recording.EnableRecordingOnConnect ?? recording.EnableRecordingOnConnect;
             var recordOnMotion = camera.Overrides?.Recording.EnableRecordingOnMotion ?? recording.EnableRecordingOnMotion;
 
-            logger.LogInformation(
-                "Camera: '{CameraName}' - RecordOnConnect: {RecordOnConnect}, RecordOnMotion: {RecordOnMotion}",
+            LogCameraRecordingSettings(
                 camera.Display.DisplayName,
                 recordOnConnect,
                 recordOnMotion);
