@@ -32,13 +32,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Atc.Network" Version="1.0.236" />
-    <PackageReference Include="Atc.Wpf" Version="4.0.81" />
-    <PackageReference Include="Atc.Wpf.Components" Version="4.0.81" />
-    <PackageReference Include="Atc.Wpf.Controls" Version="4.0.81" />
-    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.0.81" />
-    <PackageReference Include="Atc.Wpf.Forms" Version="4.0.81" />
-    <PackageReference Include="Atc.Wpf.Network" Version="4.0.81" />
-    <PackageReference Include="Atc.Wpf.Theming" Version="4.0.81" />
+    <PackageReference Include="Atc.Wpf" Version="4.0.101" />
+    <PackageReference Include="Atc.Wpf.Components" Version="4.0.101" />
+    <PackageReference Include="Atc.Wpf.Controls" Version="4.0.101" />
+    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.0.101" />
+    <PackageReference Include="Atc.Wpf.Forms" Version="4.0.101" />
+    <PackageReference Include="Atc.Wpf.Network" Version="4.0.101" />
+    <PackageReference Include="Atc.Wpf.Theming" Version="4.0.101" />
     <PackageReference Include="Atc.XamlToolkit" Version="3.0.18" />
     <PackageReference Include="Atc.XamlToolkit.Wpf" Version="3.0.18" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
@@ -69,10 +69,6 @@
   <ItemGroup>
     <Resource Include="Resources\Images\cctv-camera.ico" />
     <Resource Include="Resources\Images\cctv-camera.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
   </ItemGroup>
 
 </Project>

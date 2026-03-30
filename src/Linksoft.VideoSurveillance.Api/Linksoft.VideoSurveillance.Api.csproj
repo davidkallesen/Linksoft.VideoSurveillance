@@ -3,12 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <NoWarn>$(NoWarn);SA1649;MA0048;CA1416</NoWarn>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Atc.Hosting" Version="2.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.13.15" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.13.17" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
@@ -18,10 +19,6 @@
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Api.Domain\Linksoft.VideoSurveillance.Api.Domain.csproj" />
     <ProjectReference Include="..\Linksoft.VideoSurveillance.Core\Linksoft.VideoSurveillance.Core.csproj" />
     <ProjectReference Include="..\Linksoft.VideoEngine\Linksoft.VideoEngine.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
   </ItemGroup>
 
 </Project>
