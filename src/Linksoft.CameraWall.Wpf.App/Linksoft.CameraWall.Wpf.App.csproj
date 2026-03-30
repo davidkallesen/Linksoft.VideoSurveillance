@@ -6,6 +6,7 @@
     <UseWPF>true</UseWPF>
     <Description>Camera Wall application for monitoring multiple RTSP/HTTP camera streams in a dynamic grid layout.</Description>
     <ApplicationIcon>..\Linksoft.VideoSurveillance.Wpf.Core\Resources\Images\cctv-camera.ico</ApplicationIcon>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,10 +31,6 @@
       <Link>cctv-camera.ico</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
   </ItemGroup>
 
 </Project>

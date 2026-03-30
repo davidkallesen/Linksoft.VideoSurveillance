@@ -20,8 +20,4 @@
     <ProjectReference Include="..\Linksoft.VideoEngine.DirectX\Linksoft.VideoEngine.DirectX.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="Meziantou.Analyzer" Version="3.0.27" />
-  </ItemGroup>
-
 </Project>
