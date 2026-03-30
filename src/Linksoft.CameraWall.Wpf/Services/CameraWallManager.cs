@@ -143,6 +143,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CameraGrid.ToastNotificationService = toastNotificationService;
         CameraGrid.VideoPlayerFactory = videoPlayerFactory;
         CameraGrid.MediaPipelineFactory = player => new VideoEngineMediaPipeline(player);
+        CameraGrid.TileLogger = logger;
 
         ApplyDisplaySettings();
         LoadStartupCameras();
@@ -579,6 +580,16 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
             e.Camera.Display.DisplayName,
             e.PreviousState.ToString(),
             e.NewState.ToString());
+
+        if (e.NewState == ConnectionState.Connected)
+        {
+            var recordOnConnect = e.Camera.Overrides?.Recording.EnableRecordingOnConnect
+                                  ?? settingsService.Recording.EnableRecordingOnConnect;
+            logger.LogInformation(
+                "Camera '{CameraName}' connected - RecordOnConnect: {RecordOnConnect}",
+                e.Camera.Display.DisplayName,
+                recordOnConnect);
+        }
 
         UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.CameraStateChanged2, e.Camera.Display.DisplayName, e.NewState));
         UpdateConnectionCount(e);

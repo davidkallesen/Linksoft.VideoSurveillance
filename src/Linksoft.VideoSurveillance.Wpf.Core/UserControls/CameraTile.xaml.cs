@@ -1,5 +1,8 @@
 // ReSharper disable UnusedMember.Local
 // ReSharper disable InvertIf
+// ReSharper disable ParameterHidesMember
+// ReSharper disable ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+// ReSharper disable GrammarMistakeInComment
 #pragma warning disable CS0169 // Field is never used
 #pragma warning disable CS0414 // Field is assigned but its value is never used
 namespace Linksoft.VideoSurveillance.Wpf.Core.UserControls;
@@ -146,6 +149,7 @@ public partial class CameraTile : IDisposable
     private IMotionDetectionService? motionDetectionService;
     private ITimelapseService? timelapseService;
     private IToastNotificationService? toastNotificationService;
+    private ILogger? logger;
     private DispatcherTimer? recordingDurationTimer;
     private IMediaPipeline? mediaPipeline;
     private IVideoPlayerFactory? videoPlayerFactory;
@@ -372,14 +376,20 @@ public partial class CameraTile : IDisposable
     /// <param name="motionDetectionService">The motion detection service.</param>
     /// <param name="timelapseService">The timelapse service.</param>
     /// <param name="toastNotificationService">The toast notification service.</param>
+    /// <param name="videoPlayerFactory">The video player factory.</param>
+    /// <param name="mediaPipelineFactory">The media pipeline factory.</param>
+    /// <param name="logger">The logger for tile events.</param>
     public void InitializeServices(
         IRecordingService? recordingService,
         IMotionDetectionService? motionDetectionService,
         ITimelapseService? timelapseService = null,
         IToastNotificationService? toastNotificationService = null,
         IVideoPlayerFactory? videoPlayerFactory = null,
-        Func<IVideoPlayer, IMediaPipeline>? mediaPipelineFactory = null)
+        Func<IVideoPlayer, IMediaPipeline>? mediaPipelineFactory = null,
+        ILogger? logger = null)
     {
+        this.logger = logger;
+
         // Unsubscribe from previous services
         if (this.recordingService is not null)
         {
@@ -399,9 +409,9 @@ public partial class CameraTile : IDisposable
         MediaPipelineFactory = mediaPipelineFactory;
 
         // Create media pipeline if the player already exists but pipeline was not yet created
-        if (mediaPipeline is null && Player is not null && MediaPipelineFactory is not null)
+        if (this.mediaPipeline is null && Player is not null && MediaPipelineFactory is not null)
         {
-            mediaPipeline = MediaPipelineFactory.Invoke(Player);
+            this.mediaPipeline = MediaPipelineFactory.Invoke(Player);
         }
 
         // Subscribe to new services
@@ -419,12 +429,12 @@ public partial class CameraTile : IDisposable
         // This handles the race condition where camera connects before services are initialized
         if (ConnectionState == ConnectionState.Connected &&
             GetEffectiveEnableRecordingOnConnect() &&
-            recordingService is not null &&
-            mediaPipeline is not null &&
+            this.recordingService is not null &&
+            this.mediaPipeline is not null &&
             Camera is not null &&
             RecordingState == RecordingState.Idle)
         {
-            recordingService.StartRecording(Camera, mediaPipeline);
+            this.recordingService.StartRecording(Camera, this.mediaPipeline);
         }
 
         // Start motion detection if camera is already connected and settings require it
@@ -443,7 +453,7 @@ public partial class CameraTile : IDisposable
         // Complete deferred player initialization if Camera was set before the factory was available
         if (this.videoPlayerFactory is not null && Camera is not null && Player is null)
         {
-            InitializePlayer(Camera);
+            InitializePlayer();
         }
     }
 
@@ -783,14 +793,9 @@ public partial class CameraTile : IDisposable
         contextMenu.Items.Add(new MenuItem { Header = Translations.TakeSnapshot, Command = SnapshotCommand });
 
         // Recording menu items
-        if (RecordingState == RecordingState.Idle)
-        {
-            contextMenu.Items.Add(new MenuItem { Header = Translations.StartRecording, Command = StartRecordingCommand });
-        }
-        else
-        {
-            contextMenu.Items.Add(new MenuItem { Header = Translations.StopRecording, Command = StopRecordingCommand });
-        }
+        contextMenu.Items.Add(RecordingState == RecordingState.Idle
+            ? new MenuItem { Header = Translations.StartRecording, Command = StartRecordingCommand }
+            : new MenuItem { Header = Translations.StopRecording, Command = StopRecordingCommand });
 
         contextMenu.Items.Add(new MenuItem { Header = Translations.Reconnect, Command = ReconnectCommand });
         contextMenu.Items.Add(new Separator());
@@ -893,7 +898,7 @@ public partial class CameraTile : IDisposable
         // until after the binding updates have completed
         _ = tile.Dispatcher.BeginInvoke(() =>
         {
-            if (tile.ConnectionState == ConnectionState.Connected && tile.Camera is not null)
+            if (tile is { ConnectionState: ConnectionState.Connected, Camera: not null })
             {
                 tile.RecreatePlayer();
             }
@@ -1084,8 +1089,7 @@ public partial class CameraTile : IDisposable
             if (ConnectionState == ConnectionState.Connected)
             {
                 // Motion detection settings changed - restart motion detection with new settings
-                System.Diagnostics.Debug.WriteLine(
-                    $"[MotionDetection] Override changed for '{Camera?.Display.DisplayName}' - restarting motion detection");
+                Debug.WriteLine($"[MotionDetection] Override changed for '{Camera?.Display.DisplayName}' - restarting motion detection");
 
                 StopMotionDetection();
 
@@ -1214,10 +1218,10 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        InitializePlayer(cameraConfig);
+        InitializePlayer();
     }
 
-    private void InitializePlayer(CameraConfiguration cameraConfig)
+    private void InitializePlayer()
     {
         Player = CreatePlayer();
         Player.StateChanged += OnPlayerStateChanged;
@@ -1283,6 +1287,8 @@ public partial class CameraTile : IDisposable
                     isReconnecting = false;
                     UpdateConnectionState(ConnectionState.ConnectionFailed, e.ErrorMessage);
                     break;
+                default:
+                    throw new SwitchCaseDefaultException(capturedState);
             }
         });
     }
@@ -1466,7 +1472,19 @@ public partial class CameraTile : IDisposable
                 Camera is not null &&
                 RecordingState == RecordingState.Idle)
             {
+                logger?.LogInformation(
+                    "Recording-on-connect starting for camera '{CameraName}'",
+                    Camera.Display.DisplayName);
                 recordingService.StartRecording(Camera, mediaPipeline);
+            }
+            else if (GetEffectiveEnableRecordingOnConnect() && Camera is not null)
+            {
+                logger?.LogWarning(
+                    "Recording-on-connect enabled but skipped for camera '{CameraName}' (pipeline={HasPipeline}, service={HasService}, state={RecordingState})",
+                    Camera.Display.DisplayName,
+                    mediaPipeline is not null,
+                    recordingService is not null,
+                    RecordingState);
             }
 
             // Auto-start motion detection if enabled (for motion-triggered recording or bounding box display)
@@ -1492,6 +1510,11 @@ public partial class CameraTile : IDisposable
         // When AutoReconnectOnFailure is true, retry forever with configured delay
         var delaySeconds = GetEffectiveReconnectDelaySeconds();
 
+        logger?.LogInformation(
+            "Auto-reconnect scheduled for camera '{CameraName}' in {DelaySeconds}s",
+            Camera.Display.DisplayName,
+            delaySeconds);
+
         // Schedule auto-reconnect after delay (use effective value for per-camera override)
         autoReconnectTimer?.Stop();
         autoReconnectTimer = new DispatcherTimer
@@ -1506,6 +1529,9 @@ public partial class CameraTile : IDisposable
             // Only reconnect if still in failed state
             if (ConnectionState == ConnectionState.ConnectionFailed && Camera is not null)
             {
+                logger?.LogInformation(
+                    "Auto-reconnect attempting for camera '{CameraName}'",
+                    Camera.Display.DisplayName);
                 Reconnect();
             }
         };
@@ -1594,6 +1620,10 @@ public partial class CameraTile : IDisposable
             // If stale for 3 consecutive checks (15 seconds), trigger reconnect
             if (staleStreamCheckCount >= 3)
             {
+                logger?.LogWarning(
+                    "Stream stale detected for camera '{CameraName}' (no frames for 15s), triggering reconnect",
+                    Camera?.Display.DisplayName ?? "Unknown");
+
                 StopStreamHealthCheck();
 
                 // Set reconnecting flag to prevent OnPlayerStateChanged from
@@ -1800,6 +1830,11 @@ public partial class CameraTile : IDisposable
 
         if (Player?.State == PlayerState.Error || reconnectCheckCount >= maxChecks)
         {
+            logger?.LogWarning(
+                "Connection timeout for camera '{CameraName}' after {Seconds}s",
+                Camera?.Display.DisplayName ?? "Unknown",
+                reconnectCheckCount / 2);
+
             isReconnecting = false;
             reconnectTimer?.Stop();
             UpdateConnectionState(ConnectionState.ConnectionFailed, Translations.ConnectionTimedOut);
@@ -1913,7 +1948,7 @@ public partial class CameraTile : IDisposable
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Snapshot failed: {ex.Message}");
+                Debug.WriteLine($"Snapshot failed: {ex.Message}");
             }
         }
     }
@@ -1986,7 +2021,7 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        System.Diagnostics.Debug.WriteLine(
+        Debug.WriteLine(
             $"[MotionDetection] Motion event for '{Camera.Display.DisplayName}' - " +
             $"IsActive={e.IsMotionActive}, BoundingBoxCount={e.BoundingBoxes.Count}, " +
             $"ChangePercentage={e.ChangePercentage:F2}%");
@@ -1999,10 +2034,9 @@ public partial class CameraTile : IDisposable
             UpdateOverlayMotionIndicator();
 
             // Update bounding box overlay
-            if (e.IsMotionActive && e.HasBoundingBoxes)
+            if (e is { IsMotionActive: true, HasBoundingBoxes: true })
             {
-                System.Diagnostics.Debug.WriteLine(
-                    $"[MotionDetection] Updating {e.BoundingBoxes.Count} bounding boxes, AnalysisRes={e.AnalysisWidth}x{e.AnalysisHeight}");
+                Debug.WriteLine($"[MotionDetection] Updating {e.BoundingBoxes.Count} bounding boxes, AnalysisRes={e.AnalysisWidth}x{e.AnalysisHeight}");
                 UpdateMotionBoundingBoxes(e.BoundingBoxes.ToRects(), e.AnalysisWidth, e.AnalysisHeight);
             }
             else
@@ -2127,8 +2161,7 @@ public partial class CameraTile : IDisposable
         var motionOverlay = GetMotionBoundingBoxOverlay();
         if (motionOverlay is null)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"[MotionDetection] ApplyBoundingBoxSettings for '{Camera?.Display.DisplayName ?? "null"}' - overlay not found!");
+            Debug.WriteLine($"[MotionDetection] ApplyBoundingBoxSettings for '{Camera?.Display.DisplayName ?? "null"}' - overlay not found!");
             return;
         }
 
@@ -2138,7 +2171,7 @@ public partial class CameraTile : IDisposable
         var effectiveThickness = GetEffectiveBoundingBoxThickness();
         var effectiveSmoothing = GetEffectiveBoundingBoxSmoothing();
 
-        System.Diagnostics.Debug.WriteLine(
+        Debug.WriteLine(
             $"[MotionDetection] ApplyBoundingBoxSettings for '{Camera?.Display.DisplayName ?? "null"}' - " +
             $"ShowBoundingBoxInGrid={effectiveShowInGrid}, Color={effectiveColor}, Thickness={effectiveThickness}");
 
@@ -2177,7 +2210,7 @@ public partial class CameraTile : IDisposable
         var motionOverlay = GetMotionBoundingBoxOverlay();
         if (motionOverlay is null)
         {
-            System.Diagnostics.Debug.WriteLine("[MotionDetection] UpdateMotionBoundingBoxes - overlay not found!");
+            Debug.WriteLine("[MotionDetection] UpdateMotionBoundingBoxes - overlay not found!");
             return;
         }
 
@@ -2188,7 +2221,7 @@ public partial class CameraTile : IDisposable
 
         // Set the video stream dimensions for letterbox-aware coordinate mapping
         var streamInfo = Player?.StreamInfo;
-        if (streamInfo is not null && streamInfo.Width > 0 && streamInfo.Height > 0)
+        if (streamInfo is { Width: > 0, Height: > 0 })
         {
             motionOverlay.VideoWidth = streamInfo.Width;
             motionOverlay.VideoHeight = streamInfo.Height;
@@ -2203,7 +2236,7 @@ public partial class CameraTile : IDisposable
             containerSize = new Size(VideoPlayer.Overlay.ActualWidth, VideoPlayer.Overlay.ActualHeight);
         }
 
-        System.Diagnostics.Debug.WriteLine(
+        Debug.WriteLine(
             $"[MotionDetection] UpdateMotionBoundingBoxes - overlay.IsOverlayEnabled={motionOverlay.IsOverlayEnabled}, " +
             $"containerSize={containerSize.Width}x{containerSize.Height}, analysisRes={analysisWidth}x{analysisHeight}, boxCount={boundingBoxes?.Count ?? 0}");
 
@@ -2215,7 +2248,7 @@ public partial class CameraTile : IDisposable
     /// </summary>
     public void StartMotionDetection()
     {
-        System.Diagnostics.Debug.WriteLine(
+        Debug.WriteLine(
             $"[MotionDetection] StartMotionDetection called for '{Camera?.Display.DisplayName ?? "null"}' - " +
             $"Camera={Camera is not null}, Pipeline={mediaPipeline is not null}, Service={motionDetectionService is not null}, " +
             $"EnableRecordingOnMotion={GetEffectiveEnableRecordingOnMotion()}, ShowBoundingBoxInGrid={GetEffectiveShowBoundingBoxInGrid()}, " +
@@ -2223,7 +2256,7 @@ public partial class CameraTile : IDisposable
 
         if (Camera is null || mediaPipeline is null || motionDetectionService is null || !ShouldRunMotionDetection)
         {
-            System.Diagnostics.Debug.WriteLine("[MotionDetection] StartMotionDetection early return - preconditions not met");
+            Debug.WriteLine("[MotionDetection] StartMotionDetection early return - preconditions not met");
             return;
         }
 
@@ -2250,7 +2283,7 @@ public partial class CameraTile : IDisposable
             },
         };
 
-        System.Diagnostics.Debug.WriteLine(
+        Debug.WriteLine(
             $"[MotionDetection] Starting detection for '{Camera.Display.DisplayName}' with " +
             $"ShowInGrid={settings.BoundingBox.ShowInGrid}, MinArea={settings.BoundingBox.MinArea}, " +
             $"Sensitivity={settings.Sensitivity}, Resolution={settings.AnalysisWidth}x{settings.AnalysisHeight}, " +
