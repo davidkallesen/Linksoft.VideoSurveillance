@@ -142,6 +142,7 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         CameraGrid.TimelapseService = timelapseService;
         CameraGrid.ToastNotificationService = toastNotificationService;
         CameraGrid.VideoPlayerFactory = videoPlayerFactory;
+        CameraGrid.MediaPipelineFactory = player => new VideoEngineMediaPipeline(player);
 
         ApplyDisplaySettings();
         LoadStartupCameras();
