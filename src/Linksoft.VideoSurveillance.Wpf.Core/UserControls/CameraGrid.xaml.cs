@@ -86,6 +86,9 @@ public partial class CameraGrid
     [DependencyProperty(PropertyChangedCallback = nameof(OnMediaPipelineFactoryChanged))]
     private Func<IVideoPlayer, IMediaPipeline>? mediaPipelineFactory;
 
+    [DependencyProperty(PropertyChangedCallback = nameof(OnTileLoggerChanged))]
+    private ILogger? tileLogger;
+
     // Recording settings
     [DependencyProperty(DefaultValue = false)]
     private bool enableRecordingOnMotion;
@@ -689,6 +692,16 @@ public partial class CameraGrid
         }
     }
 
+    private static void OnTileLoggerChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraGrid grid)
+        {
+            grid.InitializeAllTileServices();
+        }
+    }
+
     /// <summary>
     /// Initializes all camera tiles with the recording, motion detection, and timelapse services.
     /// </summary>
@@ -702,7 +715,7 @@ public partial class CameraGrid
         for (var i = 0; i < CameraTiles.Count; i++)
         {
             var tile = GetCameraTileAt(i);
-            tile?.InitializeServices(RecordingService, MotionDetectionService, TimelapseService, ToastNotificationService, VideoPlayerFactory, MediaPipelineFactory);
+            tile?.InitializeServices(RecordingService, MotionDetectionService, TimelapseService, ToastNotificationService, VideoPlayerFactory, MediaPipelineFactory, TileLogger);
         }
     }
 }

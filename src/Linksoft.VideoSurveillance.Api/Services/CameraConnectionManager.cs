@@ -45,6 +45,10 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
             {
                 if (!RecordingPolicyHelper.ShouldRecordOnConnect(camera, appDefault))
                 {
+                    logger.LogDebug(
+                        "Camera {CameraId} ({DisplayName}) - recording-on-connect disabled, skipping",
+                        camera.Id,
+                        camera.Display.DisplayName);
                     continue;
                 }
 
@@ -190,6 +194,11 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
     {
         if (e.NewState == ConnectionState.Connected)
         {
+            logger.LogInformation(
+                "Camera {CameraId} ({DisplayName}) connected",
+                camera.Id,
+                camera.Display.DisplayName);
+
             if (recordingService.IsRecording(camera.Id) ||
                 !managedPipelines.TryGetValue(camera.Id, out var pipeline))
             {
@@ -216,6 +225,13 @@ public sealed class CameraConnectionManager : BackgroundServiceBase<CameraConnec
                 // and Dispose joins that thread (self-join deadlock).
                 ScheduleDeferredDisposal(camera.Id);
             }
+        }
+        else if (e.NewState == ConnectionState.Disconnected)
+        {
+            logger.LogInformation(
+                "Camera {CameraId} ({DisplayName}) disconnected",
+                camera.Id,
+                camera.Display.DisplayName);
         }
         else if (e.NewState == ConnectionState.Error)
         {
