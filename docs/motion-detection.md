@@ -1,8 +1,8 @@
-# Motion Detection Guide
+# 🏃 Motion Detection Guide
 
 Setup and configuration guide for the motion detection system in Linksoft.VideoSurveillance. Covers both the WPF desktop app and the REST API server.
 
-## Overview
+## 📖 Overview
 
 The motion detection system uses frame-based pixel differencing to detect movement in camera streams. It supports multiple simultaneous motion regions with bounding box visualization, motion-triggered recording, and real-time event broadcasting via SignalR.
 
@@ -20,7 +20,7 @@ graph LR
     Event --> SignalR["SignalR Broadcast"]
 ```
 
-## Detection Algorithm
+## 🧮 Detection Algorithm
 
 ### Step 1: Frame Capture
 
@@ -71,7 +71,7 @@ The total change percentage is compared against `MinimumChangePercent`:
 - If `changePercent >= MinimumChangePercent` → **Motion Active**
 - Otherwise → **Motion Inactive**
 
-## CPU Scheduling
+## ⚡ CPU Scheduling
 
 The scheduler prevents CPU spikes when monitoring multiple cameras:
 
@@ -87,7 +87,7 @@ The scheduler prevents CPU spikes when monitoring multiple cameras:
 | 8 | 3 | 24 | ~42ms |
 | 16 | 2 | 32 | ~31ms |
 
-## Settings Reference
+## ⚙️ Settings Reference
 
 ### Analysis Settings
 
@@ -139,7 +139,7 @@ smoothed.Position = Lerp(previous.Position, current.Position, alpha)
 | 0.7 | Heavy smoothing, slow transitions |
 | 1.0 | Maximum smoothing, boxes barely move |
 
-## Motion-Triggered Recording
+## 🔴 Motion-Triggered Recording
 
 ```mermaid
 stateDiagram-v2
@@ -178,7 +178,7 @@ The `CooldownSeconds` setting prevents rapid recording cycles. After a motion-tr
 
 If a user starts manual recording, it takes priority. Motion events are still processed (bounding boxes still display) but cannot start or stop a manual recording.
 
-## Setup: WPF Desktop App
+## 🖥️ Setup: WPF Desktop App
 
 ### 1. Configure Global Motion Detection Settings
 
@@ -220,7 +220,7 @@ Right-click a camera tile → **Edit** → navigate to the **Motion Detection** 
 - Check the recording indicator when motion triggers recording
 - Use the **Recordings Browser** (View tab) to review motion-triggered recordings
 
-## Setup: REST API Server
+## 🌍 Setup: REST API Server
 
 ### 1. Configure Settings via API
 
@@ -318,7 +318,7 @@ displayW = (box.Width / analysisWidth) * displayWidth
 displayH = (box.Height / analysisHeight) * displayHeight
 ```
 
-## Performance Tuning
+## 📈 Performance Tuning
 
 ### Reducing CPU Usage
 
@@ -373,7 +373,7 @@ displayH = (box.Height / analysisHeight) * displayHeight
 }
 ```
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### False Positives
 

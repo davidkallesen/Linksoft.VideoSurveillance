@@ -1,8 +1,8 @@
-# Linksoft.VideoSurveillance Settings Reference
+# ⚙️ Linksoft.VideoSurveillance Settings Reference
 
 Complete reference for all application settings and parameters. Settings are stored as JSON in `%ProgramData%\Linksoft\CameraWall\settings.json` and are shared between the WPF desktop app and the REST API server.
 
-## Settings Hierarchy
+## 📊 Settings Hierarchy
 
 ```mermaid
 graph TB
@@ -23,7 +23,7 @@ Settings support per-camera overrides via nullable override models. When a camer
 
 ---
 
-## General Settings
+## 🎨 General Settings
 
 UI and startup behavior. **WPF only** (not exposed via API settings endpoint).
 
@@ -38,7 +38,7 @@ UI and startup behavior. **WPF only** (not exposed via API settings endpoint).
 
 ---
 
-## Camera Display Settings
+## 🖥️ Camera Display Settings
 
 Camera overlay and grid layout defaults. Per-camera overrides available for overlay properties.
 
@@ -65,7 +65,7 @@ Camera overlay and grid layout defaults. Per-camera overrides available for over
 
 ---
 
-## Connection Settings
+## 🔌 Connection Settings
 
 Connection behavior, defaults for new cameras, and notification preferences.
 
@@ -90,7 +90,7 @@ Connection behavior, defaults for new cameras, and notification preferences.
 
 ---
 
-## Performance Settings
+## 📈 Performance Settings
 
 Video playback and streaming configuration.
 
@@ -122,7 +122,7 @@ Video playback and streaming configuration.
 
 ---
 
-## Motion Detection Settings
+## 🏃 Motion Detection Settings
 
 Frame-based motion analysis configuration. See [motion-detection.md](motion-detection.md) for detailed setup guide.
 
@@ -151,7 +151,7 @@ Frame-based motion analysis configuration. See [motion-detection.md](motion-dete
 
 ---
 
-## Recording Settings
+## 🔴 Recording Settings
 
 Recording paths, formats, segmentation, and timelapse configuration.
 
@@ -220,7 +220,7 @@ When `EnableHourlySegmentation` is enabled, recordings are split at clock-aligne
 
 ---
 
-## Advanced Settings
+## 🔧 Advanced Settings
 
 Debugging and logging configuration.
 
@@ -236,11 +236,11 @@ When debug logging is enabled:
 
 ---
 
-## Per-Camera Configuration
+## 📷 Per-Camera Configuration
 
 In addition to the override system, each camera has its own direct configuration properties.
 
-### Connection Settings (per camera)
+### 🔌 Connection Settings (per camera)
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
@@ -275,7 +275,7 @@ In addition to the override system, each camera has its own direct configuration
 
 ---
 
-## Per-Camera Override System
+## 🔀 Per-Camera Override System
 
 Every application-level setting marked "Override: Yes" in the tables above can be overridden on a per-camera basis. Override models use nullable properties where `null` means "use application default".
 
@@ -336,7 +336,7 @@ var timeout = settingsService.GetEffectiveValue(
 
 ---
 
-## API Server Settings
+## 🌍 API Server Settings
 
 The REST API exposes settings via endpoints:
 
@@ -350,7 +350,7 @@ Per-camera overrides are managed through camera endpoints:
 
 ---
 
-## Application Paths
+## 📁 Application Paths
 
 All default paths are relative to `%ProgramData%\Linksoft\CameraWall\`:
 
@@ -364,7 +364,7 @@ All default paths are relative to `%ProgramData%\Linksoft\CameraWall\`:
 
 ---
 
-## JSON Example
+## 📝 JSON Example
 
 ```json
 {

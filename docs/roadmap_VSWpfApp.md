@@ -1,12 +1,12 @@
-# Linksoft.VideoSurveillance.Wpf.App Roadmap
+# 🗺️ Linksoft.VideoSurveillance.Wpf.App Roadmap
 
-## Vision
+## 🎯 Vision
 
 A native WPF desktop client for the Linksoft VideoSurveillance REST API server. Unlike the standalone CameraWall app (which connects directly to cameras via RTSP/HTTP), this app is a **thin client** that communicates exclusively through the API server and SignalR hub.
 
 Key differentiator: native recording playback over HTTP using VideoEngine/MediaElement instead of browser-based HLS streaming.
 
-## Architecture
+## 🏛️ Architecture
 
 ```
 +-------------------------------------------+     +-------------------------------------------+
@@ -35,7 +35,7 @@ Communication:
   WPF App --[HTTP]--> /recordings-files/{path} (native video playback)
 ```
 
-## Phases
+## 📋 Phases
 
 ### Phase 1: Init-Setup ✅
 - Project scaffolding with DI, Serilog, splash screen
@@ -187,18 +187,18 @@ The following VS.Wpf dialogs/windows intentionally remain app-specific because t
 - [x] Notification settings (enable/disable per event type, optional sounds, local JSON persistence)
 - [x] Notification history panel (recent events with timestamps, ribbon button, clear action)
 
-#### 9.3 UI Enhancements
-- [ ] Keyboard shortcuts for common actions (Ctrl+N new camera, F5 refresh, F11 full screen, etc.)
-- [ ] Keyboard shortcut reference dialog
-- [ ] Window state persistence (size, position, maximized state, saved to local config)
-- [ ] Ribbon quick access toolbar customization
-- [ ] Status bar enhancements (server latency, connected camera count, active recordings)
+#### 9.3 UI Enhancements ✅
+- [x] Keyboard shortcuts for common actions (Ctrl+N new camera, F5 refresh, F11 full screen, etc.)
+- [x] Keyboard shortcut reference dialog
+- [x] Window state persistence (size, position, maximized state, saved to local config)
+- [x] Ribbon quick access toolbar customization
+- [x] Status bar enhancements (server latency, connected camera count, active recordings)
 
-#### 9.4 Installer
-- [ ] WiX installer project for Wpf.App (matching CameraWall.Wpf.App installer pattern)
-- [ ] Desktop and Start Menu shortcuts
+#### 9.4 Installer ✅
+- [x] WiX installer project for Wpf.App (matching CameraWall.Wpf.App installer pattern)
+- [x] Desktop and Start Menu shortcuts
 - [ ] Auto-start option (Windows startup registry)
-- [ ] Upgrade support (preserve local config on update)
+- [x] Upgrade support (preserve local config on update)
 
 ### Phase 10: Advanced Capabilities
 
@@ -222,7 +222,7 @@ The following VS.Wpf dialogs/windows intentionally remain app-specific because t
 - [ ] Timelapse playback via HTTP (VideoHost)
 - [ ] Configure timelapse schedules per camera via API
 
-## Phase Summary
+## 📊 Phase Summary
 
 | Phase | Focus | Status | Key Deliverable |
 |-------|-------|--------|-----------------|
@@ -234,10 +234,10 @@ The following VS.Wpf dialogs/windows intentionally remain app-specific because t
 | **Phase 6** | Settings & Polish | ✅ | Settings dialog, themes, About, Check for Updates |
 | **Phase 7** | Shared WPF Library | ✅ | Wpf.Core shared library, ~120 files moved from CameraWall.Wpf |
 | **Phase 8** | Dialog Migration | ✅ | AboutDialog, CheckForUpdates, FullScreenRecordingWindow migrated to Wpf.Core |
-| **Phase 9** | Enhanced Features | Planned | Server profiles, notifications, shortcuts, installer |
+| **Phase 9** | Enhanced Features | ✅ | Server profiles, notifications, shortcuts, installer |
 | **Phase 10** | Advanced Capabilities | Future | Multi-monitor, camera groups, audit log, timelapse |
 
-## Shared Code Strategy
+## 🧩 Shared Code Strategy
 
 ### Approach: Shared WPF Library (Wpf.Core)
 
@@ -265,7 +265,7 @@ Shared WPF components live in `Linksoft.VideoSurveillance.Wpf.Core`, referenced 
 | | CameraModelMappingExtensions (API ↔ shared models) |
 | | Server profile management (Phase 9) |
 
-## Feature Comparison
+## 🔄 Feature Comparison
 
 | Feature | CameraWall.Wpf.App | VideoSurveillance.Wpf.App | Blazor.App |
 |---------|-------------------|--------------------------|------------|
@@ -284,7 +284,7 @@ Shared WPF components live in `Linksoft.VideoSurveillance.Wpf.Core`, referenced 
 | Deployment | Standalone installer | Installer (needs API) | Browser (needs API) |
 | Offline capable | Yes | No | No |
 
-## Phase Dependencies
+## 🔗 Phase Dependencies
 
 ```
 Phase 7 (Wpf.Core)
@@ -302,7 +302,7 @@ Phase 7 (Wpf.Core)
 | **Phase 9.4** | Phase 8 | — |
 | **Phase 10** | Phase 8 + 9 | — |
 
-## Local vs Server Storage
+## 💾 Local vs Server Storage
 
 VideoSurveillance.Wpf.App is a thin client, but some data must be stored locally:
 
@@ -319,7 +319,7 @@ VideoSurveillance.Wpf.App is a thin client, but some data must be stored locally
 | Settings | **Server** (API) | `GET/PUT /api/settings` |
 | Recordings | **Server** (API) | `GET /api/recordings`, streamed via HTTP |
 
-## API Requirements for Future Phases
+## 🌍 API Requirements for Future Phases
 
 Some planned features require new or extended API endpoints that do not yet exist:
 
@@ -333,7 +333,7 @@ Some planned features require new or extended API endpoints that do not yet exis
 | **10.4** | Timelapse schedules | New: `GET/PUT /api/cameras/{id}/timelapse` |
 | **10.4** | Timelapse browser | New: `GET /api/timelapses`, `/timelapse-files/{path}` |
 
-## Migration Risks & Mitigations (Phase 7)
+## ⚠️ Migration Risks & Mitigations (Phase 7)
 
 | Risk | Impact | Mitigation |
 |------|--------|-----------|
