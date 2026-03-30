@@ -1,4 +1,12 @@
 <Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/architecture.md" />
+    <File Path="docs/motion-detection.md" />
+    <File Path="docs/roadmap.md" />
+    <File Path="docs/roadmap_VSWpfApp.md" />
+    <File Path="docs/settings.md" />
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Linksoft.VideoSurveillance.Aspire/Linksoft.VideoSurveillance.Aspire.csproj" />
   </Folder>
@@ -30,5 +38,6 @@
     <Project Path="test/Linksoft.VideoEngine.Tests/Linksoft.VideoEngine.Tests.csproj" />
     <Project Path="test/Linksoft.VideoSurveillance.Api.Tests/Linksoft.VideoSurveillance.Api.Tests.csproj" />
     <Project Path="test/Linksoft.VideoSurveillance.Core.Tests/Linksoft.VideoSurveillance.Core.Tests.csproj" />
+    <Project Path="test/Linksoft.VideoSurveillance.Wpf.Core.Tests/Linksoft.VideoSurveillance.Wpf.Core.Tests.csproj" />
   </Folder>
 </Solution>
