@@ -4,9 +4,9 @@ namespace Linksoft.VideoSurveillance.Wpf.UserControls;
 /// Camera tile control displaying a single camera stream with overlay.
 /// DataContext is <see cref="CameraTileViewModel"/>.
 /// </summary>
-public partial class CameraTileControl
+public partial class CameraTileBadge
 {
-    public CameraTileControl()
+    public CameraTileBadge()
     {
         InitializeComponent();
     }

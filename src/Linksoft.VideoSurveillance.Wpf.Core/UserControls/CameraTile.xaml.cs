@@ -154,6 +154,17 @@ public partial class CameraTile : IDisposable
     private IMediaPipeline? mediaPipeline;
     private IVideoPlayerFactory? videoPlayerFactory;
 
+    // Zoom state
+    private float currentZoom = 1.0f;
+    private float currentPanX;
+    private float currentPanY;
+    private bool isPanning;
+    private bool isSelecting;
+    private Point panStartPoint;
+    private Point selectionStartPoint;
+    private float panStartX;
+    private float panStartY;
+
     private bool disposed;
     private bool isReconnecting;
     private bool isSwapping;
@@ -323,6 +334,11 @@ public partial class CameraTile : IDisposable
     public event EventHandler<FullScreenRequestedEventArgs>? FullScreenRequested;
 
     /// <summary>
+    /// Occurs when the zoom state changes on this tile.
+    /// </summary>
+    public event EventHandler? ZoomStateChanged;
+
+    /// <summary>
     /// Occurs when a swap left request is made.
     /// </summary>
     public event EventHandler<CameraConfiguration>? SwapLeftRequested;
@@ -367,6 +383,7 @@ public partial class CameraTile : IDisposable
         Unloaded += OnUnloaded;
         VideoPlayer.OverlayCreated += OnOverlayCreated;
         VideoPlayer.SurfaceCreated += OnSurfaceCreated;
+        InputManager.Current.PreProcessInput += OnPreProcessInput;
     }
 
     /// <summary>
@@ -709,15 +726,18 @@ public partial class CameraTile : IDisposable
             Unloaded -= OnUnloaded;
             VideoPlayer.OverlayCreated -= OnOverlayCreated;
             VideoPlayer.SurfaceCreated -= OnSurfaceCreated;
+            InputManager.Current.PreProcessInput -= OnPreProcessInput;
 
             if (VideoPlayer.Overlay is not null)
             {
                 VideoPlayer.Overlay.PreviewMouseRightButtonUp -= OnMouseRightButtonUp;
+                VideoPlayer.Overlay.PreviewMouseWheel -= OnOverlayMouseWheel;
             }
 
             if (VideoPlayer.Surface is not null)
             {
                 VideoPlayer.Surface.PreviewMouseRightButtonUp -= OnMouseRightButtonUp;
+                VideoPlayer.Surface.PreviewMouseWheel -= OnOverlayMouseWheel;
             }
 
             if (Camera is not null)
@@ -1385,12 +1405,16 @@ public partial class CameraTile : IDisposable
         {
             VideoPlayer.Overlay.PreviewMouseRightButtonUp -= OnMouseRightButtonUp;
             VideoPlayer.Overlay.PreviewMouseRightButtonUp += OnMouseRightButtonUp;
+            VideoPlayer.Overlay.PreviewMouseWheel -= OnOverlayMouseWheel;
+            VideoPlayer.Overlay.PreviewMouseWheel += OnOverlayMouseWheel;
         }
 
         if (VideoPlayer.Surface is not null)
         {
             VideoPlayer.Surface.PreviewMouseRightButtonUp -= OnMouseRightButtonUp;
             VideoPlayer.Surface.PreviewMouseRightButtonUp += OnMouseRightButtonUp;
+            VideoPlayer.Surface.PreviewMouseWheel -= OnOverlayMouseWheel;
+            VideoPlayer.Surface.PreviewMouseWheel += OnOverlayMouseWheel;
         }
     }
 
@@ -2327,10 +2351,18 @@ public partial class CameraTile : IDisposable
     {
         dragStartPoint = e.GetPosition(this);
 
-        // Handle double-click for fullscreen
+        // Handle double-click: reset zoom if zoomed, otherwise fullscreen
         if (e.ClickCount == 2 && Camera is not null && ConnectionState == ConnectionState.Connected)
         {
-            FullScreenRequested?.Invoke(this, new FullScreenRequestedEventArgs(Camera, this));
+            if (IsZoomed)
+            {
+                ResetZoom();
+            }
+            else
+            {
+                FullScreenRequested?.Invoke(this, new FullScreenRequestedEventArgs(Camera, this));
+            }
+
             e.Handled = true;
         }
     }
@@ -2390,5 +2422,273 @@ public partial class CameraTile : IDisposable
 
         CameraDropped?.Invoke(this, sourceCamera);
         e.Handled = true;
+    }
+
+    private void OnOverlayMouseWheel(
+        object sender,
+        MouseWheelEventArgs e)
+    {
+        // Ctrl+Scroll = zoom toward mouse pointer
+        if (Keyboard.Modifiers != ModifierKeys.Control)
+        {
+            return;
+        }
+
+        var wasZoomed = IsZoomed;
+        var oldZoom = currentZoom;
+        var factor = e.Delta > 0 ? 1.15f : 0.87f;
+        var newZoom = Math.Clamp(currentZoom * factor, 1.0f, 10.0f);
+
+        // Adjust pan so the point under the mouse stays fixed
+        if (sender is Window window && newZoom > 1.01f)
+        {
+            var mousePos = e.GetPosition(window);
+            var mx = (float)(mousePos.X / window.ActualWidth);
+            var my = (float)(mousePos.Y / window.ActualHeight);
+
+            // Convert mouse position to normalized offset from center (-1..+1)
+            var mxNorm = (mx - 0.5f) * 2f;
+            var myNorm = (my - 0.5f) * 2f;
+
+            // Shift pan so content under mouse stays stationary
+            currentPanX += mxNorm * (1f - (oldZoom / newZoom));
+            currentPanY += myNorm * (1f - (oldZoom / newZoom));
+            currentPanX = Math.Clamp(currentPanX, -1f, 1f);
+            currentPanY = Math.Clamp(currentPanY, -1f, 1f);
+        }
+
+        currentZoom = newZoom;
+
+        if (currentZoom <= 1.01f)
+        {
+            // Snap to fit
+            currentZoom = 1.0f;
+            currentPanX = 0f;
+            currentPanY = 0f;
+        }
+
+        VideoPlayer.SetZoom(currentZoom, currentPanX, currentPanY);
+        UpdateZoomVisuals();
+
+        if (wasZoomed != IsZoomed)
+        {
+            ZoomStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnPreProcessInput(
+        object sender,
+        PreProcessInputEventArgs e)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        switch (e.StagingItem.Input)
+        {
+            case KeyEventArgs { Key: Key.Escape } when IsZoomed:
+                if (VideoPlayer.Overlay is not null && IsMouseOverWindow(VideoPlayer.Overlay))
+                {
+                    ResetZoom();
+                }
+
+                break;
+
+            // Button events must be checked before MouseEventArgs (inherits from it)
+            case MouseButtonEventArgs { ChangedButton: MouseButton.Left } mouseButton:
+                HandleZoomMouseButton(mouseButton);
+                break;
+
+            case MouseEventArgs mouseMove when isSelecting:
+                HandleSelectionMouseMove(mouseMove);
+                break;
+
+            case MouseEventArgs mouseMove when isPanning:
+                HandlePanMouseMove(mouseMove);
+                break;
+        }
+    }
+
+    private void HandleZoomMouseButton(MouseButtonEventArgs e)
+    {
+        if (e.ButtonState == MouseButtonState.Pressed
+            && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            // Verify mouse is over this tile's overlay
+            if (VideoPlayer.Overlay is null || !IsMouseOverWindow(VideoPlayer.Overlay))
+            {
+                return;
+            }
+
+            if (IsZoomed)
+            {
+                // Ctrl+drag when zoomed = pan
+                isPanning = true;
+                panStartPoint = e.GetPosition(VideoPlayer.Overlay);
+                panStartX = currentPanX;
+                panStartY = currentPanY;
+            }
+            else
+            {
+                // Ctrl+drag when not zoomed = rectangle selection zoom
+                isSelecting = true;
+                selectionStartPoint = e.GetPosition(VideoPlayer.Overlay);
+                ZoomSelectionCanvas.Visibility = Visibility.Visible;
+                ZoomSelectionRect.Width = 0;
+                ZoomSelectionRect.Height = 0;
+                Canvas.SetLeft(ZoomSelectionRect, selectionStartPoint.X);
+                Canvas.SetTop(ZoomSelectionRect, selectionStartPoint.Y);
+            }
+        }
+        else if (e.ButtonState == MouseButtonState.Released)
+        {
+            if (isPanning)
+            {
+                isPanning = false;
+            }
+
+            if (isSelecting)
+            {
+                CompleteSelectionZoom(e);
+            }
+        }
+    }
+
+    private void HandleSelectionMouseMove(MouseEventArgs e)
+    {
+        if (VideoPlayer.Overlay is null)
+        {
+            return;
+        }
+
+        var current = e.GetPosition(VideoPlayer.Overlay);
+        var x = Math.Min(selectionStartPoint.X, current.X);
+        var y = Math.Min(selectionStartPoint.Y, current.Y);
+        var w = Math.Abs(current.X - selectionStartPoint.X);
+        var h = Math.Abs(current.Y - selectionStartPoint.Y);
+
+        Canvas.SetLeft(ZoomSelectionRect, x);
+        Canvas.SetTop(ZoomSelectionRect, y);
+        ZoomSelectionRect.Width = w;
+        ZoomSelectionRect.Height = h;
+    }
+
+    private void CompleteSelectionZoom(MouseButtonEventArgs e)
+    {
+        isSelecting = false;
+        ZoomSelectionCanvas.Visibility = Visibility.Collapsed;
+
+        if (VideoPlayer.Overlay is null)
+        {
+            return;
+        }
+
+        var endPoint = e.GetPosition(VideoPlayer.Overlay);
+        var overlayW = VideoPlayer.Overlay.ActualWidth;
+        var overlayH = VideoPlayer.Overlay.ActualHeight;
+
+        if (overlayW <= 0 || overlayH <= 0)
+        {
+            return;
+        }
+
+        var selW = Math.Abs(endPoint.X - selectionStartPoint.X);
+        var selH = Math.Abs(endPoint.Y - selectionStartPoint.Y);
+
+        // Ignore tiny selections (accidental clicks)
+        if (selW < 10 || selH < 10)
+        {
+            return;
+        }
+
+        // Calculate zoom level from selection size
+        var zoomX = (float)(overlayW / selW);
+        var zoomY = (float)(overlayH / selH);
+        var newZoom = Math.Clamp(Math.Min(zoomX, zoomY), 1.0f, 10.0f);
+
+        // Calculate pan to center the selection
+        var centerX = (Math.Min(selectionStartPoint.X, endPoint.X) + (selW / 2)) / overlayW;
+        var centerY = (Math.Min(selectionStartPoint.Y, endPoint.Y) + (selH / 2)) / overlayH;
+
+        currentZoom = newZoom;
+        currentPanX = Math.Clamp(((float)centerX - 0.5f) * 2f, -1f, 1f);
+        currentPanY = Math.Clamp(((float)centerY - 0.5f) * 2f, -1f, 1f);
+
+        VideoPlayer.SetZoom(currentZoom, currentPanX, currentPanY);
+        UpdateZoomVisuals();
+        ZoomStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void HandlePanMouseMove(MouseEventArgs e)
+    {
+        if (VideoPlayer.Overlay is null)
+        {
+            return;
+        }
+
+        var current = e.GetPosition(VideoPlayer.Overlay);
+        var dx = (float)((panStartPoint.X - current.X) / VideoPlayer.Overlay.ActualWidth) * 2f;
+        var dy = (float)((panStartPoint.Y - current.Y) / VideoPlayer.Overlay.ActualHeight) * 2f;
+
+        currentPanX = Math.Clamp(panStartX + dx, -1f, 1f);
+        currentPanY = Math.Clamp(panStartY + dy, -1f, 1f);
+
+        VideoPlayer.SetZoom(currentZoom, currentPanX, currentPanY);
+    }
+
+    private static bool IsMouseOverWindow(Window window)
+    {
+        var pos = Mouse.GetPosition(window);
+        return pos.X >= 0 && pos.Y >= 0
+            && pos.X <= window.ActualWidth
+            && pos.Y <= window.ActualHeight;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this tile is zoomed beyond the default fit view.
+    /// </summary>
+    public bool IsZoomed => currentZoom > 1.01f;
+
+    /// <summary>
+    /// Resets the zoom level back to fit-to-view.
+    /// </summary>
+    public void ResetZoom()
+    {
+        var wasZoomed = IsZoomed;
+        currentZoom = 1.0f;
+        currentPanX = 0f;
+        currentPanY = 0f;
+        VideoPlayer.ResetZoom();
+        UpdateZoomVisuals();
+
+        if (wasZoomed)
+        {
+            ZoomStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void UpdateZoomVisuals()
+    {
+        // Motion overlay: hide when zoomed
+        var overlay = GetMotionBoundingBoxOverlay();
+        if (overlay is not null)
+        {
+            overlay.Visibility = IsZoomed ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        // Zoom indicator text
+        if (IsZoomed)
+        {
+            var percent = (int)(currentZoom * 100);
+            ZoomIndicator.Text = $"Zoom: {percent.ToString(CultureInfo.InvariantCulture)}%";
+            ZoomIndicatorBorder.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            ZoomIndicatorBorder.Visibility = Visibility.Collapsed;
+        }
     }
 }

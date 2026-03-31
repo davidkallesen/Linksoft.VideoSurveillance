@@ -17,6 +17,9 @@ public sealed class SwapChainPresenter : IDisposable
     private uint swapChainHeight;
     private int lastControlWidth;
     private int lastControlHeight;
+    private float zoomLevel = 1.0f;
+    private float panX;
+    private float panY;
     private bool disposed;
 
     public SwapChainPresenter(
@@ -149,6 +152,40 @@ public sealed class SwapChainPresenter : IDisposable
         }
     }
 
+    /// <summary>
+    /// Sets the zoom level and pan offset for the video viewport.
+    /// </summary>
+    /// <param name="zoom">Zoom level (1.0 = fit to control, >1.0 = zoomed in).</param>
+    /// <param name="offsetX">Horizontal pan offset in normalized coordinates (0.0-1.0).</param>
+    /// <param name="offsetY">Vertical pan offset in normalized coordinates (0.0-1.0).</param>
+    public void SetZoom(
+        float zoom,
+        float offsetX,
+        float offsetY)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        lock (presentLock)
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            zoomLevel = Math.Max(1.0f, zoom);
+            panX = offsetX;
+            panY = offsetY;
+
+            if (lastControlWidth > 0 && lastControlHeight > 0 && swapChainWidth > 0 && swapChainHeight > 0)
+            {
+                ApplyTransform();
+            }
+        }
+    }
+
     private void ApplyTransform()
     {
         float scaleX = lastControlWidth / (float)swapChainWidth;
@@ -156,11 +193,22 @@ public sealed class SwapChainPresenter : IDisposable
 
         // Uniform scale preserves aspect ratio; the surface window's black
         // background provides letterbox/pillarbox bars automatically.
-        float scale = Math.Min(scaleX, scaleY);
-        float offsetX = (lastControlWidth - (swapChainWidth * scale)) / 2f;
-        float offsetY = (lastControlHeight - (swapChainHeight * scale)) / 2f;
+        float baseScale = Math.Min(scaleX, scaleY);
+        float totalScale = baseScale * zoomLevel;
 
-        var matrix = Matrix3x2.CreateScale(scale, scale)
+        // Video dimensions after scaling
+        float scaledW = swapChainWidth * totalScale;
+        float scaledH = swapChainHeight * totalScale;
+
+        // Center when at fit-to-view; pan offset shifts the viewport when zoomed.
+        // panX/panY are in normalized coordinates (0.0 = centered, -1.0/+1.0 = edges).
+        float maxPanX = Math.Max(0, (scaledW - lastControlWidth) / 2f);
+        float maxPanY = Math.Max(0, (scaledH - lastControlHeight) / 2f);
+
+        float offsetX = ((lastControlWidth - scaledW) / 2f) - (panX * maxPanX);
+        float offsetY = ((lastControlHeight - scaledH) / 2f) - (panY * maxPanY);
+
+        var matrix = Matrix3x2.CreateScale(totalScale, totalScale)
             * Matrix3x2.CreateTranslation(offsetX, offsetY);
         dcompVisual.SetTransform(ref matrix);
         dcompDevice.Commit();

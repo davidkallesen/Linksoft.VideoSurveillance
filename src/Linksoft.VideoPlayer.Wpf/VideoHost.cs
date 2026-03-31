@@ -134,6 +134,28 @@ public partial class VideoHost : ContentControl, IDisposable
         set => SetValue(BackColorProperty, value);
     }
 
+    /// <summary>
+    /// Sets the video viewport zoom and pan.
+    /// </summary>
+    /// <param name="zoom">Zoom level (1.0 = fit to control, >1.0 = zoomed in).</param>
+    /// <param name="panX">Horizontal pan in normalized coordinates (-1.0 to 1.0).</param>
+    /// <param name="panY">Vertical pan in normalized coordinates (-1.0 to 1.0).</param>
+    public void SetZoom(
+        float zoom,
+        float panX = 0f,
+        float panY = 0f)
+    {
+        presenter?.SetZoom(zoom, panX, panY);
+    }
+
+    /// <summary>
+    /// Resets the video viewport to fit-to-control (no zoom, no pan).
+    /// </summary>
+    public void ResetZoom()
+    {
+        presenter?.SetZoom(1.0f, 0f, 0f);
+    }
+
     public void Dispose()
     {
         Dispose(true);

@@ -34,6 +34,7 @@
                         DeleteCameraRequested="OnDeleteCameraRequested"
                         EditCameraRequested="OnEditCameraRequested"
                         FullScreenRequested="OnFullScreenRequested"
+                        ZoomStateChanged="OnZoomStateChanged"
                         SnapshotPath="{Binding Path=SnapshotPath, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
                         SwapLeftRequested="OnSwapLeftRequested"
                         SwapRightRequested="OnSwapRightRequested">
