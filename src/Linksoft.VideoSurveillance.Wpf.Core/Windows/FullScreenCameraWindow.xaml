@@ -102,6 +102,19 @@
                     IsOverlayEnabled="{Binding Path=HostDataContext.ShowBoundingBoxInFullScreen}"
                     SmoothingFactor="{Binding Path=HostDataContext.BoundingBoxSmoothing}" />
 
+                <!--  Zoom Selection Rectangle  -->
+                <Canvas
+                    x:Name="ZoomSelectionCanvas"
+                    IsHitTestVisible="False"
+                    Visibility="Collapsed">
+                    <Rectangle
+                        x:Name="ZoomSelectionRect"
+                        Fill="#22FFFFFF"
+                        Stroke="#CCFFFFFF"
+                        StrokeDashArray="4 2"
+                        StrokeThickness="1.5" />
+                </Canvas>
+
                 <!--  Close Button (Top-Right)  -->
                 <Button
                     Width="40"

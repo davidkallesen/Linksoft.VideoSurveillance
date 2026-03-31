@@ -15,6 +15,16 @@ A professional video surveillance platform for live monitoring of multiple RTSP/
 - **Full Screen Mode** - Double-click or use context menu to view any camera in full screen (Escape to exit)
 - **Connection State Indicators** - Visual indicators for Connected, Connecting, and Error states
 
+### 🔍 Zoom & Pan
+- **Scroll Zoom** - Ctrl+Scroll to zoom in/out on any camera tile or full screen view, centered on mouse pointer
+- **Rectangle Selection Zoom** - Ctrl+Left-drag to draw a selection rectangle, zooms to the selected region on release
+- **Pan** - Ctrl+Left-drag while zoomed to pan the viewport
+- **Zoom Indicator** - "Zoom: 150%" badge displayed on camera tile while zoomed
+- **Reset Zoom** - Double-click or ESC to reset back to fit-to-view
+- **Single Zoom Policy** - Only one camera tile can be zoomed at a time in the grid layout; zooming another resets the previous
+- **Motion Overlay Pause** - Bounding box overlays are hidden while zoomed to avoid visual clutter, restored on reset
+- **GPU-Accelerated** - Zoom operates at the DirectComposition transform level for smooth, low-latency rendering
+
 ### 📷 Camera Management
 - **Context Menu** - Edit, Delete, Full Screen, Swap Left/Right, Snapshot, Reconnect, Start/Stop Recording
 - **Drag-and-Drop** - Reorder cameras by dragging tiles within the grid

@@ -23,7 +23,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <userControls:CameraTileControl Margin="1" />
+                    <userControls:CameraTileBadge Margin="1" />
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

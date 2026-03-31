@@ -571,6 +571,26 @@ public partial class CameraGrid
         FullScreenRequested?.Invoke(this, e);
     }
 
+    private void OnZoomStateChanged(
+        object? sender,
+        EventArgs e)
+    {
+        // Only one tile can be zoomed at a time — reset all others
+        if (sender is not CameraTile zoomedTile || !zoomedTile.IsZoomed || CameraTiles is null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < CameraTiles.Count; i++)
+        {
+            var tile = GetCameraTileAt(i);
+            if (tile is not null && tile != zoomedTile && tile.IsZoomed)
+            {
+                tile.ResetZoom();
+            }
+        }
+    }
+
     private void OnSwapLeftRequested(
         object? sender,
         CameraConfiguration e)
