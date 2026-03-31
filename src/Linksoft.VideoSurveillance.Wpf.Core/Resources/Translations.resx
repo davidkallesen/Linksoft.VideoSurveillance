@@ -168,6 +168,9 @@
   <data name="Reconnect" xml:space="preserve">
     <value>Reconnect</value>
   </data>
+  <data name="ResetZoom" xml:space="preserve">
+    <value>Reset Zoom</value>
+  </data>
   <data name="SaveSnapshot" xml:space="preserve">
     <value>Save Snapshot</value>
   </data>
@@ -187,7 +190,7 @@
     <value>Rename Layout</value>
   </data>
   <data name="EnterNewLayoutName" xml:space="preserve">
-    <value>Enter a new name for the layout:</value>
+    <value>Enter a new name for the layout</value>
   </data>
   <data name="RenameLayoutCancelled" xml:space="preserve">
     <value>Rename layout cancelled</value>
@@ -268,7 +271,7 @@
     <value>Are you sure you want to delete layout '{0}'?</value>
   </data>
   <data name="EnterLayoutName" xml:space="preserve">
-    <value>Enter a name for the new layout:</value>
+    <value>Enter a name for the new layout</value>
   </data>
   <data name="IpAddressRequired" xml:space="preserve">
     <value>IP Address is required</value>
@@ -559,10 +562,10 @@
     <value>View</value>
   </data>
   <data name="CamerasLabel" xml:space="preserve">
-    <value>Cameras:</value>
+    <value>Cameras</value>
   </data>
   <data name="ConnectedLabel" xml:space="preserve">
-    <value>Connected:</value>
+    <value>Connected</value>
   </data>
   <data name="ApplicationTitle" xml:space="preserve">
     <value>Linksoft Camera Wall</value>

@@ -19,8 +19,11 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
 
         Manager = cameraWallManager;
         Manager.PropertyChanged += OnManagerPropertyChanged;
+        Manager.Layouts.CollectionChanged += OnLayoutsCollectionChanged;
 
         IsRibbonMinimized = settingsService.General.StartRibbonCollapsed;
+        RebuildLayoutItems();
+        SubscribeToLayoutPropertyChanges();
     }
 
     /// <summary>
@@ -47,6 +50,36 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     {
         get => Manager.CurrentLayout;
         set => Manager.CurrentLayout = value;
+    }
+
+    /// <summary>
+    /// Gets the layout items as a dictionary for LabelComboBox binding.
+    /// Key = layout ID (string), Value = layout name.
+    /// </summary>
+    [ObservableProperty]
+    private Dictionary<string, string> layoutItems = [];
+
+    /// <summary>
+    /// Gets or sets the selected layout ID for LabelComboBox binding.
+    /// Auto-syncs with <see cref="CurrentLayout"/>.
+    /// </summary>
+    public string? SelectedLayoutId
+    {
+        get => Manager.CurrentLayout?.Id.ToString();
+        set
+        {
+            if (value is null ||
+                !Guid.TryParse(value, out var id))
+            {
+                return;
+            }
+
+            var layout = Manager.Layouts.FirstOrDefault(l => l.Id == id);
+            if (layout is not null)
+            {
+                Manager.CurrentLayout = layout;
+            }
+        }
     }
 
     /// <summary>
@@ -130,6 +163,60 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     public void DeleteCamera(CameraConfiguration camera)
         => Manager.DeleteCamera(camera);
 
+    private void OnLayoutsCollectionChanged(
+        object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        // Unsubscribe from removed layouts
+        if (e.OldItems is not null)
+        {
+            foreach (CameraLayout layout in e.OldItems)
+            {
+                layout.PropertyChanged -= OnLayoutPropertyChanged;
+            }
+        }
+
+        // Subscribe to new layouts
+        if (e.NewItems is not null)
+        {
+            foreach (CameraLayout layout in e.NewItems)
+            {
+                layout.PropertyChanged += OnLayoutPropertyChanged;
+            }
+        }
+
+        RebuildLayoutItems();
+    }
+
+    private void OnLayoutPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(CameraLayout.Name))
+        {
+            RebuildLayoutItems();
+        }
+    }
+
+    private void SubscribeToLayoutPropertyChanges()
+    {
+        foreach (var layout in Manager.Layouts)
+        {
+            layout.PropertyChanged += OnLayoutPropertyChanged;
+        }
+    }
+
+    private void RebuildLayoutItems()
+    {
+        LayoutItems = Manager.Layouts.ToDictionary(
+            l => l.Id.ToString(),
+            l => l.Name,
+            StringComparer.Ordinal);
+
+        // Re-notify SelectedLayoutId so the ComboBox re-applies the display text
+        OnPropertyChanged(nameof(SelectedLayoutId));
+    }
+
     private void OnManagerPropertyChanged(
         object? sender,
         PropertyChangedEventArgs e)
@@ -145,6 +232,12 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             or nameof(UpdateVersion))
         {
             OnPropertyChanged(e.PropertyName);
+        }
+
+        // Sync SelectedLayoutId when CurrentLayout changes externally
+        if (e.PropertyName is nameof(CurrentLayout))
+        {
+            OnPropertyChanged(nameof(SelectedLayoutId));
         }
 
         // Handle CanExecute invalidation for commands

@@ -819,6 +819,8 @@ public partial class CameraTile : IDisposable
 
         contextMenu.Items.Add(new MenuItem { Header = Translations.Reconnect, Command = ReconnectCommand });
         contextMenu.Items.Add(new Separator());
+        contextMenu.Items.Add(new MenuItem { Header = Translations.ResetZoom, Command = ZoomResetCommand });
+        contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(new MenuItem { Header = Translations.EditCamera, Command = EditCameraCommand });
 
         contextMenu.IsOpen = true;
@@ -2651,6 +2653,13 @@ public partial class CameraTile : IDisposable
     /// Gets a value indicating whether this tile is zoomed beyond the default fit view.
     /// </summary>
     public bool IsZoomed => currentZoom > 1.01f;
+
+    [RelayCommand(CanExecute = nameof(CanResetZoom))]
+    private void ZoomReset()
+        => ResetZoom();
+
+    private bool CanResetZoom()
+        => IsZoomed;
 
     /// <summary>
     /// Resets the zoom level back to fit-to-view.
