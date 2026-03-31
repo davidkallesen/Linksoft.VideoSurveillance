@@ -491,6 +491,24 @@ public partial class FullScreenCameraWindow : IDisposable
     {
         // Create context menu dynamically to avoid binding conflicts
         var contextMenu = new ContextMenu();
+
+        var resetZoomItem = new MenuItem
+        {
+            Header = Translations.ResetZoom,
+            IsEnabled = currentZoom > 1.01f,
+        };
+
+        resetZoomItem.Click += (_, _) =>
+        {
+            currentZoom = 1.0f;
+            currentPanX = 0f;
+            currentPanY = 0f;
+            VideoPlayer.ResetZoom();
+            UpdateMotionOverlayForZoom();
+        };
+
+        contextMenu.Items.Add(resetZoomItem);
+        contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(new MenuItem
         {
             Header = Translations.Close,

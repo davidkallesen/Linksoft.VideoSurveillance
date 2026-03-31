@@ -475,7 +475,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cameras:.
+        ///   Looks up a localized string similar to Cameras.
         /// </summary>
         public static string CamerasLabel {
             get {
@@ -637,7 +637,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Connected:.
+        ///   Looks up a localized string similar to Connected.
         /// </summary>
         public static string ConnectedLabel {
             get {
@@ -1123,7 +1123,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter a name for the new layout:.
+        ///   Looks up a localized string similar to Enter a name for the new layout.
         /// </summary>
         public static string EnterLayoutName {
             get {
@@ -1132,7 +1132,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter a new name for the layout:.
+        ///   Looks up a localized string similar to Enter a new name for the layout.
         /// </summary>
         public static string EnterNewLayoutName {
             get {
@@ -2415,6 +2415,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         public static string RenameLayoutCancelled {
             get {
                 return ResourceManager.GetString("RenameLayoutCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reset Zoom.
+        /// </summary>
+        public static string ResetZoom {
+            get {
+                return ResourceManager.GetString("ResetZoom", resourceCulture);
             }
         }
         

@@ -85,15 +85,15 @@
                 <!--  Layouts Tab  -->
                 <fluent:RibbonTabItem Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations, Key=Layouts}">
                     <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations, Key=CurrentLayoutGroup}">
-                        <fluent:ComboBox
-                            Width="150"
-                            Margin="5,28"
-                            DisplayMemberPath="Name"
-                            Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
-                                                         Key=Layout}"
-                            IsEditable="False"
-                            ItemsSource="{Binding Path=Layouts}"
-                            SelectedItem="{Binding Path=CurrentLayout}" />
+                        <atcTheming:LabelComboBox
+                            Width="250"
+                            Margin="5,25,5,25"
+                            HideAreas="All"
+                            Items="{Binding Path=LayoutItems}"
+                            LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                            Key=Layout}"
+                            LabelWidthNumber="50"
+                            SelectedKey="{Binding Path=SelectedLayoutId}" />
                     </fluent:RibbonGroupBox>
 
                     <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations, Key=Actions}">

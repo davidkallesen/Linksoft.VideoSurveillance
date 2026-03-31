@@ -168,6 +168,9 @@
   <data name="Reconnect" xml:space="preserve">
     <value>Genopret forbindelse</value>
   </data>
+  <data name="ResetZoom" xml:space="preserve">
+    <value>Nulstil zoom</value>
+  </data>
   <data name="SaveSnapshot" xml:space="preserve">
     <value>Gem skærmbillede</value>
   </data>
@@ -187,7 +190,7 @@
     <value>Omdøb layout</value>
   </data>
   <data name="EnterNewLayoutName" xml:space="preserve">
-    <value>Indtast et nyt navn til layoutet:</value>
+    <value>Indtast et nyt navn til layoutet</value>
   </data>
   <data name="RenameLayoutCancelled" xml:space="preserve">
     <value>Omdøb layout annulleret</value>
@@ -268,7 +271,7 @@
     <value>Er du sikker på, at du vil slette layoutet '{0}'?</value>
   </data>
   <data name="EnterLayoutName" xml:space="preserve">
-    <value>Indtast et navn til det nye layout:</value>
+    <value>Indtast et navn til det nye layout</value>
   </data>
   <data name="IpAddressRequired" xml:space="preserve">
     <value>IP-adresse er påkrævet</value>
@@ -559,10 +562,10 @@
     <value>Visning</value>
   </data>
   <data name="CamerasLabel" xml:space="preserve">
-    <value>Kameraer:</value>
+    <value>Kameraer</value>
   </data>
   <data name="ConnectedLabel" xml:space="preserve">
-    <value>Forbundet:</value>
+    <value>Forbundet</value>
   </data>
   <data name="ApplicationTitle" xml:space="preserve">
     <value>Linksoft Camera Wall</value>
