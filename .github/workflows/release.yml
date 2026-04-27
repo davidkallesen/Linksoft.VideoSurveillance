@@ -112,7 +112,7 @@ jobs:
           echo "version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Publish Application
-        run: dotnet publish src/Linksoft.CameraWall.Wpf.App/Linksoft.CameraWall.Wpf.App.csproj --configuration ${{ env.CONFIGURATION }} --output ./publish
+        run: dotnet publish src/Linksoft.CameraWall.Wpf.App/Linksoft.CameraWall.Wpf.App.csproj --configuration ${{ env.CONFIGURATION }} --output ./publish -p:Version=${{ steps.version.outputs.version }}
 
       - name: Download FFmpeg
         run: |
@@ -161,7 +161,7 @@ jobs:
           echo "version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Publish Application
-        run: dotnet publish src/Linksoft.VideoSurveillance.Wpf.App/Linksoft.VideoSurveillance.Wpf.App.csproj --configuration ${{ env.CONFIGURATION }} --output ./publish-vs
+        run: dotnet publish src/Linksoft.VideoSurveillance.Wpf.App/Linksoft.VideoSurveillance.Wpf.App.csproj --configuration ${{ env.CONFIGURATION }} --output ./publish-vs -p:Version=${{ steps.version.outputs.version }}
 
       - name: Download FFmpeg
         run: |
