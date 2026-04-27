@@ -78,10 +78,46 @@ internal static class FFmpegLoader
         var buffer = stackalloc byte[LogBufferSize];
         var printPrefix = 1;
         av_log_format_line2(p0, level, format, vl, buffer, LogBufferSize, &printPrefix);
-        var line = BytePtrToStringUtf8(buffer);
+        var trimmed = BytePtrToStringUtf8(buffer).Trim();
 
-        Trace.TraceInformation("FFmpeg|{0,-7}|{1}", level, line.Trim());
+        if (IsBenignNoise(trimmed))
+        {
+            return;
+        }
+
+        // Map FFmpeg severity to the matching .NET Trace channel so VS Output
+        // (and external trace listeners) filter by level correctly.
+        if (level <= FFmpegLogLevel.Error)
+        {
+            Trace.TraceError("FFmpeg|{0,-7}|{1}", level, trimmed);
+        }
+        else if (level <= FFmpegLogLevel.Warn)
+        {
+            Trace.TraceWarning("FFmpeg|{0,-7}|{1}", level, trimmed);
+        }
+        else
+        {
+            Trace.TraceInformation("FFmpeg|{0,-7}|{1}", level, trimmed);
+        }
     };
+
+    /// <summary>
+    /// Returns true for FFmpeg messages that are spammy but safe to ignore —
+    /// typically camera-side metadata that the bitstream parser flags but
+    /// playback is unaffected. Filtered here to avoid drowning the output.
+    /// </summary>
+    private static bool IsBenignNoise(string message)
+    {
+        // Many IP cameras (Tapo, Hikvision, Dahua) embed vendor SEI messages
+        // that FFmpeg considers malformed. Logged per-frame at AV_LOG_ERROR.
+        if (message.Contains("SEI type", StringComparison.Ordinal)
+            && message.Contains("truncated at", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     private static string ResolvePath(string? path)
     {
