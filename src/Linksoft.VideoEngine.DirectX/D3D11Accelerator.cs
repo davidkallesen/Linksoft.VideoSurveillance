@@ -64,9 +64,13 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
 #pragma warning disable CA2000
         var nv12Texture = new ID3D11Texture2D(texturePtr);
 #pragma warning restore CA2000
-        var desc = nv12Texture.Description;
-        int width = (int)desc.Width;
-        int height = (int)desc.Height;
+
+        // Use the frame's display dimensions, not the texture's allocated size.
+        // HEVC decoders pad the texture height up to the next CTU multiple
+        // (e.g., 1280×720 → 1280×768); those padding rows hold uninitialized
+        // data that renders as a green strip on some GPUs (notably Intel UHD).
+        int width = frame->width;
+        int height = frame->height;
 
         try
         {
