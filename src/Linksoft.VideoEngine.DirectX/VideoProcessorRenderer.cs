@@ -70,6 +70,14 @@ internal sealed class VideoProcessorRenderer : IDisposable
 
         using (inputView)
         {
+            // Constrain the source rect to the visible image area. Without this,
+            // the processor samples the full allocated texture (which for HEVC
+            // includes decoder padding rows beyond the display height), and the
+            // garbage padding gets scaled across the output as a coloured strip.
+            var sourceRect = new RawRect(0, 0, width, height);
+            videoContext.VideoProcessorSetStreamSourceRect(processor!, 0, true, sourceRect);
+            videoContext.VideoProcessorSetStreamDestRect(processor!, 0, true, sourceRect);
+
             VideoProcessorStream[] streams =
             [
                 new VideoProcessorStream

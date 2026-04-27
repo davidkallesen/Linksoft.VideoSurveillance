@@ -3,6 +3,7 @@ global using System.Runtime.InteropServices;
 global using Flyleaf.FFmpeg;
 global using Linksoft.VideoEngine.FFmpeg;
 global using Microsoft.Extensions.Logging;
+global using Vortice;
 global using Vortice.Direct3D;
 global using Vortice.Direct3D11;
 global using Vortice.DirectComposition;
