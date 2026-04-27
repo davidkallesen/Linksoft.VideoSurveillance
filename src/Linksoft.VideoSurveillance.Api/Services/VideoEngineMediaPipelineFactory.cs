@@ -20,7 +20,7 @@ public sealed class VideoEngineMediaPipelineFactory : IMediaPipelineFactory
         ArgumentNullException.ThrowIfNull(camera);
 
         var player = videoPlayerFactory.Create();
-        var pipeline = new VideoEngineMediaPipeline(player);
+        var pipeline = new VideoEngineMediaPipeline(player, camera.Display.DisplayName);
 
         pipeline.Open(camera.BuildUri(), camera.Stream);
 

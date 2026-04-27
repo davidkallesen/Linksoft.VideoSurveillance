@@ -92,6 +92,7 @@ internal sealed unsafe partial class Demuxer : IDisposable
             if (ret == AvErrorExit)
             {
                 LogAvformatOpenInputAborted(
+                    options.Source,
                     abortRequested,
                     cancellationToken.IsCancellationRequested,
                     timeoutWatch.Elapsed.TotalSeconds,

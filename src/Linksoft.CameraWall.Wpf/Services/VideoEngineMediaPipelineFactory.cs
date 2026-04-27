@@ -28,6 +28,6 @@ public class VideoEngineMediaPipelineFactory : IMediaPipelineFactory
         ArgumentNullException.ThrowIfNull(camera);
 
         var player = videoPlayerFactory.Create();
-        return new VideoEngineMediaPipeline(player);
+        return new VideoEngineMediaPipeline(player, camera.Display.DisplayName);
     }
 }

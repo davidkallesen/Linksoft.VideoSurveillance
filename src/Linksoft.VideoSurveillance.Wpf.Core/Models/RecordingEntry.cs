@@ -8,12 +8,12 @@ public class RecordingEntry
     /// <summary>
     /// Gets the full file path of the recording.
     /// </summary>
-    required public string FilePath { get; init; }
+    public required string FilePath { get; init; }
 
     /// <summary>
     /// Gets the name of the camera that made the recording.
     /// </summary>
-    required public string CameraName { get; init; }
+    public required string CameraName { get; init; }
 
     /// <summary>
     /// Gets the file name without path.
