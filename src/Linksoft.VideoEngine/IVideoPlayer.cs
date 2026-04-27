@@ -70,6 +70,15 @@ public interface IVideoPlayer : IDisposable
     Task<byte[]?> CaptureFrameAsync(CancellationToken ct = default);
 
     /// <summary>
+    /// Sets the clockwise rotation applied to the live video, snapshots, and
+    /// (via container metadata) any active or future recording.
+    /// Safe to call before <see cref="Open"/> or while playing; the next
+    /// processed frame and any subsequent <see cref="StartRecording"/> reflect
+    /// the new value.
+    /// </summary>
+    void SetRotation(VideoRotation rotation);
+
+    /// <summary>
     /// Occurs when the player state changes.
     /// </summary>
     event EventHandler<PlayerStateChangedEventArgs>? StateChanged;

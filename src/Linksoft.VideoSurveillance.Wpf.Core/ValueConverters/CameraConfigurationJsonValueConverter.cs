@@ -183,6 +183,12 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
             config.Display.OverlayPosition = positionEnum;
         }
 
+        if (TryGetStringProperty(root, "rotation", "Rotation", out var rotation) &&
+            Enum.TryParse<CameraRotation>(rotation, ignoreCase: true, out var rotationEnum))
+        {
+            config.Display.Rotation = rotationEnum;
+        }
+
         // Stream properties (flat)
         if (TryGetBoolProperty(root, "useLowLatencyMode", "UseLowLatencyMode", out var useLowLatencyMode))
         {
@@ -264,6 +270,12 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
             Enum.TryParse<OverlayPosition>(overlayPosition, ignoreCase: true, out var positionEnum))
         {
             settings.OverlayPosition = positionEnum;
+        }
+
+        if (TryGetStringProperty(element, "rotation", "Rotation", out var rotation) &&
+            Enum.TryParse<CameraRotation>(rotation, ignoreCase: true, out var rotationEnum))
+        {
+            settings.Rotation = rotationEnum;
         }
     }
 
@@ -805,6 +817,7 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
         }
 
         writer.WriteString("overlayPosition", settings.OverlayPosition.ToString());
+        writer.WriteString("rotation", settings.Rotation.ToString());
         writer.WriteEndObject();
     }
 

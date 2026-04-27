@@ -30,6 +30,7 @@
                         AutoConnectOnLoad="{Binding Path=AutoConnectOnLoad, RelativeSource={RelativeSource AncestorType=local:CameraGrid}}"
                         Camera="{Binding}"
                         CameraDropped="OnCameraDropped"
+                        CameraConfigurationChanged="OnCameraConfigurationChanged"
                         ConnectionStateChanged="OnConnectionStateChanged"
                         DeleteCameraRequested="OnDeleteCameraRequested"
                         EditCameraRequested="OnEditCameraRequested"

@@ -69,6 +69,13 @@ public interface ICameraWallManager : INotifyPropertyChanged
     void DeleteCamera(CameraConfiguration camera);
 
     /// <summary>
+    /// Persists an in-place mutation of a camera configuration (e.g., rotation
+    /// changed via tile context menu) without re-opening the edit dialog.
+    /// </summary>
+    /// <param name="camera">The mutated camera configuration.</param>
+    void SaveCameraConfiguration(CameraConfiguration camera);
+
+    /// <summary>
     /// Shows a camera in full screen.
     /// </summary>
     /// <param name="camera">The camera to show.</param>

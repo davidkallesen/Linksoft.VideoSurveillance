@@ -136,6 +136,17 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
         }
     }
 
+    public void SetRotation(VideoRotation rotation)
+    {
+        // Take frameLock so a concurrent OnFrameDecoded sees a coherent view of
+        // (rotation + cached pipeline). The renderer's EnsurePipeline reallocates
+        // the output texture if the rotation flips dimensions.
+        lock (frameLock)
+        {
+            renderer.SetRotation(rotation);
+        }
+    }
+
     public void Dispose()
     {
         if (disposed)

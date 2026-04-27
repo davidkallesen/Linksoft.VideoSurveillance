@@ -26,5 +26,11 @@
             LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
                                             Key=OverlayPosition}"
             SelectedKey="{Binding Path=SelectedOverlayPositionKey, Mode=TwoWay}" />
+
+        <atc:LabelComboBox
+            Items="{Binding Path=RotationItems}"
+            LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                            Key=Rotation}"
+            SelectedKey="{Binding Path=SelectedRotationKey, Mode=TwoWay}" />
     </StackPanel>
 </UserControl>

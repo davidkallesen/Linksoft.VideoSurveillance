@@ -171,6 +171,9 @@
   <data name="ResetZoom" xml:space="preserve">
     <value>Reset Zoom</value>
   </data>
+  <data name="Rotate" xml:space="preserve">
+    <value>Rotate</value>
+  </data>
   <data name="SaveSnapshot" xml:space="preserve">
     <value>Save Snapshot</value>
   </data>
@@ -323,6 +326,9 @@
   </data>
   <data name="OverlayPosition" xml:space="preserve">
     <value>Overlay Position</value>
+  </data>
+  <data name="Rotation" xml:space="preserve">
+    <value>Rotation</value>
   </data>
   <data name="TestResult" xml:space="preserve">
     <value>Test Result</value>
@@ -1019,6 +1025,18 @@
   </data>
   <data name="OverlayPositionBottomRight" xml:space="preserve">
     <value>Bottom Right</value>
+  </data>
+  <data name="RotationNone" xml:space="preserve">
+    <value>0° (None)</value>
+  </data>
+  <data name="RotationRotate90" xml:space="preserve">
+    <value>90°</value>
+  </data>
+  <data name="RotationRotate180" xml:space="preserve">
+    <value>180°</value>
+  </data>
+  <data name="RotationRotate270" xml:space="preserve">
+    <value>270°</value>
   </data>
   <data name="MotionSensitivityLow" xml:space="preserve">
     <value>Low (10)</value>

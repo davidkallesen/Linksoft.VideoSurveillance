@@ -12,6 +12,7 @@ A professional video surveillance platform for live monitoring of multiple RTSP/
 - **Dynamic Grid Layout** - Auto-calculates optimal grid based on camera count (optimized for 4:3 aspect ratio)
 - **Camera Tile Overlay** - Configurable overlay showing title, description, timestamp, and connection status
 - **Overlay Configuration** - Choose corner position (TopLeft, TopRight, BottomLeft, BottomRight) and opacity (0-100%)
+- **Stream Rotation** - Per-camera 0°/90°/180°/270° rotation applied at the GPU video processor stage; live display, snapshots, and recordings are all rotated. Recordings carry an MP4 `rotate` metadata tag so any standard player honours it.
 - **Full Screen Mode** - Double-click or use context menu to view any camera in full screen (Escape to exit)
 - **Connection State Indicators** - Visual indicators for Connected, Connecting, and Error states
 
@@ -26,7 +27,7 @@ A professional video surveillance platform for live monitoring of multiple RTSP/
 - **GPU-Accelerated** - Zoom operates at the DirectComposition transform level for smooth, low-latency rendering
 
 ### 📷 Camera Management
-- **Context Menu** - Edit, Delete, Full Screen, Swap Left/Right, Snapshot, Reconnect, Start/Stop Recording
+- **Context Menu** - Edit, Delete, Full Screen, Swap Left/Right, Snapshot, Reconnect, Start/Stop Recording, Reset Zoom, Rotate (0°/90°/180°/270°)
 - **Drag-and-Drop** - Reorder cameras by dragging tiles within the grid
 - **Network Scanner** - Auto-discover cameras on the local network (integrated in Add Camera dialog)
 - **Test Connection** - Validate camera connectivity before saving

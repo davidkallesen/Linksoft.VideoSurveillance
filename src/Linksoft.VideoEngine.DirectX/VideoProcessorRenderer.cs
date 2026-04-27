@@ -3,6 +3,8 @@ namespace Linksoft.VideoEngine.DirectX;
 /// <summary>
 /// Converts NV12 decoded textures to BGRA using the D3D11 Video Processor,
 /// which runs on the GPU's dedicated video processing hardware.
+/// Optionally applies a clockwise rotation (0/90/180/270°) at this stage so
+/// display, snapshots, and downstream consumers all receive rotated frames.
 /// </summary>
 internal sealed class VideoProcessorRenderer : IDisposable
 {
@@ -15,8 +17,10 @@ internal sealed class VideoProcessorRenderer : IDisposable
     private ID3D11Texture2D? outputTexture;
     private ID3D11VideoProcessorOutputView? outputView;
 
-    private int cachedWidth;
-    private int cachedHeight;
+    private int cachedInputWidth;
+    private int cachedInputHeight;
+    private VideoRotation cachedRotation = VideoRotation.None;
+    private VideoRotation rotation = VideoRotation.None;
     private bool disposed;
 
     public VideoProcessorRenderer(D3D11Device d3d11Device)
@@ -32,14 +36,28 @@ internal sealed class VideoProcessorRenderer : IDisposable
     public ID3D11Texture2D? OutputTexture => outputTexture;
 
     /// <summary>
-    /// Gets the current output width.
+    /// Gets the current output width in BGRA texture pixels.
+    /// For 90°/270° rotations this is the input height, not the input width.
     /// </summary>
-    public int OutputWidth => cachedWidth;
+    public int OutputWidth
+        => IsQuarterTurn(cachedRotation) ? cachedInputHeight : cachedInputWidth;
 
     /// <summary>
-    /// Gets the current output height.
+    /// Gets the current output height in BGRA texture pixels.
+    /// For 90°/270° rotations this is the input width, not the input height.
     /// </summary>
-    public int OutputHeight => cachedHeight;
+    public int OutputHeight
+        => IsQuarterTurn(cachedRotation) ? cachedInputWidth : cachedInputHeight;
+
+    /// <summary>
+    /// Sets the clockwise rotation applied to subsequent frames. Takes effect
+    /// on the next <see cref="ProcessFrame"/> call; the pipeline (output texture
+    /// + view) is rebuilt automatically when the rotation flips dimensions.
+    /// </summary>
+    public void SetRotation(VideoRotation rotation)
+    {
+        this.rotation = rotation;
+    }
 
     /// <summary>
     /// Processes a decoded NV12 texture through the Video Processor, producing a BGRA output.
@@ -70,13 +88,13 @@ internal sealed class VideoProcessorRenderer : IDisposable
 
         using (inputView)
         {
-            // Constrain the source rect to the visible image area. Without this,
-            // the processor samples the full allocated texture (which for HEVC
-            // includes decoder padding rows beyond the display height), and the
-            // garbage padding gets scaled across the output as a coloured strip.
+            // Source rect = visible input area (excludes decoder padding rows for HEVC).
+            // Dest rect = output texture extents (swapped for 90/270 rotation).
             var sourceRect = new RawRect(0, 0, width, height);
+            var destRect = new RawRect(0, 0, OutputWidth, OutputHeight);
             videoContext.VideoProcessorSetStreamSourceRect(processor!, 0, true, sourceRect);
-            videoContext.VideoProcessorSetStreamDestRect(processor!, 0, true, sourceRect);
+            videoContext.VideoProcessorSetStreamDestRect(processor!, 0, true, destRect);
+            videoContext.VideoProcessorSetStreamRotation(processor!, 0, true, MapRotation(cachedRotation));
 
             VideoProcessorStream[] streams =
             [
@@ -109,24 +127,48 @@ internal sealed class VideoProcessorRenderer : IDisposable
         videoDevice.Dispose();
     }
 
+    private static bool IsQuarterTurn(VideoRotation r)
+        => r is VideoRotation.Rotate90 or VideoRotation.Rotate270;
+
+    private static VideoProcessorRotation MapRotation(VideoRotation r)
+        => r switch
+        {
+            VideoRotation.Rotate90 => VideoProcessorRotation.Rotation90,
+            VideoRotation.Rotate180 => VideoProcessorRotation.Rotation180,
+            VideoRotation.Rotate270 => VideoProcessorRotation.Rotation270,
+            _ => VideoProcessorRotation.Identity,
+        };
+
     private void EnsurePipeline(
         int width,
         int height)
     {
-        if (enumerator is not null && cachedWidth == width && cachedHeight == height)
+        // Pipeline cache key includes rotation so a 0°→90° change reallocates the
+        // output texture at the swapped dimensions.
+        if (enumerator is not null
+            && cachedInputWidth == width
+            && cachedInputHeight == height
+            && cachedRotation == rotation)
         {
             return;
         }
 
         ReleasePipeline();
 
+        cachedInputWidth = width;
+        cachedInputHeight = height;
+        cachedRotation = rotation;
+
+        var outputWidth = OutputWidth;
+        var outputHeight = OutputHeight;
+
         var contentDesc = new VideoProcessorContentDescription
         {
             InputFrameFormat = VideoFrameFormat.Progressive,
             InputWidth = (uint)width,
             InputHeight = (uint)height,
-            OutputWidth = (uint)width,
-            OutputHeight = (uint)height,
+            OutputWidth = (uint)outputWidth,
+            OutputHeight = (uint)outputHeight,
             InputFrameRate = new Rational(
                 30,
                 1),
@@ -147,8 +189,8 @@ internal sealed class VideoProcessorRenderer : IDisposable
 
         var outputDesc = new Texture2DDescription
         {
-            Width = (uint)width,
-            Height = (uint)height,
+            Width = (uint)outputWidth,
+            Height = (uint)outputHeight,
             MipLevels = 1,
             ArraySize = 1,
             Format = Format.B8G8R8A8_UNorm,
@@ -169,9 +211,6 @@ internal sealed class VideoProcessorRenderer : IDisposable
             enumerator,
             outputViewDesc,
             out outputView).CheckError();
-
-        cachedWidth = width;
-        cachedHeight = height;
     }
 
     private void ReleasePipeline()
@@ -188,7 +227,8 @@ internal sealed class VideoProcessorRenderer : IDisposable
         enumerator?.Dispose();
         enumerator = null;
 
-        cachedWidth = 0;
-        cachedHeight = 0;
+        cachedInputWidth = 0;
+        cachedInputHeight = 0;
+        cachedRotation = VideoRotation.None;
     }
 }

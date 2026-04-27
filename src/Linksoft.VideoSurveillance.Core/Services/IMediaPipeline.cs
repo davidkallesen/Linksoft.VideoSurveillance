@@ -39,6 +39,12 @@ public interface IMediaPipeline : IDisposable
     Task<byte[]?> CaptureFrameAsync(CancellationToken ct = default);
 
     /// <summary>
+    /// Sets the clockwise rotation applied to live display, snapshots, and
+    /// (via container metadata) any active or future recording.
+    /// </summary>
+    void SetRotation(CameraRotation rotation);
+
+    /// <summary>
     /// Gets the current frames per second.
     /// </summary>
     double CurrentFps { get; }

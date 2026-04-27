@@ -263,6 +263,20 @@ In addition to the override system, each camera has its own direct configuration
 | `DisplayName` | string | *(required)* | Human-readable camera name (max 256 chars) |
 | `Description` | string | `null` | Optional camera description |
 | `OverlayPosition` | enum | `TopLeft` | Overlay position for this camera |
+| `Rotation` | enum | `None` | Clockwise rotation applied to the stream — see [Rotation Options](#rotation-options) |
+
+#### Rotation Options
+
+Per-camera setting only — there is no app-level default and no override entry.
+Applied at the GPU video processor stage, so the live display, snapshots, and
+recordings are all rotated. For recordings the rotation is written as an MP4
+`rotate` metadata tag (the encoded H.264/HEVC bitstream is unchanged), which
+VLC, Media Player, browsers, and ffplay all honour at playback.
+
+- `None` → 0° (default)
+- `Rotate90` → 90° clockwise
+- `Rotate180` → 180°
+- `Rotate270` → 270° clockwise (= 90° counter-clockwise)
 
 ### Stream Settings (per camera)
 

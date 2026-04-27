@@ -53,6 +53,20 @@ public static class DropDownItemsFactory
         };
 
     /// <summary>
+    /// Gets the camera rotation options. Keys match
+    /// <see cref="CameraRotation"/> member names so they round-trip via
+    /// <c>Enum.Parse</c> in <c>LabelComboBox.SelectedKey</c> bindings.
+    /// </summary>
+    public static IDictionary<string, string> RotationItems
+        => new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["None"] = Translations.RotationNone,
+            ["Rotate90"] = Translations.RotationRotate90,
+            ["Rotate180"] = Translations.RotationRotate180,
+            ["Rotate270"] = Translations.RotationRotate270,
+        };
+
+    /// <summary>
     /// Gets the overlay opacity options for dropdowns.
     /// Keys are decimal values as strings, values are percentage display text.
     /// </summary>

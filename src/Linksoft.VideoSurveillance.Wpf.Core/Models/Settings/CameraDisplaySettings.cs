@@ -83,6 +83,24 @@ public partial class CameraDisplaySettings : ObservableObject
     }
 
     /// <summary>
+    /// Gets or sets the clockwise rotation applied to this camera's stream.
+    /// </summary>
+    public CameraRotation Rotation
+    {
+        get => Core.Rotation;
+        set
+        {
+            if (Core.Rotation == value)
+            {
+                return;
+            }
+
+            Core.Rotation = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
     /// Creates a deep copy of this instance.
     /// </summary>
     public CameraDisplaySettings Clone()
@@ -98,6 +116,7 @@ public partial class CameraDisplaySettings : ObservableObject
         DisplayName = source.DisplayName;
         Description = source.Description;
         OverlayPosition = source.OverlayPosition;
+        Rotation = source.Rotation;
     }
 
     /// <summary>

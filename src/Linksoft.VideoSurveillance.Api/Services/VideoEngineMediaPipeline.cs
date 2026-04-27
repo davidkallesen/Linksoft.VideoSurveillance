@@ -82,6 +82,19 @@ public sealed class VideoEngineMediaPipeline : IMediaPipeline
         => player.CaptureFrameAsync(ct);
 
     /// <inheritdoc />
+    public void SetRotation(CameraRotation rotation)
+        => player.SetRotation(MapRotation(rotation));
+
+    private static VideoRotation MapRotation(CameraRotation rotation)
+        => rotation switch
+        {
+            CameraRotation.Rotate90 => VideoRotation.Rotate90,
+            CameraRotation.Rotate180 => VideoRotation.Rotate180,
+            CameraRotation.Rotate270 => VideoRotation.Rotate270,
+            _ => VideoRotation.None,
+        };
+
+    /// <inheritdoc />
     public void Dispose()
     {
         if (disposed)
