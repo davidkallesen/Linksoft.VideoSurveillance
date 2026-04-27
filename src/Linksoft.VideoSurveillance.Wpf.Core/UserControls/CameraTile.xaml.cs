@@ -1269,6 +1269,7 @@ public partial class CameraTile : IDisposable
     private StreamOptions BuildStreamOptions(CameraConfiguration camera)
         => new()
         {
+            Source = camera.Display.DisplayName,
             UseLowLatencyMode = camera.Stream.UseLowLatencyMode,
             MaxLatencyMs = camera.Stream.MaxLatencyMs,
             RtspTransport = camera.Stream.RtspTransport,

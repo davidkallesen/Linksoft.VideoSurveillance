@@ -219,15 +219,16 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
     {
         Demuxer? localDemuxer = null;
         VideoDecoder? localDecoder = null;
+        var source = options.Source;
 
         try
         {
             localDemuxer = new Demuxer(logger);
             localDecoder = new VideoDecoder();
 
-            LogOpeningStream(streamUri.AbsoluteUri);
+            LogOpeningStream(source, streamUri.AbsoluteUri);
             localDemuxer.Open(streamUri, options, ct);
-            LogStreamDemuxerOpened();
+            LogStreamDemuxerOpened(source);
 
             var threadCount = VideoEngineBootstrap.Config?.DecoderThreads ?? 0;
             var useHwAccel = options.HardwareAcceleration
@@ -237,7 +238,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
                 : null;
 
             localDecoder.Open(localDemuxer.VideoCodecParameters, threadCount, hwDeviceCtx);
-            LogDecoderOpened(localDecoder.IsHardwareAccelerated);
+            LogDecoderOpened(source, localDecoder.IsHardwareAccelerated);
 
             demuxer = localDemuxer;
             decoder = localDecoder;
@@ -253,17 +254,17 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
                 IsHardwareAccelerated = localDecoder.IsHardwareAccelerated,
             };
 
-            LogStreamOpened(StreamInfo, streamUri.AbsoluteUri);
+            LogStreamOpened(source, StreamInfo, streamUri.AbsoluteUri);
 
             SetState(PlayerState.Playing);
 
-            RunReadLoop();
+            RunReadLoop(source);
         }
         catch (Exception ex)
         {
             if (!stopRequested)
             {
-                LogDemuxLoopFailed(ex);
+                LogDemuxLoopFailed(source, ex);
                 SetState(PlayerState.Error, ex.Message);
             }
         }
@@ -304,7 +305,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
         }
     }
 
-    private void RunReadLoop()
+    private void RunReadLoop(string source)
     {
         int consecutiveErrors = 0;
         fpsWatch.Restart();
@@ -316,7 +317,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
 
             if (ret == AVERROR_EOF)
             {
-                LogEndOfStreamReached();
+                LogEndOfStreamReached(source);
                 break;
             }
 
@@ -325,7 +326,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
                 consecutiveErrors++;
                 if (consecutiveErrors > MaxConsecutiveReadErrors)
                 {
-                    LogExceededConsecutiveReadErrors(MaxConsecutiveReadErrors);
+                    LogExceededConsecutiveReadErrors(source, MaxConsecutiveReadErrors);
                     break;
                 }
 

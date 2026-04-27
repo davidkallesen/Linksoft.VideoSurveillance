@@ -184,6 +184,7 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         var uri = camera.BuildUri();
         var options = new StreamOptions
         {
+            Source = camera.Display.DisplayName,
             UseLowLatencyMode = camera.Stream.UseLowLatencyMode,
             MaxLatencyMs = camera.Stream.MaxLatencyMs,
             RtspTransport = camera.Stream.RtspTransport,

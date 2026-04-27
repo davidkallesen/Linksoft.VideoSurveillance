@@ -12,6 +12,7 @@ using CoreStreamSettings = Linksoft.VideoSurveillance.Models.Settings.StreamSett
 public sealed class VideoEngineMediaPipeline : IMediaPipeline
 {
     private readonly IVideoPlayer player;
+    private readonly string source;
     private CoreConnectionState currentState = CoreConnectionState.Disconnected;
     private bool disposed;
 
@@ -19,9 +20,13 @@ public sealed class VideoEngineMediaPipeline : IMediaPipeline
     /// Initializes a new instance of the <see cref="VideoEngineMediaPipeline"/> class.
     /// </summary>
     /// <param name="player">The video player to wrap.</param>
-    public VideoEngineMediaPipeline(IVideoPlayer player)
+    /// <param name="source">A human-readable label (typically the camera display name) for log correlation.</param>
+    public VideoEngineMediaPipeline(
+        IVideoPlayer player,
+        string source = "")
     {
         this.player = player ?? throw new ArgumentNullException(nameof(player));
+        this.source = source ?? string.Empty;
         this.player.StateChanged += OnPlayerStateChanged;
     }
 
@@ -47,6 +52,7 @@ public sealed class VideoEngineMediaPipeline : IMediaPipeline
 
         var options = new StreamOptions
         {
+            Source = source,
             UseLowLatencyMode = settings.UseLowLatencyMode,
             MaxLatencyMs = settings.MaxLatencyMs,
             RtspTransport = settings.RtspTransport,

@@ -39,7 +39,14 @@ public sealed class StreamOptions
     /// </summary>
     public int MaxVerticalResolution { get; set; }
 
+    /// <summary>
+    /// Gets or sets a human-readable label (typically the camera display name)
+    /// included in player and demuxer log messages so failures can be traced
+    /// back to a specific camera. Empty when not set.
+    /// </summary>
+    public string Source { get; set; } = string.Empty;
+
     /// <inheritdoc />
     public override string ToString()
-        => $"StreamOptions {{ Transport='{RtspTransport}', LowLatency={UseLowLatencyMode}, MaxLatency={MaxLatencyMs}ms, HwAccel={HardwareAcceleration} }}";
+        => $"StreamOptions {{ Source='{Source}', Transport='{RtspTransport}', LowLatency={UseLowLatencyMode}, MaxLatency={MaxLatencyMs}ms, HwAccel={HardwareAcceleration} }}";
 }
