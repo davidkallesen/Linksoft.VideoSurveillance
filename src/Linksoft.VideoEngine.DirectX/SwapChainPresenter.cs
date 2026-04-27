@@ -11,6 +11,9 @@ public sealed class SwapChainPresenter : IDisposable
     private readonly IDCompositionDevice dcompDevice;
     private readonly IDCompositionTarget dcompTarget;
     private readonly IDCompositionVisual dcompVisual;
+    private readonly IDCompositionVisual rootVisual;
+    private readonly IDCompositionVisual backgroundVisual;
+    private readonly IDCompositionSurface blackSurface;
 
     private readonly Lock presentLock = new();
     private uint swapChainWidth;
@@ -70,11 +73,65 @@ public sealed class SwapChainPresenter : IDisposable
             hwnd,
             false,
             out dcompTarget).CheckError();
+
+        // Build a 3-visual tree:
+        //   rootVisual            — full-extent host (no transform)
+        //   ├── backgroundVisual  — opaque black, stretched to cover the control
+        //   └── dcompVisual       — swap chain, fit-to-control with optional zoom/pan
+        // The background visual guarantees the letterbox region is black on every
+        // GPU/driver. Without it, the area outside the swap-chain visual is
+        // implementation-defined (some Intel/AMD drivers render it bright green
+        // because the surface HWND uses WS_EX_NOREDIRECTIONBITMAP, which prevents
+        // WPF's Background brush from ever being painted).
+        dcompDevice.CreateVisual(out rootVisual).CheckError();
+        dcompDevice.CreateVisual(out backgroundVisual).CheckError();
         dcompDevice.CreateVisual(out dcompVisual).CheckError();
 
+        blackSurface = CreateBlackSurface(dcompDevice, d3d11Device.DeviceContext);
+        backgroundVisual.SetContent(blackSurface).CheckError();
+        backgroundVisual.SetBitmapInterpolationMode(BitmapInterpolationMode.NearestNeighbor).CheckError();
+
         dcompVisual.SetContent(swapChain).CheckError();
-        dcompTarget.SetRoot(dcompVisual).CheckError();
+
+        rootVisual.AddVisual(backgroundVisual, insertAbove: false, referenceVisual: null!).CheckError();
+        rootVisual.AddVisual(dcompVisual, insertAbove: true, backgroundVisual).CheckError();
+
+        dcompTarget.SetRoot(rootVisual).CheckError();
         dcompDevice.Commit().CheckError();
+    }
+
+    private static IDCompositionSurface CreateBlackSurface(
+        IDCompositionDevice device,
+        ID3D11DeviceContext context)
+    {
+        device.CreateSurface(
+            1,
+            1,
+            Format.B8G8R8A8_UNorm,
+            AlphaMode.Ignore,
+            out var surface).CheckError();
+
+        var texture = surface.BeginDraw<ID3D11Texture2D>(null, out var offset);
+        try
+        {
+            // Write a single opaque-black BGRA pixel at the surface's atlas offset.
+            ReadOnlySpan<byte> blackPixel = [0x00, 0x00, 0x00, 0xFF];
+            var box = new Box(
+                offset.X,
+                offset.Y,
+                0,
+                offset.X + 1,
+                offset.Y + 1,
+                1);
+            context.UpdateSubresource(blackPixel, texture, 0, 4, 4, box);
+        }
+        finally
+        {
+            texture.Dispose();
+        }
+
+        surface.EndDraw().CheckError();
+        return surface;
     }
 
     /// <summary>
@@ -191,8 +248,9 @@ public sealed class SwapChainPresenter : IDisposable
         float scaleX = lastControlWidth / (float)swapChainWidth;
         float scaleY = lastControlHeight / (float)swapChainHeight;
 
-        // Uniform scale preserves aspect ratio; the surface window's black
-        // background provides letterbox/pillarbox bars automatically.
+        // Uniform scale preserves aspect ratio; the dedicated backgroundVisual
+        // (1×1 black surface stretched to the control bounds) provides the
+        // letterbox/pillarbox bars deterministically across all GPU drivers.
         float baseScale = Math.Min(scaleX, scaleY);
         float totalScale = baseScale * zoomLevel;
 
@@ -211,6 +269,12 @@ public sealed class SwapChainPresenter : IDisposable
         var matrix = Matrix3x2.CreateScale(totalScale, totalScale)
             * Matrix3x2.CreateTranslation(offsetX, offsetY);
         dcompVisual.SetTransform(ref matrix);
+
+        // Stretch the 1×1 black surface to fully cover the control area so the
+        // letterbox bars are always opaque black.
+        var backgroundMatrix = Matrix3x2.CreateScale(lastControlWidth, lastControlHeight);
+        backgroundVisual.SetTransform(ref backgroundMatrix);
+
         dcompDevice.Commit();
     }
 
@@ -225,6 +289,9 @@ public sealed class SwapChainPresenter : IDisposable
 
             disposed = true;
             dcompVisual.Dispose();
+            backgroundVisual.Dispose();
+            rootVisual.Dispose();
+            blackSurface.Dispose();
             dcompTarget.Dispose();
             dcompDevice.Dispose();
             swapChain.Dispose();
