@@ -369,6 +369,13 @@ public partial class CameraTile : IDisposable
     public event EventHandler<CameraConfiguration>? CameraDropped;
 
     /// <summary>
+    /// Occurs when the camera configuration is mutated in-place by a tile-level
+    /// command (e.g., the Rotate context-menu submenu). The host should persist
+    /// the updated configuration.
+    /// </summary>
+    public event EventHandler<CameraConfiguration>? CameraConfigurationChanged;
+
+    /// <summary>
     /// Occurs when the recording state changes.
     /// </summary>
     public event EventHandler<RecordingStateChangedEventArgs>? RecordingStateChangedEvent;
@@ -820,6 +827,7 @@ public partial class CameraTile : IDisposable
         contextMenu.Items.Add(new MenuItem { Header = Translations.Reconnect, Command = ReconnectCommand });
         contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(new MenuItem { Header = Translations.ResetZoom, Command = ZoomResetCommand });
+        contextMenu.Items.Add(BuildRotateMenu());
         contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(new MenuItem { Header = Translations.EditCamera, Command = EditCameraCommand });
 
@@ -1187,6 +1195,7 @@ public partial class CameraTile : IDisposable
             CameraName = cameraConfig.Display.DisplayName;
             CameraDescription = cameraConfig.Display.Description ?? string.Empty;
             UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
+            ApplyRotation();
             InitializeOverrideTracking(cameraConfig);
             return;
         }
@@ -1248,6 +1257,7 @@ public partial class CameraTile : IDisposable
         Player = CreatePlayer();
         Player.StateChanged += OnPlayerStateChanged;
         mediaPipeline = MediaPipelineFactory?.Invoke(Player);
+        ApplyRotation();
 
         // Only auto-connect if enabled
         if (AutoConnectOnLoad)
@@ -1715,6 +1725,69 @@ public partial class CameraTile : IDisposable
     {
         var overlay = GetCameraOverlay();
         overlay?.Description = description;
+    }
+
+    /// <summary>
+    /// Pushes the current camera's rotation through the media pipeline so the
+    /// VideoProcessor + recording metadata both reflect the latest setting.
+    /// Safe to call before the pipeline is created or before a stream is open.
+    /// </summary>
+    private void ApplyRotation()
+    {
+        var rotation = Camera?.Display.Rotation ?? CameraRotation.None;
+        mediaPipeline?.SetRotation(rotation);
+    }
+
+    /// <summary>
+    /// Re-reads display-time properties from the bound <see cref="Camera"/>
+    /// without recreating the player. Used after the Edit Camera dialog mutates
+    /// the camera in place (since the <c>Camera</c> dependency property reference
+    /// is unchanged, the change-callback doesn't fire on its own).
+    /// </summary>
+    public void RefreshFromCameraSettings()
+    {
+        if (Camera is null)
+        {
+            return;
+        }
+
+        CameraName = Camera.Display.DisplayName;
+        CameraDescription = Camera.Display.Description ?? string.Empty;
+        UpdateOverlayPosition(Camera.Display.OverlayPosition);
+        ApplyRotation();
+    }
+
+    /// <summary>
+    /// Builds the "Rotate" submenu shown in the camera tile's context menu.
+    /// The current rotation is shown with a checkmark; selecting another value
+    /// invokes <see cref="RotateCommand"/>.
+    /// </summary>
+    private MenuItem BuildRotateMenu()
+    {
+        var current = Camera?.Display.Rotation ?? CameraRotation.None;
+        var menu = new MenuItem { Header = Translations.Rotate };
+        AddRotateItem(menu, Translations.RotationNone, CameraRotation.None, current);
+        AddRotateItem(menu, Translations.RotationRotate90, CameraRotation.Rotate90, current);
+        AddRotateItem(menu, Translations.RotationRotate180, CameraRotation.Rotate180, current);
+        AddRotateItem(menu, Translations.RotationRotate270, CameraRotation.Rotate270, current);
+        return menu;
+    }
+
+    private void AddRotateItem(
+        MenuItem parent,
+        string header,
+        CameraRotation rotation,
+        CameraRotation current)
+    {
+        parent.Items.Add(new MenuItem
+        {
+            Header = header,
+            IsChecked = rotation == current,
+            IsCheckable = true,
+            StaysOpenOnClick = false,
+            Command = RotateCommand,
+            CommandParameter = rotation,
+        });
     }
 
     private void UpdateOverlayPosition(OverlayPosition position)
@@ -2661,6 +2734,19 @@ public partial class CameraTile : IDisposable
 
     private bool CanResetZoom()
         => IsZoomed;
+
+    [RelayCommand]
+    private void Rotate(CameraRotation rotation)
+    {
+        if (Camera is null || Camera.Display.Rotation == rotation)
+        {
+            return;
+        }
+
+        Camera.Display.Rotation = rotation;
+        ApplyRotation();
+        CameraConfigurationChanged?.Invoke(this, Camera);
+    }
 
     /// <summary>
     /// Resets the zoom level back to fit-to-view.

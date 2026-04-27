@@ -2500,6 +2500,60 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Rotate.
+        /// </summary>
+        public static string Rotate {
+            get {
+                return ResourceManager.GetString("Rotate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rotation.
+        /// </summary>
+        public static string Rotation {
+            get {
+                return ResourceManager.GetString("Rotation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 0° (None).
+        /// </summary>
+        public static string RotationNone {
+            get {
+                return ResourceManager.GetString("RotationNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 180°.
+        /// </summary>
+        public static string RotationRotate180 {
+            get {
+                return ResourceManager.GetString("RotationRotate180", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 270°.
+        /// </summary>
+        public static string RotationRotate270 {
+            get {
+                return ResourceManager.GetString("RotationRotate270", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 90°.
+        /// </summary>
+        public static string RotationRotate90 {
+            get {
+                return ResourceManager.GetString("RotationRotate90", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to RTSP transport.
         /// </summary>
         public static string RtspTransport {

@@ -32,6 +32,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
     private bool disposed;
 
     private PlayerState state = PlayerState.Stopped;
+    private VideoRotation rotation = VideoRotation.None;
 
     public VideoPlayer(ILogger<VideoPlayer> logger)
         : this(logger, gpuAccelerator: null)
@@ -127,7 +128,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
             return;
         }
 
-        remuxer.Open(outputFilePath, demuxer.VideoCodecParameters, demuxer.VideoTimeBase);
+        remuxer.Open(outputFilePath, demuxer.VideoCodecParameters, demuxer.VideoTimeBase, (int)rotation);
         LogRecordingStarted(outputFilePath);
     }
 
@@ -140,6 +141,12 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
 
         remuxer.Close();
         LogRecordingStopped();
+    }
+
+    public void SetRotation(VideoRotation rotation)
+    {
+        this.rotation = rotation;
+        gpuAccelerator?.SetRotation(rotation);
     }
 
     public Task<byte[]?> CaptureFrameAsync(CancellationToken ct = default)

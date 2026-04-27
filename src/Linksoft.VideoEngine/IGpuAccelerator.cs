@@ -39,4 +39,11 @@ public unsafe interface IGpuAccelerator : IDisposable
     /// </summary>
     /// <returns>PNG-encoded bytes, or <c>null</c> if no frame is available.</returns>
     byte[]? CaptureSnapshot();
+
+    /// <summary>
+    /// Sets the clockwise rotation applied to subsequent frames at the GPU
+    /// video-processor stage. Display, snapshots, and the next-allocated
+    /// output texture all reflect the new value.
+    /// </summary>
+    void SetRotation(VideoRotation rotation);
 }

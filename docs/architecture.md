@@ -133,7 +133,7 @@ graph LR
 
     subgraph DirectX["VideoEngine.DirectX"]
         HwAccel["HwAccelContext<br/><i>D3D11VA device</i>"]
-        VPR["VideoProcessorRenderer<br/><i>NV12 → BGRA</i>"]
+        VPR["VideoProcessorRenderer<br/><i>NV12 → BGRA + per-stream rotation</i>"]
         SCP["SwapChainPresenter<br/><i>DirectComposition</i>"]
     end
 
@@ -212,8 +212,8 @@ sequenceDiagram
 
 | Assembly | Target | Description |
 |----------|--------|-------------|
-| **Linksoft.VideoEngine** | net10.0 | Cross-platform video engine using in-process FFmpeg via Flyleaf.FFmpeg.Bindings. Provides `Demuxer` for packet extraction, `VideoDecoder` for CPU/GPU decoding, `Remuxer` for recording to file (MP4/MKV), `FrameCapture` for PNG snapshots, and `MediaProbe` for stream metadata. Exposes `IVideoPlayer` and `IVideoPlayerFactory` interfaces. Defines `IGpuAccelerator` for pluggable hardware acceleration. |
-| **Linksoft.VideoEngine.DirectX** | net10.0-windows | Windows-specific GPU acceleration using Direct3D 11. Implements `IGpuAccelerator` via `D3D11Accelerator` for D3D11VA hardware-accelerated decoding. Provides `VideoProcessorRenderer` (NV12 to BGRA conversion), `SwapChainPresenter` (DirectComposition swap chain rendering), `HwAccelContext` (FFmpeg hardware device setup), and `GpuSnapshotCapture` (GPU-surface PNG capture). Uses Vortice bindings. |
+| **Linksoft.VideoEngine** | net10.0 | Cross-platform video engine using in-process FFmpeg via Flyleaf.FFmpeg.Bindings. Provides `Demuxer` for packet extraction, `VideoDecoder` for CPU/GPU decoding, `Remuxer` for recording to file (MP4/MKV) — with optional `rotate` metadata for rotated streams — `FrameCapture` for PNG snapshots, and `MediaProbe` for stream metadata. Exposes `IVideoPlayer` and `IVideoPlayerFactory` interfaces. Defines `IGpuAccelerator` for pluggable hardware acceleration and a `VideoRotation` enum for per-stream rotation. |
+| **Linksoft.VideoEngine.DirectX** | net10.0-windows | Windows-specific GPU acceleration using Direct3D 11. Implements `IGpuAccelerator` via `D3D11Accelerator` for D3D11VA hardware-accelerated decoding. Provides `VideoProcessorRenderer` (NV12 → BGRA, with optional 0/90/180/270° rotation via `VideoProcessorSetStreamRotation`), `SwapChainPresenter` (DirectComposition swap chain rendering), `HwAccelContext` (FFmpeg hardware device setup), and `GpuSnapshotCapture` (GPU-surface PNG capture). Uses Vortice bindings. |
 
 ### 🖥️ WPF Presentation Layer
 

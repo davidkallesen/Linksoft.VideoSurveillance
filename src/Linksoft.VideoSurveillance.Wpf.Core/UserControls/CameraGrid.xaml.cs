@@ -168,6 +168,12 @@ public partial class CameraGrid
     public event EventHandler<CameraConfiguration>? DeleteCameraRequested;
 
     /// <summary>
+    /// Occurs when a tile-level command (e.g. Rotate) mutates a camera config
+    /// and the host should persist the updated value.
+    /// </summary>
+    public event EventHandler<CameraConfiguration>? CameraConfigurationChanged;
+
+    /// <summary>
     /// Adds a camera to the wall.
     /// </summary>
     /// <param name="camera">The camera configuration to add.</param>
@@ -254,6 +260,27 @@ public partial class CameraGrid
                 tile.RecreatePlayer();
             }
         }
+    }
+
+    /// <summary>
+    /// Forces the tile bound to the specified camera id to re-read its
+    /// display-time settings (rotation, overlay position, name, description)
+    /// after the Edit Camera dialog has mutated the configuration in place.
+    /// </summary>
+    public void RefreshCameraDisplay(Guid cameraId)
+    {
+        if (CameraTiles is null)
+        {
+            return;
+        }
+
+        var index = CameraTiles.ToList().FindIndex(c => c.Id == cameraId);
+        if (index < 0)
+        {
+            return;
+        }
+
+        GetCameraTileAt(index)?.RefreshFromCameraSettings();
     }
 
     /// <summary>
@@ -624,6 +651,13 @@ public partial class CameraGrid
         CameraConfiguration e)
     {
         DeleteCameraRequested?.Invoke(this, e);
+    }
+
+    private void OnCameraConfigurationChanged(
+        object? sender,
+        CameraConfiguration e)
+    {
+        CameraConfigurationChanged?.Invoke(this, e);
     }
 
     private void OnCameraDropped(

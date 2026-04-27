@@ -244,6 +244,12 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     }
 
     /// <inheritdoc />
+    public void SaveCameraConfiguration(CameraConfiguration camera)
+    {
+        ArgumentNullException.ThrowIfNull(camera);
+        storageService.AddOrUpdateCamera(camera);
+    }
+
     public void EditCamera(CameraConfiguration camera)
     {
         ArgumentNullException.ThrowIfNull(camera);
@@ -257,6 +263,13 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
         if (result is not null)
         {
             storageService.AddOrUpdateCamera(camera);
+
+            // The dialog mutates the camera in place, so the CameraTile's Camera
+            // dependency property reference is unchanged and OnCameraChanged
+            // doesn't fire on its own. Force the running tile to re-read
+            // display-time settings (rotation, overlay position, name, …).
+            CameraGrid?.RefreshCameraDisplay(camera.Id);
+
             UpdateStatus(string.Format(CultureInfo.CurrentCulture, Translations.UpdatedCamera1, camera.Display.DisplayName));
         }
         else

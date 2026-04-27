@@ -122,6 +122,22 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
+    public IDictionary<string, string> RotationItems
+        => DropDownItemsFactory.RotationItems;
+
+    public string SelectedRotationKey
+    {
+        get => Camera.Display.Rotation.ToString();
+        set
+        {
+            if (Enum.TryParse<CameraRotation>(value, out var rotation))
+            {
+                Camera.Display.Rotation = rotation;
+                RaisePropertyChanged();
+            }
+        }
+    }
+
     public IDictionary<string, string> RtspTransportItems
         => DropDownItemsFactory.RtspTransportItems;
 

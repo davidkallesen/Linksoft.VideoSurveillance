@@ -98,4 +98,11 @@ public partial class MainWindow : Fluent.IRibbonWindow
     {
         viewModel.DeleteCamera(e);
     }
+
+    private void CameraGrid_CameraConfigurationChanged(
+        object? sender,
+        CameraConfiguration e)
+    {
+        viewModel.SaveCameraConfiguration(e);
+    }
 }

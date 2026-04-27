@@ -163,6 +163,13 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     public void DeleteCamera(CameraConfiguration camera)
         => Manager.DeleteCamera(camera);
 
+    /// <summary>
+    /// Persists an in-place camera configuration mutation (e.g., rotation
+    /// changed via tile context menu).
+    /// </summary>
+    public void SaveCameraConfiguration(CameraConfiguration camera)
+        => Manager.SaveCameraConfiguration(camera);
+
     private void OnLayoutsCollectionChanged(
         object? sender,
         System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

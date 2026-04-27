@@ -192,6 +192,7 @@
             <cw:CameraGrid
                 x:Name="CameraGridControl"
                 Grid.Row="1"
+                CameraConfigurationChanged="CameraGrid_CameraConfigurationChanged"
                 ConnectionStateChanged="CameraGrid_ConnectionStateChanged"
                 DeleteCameraRequested="CameraGrid_DeleteCameraRequested"
                 EditCameraRequested="CameraGrid_EditCameraRequested"
