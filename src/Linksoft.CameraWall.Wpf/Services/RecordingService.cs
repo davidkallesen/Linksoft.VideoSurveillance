@@ -7,6 +7,10 @@ namespace Linksoft.CameraWall.Wpf.Services;
 [Registration(Lifetime.Singleton)]
 public partial class RecordingService : IRecordingService, IDisposable
 {
+    // Cooldown entries older than this are stale — no realistic cooldown
+    // setting exceeds a few minutes, so 24h is a wide safety margin.
+    private static readonly TimeSpan CooldownEntryMaxAge = TimeSpan.FromHours(24);
+
     private readonly ILogger<RecordingService> logger;
     private readonly IApplicationSettingsService settingsService;
     private readonly IThumbnailGeneratorService thumbnailService;
@@ -152,6 +156,7 @@ public partial class RecordingService : IRecordingService, IDisposable
         if (!session.IsManualRecording)
         {
             recordingCooldowns[cameraId] = DateTime.UtcNow;
+            PruneStaleCooldowns();
         }
 
         // Raise event
@@ -573,6 +578,20 @@ public partial class RecordingService : IRecordingService, IDisposable
         RecordingStateChanged?.Invoke(
             this,
             new RecordingStateChangedEventArgs(cameraId, oldState, newState, filePath));
+    }
+
+    // Bounds recordingCooldowns over weeks of motion events. Iterating
+    // ConcurrentDictionary is safe; TryRemove is atomic.
+    private void PruneStaleCooldowns()
+    {
+        var cutoff = DateTime.UtcNow - CooldownEntryMaxAge;
+        foreach (var entry in recordingCooldowns)
+        {
+            if (entry.Value < cutoff)
+            {
+                recordingCooldowns.TryRemove(entry.Key, out _);
+            }
+        }
     }
 
     private static string SanitizeFilename(string filename)
