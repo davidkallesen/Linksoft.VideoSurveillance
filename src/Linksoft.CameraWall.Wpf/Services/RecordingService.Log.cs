@@ -49,4 +49,7 @@ public partial class RecordingService
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Transitioning to post-motion state for camera ID: {CameraId}, {Remaining}s remaining")]
     private partial void LogTransitioningToPostMotion(Guid cameraId, string remaining);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Post-motion tick failed for camera ID: {CameraId}; will retry on next interval")]
+    private partial void LogPostMotionTickFailed(Exception ex, Guid cameraId);
 }
