@@ -104,7 +104,14 @@ public sealed partial class SurveillanceHub : Hub
     /// <summary>
     /// Starts HLS streaming for a camera. Returns the playlist URL.
     /// </summary>
-    public async Task StartStream(Guid cameraId)
+    /// <param name="cameraId">The camera to stream.</param>
+    /// <param name="cancellationToken">
+    /// Aborts the playlist-ready wait when the SignalR client disconnects;
+    /// SignalR injects this from <c>HubCallerContext.ConnectionAborted</c>.
+    /// </param>
+    public async Task StartStream(
+        Guid cameraId,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -118,6 +125,12 @@ public sealed partial class SurveillanceHub : Hub
             while (!File.Exists(playlistPath)
                    || !Directory.EnumerateFiles(playlistDir, "*.ts").Any())
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    streamingService.StopStream(cameraId);
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
                 if (streamingService.HasProcessExited(cameraId))
                 {
                     var errors = streamingService.GetProcessError(cameraId);
@@ -134,7 +147,7 @@ public sealed partial class SurveillanceHub : Hub
                         $"FFmpeg did not produce the HLS playlist in time. Last output: {errors}");
                 }
 
-                await Task.Delay(500).ConfigureAwait(false);
+                await Task.Delay(500, cancellationToken).ConfigureAwait(false);
             }
 
             var relativePath = Path.GetRelativePath(
@@ -142,7 +155,10 @@ public sealed partial class SurveillanceHub : Hub
                 playlistPath).Replace('\\', '/');
 
             await Clients.Caller
-                .SendAsync("StreamStarted", new { CameraId = cameraId, PlaylistUrl = $"/streams/{relativePath}" })
+                .SendAsync(
+                    "StreamStarted",
+                    new { CameraId = cameraId, PlaylistUrl = $"/streams/{relativePath}" },
+                    cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (Exception ex)
