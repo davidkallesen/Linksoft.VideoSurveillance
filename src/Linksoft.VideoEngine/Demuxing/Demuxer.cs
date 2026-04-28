@@ -72,60 +72,98 @@ internal sealed unsafe partial class Demuxer : IDisposable
             throw new InvalidOperationException("Failed to allocate AVFormatContext.");
         }
 
-        gcHandle = GCHandle.Alloc(this);
-        interruptDelegate = new AVIOInterruptCB_callback(InterruptCallback);
-        fmtCtx->interrupt_callback.callback = interruptDelegate;
-        fmtCtx->interrupt_callback.opaque = (void*)GCHandle.ToIntPtr(gcHandle);
-
         AVDictionary* dict = null;
-        SetFormatOptions(ref dict, options);
+        AVDictionary* infoDict = null;
 
-        timeoutSeconds = OpenTimeoutSeconds;
-        timeoutWatch.Restart();
-
-        var url = streamUri.AbsoluteUri;
-        var ret = avformat_open_input(ref fmtCtx, url, null, ref dict);
-        av_dict_free(ref dict);
-
-        if (ret < 0)
+        try
         {
-            if (ret == AvErrorExit)
+            gcHandle = GCHandle.Alloc(this);
+            interruptDelegate = new AVIOInterruptCB_callback(InterruptCallback);
+            fmtCtx->interrupt_callback.callback = interruptDelegate;
+            fmtCtx->interrupt_callback.opaque = (void*)GCHandle.ToIntPtr(gcHandle);
+
+            SetFormatOptions(ref dict, options);
+
+            timeoutSeconds = OpenTimeoutSeconds;
+            timeoutWatch.Restart();
+
+            var url = streamUri.AbsoluteUri;
+            var ret = avformat_open_input(ref fmtCtx, url, null, ref dict);
+
+            if (ret < 0)
             {
-                LogAvformatOpenInputAborted(
-                    options.Source,
-                    abortRequested,
-                    cancellationToken.IsCancellationRequested,
-                    timeoutWatch.Elapsed.TotalSeconds,
-                    timeoutSeconds);
+                if (ret == AvErrorExit)
+                {
+                    LogAvformatOpenInputAborted(
+                        options.Source,
+                        abortRequested,
+                        cancellationToken.IsCancellationRequested,
+                        timeoutWatch.Elapsed.TotalSeconds,
+                        timeoutSeconds);
+                }
+
+                // avformat_open_input frees the user-supplied fmtCtx on failure
+                // and sets it to null via the ref parameter
+                throw new FFmpegException(ret, "Failed to open input");
             }
 
-            fmtCtx = null;
-            throw new FFmpegException(ret, "Failed to open input");
-        }
+            timeoutWatch.Restart();
+            ret = avformat_find_stream_info(fmtCtx, ref infoDict);
+            if (ret < 0)
+            {
+                throw new FFmpegException(ret, "Failed to find stream info");
+            }
 
-        timeoutWatch.Restart();
-        AVDictionary* infoDict = null;
-        ret = avformat_find_stream_info(fmtCtx, ref infoDict);
-        if (ret < 0)
+            if (fmtCtx->pb is not null)
+            {
+                fmtCtx->pb->eof_reached = 0;
+            }
+
+            FindVideoStream();
+
+            timeoutSeconds = ReadTimeoutSeconds;
+            timeoutWatch.Restart();
+
+            packet = av_packet_alloc();
+            if (packet is null)
+            {
+                throw new InvalidOperationException("Failed to allocate AVPacket.");
+            }
+        }
+        catch
         {
-            throw new FFmpegException(ret, "Failed to find stream info");
+            CleanupOnOpenFailure();
+            throw;
         }
-
-        if (fmtCtx->pb is not null)
+        finally
         {
-            fmtCtx->pb->eof_reached = 0;
+            // Free option dictionaries on every path; FFmpeg may leave unconsumed
+            // entries even on success
+            av_dict_free(ref dict);
+            av_dict_free(ref infoDict);
         }
+    }
 
-        FindVideoStream();
-
-        timeoutSeconds = ReadTimeoutSeconds;
-        timeoutWatch.Restart();
-
-        packet = av_packet_alloc();
-        if (packet is null)
+    private void CleanupOnOpenFailure()
+    {
+        if (packet is not null)
         {
-            throw new InvalidOperationException("Failed to allocate AVPacket.");
+            var p = packet;
+            av_packet_free(ref p);
+            packet = null;
         }
+
+        if (fmtCtx is not null)
+        {
+            avformat_close_input(ref fmtCtx);
+        }
+
+        if (gcHandle.IsAllocated)
+        {
+            gcHandle.Free();
+        }
+
+        interruptDelegate = null;
     }
 
     public int ReadPacket()
