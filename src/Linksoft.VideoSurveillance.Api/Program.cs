@@ -92,6 +92,11 @@ try
 
     builder.Services.AddHostedService<CameraConnectionManager>();
 
+    // Periodic disk-retention enforcement; without this, continuous server
+    // recording fills the disk and crashes the host. Mirrors the WPF app's
+    // MediaCleanupService but runs on a System.Threading.Timer (no UI).
+    builder.Services.AddHostedService<ServerMediaCleanupBackgroundService>();
+
     var app = builder.Build();
 
     app.UseCors();
