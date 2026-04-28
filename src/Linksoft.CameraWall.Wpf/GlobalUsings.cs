@@ -49,6 +49,7 @@ global using MediaCleanupResult = Linksoft.VideoSurveillance.Models.MediaCleanup
 global using MotionDetectedEventArgs = Linksoft.VideoSurveillance.Events.MotionDetectedEventArgs;
 global using RecordingSegmentedEventArgs = Linksoft.VideoSurveillance.Events.RecordingSegmentedEventArgs;
 global using RecordingSession = Linksoft.VideoSurveillance.Models.RecordingSession;
+global using RecordingSlotCalculator = Linksoft.VideoSurveillance.Helpers.RecordingSlotCalculator;
 global using RecordingStateChangedEventArgs = Linksoft.VideoSurveillance.Events.RecordingStateChangedEventArgs;
 global using SegmentationReason = Linksoft.VideoSurveillance.Events.SegmentationReason;
 global using TimelapseFrameCapturedEventArgs = Linksoft.VideoSurveillance.Events.TimelapseFrameCapturedEventArgs;
