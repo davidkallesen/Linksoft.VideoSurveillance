@@ -8,6 +8,9 @@ public sealed partial class VideoPlayer
     [LoggerMessage(Level = Microsoft.Extensions.Logging.LogLevel.Information, Message = "Recording stopped")]
     private partial void LogRecordingStopped();
 
+    [LoggerMessage(Level = Microsoft.Extensions.Logging.LogLevel.Information, Message = "Recording switched atomically to: {Path}")]
+    private partial void LogRecordingSwitched(string path);
+
     [LoggerMessage(Level = Microsoft.Extensions.Logging.LogLevel.Information, Message = "[{Source}] Opening stream: {Uri}")]
     private partial void LogOpeningStream(string source, string uri);
 

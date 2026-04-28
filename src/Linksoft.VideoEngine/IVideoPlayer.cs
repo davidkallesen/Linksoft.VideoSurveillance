@@ -63,6 +63,15 @@ public interface IVideoPlayer : IDisposable
     void StopRecording();
 
     /// <summary>
+    /// Atomically transitions the active recording to a new file.
+    /// Packets arriving from the demux thread between Close and Open are
+    /// not silently dropped — they land in either the previous or the new
+    /// segment. If no recording is currently active, behaves like
+    /// <see cref="StartRecording"/>.
+    /// </summary>
+    void SwitchRecording(string newOutputFilePath);
+
+    /// <summary>
     /// Captures a single frame from the stream as PNG image bytes.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
