@@ -270,8 +270,13 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
                 Directory.CreateDirectory(directory);
             }
 
-            // Save thumbnail
-            thumbnail.Save(context.ThumbnailPath, DrawingImaging.ImageFormat.Png);
+            // Save thumbnail atomically: write to *.tmp then move into
+            // place. The recordings browser may read the same path
+            // concurrently; without atomic replace it can observe a
+            // partially-written PNG (corrupt image or GDI+ IOException).
+            var tempPath = context.ThumbnailPath + ".tmp";
+            thumbnail.Save(tempPath, DrawingImaging.ImageFormat.Png);
+            File.Move(tempPath, context.ThumbnailPath, overwrite: true);
 
             LogGeneratedThumbnail(
                 cameraId,
