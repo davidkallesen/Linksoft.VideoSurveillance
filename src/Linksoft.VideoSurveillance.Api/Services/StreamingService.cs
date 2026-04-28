@@ -293,6 +293,15 @@ public sealed partial class StreamingService : IDisposable
         var streamUri = camera.BuildUri();
         var transport = camera.Stream.RtspTransport ?? "tcp";
 
+        // -c:v copy: pass the camera's native H.264/H.265 video stream
+        // straight through to HLS without re-encoding. Modern IP cameras
+        // already produce HLS-compatible video, so transcoding is pure CPU
+        // waste — at 10+ viewed cameras libx264 saturates the host. HLS
+        // still honours -hls_time at GOP boundaries (typically 2-4 s).
+        // Audio is always re-encoded because cameras commonly use G.711
+        // / PCMU which HLS / browser MSE cannot demux. Cameras with non-
+        // H.264/H.265 video will fail under this default — for those, add
+        // a future per-camera "force transcoding" setting.
         var args = string.Join(
             ' ',
             "-v info",
@@ -303,7 +312,7 @@ public sealed partial class StreamingService : IDisposable
             $"-rtsp_transport {transport}",
             "-timeout 10000000",
             $"-i \"{streamUri}\"",
-            "-c:v libx264 -preset ultrafast -tune zerolatency -g 30",
+            "-c:v copy",
             "-c:a aac -b:a 64k",
             "-f hls",
             "-hls_time 2",
