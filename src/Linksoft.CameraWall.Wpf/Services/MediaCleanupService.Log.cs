@@ -26,6 +26,15 @@ public partial class MediaCleanupService
     [LoggerMessage(Level = LogLevel.Debug, Message = "Periodic cleanup timer stopped")]
     private partial void LogPeriodicTimerStopped();
 
+    [LoggerMessage(Level = LogLevel.Error, Message = "Periodic cleanup tick failed; cleanup will retry on next interval")]
+    private partial void LogPeriodicTickFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to enumerate active recording sessions during cleanup; falling back to deleting all eligible files")]
+    private partial void LogActiveSessionLookupFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "File enumeration failed in {Path}; cleanup batch aborted")]
+    private partial void LogEnumerationFailed(Exception ex, string path);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Deleted thumbnail: {File}")]
     private partial void LogDeletedThumbnail(string file);
 
