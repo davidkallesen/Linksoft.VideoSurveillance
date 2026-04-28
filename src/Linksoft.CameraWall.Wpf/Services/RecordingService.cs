@@ -277,7 +277,7 @@ public partial class RecordingService : IRecordingService, IDisposable
 
         var basePath = GetEffectiveRecordingPath(camera);
         var safeDisplayName = SanitizeFilename(camera.Display.DisplayName);
-        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
 
         // Create camera subfolder
         var cameraFolder = Path.Combine(basePath, safeDisplayName);
@@ -285,7 +285,7 @@ public partial class RecordingService : IRecordingService, IDisposable
         // Generate filename with the specified format extension
         var filename = $"{safeDisplayName}_{timestamp}.{format}";
 
-        return Path.Combine(cameraFolder, filename);
+        return UniqueFilename.EnsureUnique(Path.Combine(cameraFolder, filename));
     }
 
     /// <inheritdoc/>
