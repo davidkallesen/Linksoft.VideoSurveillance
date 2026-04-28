@@ -44,7 +44,7 @@ public static class UniqueFilename
         {
             var candidate = Path.Combine(
                 dir,
-                FormattableString.Invariant($"{stem}_{i}{ext}"));
+                string.Create(CultureInfo.InvariantCulture, $"{stem}_{i}{ext}"));
 
             if (!exists(candidate))
             {
@@ -55,6 +55,6 @@ public static class UniqueFilename
         // Last resort: implausibly many collisions in the same second.
         // Append a UTC millisecond stamp so we never overwrite.
         var ms = DateTime.UtcNow.ToString("HHmmssfff", CultureInfo.InvariantCulture);
-        return Path.Combine(dir, FormattableString.Invariant($"{stem}_{ms}{ext}"));
+        return Path.Combine(dir, string.Create(CultureInfo.InvariantCulture, $"{stem}_{ms}{ext}"));
     }
 }
