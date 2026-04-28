@@ -77,6 +77,7 @@ global using IMotionDetectionService = Linksoft.VideoSurveillance.Services.IMoti
 global using MotionDetectedEventArgs = Linksoft.VideoSurveillance.Events.MotionDetectedEventArgs;
 global using RecordingSession = Linksoft.VideoSurveillance.Models.RecordingSession;
 global using RecordingStateChangedEventArgs = Linksoft.VideoSurveillance.Events.RecordingStateChangedEventArgs;
+global using SafeJsonFile = Linksoft.VideoSurveillance.Helpers.SafeJsonFile;
 global using SmoothedBox = Linksoft.VideoSurveillance.Models.SmoothedBox;
 global using StreamSettings = Linksoft.VideoSurveillance.Wpf.Core.Models.Settings.StreamSettings;
 global using TimelapseFrameCapturedEventArgs = Linksoft.VideoSurveillance.Events.TimelapseFrameCapturedEventArgs;

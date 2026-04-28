@@ -166,41 +166,16 @@ public class ApplicationSettingsService : IApplicationSettingsService
     /// <inheritdoc/>
     public void Load()
     {
-        try
-        {
-            if (!File.Exists(storagePath))
-            {
-                appSettings = new ApplicationSettings();
-                return;
-            }
-
-            var json = File.ReadAllText(storagePath);
-            appSettings = JsonSerializer.Deserialize<ApplicationSettings>(json, JsonOptions) ?? new ApplicationSettings();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Failed to load application settings: {ex.Message}");
-            appSettings = new ApplicationSettings();
-        }
+        appSettings = SafeJsonFile.TryRead<ApplicationSettings>(storagePath, JsonOptions)
+                      ?? new ApplicationSettings();
     }
 
     /// <inheritdoc/>
     public void Save()
     {
-        try
+        if (!SafeJsonFile.TryWrite(storagePath, appSettings, JsonOptions))
         {
-            var directory = Path.GetDirectoryName(storagePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            var json = JsonSerializer.Serialize(appSettings, JsonOptions);
-            File.WriteAllText(storagePath, json);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Failed to save application settings: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to save application settings to {storagePath}");
         }
     }
 
@@ -214,24 +189,13 @@ public class ApplicationSettingsService : IApplicationSettingsService
             return;
         }
 
-        try
+        if (SafeJsonFile.TryWrite(storagePath, new ApplicationSettings(), JsonOptions))
         {
-            var directory = Path.GetDirectoryName(storagePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            // Create default settings file
-            var defaultSettings = new ApplicationSettings();
-            var json = JsonSerializer.Serialize(defaultSettings, JsonOptions);
-            File.WriteAllText(storagePath, json);
-
             System.Diagnostics.Debug.WriteLine($"Created default settings file: {storagePath}");
         }
-        catch (Exception ex)
+        else
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to create default settings file: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to create default settings file: {storagePath}");
         }
     }
 }

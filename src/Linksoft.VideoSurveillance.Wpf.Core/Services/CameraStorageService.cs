@@ -150,43 +150,16 @@ public class CameraStorageService : ICameraStorageService
     /// <inheritdoc/>
     public void Save()
     {
-        try
+        if (!SafeJsonFile.TryWrite(storagePath, data, JsonOptions))
         {
-            var directory = Path.GetDirectoryName(storagePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            var json = JsonSerializer.Serialize(data, JsonOptions);
-            File.WriteAllText(storagePath, json);
-        }
-        catch (Exception ex)
-        {
-            // Log error but don't throw - storage failures shouldn't crash the app
-            System.Diagnostics.Debug.WriteLine($"Failed to save camera storage: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to save camera storage to {storagePath}");
         }
     }
 
     /// <inheritdoc/>
     public void Load()
     {
-        try
-        {
-            if (!File.Exists(storagePath))
-            {
-                data = new CameraStorageData();
-                return;
-            }
-
-            var json = File.ReadAllText(storagePath);
-            data = JsonSerializer.Deserialize<CameraStorageData>(json, JsonOptions) ?? new CameraStorageData();
-        }
-        catch (Exception ex)
-        {
-            // Log error and start with empty data
-            System.Diagnostics.Debug.WriteLine($"Failed to load camera storage: {ex.Message}");
-            data = new CameraStorageData();
-        }
+        data = SafeJsonFile.TryRead<CameraStorageData>(storagePath, JsonOptions)
+               ?? new CameraStorageData();
     }
 }
