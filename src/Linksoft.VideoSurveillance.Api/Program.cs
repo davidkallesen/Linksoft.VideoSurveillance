@@ -50,12 +50,26 @@ try
     builder.Services.AddSingleton<IMediaPipelineFactory, VideoEngineMediaPipelineFactory>();
     builder.Services.AddSingleton<StreamingService>();
 
-    // Configure CORS for Blazor client (AllowCredentials required for SignalR WebSocket transport)
+    // Configure CORS for Blazor client (AllowCredentials required for SignalR WebSocket transport).
+    // Origins are loaded from configuration (Cors:AllowedOrigins). With AllowCredentials,
+    // wildcard origins are forbidden — populate the section explicitly when fronting the
+    // API from a non-loopback host.
+    string[] defaultAllowedOrigins =
+    [
+        "http://localhost:5000",
+        "https://localhost:5001",
+        "http://localhost:39576",   // Blazor.App default HTTP
+        "https://localhost:39575",  // Blazor.App default HTTPS
+    ];
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? defaultAllowedOrigins;
+
     builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(policy =>
         {
-            policy.SetIsOriginAllowed(_ => true)
+            policy.WithOrigins(allowedOrigins)
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
