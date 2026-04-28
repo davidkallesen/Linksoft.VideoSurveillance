@@ -14,7 +14,10 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
     private readonly Lock lockObject = new();
-    private DispatcherTimer? periodicTimer;
+
+    // Threading.Timer (not DispatcherTimer) so cleanup ticks fire even when
+    // the UI thread is busy rendering 10+ video tiles.
+    private Timer? periodicTimer;
     private bool isRunning;
     private bool disposed;
 
@@ -109,45 +112,10 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
             // on Windows; orphaned undeletable file otherwise).
             var activePaths = GetActiveRecordingPaths();
 
-            // Clean recordings
-            var recordingPath = settingsService.Recording.RecordingPath;
-            if (!string.IsNullOrEmpty(recordingPath) && Directory.Exists(recordingPath))
-            {
-                await CleanDirectoryAsync(
-                    recordingPath,
-                    RecordingExtensions,
-                    settings.RecordingRetentionDays,
-                    result,
-                    activePaths,
-                    isRecording: true).ConfigureAwait(false);
-            }
-
-            // Clean snapshots if enabled
-            if (settings.IncludeSnapshots)
-            {
-                var snapshotPath = settingsService.CameraDisplay.SnapshotPath;
-                if (!string.IsNullOrEmpty(snapshotPath) && Directory.Exists(snapshotPath))
-                {
-                    await CleanDirectoryAsync(
-                        snapshotPath,
-                        SnapshotExtensions,
-                        settings.SnapshotRetentionDays,
-                        result,
-                        activePaths,
-                        isRecording: false).ConfigureAwait(false);
-                }
-            }
-
-            // Clean up empty directories
-            await CleanEmptyDirectoriesAsync(recordingPath, result).ConfigureAwait(false);
-            if (settings.IncludeSnapshots)
-            {
-                var snapshotPath = settingsService.CameraDisplay.SnapshotPath;
-                if (!string.IsNullOrEmpty(snapshotPath) && Directory.Exists(snapshotPath))
-                {
-                    await CleanEmptyDirectoriesAsync(snapshotPath, result).ConfigureAwait(false);
-                }
-            }
+            // Run the actual file-system work on the thread pool — keeps the
+            // dispatcher responsive when scanning very large recording trees.
+            await Task.Run(() =>
+                RunCleanupCore(settings, activePaths, result)).ConfigureAwait(false);
 
             LogCleanupCompleted(
                 result.RecordingsDeleted,
@@ -167,6 +135,134 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
                 isRunning = false;
             }
         }
+    }
+
+    private void RunCleanupCore(
+        MediaCleanupSettings settings,
+        HashSet<string> activePaths,
+        MediaCleanupResult result)
+    {
+        var recordingPath = settingsService.Recording.RecordingPath;
+        if (!string.IsNullOrEmpty(recordingPath))
+        {
+            var run = MediaCleanupRunner.CleanDirectory(
+                recordingPath,
+                RecordingExtensions,
+                DateTime.Now.AddDays(-settings.RecordingRetentionDays),
+                activePaths,
+                deleteCompanionThumbnail: true);
+
+            ApplyRecordingRunResult(run, result);
+
+            var emptyDirs = MediaCleanupRunner.RemoveEmptyDirectoriesBelow(recordingPath);
+            ApplyEmptyDirectoriesResult(emptyDirs, result);
+        }
+
+        if (!settings.IncludeSnapshots)
+        {
+            return;
+        }
+
+        var snapshotPath = settingsService.CameraDisplay.SnapshotPath;
+        if (string.IsNullOrEmpty(snapshotPath))
+        {
+            return;
+        }
+
+        var snapshotRun = MediaCleanupRunner.CleanDirectory(
+            snapshotPath,
+            SnapshotExtensions,
+            DateTime.Now.AddDays(-settings.SnapshotRetentionDays),
+            activePaths,
+            deleteCompanionThumbnail: false);
+
+        ApplySnapshotRunResult(snapshotRun, result);
+
+        var snapshotEmpty = MediaCleanupRunner.RemoveEmptyDirectoriesBelow(snapshotPath);
+        ApplyEmptyDirectoriesResult(snapshotEmpty, result);
+    }
+
+    private void ApplyRecordingRunResult(
+        MediaCleanupRunResult run,
+        MediaCleanupResult result)
+    {
+        foreach (var file in run.DeletedFiles)
+        {
+            LogDeletedOldMediaFile(file);
+        }
+
+        foreach (var thumb in run.DeletedThumbnails)
+        {
+            LogDeletedThumbnail(thumb);
+        }
+
+        result.RecordingsDeleted += run.DeletedFiles.Count;
+        result.ThumbnailsDeleted += run.DeletedThumbnails.Count;
+        result.BytesFreed += run.BytesFreed;
+        ApplyErrors(run.Errors, result);
+    }
+
+    private void ApplySnapshotRunResult(
+        MediaCleanupRunResult run,
+        MediaCleanupResult result)
+    {
+        foreach (var file in run.DeletedFiles)
+        {
+            LogDeletedOldMediaFile(file);
+        }
+
+        result.SnapshotsDeleted += run.DeletedFiles.Count;
+        result.BytesFreed += run.BytesFreed;
+        ApplyErrors(run.Errors, result);
+    }
+
+    private void ApplyEmptyDirectoriesResult(
+        MediaCleanupDirectoryResult run,
+        MediaCleanupResult result)
+    {
+        foreach (var dir in run.RemovedDirectories)
+        {
+            LogRemovedEmptyDirectory(dir);
+        }
+
+        result.DirectoriesRemoved += run.RemovedDirectories.Count;
+        foreach (var error in run.Errors)
+        {
+            switch (error.Exception)
+            {
+                case UnauthorizedAccessException uae:
+                    LogAccessDeniedRemovingDirectory(uae, error.Path);
+                    break;
+                default:
+                    LogCouldNotRemoveDirectory(error.Exception, error.Path);
+                    break;
+            }
+        }
+
+        result.ErrorCount += run.Errors.Count;
+    }
+
+    private void ApplyErrors(
+        IReadOnlyList<MediaCleanupRunError> errors,
+        MediaCleanupResult result)
+    {
+        foreach (var error in errors)
+        {
+            switch (error.Exception)
+            {
+                case UnauthorizedAccessException uae:
+                    LogAccessDeniedDeletingFile(uae, error.Path);
+                    break;
+                case IOException ioe:
+                    LogFailedToDeleteFile(ioe, error.Path);
+                    break;
+                default:
+                    LogFailedToDeleteFile(error.Exception, error.Path);
+                    break;
+            }
+        }
+
+        result.ErrorCount += errors.Count;
     }
 
     /// <summary>
@@ -195,14 +291,7 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
 
     private void StartPeriodicTimer()
     {
-        periodicTimer = new DispatcherTimer
-        {
-            Interval = PeriodicInterval,
-        };
-
-        periodicTimer.Tick += OnPeriodicTimerTick;
-        periodicTimer.Start();
-
+        periodicTimer = new Timer(OnPeriodicTimerTick, state: null, PeriodicInterval, PeriodicInterval);
         LogPeriodicTimerStarted(PeriodicInterval);
     }
 
@@ -210,18 +299,20 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
     {
         if (periodicTimer is not null)
         {
-            periodicTimer.Stop();
-            periodicTimer.Tick -= OnPeriodicTimerTick;
+            periodicTimer.Dispose();
             periodicTimer = null;
             LogPeriodicTimerStopped();
         }
     }
 
-    // Async-void event handler must catch all exceptions; an unobserved
-    // exception here would crash the dispatcher.
-    private async void OnPeriodicTimerTick(
-        object? sender,
-        EventArgs e)
+    private void OnPeriodicTimerTick(object? state)
+        => _ = RunCleanupSafelyAsync();
+
+    // The Timer callback is on a thread-pool thread, but we still need to
+    // catch all exceptions: an unobserved exception in fire-and-forget
+    // continuations would terminate the process via the unhandled-exception
+    // path.
+    private async Task RunCleanupSafelyAsync()
     {
         try
         {
@@ -261,148 +352,6 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
         }
 
         return set;
-    }
-
-    private Task CleanDirectoryAsync(
-        string path,
-        string[] extensions,
-        int retentionDays,
-        MediaCleanupResult result,
-        HashSet<string> activePaths,
-        bool isRecording)
-    {
-        var cutoffDate = DateTime.Now.AddDays(-retentionDays);
-
-        return Task.Run(() =>
-        {
-            try
-            {
-                var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
-                    .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
-
-                foreach (var file in files)
-                {
-                    try
-                    {
-                        // Skip files currently being written by an active recording
-                        if (activePaths.Contains(Path.GetFullPath(file)))
-                        {
-                            continue;
-                        }
-
-                        var fileInfo = new FileInfo(file);
-                        if (fileInfo.LastWriteTime < cutoffDate)
-                        {
-                            var fileSize = fileInfo.Length;
-                            fileInfo.Delete();
-
-                            if (isRecording)
-                            {
-                                result.RecordingsDeleted++;
-
-                                // Also delete associated thumbnail if exists
-                                var thumbnailPath = Path.ChangeExtension(file, ".png");
-                                if (File.Exists(thumbnailPath))
-                                {
-                                    var thumbInfo = new FileInfo(thumbnailPath);
-                                    var thumbSize = thumbInfo.Length;
-                                    thumbInfo.Delete();
-                                    result.ThumbnailsDeleted++;
-                                    result.BytesFreed += thumbSize;
-                                    LogDeletedThumbnail(thumbnailPath);
-                                }
-                            }
-                            else
-                            {
-                                result.SnapshotsDeleted++;
-                            }
-
-                            result.BytesFreed += fileSize;
-                            LogDeletedOldMediaFile(file);
-                        }
-                    }
-                    catch (IOException ex)
-                    {
-                        result.ErrorCount++;
-                        LogFailedToDeleteFile(ex, file);
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        result.ErrorCount++;
-                        LogAccessDeniedDeletingFile(ex, file);
-                    }
-                }
-            }
-            catch (DirectoryNotFoundException)
-            {
-                // Directory no longer exists, nothing to clean
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                // Recursive enumeration hit a folder we can't read; abort this batch
-                result.ErrorCount++;
-                LogEnumerationFailed(ex, path);
-            }
-            catch (IOException ex)
-            {
-                // Network drive dropped, path-too-long, etc. Don't crash the dispatcher.
-                result.ErrorCount++;
-                LogEnumerationFailed(ex, path);
-            }
-        });
-    }
-
-    private Task CleanEmptyDirectoriesAsync(
-        string rootPath,
-        MediaCleanupResult result)
-    {
-        if (string.IsNullOrEmpty(rootPath) || !Directory.Exists(rootPath))
-        {
-            return Task.CompletedTask;
-        }
-
-        return Task.Run(() =>
-        {
-            try
-            {
-                // Get all directories, sorted by depth (deepest first)
-                var directories = Directory.EnumerateDirectories(rootPath, "*", SearchOption.AllDirectories)
-                    .OrderByDescending(d => d.Length)
-                    .ToList();
-
-                foreach (var dir in directories)
-                {
-                    try
-                    {
-                        // Don't delete if it's the root path
-                        if (string.Equals(dir, rootPath, StringComparison.OrdinalIgnoreCase))
-                        {
-                            continue;
-                        }
-
-                        // Check if directory is empty
-                        if (!Directory.EnumerateFileSystemEntries(dir).Any())
-                        {
-                            Directory.Delete(dir);
-                            result.DirectoriesRemoved++;
-                            LogRemovedEmptyDirectory(dir);
-                        }
-                    }
-                    catch (IOException ex)
-                    {
-                        LogCouldNotRemoveDirectory(ex, dir);
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        LogAccessDeniedRemovingDirectory(ex, dir);
-                    }
-                }
-            }
-            catch (DirectoryNotFoundException)
-            {
-                // Root directory no longer exists
-            }
-        });
     }
 
     private void OnCleanupCompleted(MediaCleanupResult result)
