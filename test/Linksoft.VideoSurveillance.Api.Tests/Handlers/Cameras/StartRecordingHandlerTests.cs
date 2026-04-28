@@ -62,10 +62,20 @@ public class StartRecordingHandlerTests
         recordingService.GetSession(cameraId).Returns((RecordingSession?)null);
         var handler = new StartRecordingHandler(storage, recordingService, pipelineFactory);
 
-        // Act
-        var result = await handler.ExecuteAsync(
+        // Act — kick off ExecuteAsync; it will subscribe to
+        // pipeline.ConnectionStateChanged and yield at the await on the
+        // TaskCompletionSource. We then raise the Connected event so it
+        // can complete and proceed to call StartRecording.
+        var executeTask = handler.ExecuteAsync(
             new StartRecordingParameters(cameraId),
             CancellationToken.None);
+
+        pipeline.ConnectionStateChanged += Raise.EventWith(
+            new Linksoft.VideoSurveillance.Events.ConnectionStateChangedEventArgs(
+                Linksoft.VideoSurveillance.Enums.ConnectionState.Connecting,
+                Linksoft.VideoSurveillance.Enums.ConnectionState.Connected));
+
+        var result = await executeTask;
 
         // Assert
         pipelineFactory.Received(1).Create(camera);
