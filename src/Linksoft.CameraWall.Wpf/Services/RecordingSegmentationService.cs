@@ -14,7 +14,7 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
     private readonly IRecordingService recordingService;
     private readonly Lock lockObject = new();
     private DispatcherTimer? checkTimer;
-    private int lastProcessedSlot = -1;
+    private (DateOnly Date, int Slot) lastProcessed = (DateOnly.MinValue, -1);
     private bool isRunning;
     private bool disposed;
 
@@ -64,8 +64,7 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
 
         // Initialize last processed slot based on current time and interval
         var intervalMinutes = settings.MaxRecordingDurationMinutes;
-        var now = DateTime.Now;
-        lastProcessedSlot = ((now.Hour * 60) + now.Minute) / intervalMinutes;
+        lastProcessed = RecordingSlotCalculator.ComputeSlot(DateTime.Now, intervalMinutes);
 
         StartCheckTimer();
 
@@ -166,8 +165,8 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
 
         var now = DateTime.Now;
         var intervalMinutes = settings.MaxRecordingDurationMinutes;
-        var currentSlot = ((now.Hour * 60) + now.Minute) / intervalMinutes;
-        var isIntervalBoundary = currentSlot != lastProcessedSlot;
+        var currentSlot = RecordingSlotCalculator.ComputeSlot(now, intervalMinutes);
+        var isIntervalBoundary = RecordingSlotCalculator.IsNewBoundary(currentSlot, lastProcessed);
         var maxDuration = TimeSpan.FromMinutes(intervalMinutes);
 
         // Get all active sessions
@@ -175,8 +174,13 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
 
         if (activeSessions.Count == 0)
         {
-            // Update slot tracking even if no recordings
-            lastProcessedSlot = currentSlot;
+            // Advance slot tracking even when no recordings so that idle
+            // periods don't trigger a stale boundary on the next session
+            if (isIntervalBoundary)
+            {
+                lastProcessed = currentSlot;
+            }
+
             return;
         }
 
@@ -190,7 +194,7 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
             {
                 shouldSegment = true;
                 reason = SegmentationReason.IntervalBoundary;
-                LogIntervalBoundaryDetected(session.CameraId, currentSlot, intervalMinutes);
+                LogIntervalBoundaryDetected(session.CameraId, currentSlot.Slot, intervalMinutes);
             }
             else if (session.Duration >= maxDuration)
             {
@@ -222,8 +226,13 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
             }
         }
 
-        // Update last processed slot
-        lastProcessedSlot = currentSlot;
+        // Only advance the high-water mark forward; backward clock jumps
+        // (NTP rollback, DST fall-back) leave it untouched so the same
+        // wall-clock slot is never segmented twice
+        if (isIntervalBoundary)
+        {
+            lastProcessed = currentSlot;
+        }
     }
 
     private void OnRecordingSegmented(
