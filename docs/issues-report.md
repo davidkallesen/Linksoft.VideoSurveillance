@@ -13,6 +13,11 @@ This report focuses only on issues that would surface during long-running unatte
 - **P1.2 DispatcherTimer.Tick safety** — converted `MediaCleanupService` async-void event handler, `RecordingSegmentationService` segmentation tick, and `RecordingService` post-motion tick to wrap their work in try/catch with `LogPeriodicTickFailed` / `LogSegmentationTickFailed` / `LogPostMotionTickFailed`. Eliminates the entire class of "exception in Tick handler crashes the WPF dispatcher" bugs.
 - **P1.3 MediaCleanupService skips active recordings** — injected `IRecordingService`, snapshots `GetActiveSessions().CurrentFilePath` (and the `.png` thumbnail companion) before each cleanup pass, and skips those files. Eliminates sharing-violation IOExceptions and the resulting orphan-undeletable-file leaks.
 - **P1.4 Cleanup enumeration is now crash-safe** — `MediaCleanupService.CleanDirectoryAsync` now also catches `UnauthorizedAccessException` and `IOException` from `Directory.EnumerateFiles` (previously only `DirectoryNotFoundException` was caught). Symlink loops, dropped network drives, and permission-denied subtrees no longer take down the dispatcher. The `CreateDirectory` calls in `RecordingService`, `ThumbnailGeneratorService`, `TimelapseService` are already inside outer try/catches that prevent crashes; deferred fallback-to-default-path behavior to a P2/P3 cycle (intrusive UX change).
+- **P2.8 Bound `recordingCooldowns`** — entries are pruned opportunistically on each motion-stop so the dictionary stays bounded by 24h of motion events. (`postMotionTimers` was found to be self-healing — `CheckPostMotionState` removes stale timers on next tick — so no fix needed there.)
+- **P2.9 Robust segmentation slot detection** — extracted `RecordingSlotCalculator` to Core. Slot identity is now `(DateOnly, int)` and the high-water mark only advances forward, so backward NTP corrections, DST fall-back, and midnight rollover never double-segment or skip a slot. 12 unit tests cover normal progression, midnight, DST forward/backward, and backward clock jumps.
+- **P2.10 Thumbnail write atomicity** — `ThumbnailGeneratorService` now writes to `*.tmp` and atomically `File.Move(..., overwrite: true)` into place, so the recordings browser cannot observe a partially-written PNG.
+- **P2.12 Filename collision prevention** — extracted `UniqueFilename.EnsureUnique` to Core, plus switched all 3 filename generators (`RecordingService`, `TimelapseService`, `ServerRecordingService`) to millisecond-resolution timestamps (`yyyyMMdd_HHmmss_fff`). Collisions now require sub-millisecond timing AND `EnsureUnique` falls back to a `_2/_3/…/_999` suffix and finally a UTC-millisecond fallback. 7 unit tests.
+- **P2.14 MotionDetectionService scheduler atomicity** — `StartDetection`/`StopDetection` now mutate `contexts` and `scheduledCameras` together under `schedulerLock`, eliminating the interleaving that could leave a camera scheduled but missing from contexts (silent no-analysis state).
 
 ---
 
@@ -89,13 +94,13 @@ The following ordering balances **likelihood × user impact**. P1 items should b
 
 ### P2 — fix within the next iteration
 
-8. **Bound `recordingCooldowns` and `postMotionTimers` (1.1, 1.8).** Prune stale entries in `StopAllRecordings` / on a scheduled tick. 24-hour retention is plenty.
-9. **Robust segmentation slot detection (1.2).** Switch to `DateTime.UtcNow`; track the last processed slot as `(date, slot)` and ignore slot < last unless a date roll occurred. Add unit tests for midnight, DST forward, DST backward.
-10. **Thumbnail write atomicity (3.7).** Write to `*.tmp` then `File.Move(..., overwrite: true)` so the browser never sees a partial file.
+8. **✅ DONE — Bound `recordingCooldowns` and `postMotionTimers` (1.1, 1.8).** Cooldowns pruned opportunistically; postMotionTimers verified self-healing.
+9. **✅ DONE — Robust segmentation slot detection (1.2).** `RecordingSlotCalculator` + 12 unit tests.
+10. **✅ DONE — Thumbnail write atomicity (3.7).** Temp + `File.Move(overwrite: true)`.
 11. **`SwapChainPresenter.Present` recovery (2.4).** Inspect HRESULT; on `DEVICE_REMOVED`, raise an event so the player drops and re-opens the demuxer. Today the camera is silently dead.
-12. **Filename collision prevention (3.5).** UTC + millisecond suffix and a `while (File.Exists) suffix++` collision check.
+12. **✅ DONE — Filename collision prevention (3.5).** `UniqueFilename.EnsureUnique` + ms timestamps + 7 unit tests.
 13. **Bound the motion-analysis fire-and-forget queue (1.7, 4.2).** Add an in-flight counter; on the server side, also stop allocating frames in the no-op detection loop until the algorithm is implemented.
-14. **`MotionDetectionService` scheduler iteration (1.5).** Snapshot `scheduledCameras.ToList()` once; iterate the snapshot.
+14. **✅ DONE — `MotionDetectionService` scheduler iteration (1.5).** `contexts` and `scheduledCameras` now mutated together under `schedulerLock`.
 15. **HLS viewer lease/heartbeat (4.6).** Per-viewer inactivity timeout (e.g. 30 s without a manifest poll → drop). Reaps orphaned FFmpeg transcoders automatically.
 16. **`StartRecordingHandler` should await `Connected` (4.5).** Wait on `ConnectionStateChanged → Connected` (with a timeout) before returning success; or return an explicit "pending" state and let the client poll.
 17. **Snapshot handler defensive disposal (4.7).** Wrap `pipelineFactory.Create` in try/catch and dispose on any exception path before re-throwing, so a single bad request doesn't strand an RTSP session.
