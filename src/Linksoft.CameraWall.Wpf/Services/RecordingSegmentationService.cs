@@ -121,7 +121,7 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
             Interval = CheckInterval,
         };
 
-        checkTimer.Tick += (_, _) => PerformSegmentationCheck();
+        checkTimer.Tick += OnCheckTimerTick;
         checkTimer.Start();
 
         LogSegmentationTimerStarted(CheckInterval);
@@ -132,8 +132,25 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
         if (checkTimer is not null)
         {
             checkTimer.Stop();
+            checkTimer.Tick -= OnCheckTimerTick;
             checkTimer = null;
             LogSegmentationTimerStopped();
+        }
+    }
+
+    // Catches all exceptions; an unhandled exception in a DispatcherTimer.Tick
+    // handler crashes the WPF dispatcher.
+    private void OnCheckTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        try
+        {
+            PerformSegmentationCheck();
+        }
+        catch (Exception ex)
+        {
+            LogSegmentationTickFailed(ex);
         }
     }
 

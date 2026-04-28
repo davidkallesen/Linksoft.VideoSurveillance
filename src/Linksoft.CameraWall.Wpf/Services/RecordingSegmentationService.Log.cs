@@ -31,4 +31,7 @@ public partial class RecordingSegmentationService
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to segment recording for camera ID: {CameraId}")]
     private partial void LogSegmentingFailed(Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Segmentation tick failed; will retry on next interval")]
+    private partial void LogSegmentationTickFailed(Exception ex);
 }

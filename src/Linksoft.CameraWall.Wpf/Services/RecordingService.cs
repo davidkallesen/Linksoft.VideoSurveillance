@@ -507,7 +507,19 @@ public partial class RecordingService : IRecordingService, IDisposable
             Interval = TimeSpan.FromSeconds(1),
         };
 
-        timer.Tick += (_, _) => CheckPostMotionState(cameraId, postMotionSeconds);
+        // Catches all exceptions; an unhandled exception in a DispatcherTimer.Tick
+        // handler crashes the WPF dispatcher.
+        timer.Tick += (_, _) =>
+        {
+            try
+            {
+                CheckPostMotionState(cameraId, postMotionSeconds);
+            }
+            catch (Exception ex)
+            {
+                LogPostMotionTickFailed(ex, cameraId);
+            }
+        };
 
         postMotionTimers[cameraId] = timer;
         timer.Start();
