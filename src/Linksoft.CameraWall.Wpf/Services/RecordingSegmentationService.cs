@@ -13,7 +13,10 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
     private readonly Lock lockObject = new();
-    private DispatcherTimer? checkTimer;
+
+    // Threading.Timer (not DispatcherTimer) so segmentation ticks fire even
+    // when the UI thread is busy rendering many video tiles.
+    private Timer? checkTimer;
     private (DateOnly Date, int Slot) lastProcessed = (DateOnly.MinValue, -1);
     private bool isRunning;
     private bool disposed;
@@ -115,14 +118,7 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
 
     private void StartCheckTimer()
     {
-        checkTimer = new DispatcherTimer
-        {
-            Interval = CheckInterval,
-        };
-
-        checkTimer.Tick += OnCheckTimerTick;
-        checkTimer.Start();
-
+        checkTimer = new Timer(OnCheckTimerTick, state: null, CheckInterval, CheckInterval);
         LogSegmentationTimerStarted(CheckInterval);
     }
 
@@ -130,18 +126,17 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
     {
         if (checkTimer is not null)
         {
-            checkTimer.Stop();
-            checkTimer.Tick -= OnCheckTimerTick;
+            checkTimer.Dispose();
             checkTimer = null;
             LogSegmentationTimerStopped();
         }
     }
 
-    // Catches all exceptions; an unhandled exception in a DispatcherTimer.Tick
-    // handler crashes the WPF dispatcher.
-    private void OnCheckTimerTick(
-        object? sender,
-        EventArgs e)
+    // Threading.Timer callback runs on a thread-pool thread; PerformSegmentationCheck
+    // calls into IRecordingService which is thread-safe (ConcurrentDictionary +
+    // sync locks). Catches all exceptions so an unobserved one cannot terminate
+    // the process.
+    private void OnCheckTimerTick(object? state)
     {
         try
         {
