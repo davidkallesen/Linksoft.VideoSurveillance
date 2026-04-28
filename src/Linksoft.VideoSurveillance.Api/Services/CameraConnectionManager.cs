@@ -12,6 +12,7 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
     private readonly IRecordingService recordingService;
     private readonly IMediaPipelineFactory pipelineFactory;
     private readonly ConcurrentDictionary<Guid, IMediaPipeline> managedPipelines = new();
+    private readonly ConcurrentDictionary<Guid, BackoffState> backoffs = new();
 
     public CameraConnectionManager(
         ILogger<CameraConnectionManager> logger,
@@ -39,6 +40,15 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
             if (stoppingToken.IsCancellationRequested)
             {
                 break;
+            }
+
+            // Skip cameras still inside their backoff window so a
+            // persistently dead camera doesn't generate ~1 M failed attempts
+            // per year.
+            if (backoffs.TryGetValue(camera.Id, out var bs)
+                && DateTime.UtcNow < bs.NextAttemptUtc)
+            {
+                continue;
             }
 
             try
@@ -85,7 +95,7 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
             catch (Exception ex)
             {
                 LogStartRecordingFailed(ex, camera.Id, camera.Display.DisplayName);
-
+                RecordFailure(camera.Id);
                 RemoveAndDisposePipeline(camera.Id);
             }
         }
@@ -174,6 +184,10 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
     {
         if (e.NewState == ConnectionState.Connected)
         {
+            // Successful connect — clear any prior backoff so the next
+            // disconnect starts fresh from the base delay.
+            backoffs.TryRemove(camera.Id, out _);
+
             LogCameraConnected(camera.Id, camera.Display.DisplayName);
 
             if (recordingService.IsRecording(camera.Id) ||
@@ -203,9 +217,39 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
         else if (e.NewState == ConnectionState.Error)
         {
             LogPipelineConnectionFailed(camera.Id, camera.Display.DisplayName);
-
+            RecordFailure(camera.Id);
             ScheduleDeferredDisposal(camera.Id);
         }
+    }
+
+    // Bumps the camera's consecutive-failure count and schedules the next
+    // attempt using capped exponential backoff; called from the demux
+    // thread on Error events.
+    private void RecordFailure(Guid cameraId)
+    {
+        backoffs.AddOrUpdate(
+            cameraId,
+            _ => new BackoffState
+            {
+                ConsecutiveFailures = 1,
+                NextAttemptUtc = DateTime.UtcNow + ReconnectBackoff.ComputeDelay(1),
+            },
+            (_, prev) =>
+            {
+                var next = prev.ConsecutiveFailures + 1;
+                return new BackoffState
+                {
+                    ConsecutiveFailures = next,
+                    NextAttemptUtc = DateTime.UtcNow + ReconnectBackoff.ComputeDelay(next),
+                };
+            });
+    }
+
+    private sealed class BackoffState
+    {
+        public int ConsecutiveFailures { get; init; }
+
+        public DateTime NextAttemptUtc { get; init; }
     }
 
     [SuppressMessage(
