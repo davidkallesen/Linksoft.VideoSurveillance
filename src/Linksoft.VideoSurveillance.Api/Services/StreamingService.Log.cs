@@ -13,4 +13,10 @@ public sealed partial class StreamingService
 
     [LoggerMessage(Level = LogLevel.Information, Message = "HLS stream started for camera {CameraId} -> {PlaylistPath}")]
     private partial void LogHlsStreamStarted(Guid cameraId, string playlistPath);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "HLS stream reaped for camera {CameraId} (idle past inactivity timeout)")]
+    private partial void LogHlsStreamReaped(Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "HLS stream reaper failed to dispose session for camera {CameraId}")]
+    private partial void LogHlsStreamReapFailed(Exception ex, Guid cameraId);
 }
