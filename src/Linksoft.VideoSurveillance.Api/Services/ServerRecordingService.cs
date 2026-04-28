@@ -6,15 +6,18 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 public sealed partial class ServerRecordingService : IRecordingService, IDisposable
 {
     private readonly IApplicationSettingsService settingsService;
+    private readonly ICameraStorageService cameraStorageService;
     private readonly ILogger<ServerRecordingService> logger;
     private readonly ConcurrentDictionary<Guid, RecordingSession> sessions = new();
     private readonly ConcurrentDictionary<Guid, IMediaPipeline> pipelines = new();
 
     public ServerRecordingService(
         IApplicationSettingsService settingsService,
+        ICameraStorageService cameraStorageService,
         ILogger<ServerRecordingService> logger)
     {
         this.settingsService = settingsService;
+        this.cameraStorageService = cameraStorageService;
         this.logger = logger;
     }
 
@@ -140,7 +143,62 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
 
     /// <inheritdoc/>
     public bool SegmentRecording(Guid cameraId)
-        => false;
+    {
+        if (!sessions.TryGetValue(cameraId, out var session))
+        {
+            return false;
+        }
+
+        if (!pipelines.TryGetValue(cameraId, out var pipeline))
+        {
+            LogSegmentNoPipeline(cameraId);
+            return false;
+        }
+
+        var camera = cameraStorageService.GetCameraById(cameraId);
+        if (camera is null)
+        {
+            LogSegmentCameraNotFound(cameraId);
+            return false;
+        }
+
+        var oldFilePath = session.CurrentFilePath;
+        var newFilePath = GenerateRecordingFilename(camera, settingsService.Recording.RecordingFormat);
+
+        var directory = Path.GetDirectoryName(newFilePath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        try
+        {
+            // Atomic switch: packets arriving from the demux thread mid-switch
+            // land in either the previous segment or the new one — never the
+            // close/open gap. Falls back to Stop+Start if the underlying
+            // pipeline doesn't support atomic switching.
+            pipeline.SwitchRecording(newFilePath);
+        }
+        catch (Exception ex)
+        {
+            LogSegmentFailed(ex, cameraId);
+            return false;
+        }
+
+        var newSession = new RecordingSession(cameraId, newFilePath, session.IsManualRecording)
+        {
+            LastMotionTime = session.LastMotionTime,
+            State = session.State,
+        };
+
+        sessions[cameraId] = newSession;
+
+        RaiseStateChanged(cameraId, session.State, RecordingState.Idle, oldFilePath);
+        RaiseStateChanged(cameraId, RecordingState.Idle, newSession.State, newFilePath);
+
+        LogSegmented(cameraId, newFilePath);
+        return true;
+    }
 
     /// <inheritdoc/>
     public IReadOnlyList<RecordingSession> GetActiveSessions()
