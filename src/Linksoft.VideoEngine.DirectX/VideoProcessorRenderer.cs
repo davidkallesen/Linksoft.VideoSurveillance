@@ -178,39 +178,50 @@ internal sealed class VideoProcessorRenderer : IDisposable
             Usage = VideoUsage.PlaybackNormal,
         };
 
-        videoDevice.CreateVideoProcessorEnumerator(
-            ref contentDesc,
-            out enumerator).CheckError();
-
-        videoDevice.CreateVideoProcessor(
-            enumerator,
-            0,
-            out processor).CheckError();
-
-        var outputDesc = new Texture2DDescription
+        // Wrap allocation in try/catch so a failure at the last step (e.g.
+        // CreateVideoProcessorOutputView under GPU memory pressure) doesn't
+        // strand the earlier-allocated enumerator/processor/outputTexture.
+        try
         {
-            Width = (uint)outputWidth,
-            Height = (uint)outputHeight,
-            MipLevels = 1,
-            ArraySize = 1,
-            Format = Format.B8G8R8A8_UNorm,
-            SampleDescription = new SampleDescription(1, 0),
-            Usage = ResourceUsage.Default,
-            BindFlags = BindFlags.RenderTarget,
-        };
+            videoDevice.CreateVideoProcessorEnumerator(
+                ref contentDesc,
+                out enumerator).CheckError();
 
-        outputTexture = device.CreateTexture2D(outputDesc);
+            videoDevice.CreateVideoProcessor(
+                enumerator,
+                0,
+                out processor).CheckError();
 
-        var outputViewDesc = new VideoProcessorOutputViewDescription
+            var outputDesc = new Texture2DDescription
+            {
+                Width = (uint)outputWidth,
+                Height = (uint)outputHeight,
+                MipLevels = 1,
+                ArraySize = 1,
+                Format = Format.B8G8R8A8_UNorm,
+                SampleDescription = new SampleDescription(1, 0),
+                Usage = ResourceUsage.Default,
+                BindFlags = BindFlags.RenderTarget,
+            };
+
+            outputTexture = device.CreateTexture2D(outputDesc);
+
+            var outputViewDesc = new VideoProcessorOutputViewDescription
+            {
+                ViewDimension = VideoProcessorOutputViewDimension.Texture2D,
+            };
+
+            videoDevice.CreateVideoProcessorOutputView(
+                outputTexture,
+                enumerator,
+                outputViewDesc,
+                out outputView).CheckError();
+        }
+        catch
         {
-            ViewDimension = VideoProcessorOutputViewDimension.Texture2D,
-        };
-
-        videoDevice.CreateVideoProcessorOutputView(
-            outputTexture,
-            enumerator,
-            outputViewDesc,
-            out outputView).CheckError();
+            ReleasePipeline();
+            throw;
+        }
     }
 
     private void ReleasePipeline()
