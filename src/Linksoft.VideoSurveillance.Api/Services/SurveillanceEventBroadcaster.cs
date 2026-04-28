@@ -6,6 +6,11 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// </summary>
 public sealed partial class SurveillanceEventBroadcaster : IHostedService
 {
+    // Bound the time any single broadcast can spend in SendAsync so a
+    // slow/disconnected client cannot accumulate unbounded in-flight tasks
+    // while events keep firing from the recording / motion services.
+    private static readonly TimeSpan BroadcastTimeout = TimeSpan.FromSeconds(5);
+
     private readonly IHubContext<SurveillanceHub> hubContext;
     private readonly IRecordingService recordingService;
     private readonly IMotionDetectionService motionDetectionService;
@@ -49,6 +54,7 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         object? sender,
         RecordingStateChangedEventArgs e)
     {
+        using var cts = new CancellationTokenSource(BroadcastTimeout);
         try
         {
             await hubContext.Clients.All
@@ -61,7 +67,8 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
                         OldState = e.OldState.ToString(),
                         e.FilePath,
                         e.Timestamp,
-                    })
+                    },
+                    cts.Token)
                 .ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -74,6 +81,7 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         object? sender,
         MotionDetectedEventArgs e)
     {
+        using var cts = new CancellationTokenSource(BroadcastTimeout);
         try
         {
             await hubContext.Clients.All
@@ -94,7 +102,8 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
                         e.AnalysisWidth,
                         e.AnalysisHeight,
                         e.Timestamp,
-                    })
+                    },
+                    cts.Token)
                 .ConfigureAwait(false);
         }
         catch (Exception ex)
