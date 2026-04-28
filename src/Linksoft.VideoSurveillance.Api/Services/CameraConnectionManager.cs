@@ -276,7 +276,10 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
     /// ThreadPool thread. This prevents self-join deadlocks when called from
     /// the pipeline's demux thread (via the ConnectionStateChanged event).
     /// </summary>
-#pragma warning disable CA2000 // Pipeline is disposed asynchronously on the ThreadPool
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "Pipeline is unconditionally disposed asynchronously on the ThreadPool inside the queued work item.")]
     private void ScheduleDeferredDisposal(Guid cameraId)
     {
         if (managedPipelines.TryRemove(cameraId, out var pipeline))
@@ -294,5 +297,4 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
             });
         }
     }
-#pragma warning restore CA2000
 }

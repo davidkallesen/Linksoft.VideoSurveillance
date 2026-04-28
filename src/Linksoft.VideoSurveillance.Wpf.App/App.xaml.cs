@@ -1,9 +1,15 @@
 // ReSharper disable AsyncVoidEventHandlerMethod
 namespace Linksoft.VideoSurveillance.Wpf.App;
 
-#pragma warning disable MA0049, CA1724 // Type name should not match containing namespace
+[SuppressMessage(
+    "Naming",
+    "MA0049:Type name should not match containing namespace",
+    Justification = "WPF convention: Application subclass is named App in the .App namespace.")]
+[SuppressMessage(
+    "Naming",
+    "CA1724:Type names should not match namespaces",
+    Justification = "WPF convention: Application subclass is named App in the .App namespace.")]
 public partial class App
-#pragma warning restore MA0049, CA1724
 {
     private const string AspireEnvVar = "services__api__https__0";
     private const string AspireEnvVarHttp = "services__api__http__0";

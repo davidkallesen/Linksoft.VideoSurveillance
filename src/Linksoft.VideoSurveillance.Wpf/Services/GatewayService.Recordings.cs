@@ -1,9 +1,9 @@
-#pragma warning disable CA1055 // URI return values should not be strings
-
 namespace Linksoft.VideoSurveillance.Wpf.Services;
 
 /// <summary>
 /// Gateway service - Recordings operations using generated endpoints.
+/// CA1055 suppression applied at the type level via [SuppressMessage] on
+/// the GatewayService.cs partial.
 /// </summary>
 public sealed partial class GatewayService
 {

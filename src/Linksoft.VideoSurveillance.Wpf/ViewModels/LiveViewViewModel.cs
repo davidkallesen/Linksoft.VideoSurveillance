@@ -133,6 +133,10 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
         await Application.Current.Dispatcher.InvokeAsync(StopAndDisposeTiles);
     }
 
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "Window self-disposes on close via the Closed event handler.")]
     public void OpenFullScreen(CameraTileViewModel tile)
     {
         ArgumentNullException.ThrowIfNull(tile);
@@ -144,11 +148,8 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
             tile.DisplayName,
             tile.Description);
 
-        // Window self-disposes on close (via Closed event handler)
-#pragma warning disable CA2000
         var window = new FullScreenCameraWindow(viewModel);
         window.Show();
-#pragma warning restore CA2000
     }
 
     public void Dispose()

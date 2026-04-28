@@ -43,3 +43,9 @@ dotnet_diagnostic.S6964.severity = none             # The rule S6964 should not 
 ##########################################
 # Custom - Code Analyzers Rules
 ##########################################
+
+# ServerMotionDetectionService.MotionDetected is required by
+# IMotionDetectionService but cannot be raised until frame-differencing is
+# implemented. Compiler warning CS0067 cannot be silenced via [SuppressMessage].
+[ServerMotionDetectionService.cs]
+dotnet_diagnostic.CS0067.severity = none   # Event is never used

@@ -1,10 +1,12 @@
-#pragma warning disable CS0169 // Field is never used
-#pragma warning disable CS0414 // Field is assigned but its value is never used
 namespace Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 
 /// <summary>
 /// Control for displaying multiple camera tiles in a dynamic grid layout.
 /// </summary>
+/// <remarks>
+/// CS0169 / CS0414 are suppressed via &lt;NoWarn&gt; in the .csproj —
+/// [DependencyProperty] backing fields are read by the source generator.
+/// </remarks>
 public partial class CameraGrid
 {
     [DependencyProperty(DefaultValue = 1)]

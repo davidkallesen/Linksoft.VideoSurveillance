@@ -17,3 +17,10 @@ dotnet_diagnostic.MA0048.severity = none            # To support partial classes
 ##########################################
 # Custom - Code Analyzers Rules
 ##########################################
+
+# WPF UserControl code-behind: [DependencyProperty] backing fields are read
+# by the source-generated property surface. CS-prefixed compiler warnings
+# cannot be silenced via [SuppressMessage], so suppress per-file here.
+[*.xaml.cs]
+dotnet_diagnostic.CS0169.severity = none   # Field is never used
+dotnet_diagnostic.CS0414.severity = none   # Field is assigned but never used

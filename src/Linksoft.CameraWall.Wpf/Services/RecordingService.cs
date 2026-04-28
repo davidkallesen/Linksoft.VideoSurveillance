@@ -120,6 +120,10 @@ public partial class RecordingService : IRecordingService, IDisposable
     }
 
     /// <inheritdoc/>
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "Pipeline is owned and disposed by CameraTile; this service only holds a non-owning reference for the recording lifetime.")]
     public void StopRecording(Guid cameraId)
     {
         // Stop thumbnail capture first (generates thumbnail with captured frames)
@@ -136,10 +140,7 @@ public partial class RecordingService : IRecordingService, IDisposable
         StopPostMotionTimer(cameraId);
 
         // Stop recording via media pipeline
-        // Note: Pipeline is owned by CameraTile, not RecordingService - we just hold a reference for recording
-#pragma warning disable CA2000 // Pipeline is owned and disposed by CameraTile
         if (pipelines.TryRemove(cameraId, out var pipeline))
-#pragma warning restore CA2000
         {
             try
             {

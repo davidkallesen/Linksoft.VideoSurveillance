@@ -44,6 +44,10 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
 
     public event Action? FrameReady;
 
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "nv12Texture is a non-owning wrapper around an FFmpeg-owned texture pointer; disposing it would corrupt FFmpeg's HW frames context.")]
     public void OnFrameDecoded(AVFrame* frame)
     {
         if (frame is null || (AVPixelFormat)frame->format != AVPixelFormat.D3d11)
@@ -61,9 +65,7 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
 
         // Wrap the FFmpeg-owned texture pointer as a Vortice COM object.
         // Do NOT dispose — the texture is owned by FFmpeg's HW frames context.
-#pragma warning disable CA2000
         var nv12Texture = new ID3D11Texture2D(texturePtr);
-#pragma warning restore CA2000
 
         // Use the frame's display dimensions, not the texture's allocated size.
         // HEVC decoders pad the texture height up to the next CTU multiple

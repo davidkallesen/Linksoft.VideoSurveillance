@@ -1,4 +1,5 @@
-#pragma warning disable MA0048 // File name must match type name — Aspire convention uses AppHost.cs for top-level Program
+// MA0048 (file name must match type name) is suppressed via NoWarn in the
+// .csproj — Aspire convention uses AppHost.cs for the top-level program.
 var builder = DistributedApplication.CreateBuilder(args);
 
 var api = builder
