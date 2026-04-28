@@ -38,34 +38,40 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
         StopDetection(cameraId);
 
         var context = new MotionDetectionContext(cameraId, pipeline, settings ?? new MotionDetectionSettings());
-        if (!contexts.TryAdd(cameraId, context))
-        {
-            context.Dispose();
-            return;
-        }
 
-        // Add to scheduler
+        // Mutate contexts and scheduledCameras together under the same lock so
+        // a concurrent Start/Stop pair cannot leave a camera scheduled but
+        // missing from contexts (which would silently stop analysis for it).
+        bool added;
         lock (schedulerLock)
         {
-            scheduledCameras.Add(cameraId);
-            UpdateSchedulerInterval();
+            added = contexts.TryAdd(cameraId, context);
+            if (added)
+            {
+                scheduledCameras.Add(cameraId);
+                UpdateSchedulerInterval();
+            }
+        }
+
+        if (!added)
+        {
+            context.Dispose();
         }
     }
 
     /// <inheritdoc/>
     public void StopDetection(Guid cameraId)
     {
-        if (contexts.TryRemove(cameraId, out var context))
-        {
-            context.Dispose();
-        }
-
-        // Remove from scheduler
+        // Same atomic invariant as StartDetection: both maps move together.
+        MotionDetectionContext? context;
         lock (schedulerLock)
         {
+            contexts.TryRemove(cameraId, out context);
             scheduledCameras.Remove(cameraId);
             UpdateSchedulerInterval();
         }
+
+        context?.Dispose();
     }
 
     /// <inheritdoc/>
