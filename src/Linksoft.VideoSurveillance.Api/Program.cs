@@ -97,6 +97,11 @@ try
     // MediaCleanupService but runs on a System.Threading.Timer (no UI).
     builder.Services.AddHostedService<ServerMediaCleanupBackgroundService>();
 
+    // Clock-aligned segment rollover so server recordings don't grow into
+    // single multi-day files. Uses the shared RecordingSlotCalculator so
+    // boundary detection is immune to NTP rollback, midnight, and DST.
+    builder.Services.AddHostedService<ServerRecordingSegmentationBackgroundService>();
+
     var app = builder.Build();
 
     app.UseCors();
