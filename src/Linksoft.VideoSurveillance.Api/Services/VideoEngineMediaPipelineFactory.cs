@@ -19,11 +19,30 @@ public sealed class VideoEngineMediaPipelineFactory : IMediaPipelineFactory
     {
         ArgumentNullException.ThrowIfNull(camera);
 
+        // The wrapping pipeline owns the player and disposes it transitively.
+        // Pre-pipeline construction failures (or pipeline.Open throwing) used
+        // to leak the half-constructed player/pipeline because the caller's
+        // `using var` never received the reference.
         var player = videoPlayerFactory.Create();
-        var pipeline = new VideoEngineMediaPipeline(player, camera.Display.DisplayName);
+        VideoEngineMediaPipeline? pipeline = null;
+        try
+        {
+            pipeline = new VideoEngineMediaPipeline(player, camera.Display.DisplayName);
+            pipeline.Open(camera.BuildUri(), camera.Stream);
+            return pipeline;
+        }
+        catch
+        {
+            if (pipeline is not null)
+            {
+                pipeline.Dispose();
+            }
+            else
+            {
+                (player as IDisposable)?.Dispose();
+            }
 
-        pipeline.Open(camera.BuildUri(), camera.Stream);
-
-        return pipeline;
+            throw;
+        }
     }
 }
