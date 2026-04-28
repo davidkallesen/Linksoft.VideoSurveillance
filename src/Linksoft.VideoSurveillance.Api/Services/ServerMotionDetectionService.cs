@@ -92,24 +92,16 @@ public sealed partial class ServerMotionDetectionService : IMotionDetectionServi
         Guid cameraId,
         DetectionContext context)
     {
-        var intervalMs = Math.Max(200, 1000 / Math.Max(1, context.Settings.AnalysisFrameRate));
+        // Frame differencing is not yet implemented; previously this loop
+        // captured a frame on every tick and discarded it, wasting ~1.5 MB/s
+        // per camera (≈150 MB/day per camera) of CPU/bandwidth without
+        // producing any events. Hold the registration open by waiting on the
+        // cancellation token until StopDetection is called.
+        LogMotionDetectionAlgorithmNotImplemented(cameraId);
 
         try
         {
-            while (!context.Cts.Token.IsCancellationRequested)
-            {
-                await Task.Delay(intervalMs, context.Cts.Token).ConfigureAwait(false);
-
-                var frame = await context.Pipeline
-                    .CaptureFrameAsync(context.Cts.Token)
-                    .ConfigureAwait(false);
-
-                if (frame is not null)
-                {
-                    // TODO: Implement frame differencing for actual motion detection
-                    // For now, discard the frame and leave motion inactive
-                }
-            }
+            await Task.Delay(Timeout.Infinite, context.Cts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
