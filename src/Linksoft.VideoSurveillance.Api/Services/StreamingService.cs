@@ -6,10 +6,17 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// </summary>
 public sealed partial class StreamingService : IDisposable
 {
+    // A client that drops its socket without calling StopStream leaves the
+    // viewer count > 0 and the FFmpeg transcoder running. The reaper closes
+    // sessions whose last activity is older than this threshold.
+    private static readonly TimeSpan InactivityTimeout = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan ReaperInterval = TimeSpan.FromSeconds(30);
+
     private readonly ICameraStorageService storage;
     private readonly ILogger<StreamingService> logger;
     private readonly ConcurrentDictionary<Guid, StreamSession> sessions = new();
     private readonly string hlsOutputRoot;
+    private readonly Timer reaperTimer;
     private bool disposed;
 
     public StreamingService(
@@ -21,6 +28,8 @@ public sealed partial class StreamingService : IDisposable
 
         hlsOutputRoot = Path.Combine(Path.GetTempPath(), "linksoft-hls");
         Directory.CreateDirectory(hlsOutputRoot);
+
+        reaperTimer = new Timer(ReapIdleSessions, state: null, ReaperInterval, ReaperInterval);
     }
 
     /// <summary>
@@ -37,8 +46,22 @@ public sealed partial class StreamingService : IDisposable
         var session = sessions.GetOrAdd(cameraId, id => CreateSession(id));
 
         session.IncrementViewers();
+        session.TouchActivity();
 
         return session.PlaylistPath;
+    }
+
+    /// <summary>
+    /// Refreshes the last-activity timestamp for a stream so it isn't reaped
+    /// for inactivity. Clients should call this periodically (e.g. once per
+    /// HLS playlist poll) so a dropped connection eventually triggers reap.
+    /// </summary>
+    public void Heartbeat(Guid cameraId)
+    {
+        if (sessions.TryGetValue(cameraId, out var session))
+        {
+            session.TouchActivity();
+        }
     }
 
     /// <summary>
@@ -107,12 +130,53 @@ public sealed partial class StreamingService : IDisposable
 
         disposed = true;
 
+        reaperTimer.Dispose();
+
         foreach (var session in sessions.Values)
         {
             session.Dispose();
         }
 
         sessions.Clear();
+    }
+
+    private void ReapIdleSessions(object? state)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        var cutoff = DateTime.UtcNow - InactivityTimeout;
+        foreach (var (cameraId, session) in sessions)
+        {
+            if (session.LastActivityUtc < cutoff)
+            {
+                ReapSession(cameraId);
+            }
+        }
+    }
+
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "removed is unconditionally disposed inside the try block.")]
+    private void ReapSession(Guid cameraId)
+    {
+        if (!sessions.TryRemove(cameraId, out var removed))
+        {
+            return;
+        }
+
+        try
+        {
+            removed.Dispose();
+            LogHlsStreamReaped(cameraId);
+        }
+        catch (Exception ex)
+        {
+            LogHlsStreamReapFailed(ex, cameraId);
+        }
     }
 
     private StreamSession CreateSession(Guid cameraId)
@@ -191,6 +255,7 @@ public sealed partial class StreamingService : IDisposable
         private readonly string outputDir;
         private readonly List<string> errorLines = [];
         private int viewerCount;
+        private long lastActivityUtcTicks;
 
         public StreamSession(
             Process process,
@@ -200,6 +265,7 @@ public sealed partial class StreamingService : IDisposable
             this.process = process;
             this.outputDir = outputDir;
             PlaylistPath = playlistPath;
+            lastActivityUtcTicks = DateTime.UtcNow.Ticks;
         }
 
         public string PlaylistPath { get; }
@@ -209,6 +275,12 @@ public sealed partial class StreamingService : IDisposable
         public bool HasExited => process.HasExited;
 
         public int ExitCode => process.HasExited ? process.ExitCode : -1;
+
+        public DateTime LastActivityUtc
+            => new(Interlocked.Read(ref lastActivityUtcTicks), DateTimeKind.Utc);
+
+        public void TouchActivity()
+            => Interlocked.Exchange(ref lastActivityUtcTicks, DateTime.UtcNow.Ticks);
 
         public void AddErrorLine(string line) => errorLines.Add(line);
 

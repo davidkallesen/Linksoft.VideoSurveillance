@@ -176,4 +176,15 @@ public sealed partial class SurveillanceHub : Hub
         streamingService.StopStream(cameraId);
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Refreshes the last-activity timestamp for a stream so the inactivity
+    /// reaper does not stop it. Clients should call this periodically (e.g.
+    /// every 30 s) while the user is watching the stream.
+    /// </summary>
+    public Task StreamHeartbeat(Guid cameraId)
+    {
+        streamingService.Heartbeat(cameraId);
+        return Task.CompletedTask;
+    }
 }
