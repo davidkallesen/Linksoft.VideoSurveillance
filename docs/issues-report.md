@@ -18,6 +18,8 @@ This report focuses only on issues that would surface during long-running unatte
 - **P2.10 Thumbnail write atomicity** — `ThumbnailGeneratorService` now writes to `*.tmp` and atomically `File.Move(..., overwrite: true)` into place, so the recordings browser cannot observe a partially-written PNG.
 - **P2.12 Filename collision prevention** — extracted `UniqueFilename.EnsureUnique` to Core, plus switched all 3 filename generators (`RecordingService`, `TimelapseService`, `ServerRecordingService`) to millisecond-resolution timestamps (`yyyyMMdd_HHmmss_fff`). Collisions now require sub-millisecond timing AND `EnsureUnique` falls back to a `_2/_3/…/_999` suffix and finally a UTC-millisecond fallback. 7 unit tests.
 - **P2.14 MotionDetectionService scheduler atomicity** — `StartDetection`/`StopDetection` now mutate `contexts` and `scheduledCameras` together under `schedulerLock`, eliminating the interleaving that could leave a camera scheduled but missing from contexts (silent no-analysis state).
+- **P2.13 Server motion loop no longer wastes frames** — `ServerMotionDetectionService.RunDetectionLoopAsync` was capturing a frame every 200 ms and discarding it (≈1.5 MB/s per camera). Now logs a one-time `LogMotionDetectionAlgorithmNotImplemented` warning and waits on the cancellation token; analysis kicks back in cleanly when the differencing algorithm is implemented.
+- **P2.11 SwapChainPresenter device-lost detection** — `Present` and `ResizeBuffers` return values are now inspected for `DXGI_ERROR_DEVICE_REMOVED` / `_HUNG` / `_RESET` / `DRIVER_INTERNAL_ERROR`. On detection a `volatile bool deviceLost` flag latches, the `DeviceLost` event fires (outside the lock so subscribers can re-enter the pipeline), and subsequent `Present` calls short-circuit. Stops the post-driver-crash busy loop; full upstream pipeline recovery still has to subscribe to the event (deferred — VideoHost has no logger or DI yet).
 
 ---
 
@@ -97,9 +99,9 @@ The following ordering balances **likelihood × user impact**. P1 items should b
 8. **✅ DONE — Bound `recordingCooldowns` and `postMotionTimers` (1.1, 1.8).** Cooldowns pruned opportunistically; postMotionTimers verified self-healing.
 9. **✅ DONE — Robust segmentation slot detection (1.2).** `RecordingSlotCalculator` + 12 unit tests.
 10. **✅ DONE — Thumbnail write atomicity (3.7).** Temp + `File.Move(overwrite: true)`.
-11. **`SwapChainPresenter.Present` recovery (2.4).** Inspect HRESULT; on `DEVICE_REMOVED`, raise an event so the player drops and re-opens the demuxer. Today the camera is silently dead.
+11. **✅ DONE (presenter half) — `SwapChainPresenter.Present` recovery (2.4).** Device-lost HRESULTs detected, `IsDeviceLost` latched, `DeviceLost` event raised. Upstream pipeline subscriber to actually re-create the chain is deferred to P3.
 12. **✅ DONE — Filename collision prevention (3.5).** `UniqueFilename.EnsureUnique` + ms timestamps + 7 unit tests.
-13. **Bound the motion-analysis fire-and-forget queue (1.7, 4.2).** Add an in-flight counter; on the server side, also stop allocating frames in the no-op detection loop until the algorithm is implemented.
+13. **✅ DONE (server side) — Bound the motion-analysis fire-and-forget queue (1.7, 4.2).** Server loop no longer captures+discards frames; WPF side already had the `IsAnalyzing` guard.
 14. **✅ DONE — `MotionDetectionService` scheduler iteration (1.5).** `contexts` and `scheduledCameras` now mutated together under `schedulerLock`.
 15. **HLS viewer lease/heartbeat (4.6).** Per-viewer inactivity timeout (e.g. 30 s without a manifest poll → drop). Reaps orphaned FFmpeg transcoders automatically.
 16. **`StartRecordingHandler` should await `Connected` (4.5).** Wait on `ConnectionStateChanged → Connected` (with a timeout) before returning success; or return an explicit "pending" state and let the client poll.
