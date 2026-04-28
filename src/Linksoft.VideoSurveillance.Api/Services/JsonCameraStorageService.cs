@@ -137,42 +137,23 @@ public sealed partial class JsonCameraStorageService : ICameraStorageService
     /// <inheritdoc/>
     public void Save()
     {
-        try
+        if (!SafeJsonFile.TryWrite(storagePath, data, JsonOptions))
         {
-            var directory = Path.GetDirectoryName(storagePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            var json = JsonSerializer.Serialize(data, JsonOptions);
-            File.WriteAllText(storagePath, json);
-        }
-        catch (Exception ex)
-        {
-            LogStorageSaveFailed(ex, storagePath);
+            LogStorageSaveFailed(new IOException("Atomic save failed"), storagePath);
         }
     }
 
     /// <inheritdoc/>
     public void Load()
     {
-        try
+        var loaded = SafeJsonFile.TryRead<CameraStorageData>(storagePath, JsonOptions);
+        if (loaded is not null)
         {
-            if (!File.Exists(storagePath))
-            {
-                data = new CameraStorageData();
-                return;
-            }
-
-            var json = File.ReadAllText(storagePath);
-            data = JsonSerializer.Deserialize<CameraStorageData>(json, JsonOptions) ?? new CameraStorageData();
-
+            data = loaded;
             LogStorageLoaded(data.Cameras.Count, data.Layouts.Count, storagePath);
         }
-        catch (Exception ex)
+        else
         {
-            LogStorageLoadFailed(ex, storagePath);
             data = new CameraStorageData();
         }
     }

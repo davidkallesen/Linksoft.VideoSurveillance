@@ -150,22 +150,14 @@ public sealed partial class JsonApplicationSettingsService : IApplicationSetting
     /// <inheritdoc/>
     public void Load()
     {
-        try
+        var loaded = SafeJsonFile.TryRead<ApplicationSettings>(storagePath, JsonOptions);
+        if (loaded is not null)
         {
-            if (!File.Exists(storagePath))
-            {
-                appSettings = new ApplicationSettings();
-                return;
-            }
-
-            var json = File.ReadAllText(storagePath);
-            appSettings = JsonSerializer.Deserialize<ApplicationSettings>(json, JsonOptions) ?? new ApplicationSettings();
-
+            appSettings = loaded;
             LogSettingsLoaded(storagePath);
         }
-        catch (Exception ex)
+        else
         {
-            LogSettingsLoadFailed(ex, storagePath);
             appSettings = new ApplicationSettings();
         }
     }
@@ -173,20 +165,9 @@ public sealed partial class JsonApplicationSettingsService : IApplicationSetting
     /// <inheritdoc/>
     public void Save()
     {
-        try
+        if (!SafeJsonFile.TryWrite(storagePath, appSettings, JsonOptions))
         {
-            var directory = Path.GetDirectoryName(storagePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            var json = JsonSerializer.Serialize(appSettings, JsonOptions);
-            File.WriteAllText(storagePath, json);
-        }
-        catch (Exception ex)
-        {
-            LogSettingsSaveFailed(ex, storagePath);
+            LogSettingsSaveFailed(new IOException("Atomic save failed"), storagePath);
         }
     }
 
@@ -197,22 +178,13 @@ public sealed partial class JsonApplicationSettingsService : IApplicationSetting
             return;
         }
 
-        try
+        if (SafeJsonFile.TryWrite(storagePath, new ApplicationSettings(), JsonOptions))
         {
-            var directory = Path.GetDirectoryName(storagePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            var json = JsonSerializer.Serialize(new ApplicationSettings(), JsonOptions);
-            File.WriteAllText(storagePath, json);
-
             LogDefaultSettingsCreated(storagePath);
         }
-        catch (Exception ex)
+        else
         {
-            LogDefaultSettingsCreateFailed(ex, storagePath);
+            LogDefaultSettingsCreateFailed(new IOException("Atomic save failed"), storagePath);
         }
     }
 }
