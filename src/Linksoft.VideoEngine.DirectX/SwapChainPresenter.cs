@@ -6,6 +6,14 @@ namespace Linksoft.VideoEngine.DirectX;
 /// </summary>
 public sealed class SwapChainPresenter : IDisposable
 {
+    // DXGI device-lost HRESULTs — when Present returns one of these the
+    // GPU device is gone (driver crash, sleep/resume, eviction) and the
+    // swap chain is unusable until the consumer recreates it.
+    private const int DxgiErrorDeviceRemoved = unchecked((int)0x887A0005);
+    private const int DxgiErrorDeviceHung = unchecked((int)0x887A0006);
+    private const int DxgiErrorDeviceReset = unchecked((int)0x887A0007);
+    private const int DxgiErrorDriverInternalError = unchecked((int)0x887A0020);
+
     private readonly D3D11Device d3d11Device;
     private readonly IDXGISwapChain1 swapChain;
     private readonly IDCompositionDevice dcompDevice;
@@ -24,6 +32,7 @@ public sealed class SwapChainPresenter : IDisposable
     private float panX;
     private float panY;
     private bool disposed;
+    private volatile bool deviceLost;
 
     public SwapChainPresenter(
         D3D11Device d3d11Device,
@@ -100,6 +109,20 @@ public sealed class SwapChainPresenter : IDisposable
         dcompDevice.Commit().CheckError();
     }
 
+    /// <summary>
+    /// Raised once when the underlying GPU device is lost. Subsequent
+    /// <see cref="Present"/> calls are no-ops; the upstream consumer
+    /// (typically <c>VideoPlayer</c>) should recreate the pipeline.
+    /// </summary>
+    public event EventHandler<EventArgs>? DeviceLost;
+
+    /// <summary>
+    /// Indicates whether the presenter has detected a lost GPU device.
+    /// Once <c>true</c>, this presenter cannot recover and must be
+    /// disposed and recreated by the consumer.
+    /// </summary>
+    public bool IsDeviceLost => deviceLost;
+
     private static IDCompositionSurface CreateBlackSurface(
         IDCompositionDevice device,
         ID3D11DeviceContext context)
@@ -143,14 +166,16 @@ public sealed class SwapChainPresenter : IDisposable
         int videoWidth,
         int videoHeight)
     {
-        if (disposed)
+        if (disposed || deviceLost)
         {
             return;
         }
 
+        var raisedDeviceLost = false;
+
         lock (presentLock)
         {
-            if (disposed)
+            if (disposed || deviceLost)
             {
                 return;
             }
@@ -160,27 +185,65 @@ public sealed class SwapChainPresenter : IDisposable
 
             if (w != swapChainWidth || h != swapChainHeight)
             {
-                swapChain.ResizeBuffers(
+                var resizeResult = swapChain.ResizeBuffers(
                     0,
                     w,
                     h,
                     Format.Unknown,
                     SwapChainFlags.None);
-                swapChainWidth = w;
-                swapChainHeight = h;
 
-                // Swap chain dimensions changed — update the DComp transform
-                // so it scales correctly to the control size.
-                if (lastControlWidth > 0 && lastControlHeight > 0)
+                if (IsDeviceLostResult(resizeResult))
                 {
-                    ApplyTransform();
+                    deviceLost = true;
+                    raisedDeviceLost = true;
+                }
+                else
+                {
+                    swapChainWidth = w;
+                    swapChainHeight = h;
+
+                    // Swap chain dimensions changed — update the DComp transform
+                    // so it scales correctly to the control size.
+                    if (lastControlWidth > 0 && lastControlHeight > 0)
+                    {
+                        ApplyTransform();
+                    }
                 }
             }
 
-            using var backBuffer = swapChain.GetBuffer<ID3D11Texture2D>(0);
-            d3d11Device.DeviceContext.CopyResource(backBuffer, bgraTexture);
-            swapChain.Present(0, PresentFlags.None);
+            if (!deviceLost)
+            {
+                using var backBuffer = swapChain.GetBuffer<ID3D11Texture2D>(0);
+                d3d11Device.DeviceContext.CopyResource(backBuffer, bgraTexture);
+                var presentResult = swapChain.Present(0, PresentFlags.None);
+
+                if (IsDeviceLostResult(presentResult))
+                {
+                    deviceLost = true;
+                    raisedDeviceLost = true;
+                }
+            }
         }
+
+        // Raise outside the lock so subscribers (e.g. VideoPlayer) can
+        // safely re-enter the pipeline without re-acquiring presentLock.
+        if (raisedDeviceLost)
+        {
+            DeviceLost?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private static bool IsDeviceLostResult(SharpGen.Runtime.Result result)
+    {
+        if (result.Success)
+        {
+            return false;
+        }
+
+        return result.Code is DxgiErrorDeviceRemoved
+                           or DxgiErrorDeviceHung
+                           or DxgiErrorDeviceReset
+                           or DxgiErrorDriverInternalError;
     }
 
     /// <summary>
