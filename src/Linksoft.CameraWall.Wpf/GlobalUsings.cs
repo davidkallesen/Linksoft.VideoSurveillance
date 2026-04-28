@@ -53,3 +53,4 @@ global using RecordingSlotCalculator = Linksoft.VideoSurveillance.Helpers.Record
 global using RecordingStateChangedEventArgs = Linksoft.VideoSurveillance.Events.RecordingStateChangedEventArgs;
 global using SegmentationReason = Linksoft.VideoSurveillance.Events.SegmentationReason;
 global using TimelapseFrameCapturedEventArgs = Linksoft.VideoSurveillance.Events.TimelapseFrameCapturedEventArgs;
+global using UniqueFilename = Linksoft.VideoSurveillance.Helpers.UniqueFilename;

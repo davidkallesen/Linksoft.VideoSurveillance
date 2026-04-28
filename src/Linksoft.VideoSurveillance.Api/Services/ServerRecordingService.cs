@@ -117,13 +117,13 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
             ? camera.Id.ToString("N")[..8]
             : string.Join("_", camera.Display.DisplayName.Split(Path.GetInvalidFileNameChars()));
 
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss", System.Globalization.CultureInfo.InvariantCulture);
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff", System.Globalization.CultureInfo.InvariantCulture);
         var ext = string.IsNullOrEmpty(format) ? "mp4" : format.TrimStart('.');
 
-        return Path.Combine(
+        return UniqueFilename.EnsureUnique(Path.Combine(
             settingsService.Recording.RecordingPath,
             safeName,
-            $"{safeName}_{timestamp}.{ext}");
+            $"{safeName}_{timestamp}.{ext}"));
     }
 
     /// <inheritdoc/>

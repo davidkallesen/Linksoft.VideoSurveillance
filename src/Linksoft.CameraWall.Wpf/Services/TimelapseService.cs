@@ -199,7 +199,7 @@ public partial class TimelapseService : ITimelapseService, IDisposable
     {
         var basePath = GetSnapshotBasePath();
         var safeDisplayName = SanitizeFilename(camera.Display.DisplayName);
-        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
 
         // Create timelapse subfolder structure: {SnapshotPath}/timelapse/{CameraName}/
         var timelapseFolder = Path.Combine(basePath, "timelapse", safeDisplayName);
@@ -207,7 +207,7 @@ public partial class TimelapseService : ITimelapseService, IDisposable
         // Generate filename: {CameraName}_{timestamp}.png
         var filename = $"{safeDisplayName}_{timestamp}.png";
 
-        return Path.Combine(timelapseFolder, filename);
+        return UniqueFilename.EnsureUnique(Path.Combine(timelapseFolder, filename));
     }
 
     private string GetSnapshotBasePath()
