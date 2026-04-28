@@ -12,6 +12,7 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
 
     private readonly ILogger<MediaCleanupService> logger;
     private readonly IApplicationSettingsService settingsService;
+    private readonly IRecordingService recordingService;
     private readonly Lock lockObject = new();
     private DispatcherTimer? periodicTimer;
     private bool isRunning;
@@ -22,12 +23,15 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="settingsService">The application settings service.</param>
+    /// <param name="recordingService">The recording service, used to identify and skip files that are currently being written to.</param>
     public MediaCleanupService(
         ILogger<MediaCleanupService> logger,
-        IApplicationSettingsService settingsService)
+        IApplicationSettingsService settingsService,
+        IRecordingService recordingService)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        this.recordingService = recordingService ?? throw new ArgumentNullException(nameof(recordingService));
     }
 
     /// <inheritdoc/>
@@ -100,6 +104,11 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
                 settings.IncludeSnapshots,
                 settings.SnapshotRetentionDays);
 
+            // Snapshot active recording paths so an in-progress recording is
+            // never deleted by the cleanup pass (sharing-violation IOException
+            // on Windows; orphaned undeletable file otherwise).
+            var activePaths = GetActiveRecordingPaths();
+
             // Clean recordings
             var recordingPath = settingsService.Recording.RecordingPath;
             if (!string.IsNullOrEmpty(recordingPath) && Directory.Exists(recordingPath))
@@ -109,6 +118,7 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
                     RecordingExtensions,
                     settings.RecordingRetentionDays,
                     result,
+                    activePaths,
                     isRecording: true).ConfigureAwait(false);
             }
 
@@ -123,6 +133,7 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
                         SnapshotExtensions,
                         settings.SnapshotRetentionDays,
                         result,
+                        activePaths,
                         isRecording: false).ConfigureAwait(false);
                 }
             }
@@ -189,7 +200,7 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
             Interval = PeriodicInterval,
         };
 
-        periodicTimer.Tick += async (_, _) => await RunCleanupAsync().ConfigureAwait(false);
+        periodicTimer.Tick += OnPeriodicTimerTick;
         periodicTimer.Start();
 
         LogPeriodicTimerStarted(PeriodicInterval);
@@ -200,9 +211,56 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
         if (periodicTimer is not null)
         {
             periodicTimer.Stop();
+            periodicTimer.Tick -= OnPeriodicTimerTick;
             periodicTimer = null;
             LogPeriodicTimerStopped();
         }
+    }
+
+    // Async-void event handler must catch all exceptions; an unobserved
+    // exception here would crash the dispatcher.
+    private async void OnPeriodicTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        try
+        {
+            await RunCleanupAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogPeriodicTickFailed(ex);
+        }
+    }
+
+    // Builds an unordered, case-insensitive set of file paths currently being
+    // written by the recording service. Used to skip in-flight files during
+    // cleanup so we never call File.Delete on a handle the muxer still owns.
+    private HashSet<string> GetActiveRecordingPaths()
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            foreach (var session in recordingService.GetActiveSessions())
+            {
+                if (!string.IsNullOrEmpty(session.CurrentFilePath))
+                {
+                    set.Add(Path.GetFullPath(session.CurrentFilePath));
+
+                    // Also protect the live thumbnail companion file
+                    var thumbnail = Path.ChangeExtension(session.CurrentFilePath, ".png");
+                    set.Add(Path.GetFullPath(thumbnail));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // If we can't enumerate sessions, fail safe by treating no files as active
+            // — but at least don't take down the cleanup pass.
+            LogActiveSessionLookupFailed(ex);
+        }
+
+        return set;
     }
 
     private Task CleanDirectoryAsync(
@@ -210,6 +268,7 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
         string[] extensions,
         int retentionDays,
         MediaCleanupResult result,
+        HashSet<string> activePaths,
         bool isRecording)
     {
         var cutoffDate = DateTime.Now.AddDays(-retentionDays);
@@ -225,6 +284,12 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
                 {
                     try
                     {
+                        // Skip files currently being written by an active recording
+                        if (activePaths.Contains(Path.GetFullPath(file)))
+                        {
+                            continue;
+                        }
+
                         var fileInfo = new FileInfo(file);
                         if (fileInfo.LastWriteTime < cutoffDate)
                         {
@@ -271,6 +336,18 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
             catch (DirectoryNotFoundException)
             {
                 // Directory no longer exists, nothing to clean
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // Recursive enumeration hit a folder we can't read; abort this batch
+                result.ErrorCount++;
+                LogEnumerationFailed(ex, path);
+            }
+            catch (IOException ex)
+            {
+                // Network drive dropped, path-too-long, etc. Don't crash the dispatcher.
+                result.ErrorCount++;
+                LogEnumerationFailed(ex, path);
             }
         });
     }
