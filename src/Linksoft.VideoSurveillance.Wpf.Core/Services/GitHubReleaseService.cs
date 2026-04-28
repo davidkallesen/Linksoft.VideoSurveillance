@@ -9,6 +9,8 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
 {
     private const string GitHubApiUrl = "https://api.github.com/repos/davidkallesen/Linksoft.VideoSurveillance/releases/latest";
     private const string UserAgent = "Linksoft-VideoSurveillance";
+    private static readonly TimeSpan LockAcquisitionTimeout = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan HttpRequestTimeout = TimeSpan.FromSeconds(10);
 
     private readonly HttpClient httpClient;
     private readonly SemaphoreSlim cacheLock = new(1, 1);
@@ -20,7 +22,10 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
     /// </summary>
     public GitHubReleaseService()
     {
-        httpClient = new HttpClient();
+        httpClient = new HttpClient
+        {
+            Timeout = HttpRequestTimeout,
+        };
         httpClient.DefaultRequestHeaders.Add("User-Agent", UserAgent);
     }
 
@@ -158,35 +163,49 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
             return cachedResponse;
         }
 
+        // Bound the wait so a hung HTTP request can't freeze every other
+        // caller indefinitely (e.g. update-check on UI thread during startup).
         var acquired = false;
-
         try
         {
-            await cacheLock.WaitAsync().ConfigureAwait(false);
-            acquired = true;
+            acquired = await cacheLock
+                .WaitAsync(LockAcquisitionTimeout)
+                .ConfigureAwait(false);
+            if (!acquired)
+            {
+                return null;
+            }
 
             // Double-check after acquiring lock (another thread may have populated the cache)
             if (cachedResponse is not null)
             {
                 return cachedResponse;
             }
-
-            cachedResponse = await httpClient
-                .GetStringAsync(new Uri(GitHubApiUrl))
-                .ConfigureAwait(false);
-
-            return cachedResponse;
-        }
-        catch
-        {
-            return null;
         }
         finally
         {
+            // Release before the HTTP call so we never hold the lock across
+            // a network round-trip; HttpClient.Timeout still bounds the call.
             if (acquired)
             {
                 cacheLock.Release();
             }
+        }
+
+        try
+        {
+            var response = await httpClient
+                .GetStringAsync(new Uri(GitHubApiUrl))
+                .ConfigureAwait(false);
+
+            // Best-effort cache population; concurrent callers may race here
+            // but the worst outcome is one extra HTTP request, never a hang.
+            cachedResponse = response;
+            return response;
+        }
+        catch
+        {
+            return null;
         }
     }
 }
