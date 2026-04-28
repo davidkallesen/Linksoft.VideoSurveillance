@@ -43,11 +43,16 @@ public sealed partial class SurveillanceHub : Hub
     }
 
     /// <summary>
-    /// Called when a client disconnects from the hub.
+    /// Called when a client disconnects from the hub. Actively reaps any HLS
+    /// streams this connection started so their CPU-heavy FFmpeg transcoders
+    /// are stopped within seconds; otherwise a closed-tab client would let
+    /// its streams run until the StreamingService inactivity timer expires.
     /// </summary>
     public override Task OnDisconnectedAsync(Exception? exception)
     {
-        LogClientDisconnected(Context.ConnectionId);
+        var connectionId = Context.ConnectionId;
+        LogClientDisconnected(connectionId);
+        streamingService.OnConnectionDisconnected(connectionId);
         return base.OnDisconnectedAsync(exception);
     }
 
@@ -113,9 +118,10 @@ public sealed partial class SurveillanceHub : Hub
         Guid cameraId,
         CancellationToken cancellationToken = default)
     {
+        var connectionId = Context.ConnectionId;
         try
         {
-            var playlistPath = streamingService.StartStream(cameraId);
+            var playlistPath = streamingService.StartStream(cameraId, connectionId);
 
             // Wait for FFmpeg to create the playlist and first segment (up to 30 seconds)
             var timeout = TimeSpan.FromSeconds(30);
@@ -127,14 +133,14 @@ public sealed partial class SurveillanceHub : Hub
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    streamingService.StopStream(cameraId);
+                    streamingService.StopStream(cameraId, connectionId);
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
                 if (streamingService.HasProcessExited(cameraId))
                 {
                     var errors = streamingService.GetProcessError(cameraId);
-                    streamingService.StopStream(cameraId);
+                    streamingService.StopStream(cameraId, connectionId);
                     throw new InvalidOperationException(
                         $"FFmpeg exited unexpectedly. Output: {errors}");
                 }
@@ -142,7 +148,7 @@ public sealed partial class SurveillanceHub : Hub
                 if (DateTime.UtcNow - start > timeout)
                 {
                     var errors = streamingService.GetProcessError(cameraId);
-                    streamingService.StopStream(cameraId);
+                    streamingService.StopStream(cameraId, connectionId);
                     throw new TimeoutException(
                         $"FFmpeg did not produce the HLS playlist in time. Last output: {errors}");
                 }
@@ -173,7 +179,7 @@ public sealed partial class SurveillanceHub : Hub
     /// </summary>
     public Task StopStream(Guid cameraId)
     {
-        streamingService.StopStream(cameraId);
+        streamingService.StopStream(cameraId, Context.ConnectionId);
         return Task.CompletedTask;
     }
 
