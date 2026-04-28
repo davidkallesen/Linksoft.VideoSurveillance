@@ -1,4 +1,3 @@
-#pragma warning disable CS0169, CS0414 // Field is never used / assigned but never used (dependency property backing fields)
 namespace Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 
 using Rectangle = System.Windows.Shapes.Rectangle;
@@ -6,6 +5,10 @@ using Rectangle = System.Windows.Shapes.Rectangle;
 /// <summary>
 /// Overlay control for displaying multiple motion detection bounding boxes.
 /// </summary>
+/// <remarks>
+/// CS0169 / CS0414 are suppressed via &lt;NoWarn&gt; in the .csproj —
+/// [DependencyProperty] backing fields are read by the source generator.
+/// </remarks>
 public partial class MotionBoundingBoxOverlay
 {
     private const int DefaultAnalysisWidth = 320;

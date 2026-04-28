@@ -14,9 +14,12 @@ public sealed partial class ServerMotionDetectionService : IMotionDetectionServi
         => this.logger = logger;
 
     /// <inheritdoc/>
-#pragma warning disable CS0067 // Event is required by interface but not raised in stub implementation
+    /// <remarks>
+    /// CS0067 (event never used) suppressed via .editorconfig — the event is
+    /// required by IMotionDetectionService but cannot be raised until
+    /// frame-differencing is implemented.
+    /// </remarks>
     public event EventHandler<MotionDetectedEventArgs>? MotionDetected;
-#pragma warning restore CS0067
 
     /// <inheritdoc/>
     public void StartDetection(
@@ -124,11 +127,17 @@ public sealed partial class ServerMotionDetectionService : IMotionDetectionServi
 
         public CancellationTokenSource Cts { get; } = cts;
 
-#pragma warning disable S3459 // Properties assigned when motion detection logic is implemented
+        [SuppressMessage(
+            "Major Code Smell",
+            "S3459:Unassigned members should be removed",
+            Justification = "Property will be written once frame-differencing is implemented.")]
         public byte[]? PreviousFrame { get; set; }
 
+        [SuppressMessage(
+            "Major Code Smell",
+            "S3459:Unassigned members should be removed",
+            Justification = "Property will be written once frame-differencing is implemented.")]
         public bool IsMotionActive { get; set; }
-#pragma warning restore S3459
 
         public IReadOnlyList<BoundingBox> LastBoundingBoxes { get; set; } = [];
     }

@@ -64,18 +64,21 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     }
 
     /// <inheritdoc/>
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "Pipeline ownership belongs to the caller; this service only holds a non-owning reference for the recording lifetime.")]
     public void StopRecording(Guid cameraId)
     {
         if (!sessions.TryRemove(cameraId, out var session))
         {
             return;
         }
-#pragma warning disable CA2000 // Pipeline ownership belongs to caller, not this service
+
         if (pipelines.TryRemove(cameraId, out var pipeline))
         {
             pipeline.StopRecording();
         }
-#pragma warning restore CA2000
 
         RaiseStateChanged(cameraId, RecordingState.Recording, RecordingState.Idle, session.CurrentFilePath);
         LogRecordingStopped(cameraId);

@@ -1,7 +1,3 @@
-#pragma warning disable ATC220 // Cannot be global — conflicts with Linksoft.VideoSurveillance.Wpf.Windows namespace
-using Linksoft.VideoSurveillance.Wpf.Core.Windows;
-#pragma warning restore ATC220
-
 namespace Linksoft.VideoSurveillance.Wpf.ViewModels;
 
 /// <summary>
@@ -157,6 +153,10 @@ public sealed partial class RecordingsViewModel : ViewModelBase
     }
 
     [RelayCommand(CanExecute = nameof(CanPlay))]
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "Window self-disposes on close via the Closed event handler.")]
     private void Play()
     {
         if (SelectedRecording is null)
@@ -164,15 +164,12 @@ public sealed partial class RecordingsViewModel : ViewModelBase
             return;
         }
 
-        // Window self-disposes on close (via Closed event handler)
-#pragma warning disable CA2000
-        var vm = new FullScreenRecordingWindowViewModel(
+        var vm = new Linksoft.VideoSurveillance.Wpf.Core.Windows.FullScreenRecordingWindowViewModel(
             SelectedRecording.PlaybackUrl.AbsoluteUri,
             SelectedRecording.FileName);
 
-        var window = new FullScreenRecordingWindow(vm);
+        var window = new Linksoft.VideoSurveillance.Wpf.Core.Windows.FullScreenRecordingWindow(vm);
         window.Show();
-#pragma warning restore CA2000
     }
 
     [RelayCommand]

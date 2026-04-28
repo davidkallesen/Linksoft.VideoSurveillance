@@ -474,6 +474,10 @@ public partial class VideoHost : ContentControl, IDisposable
         presenter = null;
     }
 
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "Texture is owned by the renderer; this method only forwards a non-owning reference to the presenter.")]
     private void OnFrameReady()
     {
         if (presenter is null || boundAccelerator is null)
@@ -481,8 +485,6 @@ public partial class VideoHost : ContentControl, IDisposable
             return;
         }
 
-        // Texture is owned by the renderer — do not dispose here.
-#pragma warning disable CA2000
         if (boundAccelerator.TryGetBgraTexture(
                 out var texture,
                 out var width,
@@ -490,7 +492,6 @@ public partial class VideoHost : ContentControl, IDisposable
         {
             presenter.Present(texture!, width, height);
         }
-#pragma warning restore CA2000
     }
 
     private void OnOwnerLocationChanged(

@@ -4,6 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
+    <!-- Aspire convention uses AppHost.cs for the top-level program entry point. -->
+    <NoWarn>$(NoWarn);MA0048</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

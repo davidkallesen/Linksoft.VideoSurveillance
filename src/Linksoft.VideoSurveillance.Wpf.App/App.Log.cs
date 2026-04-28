@@ -1,8 +1,8 @@
 namespace Linksoft.VideoSurveillance.Wpf.App;
 
-#pragma warning disable MA0049, CA1724 // Type name matches containing namespace
+// MA0049 / CA1724 (type name matches namespace) suppressed via attributes on
+// the App.xaml.cs partial declaration; one attribute covers the whole type.
 public partial class App
-#pragma warning restore MA0049, CA1724
 {
     [LoggerMessage(Level = LogLevel.Error, Message = "CurrentDomain Unhandled Exception: {Message}")]
     private partial void LogCurrentDomainUnhandledException(string message);

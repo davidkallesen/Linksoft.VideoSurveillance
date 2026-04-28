@@ -1,8 +1,14 @@
 namespace Linksoft.VideoSurveillance.Blazor.App;
 
-#pragma warning disable MA0049, CA1724 // Type name should not match containing namespace
+[SuppressMessage(
+    "Naming",
+    "MA0049:Type name should not match containing namespace",
+    Justification = "Blazor convention: root component is named App in the .App namespace.")]
+[SuppressMessage(
+    "Naming",
+    "CA1724:Type names should not match namespaces",
+    Justification = "Blazor convention: root component is named App in the .App namespace.")]
 public partial class App
-#pragma warning restore MA0049, CA1724
 {
     private MudThemeProvider mudThemeProvider = null!;
     private bool isDarkMode = true;

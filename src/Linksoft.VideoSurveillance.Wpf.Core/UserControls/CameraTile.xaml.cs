@@ -3,13 +3,16 @@
 // ReSharper disable ParameterHidesMember
 // ReSharper disable ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
 // ReSharper disable GrammarMistakeInComment
-#pragma warning disable CS0169 // Field is never used
-#pragma warning disable CS0414 // Field is assigned but its value is never used
 namespace Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 
 /// <summary>
 /// Control for displaying a single camera stream with overlay and context menu.
 /// </summary>
+/// <remarks>
+/// CS0169 / CS0414 are suppressed via &lt;NoWarn&gt; in the .csproj because
+/// [DependencyProperty] backing fields are read by the source-generated
+/// property surface; compiler warnings cannot be silenced via [SuppressMessage].
+/// </remarks>
 public partial class CameraTile : IDisposable
 {
     [DependencyProperty(PropertyChangedCallback = nameof(OnCameraChanged))]

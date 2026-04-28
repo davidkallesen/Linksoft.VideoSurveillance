@@ -1,15 +1,29 @@
-#pragma warning disable CA1034 // Do not nest type
-#pragma warning disable CA1054 // URI parameters should not be strings
-#pragma warning disable CA1056 // URI properties should not be strings
-
 namespace Linksoft.VideoSurveillance.Blazor.App.Services;
 
 /// <summary>
 /// Service for connecting to the SignalR surveillance hub.
 /// Provides real-time camera events: connection state, recording, motion, and streaming.
 /// </summary>
-#pragma warning disable CA1003 // Use generic event handler instances
-#pragma warning disable MA0046 // The delegate must have 2 parameters
+[SuppressMessage(
+    "Design",
+    "CA1034:Nested types should not be visible",
+    Justification = "Event payload records are local to this service.")]
+[SuppressMessage(
+    "Design",
+    "CA1054:URI parameters should not be strings",
+    Justification = "Hub URLs are configured strings, not constructed Uri values; matches SignalR HubConnectionBuilder API.")]
+[SuppressMessage(
+    "Design",
+    "CA1056:URI properties should not be strings",
+    Justification = "Hub URLs are configured strings, not constructed Uri values; matches SignalR HubConnectionBuilder API.")]
+[SuppressMessage(
+    "Design",
+    "CA1003:Use generic event handler instances",
+    Justification = "Action<T> events are intentional for terse Blazor consumption.")]
+[SuppressMessage(
+    "Design",
+    "MA0046:Use EventHandler<T> to declare events",
+    Justification = "Action<T> events are intentional for terse Blazor consumption.")]
 public sealed class SurveillanceHubService : IAsyncDisposable
 {
     private HubConnection? hubConnection;
@@ -172,5 +186,3 @@ public sealed class SurveillanceHubService : IAsyncDisposable
 
     public sealed record StreamStartedEvent(Guid CameraId, string PlaylistUrl);
 }
-#pragma warning restore MA0046
-#pragma warning restore CA1003
