@@ -20,6 +20,14 @@ This report focuses only on issues that would surface during long-running unatte
 - **P2.14 MotionDetectionService scheduler atomicity** — `StartDetection`/`StopDetection` now mutate `contexts` and `scheduledCameras` together under `schedulerLock`, eliminating the interleaving that could leave a camera scheduled but missing from contexts (silent no-analysis state).
 - **P2.13 Server motion loop no longer wastes frames** — `ServerMotionDetectionService.RunDetectionLoopAsync` was capturing a frame every 200 ms and discarding it (≈1.5 MB/s per camera). Now logs a one-time `LogMotionDetectionAlgorithmNotImplemented` warning and waits on the cancellation token; analysis kicks back in cleanly when the differencing algorithm is implemented.
 - **P2.11 SwapChainPresenter device-lost detection** — `Present` and `ResizeBuffers` return values are now inspected for `DXGI_ERROR_DEVICE_REMOVED` / `_HUNG` / `_RESET` / `DRIVER_INTERNAL_ERROR`. On detection a `volatile bool deviceLost` flag latches, the `DeviceLost` event fires (outside the lock so subscribers can re-enter the pipeline), and subsequent `Present` calls short-circuit. Stops the post-driver-crash busy loop; full upstream pipeline recovery still has to subscribe to the event (deferred — VideoHost has no logger or DI yet).
+- **P3.18 GitHubReleaseService no longer holds the lock across HTTP** — `cacheLock.WaitAsync` now uses a 2-second timeout, the lock is released before the HTTP call, and `HttpClient.Timeout` caps at 10 s. A network stall on update-check can no longer freeze unrelated callers indefinitely.
+- **P3.19 Atomic recording segment switch** — `Remuxer` now exposes `SwitchTo` that holds `syncLock` across `CloseLocked + OpenLocked`. New `IMediaPipeline.SwitchRecording` (default impl falls back to Stop+Start) is overridden in both `VideoEngineMediaPipeline`s to call `VideoPlayer.SwitchRecording` → `Remuxer.SwitchTo`. `RecordingService.SegmentRecording` uses the atomic path so packets arriving from the demux thread mid-switch land in the previous or new segment, never the close/open gap.
+- **P3.20 GPU allocation try/finally** — `VideoProcessorRenderer.EnsurePipeline` wraps `CreateVideoProcessorEnumerator → CreateVideoProcessor → CreateTexture2D → CreateVideoProcessorOutputView` in try/catch with `ReleasePipeline()` cleanup. `GpuSnapshotCapture.EnsureEncoder` has the same shape with `FreeEncoder()` cleanup. Failures during rotation/resolution churn no longer strand half-allocated GPU resources.
+- **P3.22 FFmpeg cleanup on failure** — `FrameCapture.EnsureContexts` and `GpuSnapshotCapture.EnsureEncoder` now wrap their multi-step allocation (sws + frame + buffer + encoder) in try/catch with `FreeContexts/FreeEncoder()` cleanup, plus `av_dict_free(ref opts)` in finally. Failures between alloc steps no longer leak `AVFrame` buffers or option dictionaries.
+- **P3.23 Reconnect uses capped exponential backoff** — extracted `ReconnectBackoff.ComputeDelay` to Core (30 s → 60 s → 120 s → 240 s → 480 s → 900 s cap), wired into `CameraConnectionManager` via a per-camera `BackoffState`. A persistently dead camera now contributes a small constant rate of failed attempts instead of ~1 M/year. Cleared on successful Connected event. 11 unit tests.
+- **P3.24 CancellationToken plumbed through `StartStream`** — SignalR injects the connection-aborted token, `Task.Delay` and the trailing `SendAsync` both honour it, and an early cancel stops the FFmpeg transcoder. A flapping client no longer leaves a 30 s playlist-wait running on the server.
+- **P3.25 Server credential storage** — DEFERRED. RTSP creds stay in plaintext JSON for now. Encryption-at-rest needs DPAPI (Windows-only) or an AES-with-machine-key scheme that breaks JSON-file portability and migration. Operational note: protect `cameras.json` via filesystem ACL; rotate via service restart until a hot-reload endpoint lands.
+- **P3.21 Shared D3D11 device** — DEFERRED. Per-camera device overhead is ~80 MB GPU which is acceptable for the 4-camera reference workload. Sharing across cameras is a multi-class rearchitecture (device pool, reference counting, threading-model verification) with regression risk that doesn't pay off until camera count grows or GPU pressure becomes evidenced in production.
 
 ---
 
@@ -109,14 +117,14 @@ The following ordering balances **likelihood × user impact**. P1 items should b
 
 ### P3 — opportunistic
 
-18. **`GitHubReleaseService` lock release before HTTP (1.6).** Refactor so the network call doesn't run under the lock; add `WaitAsync(timeout)`.
-19. **Remuxer segment-boundary flush (2.5).** Ensure trailer is written and `outputCtx` is truly null before `StartRecording` re-opens; don't drop packets between segments.
-20. **VideoProcessor / GpuSnapshot allocation try/finally (2.3, 2.9).** Avoid GPU leak on rotation/resolution churn.
-21. **Shared D3D11 device (2.7).** Single `ID3D11Device` factory shared across cameras; reduces VRAM pressure and `DEVICE_REMOVED` likelihood. Larger refactor.
-22. **`FrameCapture` / `GpuSnapshotCapture` cleanup paths (2.6, 2.8).** Tighten try/finally so exceptions never strand `AVFrame` buffers.
-23. **Exponential backoff in `CameraConnectionManager` (4.8).** Cap log noise on persistently dead cameras and reduce the per-attempt FFmpeg leak surface.
-24. **Thread `CancellationToken` through hub long-running ops (4.9).** Cleaner shutdown and faster cancel on client disconnect.
-25. **Server-side credential storage (4.4).** Move RTSP creds out of plaintext JSON. DPAPI on Windows or a secrets store; add a hot-reload endpoint so rotation doesn't require a service restart.
+18. **✅ DONE — `GitHubReleaseService` lock release before HTTP (1.6).** Lock released before HTTP, 2 s acquisition timeout, 10 s `HttpClient.Timeout`.
+19. **✅ DONE — Remuxer segment-boundary flush (2.5).** Atomic `SwitchTo` on Remuxer + `SwitchRecording` on `IMediaPipeline`/`VideoPlayer`, used by `RecordingService.SegmentRecording`.
+20. **✅ DONE — VideoProcessor / GpuSnapshot allocation try/finally (2.3, 2.9).** `ReleasePipeline` / `FreeEncoder` runs on any failure during multi-step allocation.
+21. **DEFERRED — Shared D3D11 device (2.7).** Single `ID3D11Device` factory shared across cameras; reduces VRAM pressure and `DEVICE_REMOVED` likelihood. Multi-class rearchitecture; per-camera ~80 MB acceptable for 4-camera reference workload. Revisit when camera count grows.
+22. **✅ DONE — `FrameCapture` / `GpuSnapshotCapture` cleanup paths (2.6, 2.8).** Try/catch+finally wrap multi-step allocation; option dicts always freed; failures call `FreeContexts/FreeEncoder()`.
+23. **✅ DONE — Exponential backoff in `CameraConnectionManager` (4.8).** `ReconnectBackoff.ComputeDelay` (Core, 11 tests) + per-camera `BackoffState` skips reattempt until the window elapses.
+24. **✅ DONE — Thread `CancellationToken` through hub long-running ops (4.9).** `StartStream` accepts and honours the SignalR connection-aborted token.
+25. **DEFERRED — Server-side credential storage (4.4).** Plaintext JSON kept for now to avoid breaking JSON-file portability and migration. Operational note: protect `cameras.json` via filesystem ACL; full DPAPI/secrets-store integration tracked separately.
 
 ---
 
