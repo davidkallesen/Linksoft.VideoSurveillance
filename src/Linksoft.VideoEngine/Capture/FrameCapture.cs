@@ -90,66 +90,84 @@ internal sealed unsafe class FrameCapture : IDisposable
 
         FreeContexts();
 
-        swsCtx = sws_getContext(
-            width,
-            height,
-            srcFormat,
-            width,
-            height,
-            AVPixelFormat.Rgb24,
-            SwsFlags.Bilinear,
-            null,
-            null,
-            null);
-
-        if (swsCtx is null)
-        {
-            throw new InvalidOperationException("Failed to create SwsContext.");
-        }
-
-        rgbFrame = av_frame_alloc();
-        if (rgbFrame is null)
-        {
-            throw new InvalidOperationException("Failed to allocate RGB frame.");
-        }
-
-        rgbFrame->format = (int)AVPixelFormat.Rgb24;
-        rgbFrame->width = width;
-        rgbFrame->height = height;
-
-        var ret = av_frame_get_buffer(rgbFrame, 0);
-        if (ret < 0)
-        {
-            throw new FFmpegException(ret, "Failed to allocate RGB frame buffer");
-        }
-
-        var encoder = avcodec_find_encoder_by_name("png");
-        if (encoder is null)
-        {
-            throw new InvalidOperationException("PNG encoder not found.");
-        }
-
-        pngEncCtx = avcodec_alloc_context3(encoder);
-        if (pngEncCtx is null)
-        {
-            throw new InvalidOperationException("Failed to allocate PNG encoder context.");
-        }
-
-        pngEncCtx->width = width;
-        pngEncCtx->height = height;
-        pngEncCtx->pix_fmt = AVPixelFormat.Rgb24;
-        pngEncCtx->time_base = new AVRational { Num = 1, Den = 1 };
-
+        // A throw between the first successful alloc and the final
+        // avcodec_open2 used to leave a partially-initialized state
+        // around (e.g. swsCtx allocated but rgbFrame null). The next
+        // matching-dimension call would skip re-init and crash on use.
+        // Run all allocations under try/catch so any failure resets
+        // every field via FreeContexts before propagating.
         AVDictionary* opts = null;
-        ret = avcodec_open2(pngEncCtx, encoder, ref opts);
-        if (ret < 0)
+        try
         {
-            throw new FFmpegException(ret, "Failed to open PNG encoder");
-        }
+            swsCtx = sws_getContext(
+                width,
+                height,
+                srcFormat,
+                width,
+                height,
+                AVPixelFormat.Rgb24,
+                SwsFlags.Bilinear,
+                null,
+                null,
+                null);
 
-        cachedWidth = width;
-        cachedHeight = height;
-        cachedSrcFormat = srcFormat;
+            if (swsCtx is null)
+            {
+                throw new InvalidOperationException("Failed to create SwsContext.");
+            }
+
+            rgbFrame = av_frame_alloc();
+            if (rgbFrame is null)
+            {
+                throw new InvalidOperationException("Failed to allocate RGB frame.");
+            }
+
+            rgbFrame->format = (int)AVPixelFormat.Rgb24;
+            rgbFrame->width = width;
+            rgbFrame->height = height;
+
+            var ret = av_frame_get_buffer(rgbFrame, 0);
+            if (ret < 0)
+            {
+                throw new FFmpegException(ret, "Failed to allocate RGB frame buffer");
+            }
+
+            var encoder = avcodec_find_encoder_by_name("png");
+            if (encoder is null)
+            {
+                throw new InvalidOperationException("PNG encoder not found.");
+            }
+
+            pngEncCtx = avcodec_alloc_context3(encoder);
+            if (pngEncCtx is null)
+            {
+                throw new InvalidOperationException("Failed to allocate PNG encoder context.");
+            }
+
+            pngEncCtx->width = width;
+            pngEncCtx->height = height;
+            pngEncCtx->pix_fmt = AVPixelFormat.Rgb24;
+            pngEncCtx->time_base = new AVRational { Num = 1, Den = 1 };
+
+            ret = avcodec_open2(pngEncCtx, encoder, ref opts);
+            if (ret < 0)
+            {
+                throw new FFmpegException(ret, "Failed to open PNG encoder");
+            }
+
+            cachedWidth = width;
+            cachedHeight = height;
+            cachedSrcFormat = srcFormat;
+        }
+        catch
+        {
+            FreeContexts();
+            throw;
+        }
+        finally
+        {
+            av_dict_free(ref opts);
+        }
     }
 
     [SuppressMessage("", "SA1019:Member access symbol '->' should not be followed by a space", Justification = "OK")]
