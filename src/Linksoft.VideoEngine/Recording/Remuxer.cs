@@ -8,13 +8,29 @@ namespace Linksoft.VideoEngine.Recording;
 [SuppressMessage("", "CA1806:calls av_*", Justification = "OK")]
 internal sealed unsafe class Remuxer : IDisposable
 {
+    // Bounded queue capacity sized so a slow disk hiccup of a few seconds
+    // (e.g. a cleanup pass thrashing the same drive) doesn't drop frames at
+    // 30 fps. When the queue fills, the producer side drops the oldest
+    // packet — keeping the freshest history when the disk is permanently
+    // behind.
+    private const int WriteQueueCapacity = 1000;
+
     private readonly Lock syncLock = new();
+
+    // BlockingCollection (not Channel) because the surrounding class is
+    // `unsafe` and cannot host `await`. The writer thread blocks on
+    // GetConsumingEnumerable instead of an async wait.
+    private readonly BlockingCollection<IntPtr> writeQueue =
+        new(new ConcurrentQueue<IntPtr>(), boundedCapacity: WriteQueueCapacity);
+
     private AVFormatContext* outputCtx;
     private AVRational outputTimeBase;
     private long firstDts = AV_NOPTS_VALUE;
     private long lastDts = AV_NOPTS_VALUE;
     private bool receivedKeyframe;
     private bool disposed;
+
+    private Thread? writerThread;
 
     public bool IsOpen => outputCtx is not null;
 
@@ -27,6 +43,7 @@ internal sealed unsafe class Remuxer : IDisposable
         lock (syncLock)
         {
             OpenLocked(outputPath, codecpar, inputTimeBase, rotationDegrees);
+            EnsureWriterRunning();
         }
     }
 
@@ -165,13 +182,116 @@ internal sealed unsafe class Remuxer : IDisposable
 
                 lastDts = clonedPkt->dts;
 
-                _ = av_interleaved_write_frame(outputCtx, clonedPkt);
+                // Hand the packet to the background writer. The synchronous
+                // disk write used to block the demux thread; on a slow
+                // drive (cleanup pass on the same disk, network share
+                // hiccup) that backed up the RTSP buffer and dropped
+                // frames upstream. The writer drains under syncLock so
+                // CloseLocked can flush before changing outputCtx.
+                if (TryEnqueueDropOldest((IntPtr)clonedPkt))
+                {
+                    // Ownership transferred to the queue — do NOT free here.
+                    clonedPkt = null;
+                }
             }
             finally
             {
-                av_packet_free(ref clonedPkt);
+                if (clonedPkt is not null)
+                {
+                    av_packet_free(ref clonedPkt);
+                }
             }
         }
+    }
+
+    // BlockingCollection has no native drop-oldest mode; emulate it by
+    // attempting a non-blocking add and, on failure, draining the oldest
+    // queued packet (freeing it) before retrying once.
+    private bool TryEnqueueDropOldest(IntPtr ptr)
+    {
+        if (writeQueue.IsAddingCompleted)
+        {
+            return false;
+        }
+
+        if (writeQueue.TryAdd(ptr))
+        {
+            return true;
+        }
+
+        if (writeQueue.TryTake(out var dropped))
+        {
+            FreeQueuedPacket(dropped);
+        }
+
+        return writeQueue.TryAdd(ptr);
+    }
+
+    // Started lazily on first Open and stopped in Dispose. Drains the
+    // bounded write queue and writes packets to the current outputCtx
+    // under syncLock. CloseLocked drains synchronously before closing the
+    // muxer, so packets are never written to a stale outputCtx.
+    private void EnsureWriterRunning()
+    {
+        if (writerThread is not null)
+        {
+            return;
+        }
+
+        writerThread = new Thread(WriterLoop)
+        {
+            IsBackground = true,
+            Name = "Remuxer.Writer",
+        };
+        writerThread.Start();
+    }
+
+    private void WriterLoop()
+    {
+        try
+        {
+            // GetConsumingEnumerable blocks the thread until items are
+            // available, and exits cleanly when CompleteAdding is called.
+            foreach (var ptr in writeQueue.GetConsumingEnumerable())
+            {
+                lock (syncLock)
+                {
+                    if (outputCtx is not null)
+                    {
+                        var pkt = (AVPacket*)ptr;
+                        _ = av_interleaved_write_frame(outputCtx, pkt);
+                    }
+
+                    FreeQueuedPacket(ptr);
+                }
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Race during Dispose; safe to ignore.
+        }
+    }
+
+    // Must be called while holding syncLock. Writes every queued packet to
+    // the current outputCtx (or just frees them if outputCtx is null).
+    private void DrainQueueLocked()
+    {
+        while (writeQueue.TryTake(out var ptr))
+        {
+            if (outputCtx is not null)
+            {
+                var pkt = (AVPacket*)ptr;
+                _ = av_interleaved_write_frame(outputCtx, pkt);
+            }
+
+            FreeQueuedPacket(ptr);
+        }
+    }
+
+    private static void FreeQueuedPacket(IntPtr ptr)
+    {
+        var pkt = (AVPacket*)ptr;
+        av_packet_free(ref pkt);
     }
 
     public void Close()
@@ -188,6 +308,11 @@ internal sealed unsafe class Remuxer : IDisposable
         {
             return;
         }
+
+        // Flush every packet still in the queue to the current outputCtx
+        // before writing the trailer. The writer task is blocked on the
+        // syncLock by us, so this drain is exclusive.
+        DrainQueueLocked();
 
         if (receivedKeyframe)
         {
@@ -211,5 +336,20 @@ internal sealed unsafe class Remuxer : IDisposable
 
         disposed = true;
         Close();
+
+        // Stop the writer thread cleanly: complete the queue so
+        // GetConsumingEnumerable exits, then join with a bounded wait.
+        writeQueue.CompleteAdding();
+        writerThread?.Join(TimeSpan.FromSeconds(2));
+
+        // Free any packets still queued at shutdown so we don't leak
+        // native memory.
+        while (writeQueue.TryTake(out var ptr))
+        {
+            FreeQueuedPacket(ptr);
+        }
+
+        writeQueue.Dispose();
+        writerThread = null;
     }
 }
