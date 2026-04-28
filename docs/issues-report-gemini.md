@@ -7,8 +7,8 @@ This report summarizes findings regarding bugs, performance bottlenecks, and arc
 | ID | Status | Notes |
 |---|---|---|
 | 2.1 GPU device sharing | DEFERRED | Tracked as P3.21 in `issues-report.md`; multi-class refactor with regression risk, per-camera ~80 MB acceptable for 4-camera workload. |
-| 2.2 HLS CPU transcoding | OPEN | Stream-copy fallback / NVENC requires per-camera codec detection; tracked for next iteration. |
-| 2.3 Synchronous remuxer disk I/O | OPEN | Background write queue is a substantial Remuxer refactor; tracked for next iteration. |
+| 2.2 HLS CPU transcoding | ✅ DONE | StreamingService now defaults to `-c:v copy` (passes the camera's H.264/H.265 stream straight through to HLS). Audio is still re-encoded because cameras commonly emit G.711 / PCMU which HLS cannot demux. |
+| 2.3 Synchronous remuxer disk I/O | ✅ DONE | `Remuxer` now writes via a dedicated `Thread` consuming from a 1000-packet `BoundedCollection` (drop-oldest). The demux thread enqueues prepared+rescaled packets and returns instantly; `CloseLocked` drains the queue under the lock before writing the trailer so no packets land in a stale outputCtx. |
 | 2.4 UI-thread DispatcherTimer | ✅ DONE | `MediaCleanupService` and `RecordingSegmentationService` switched to `System.Threading.Timer`; ticks fire even when UI is busy rendering many tiles. |
 | 2.5 HLS reaper too lenient | ✅ DONE | Inactivity 2 min → 45 s, reaper 30 s → 10 s; `SurveillanceHub.OnDisconnectedAsync` now calls `StreamingService.OnConnectionDisconnected` to reap streams the closing connection owned. |
 | 3.1 Server segmentation no-op | ✅ DONE | `ServerRecordingService.SegmentRecording` implemented using the atomic `IMediaPipeline.SwitchRecording`; mirrors WPF behavior minus thumbnails. |
