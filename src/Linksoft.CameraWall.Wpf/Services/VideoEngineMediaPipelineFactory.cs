@@ -27,7 +27,17 @@ public class VideoEngineMediaPipelineFactory : IMediaPipelineFactory
     {
         ArgumentNullException.ThrowIfNull(camera);
 
+        // Pipeline takes ownership of player on success; on construction
+        // failure dispose the player so it doesn't leak.
         var player = videoPlayerFactory.Create();
-        return new VideoEngineMediaPipeline(player, camera.Display.DisplayName);
+        try
+        {
+            return new VideoEngineMediaPipeline(player, camera.Display.DisplayName);
+        }
+        catch
+        {
+            (player as IDisposable)?.Dispose();
+            throw;
+        }
     }
 }
