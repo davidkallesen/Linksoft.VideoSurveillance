@@ -54,6 +54,7 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
         LogStartingThumbnailCapture(cameraId, thumbnailPath, tileCount);
 
         // Capture first frame immediately
+        context.ScheduledCaptures++;
         _ = CaptureFrameAsync(cameraId, context);
 
         // For single tile, we only need one frame - stop immediately
@@ -87,13 +88,19 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
         // Generate thumbnail with whatever frames we have
         GenerateThumbnail(cameraId, context);
 
-        // Dispose captured frames
-        foreach (var frame in context.CapturedFrames)
+        // Snapshot frames under lock; an in-flight CaptureFrameAsync may still be
+        // adding to the list on a thread-pool thread (ConfigureAwait(false))
+        Drawing.Bitmap?[] frames;
+        lock (context.FramesLock)
+        {
+            frames = [.. context.CapturedFrames];
+            context.CapturedFrames.Clear();
+        }
+
+        foreach (var frame in frames)
         {
             frame?.Dispose();
         }
-
-        context.CapturedFrames.Clear();
     }
 
     /// <inheritdoc/>
@@ -118,10 +125,16 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
             return;
         }
 
-        _ = CaptureFrameAsync(cameraId, context);
+        // Avoid scheduling more captures than tiles. The previous tick's
+        // CaptureFrameAsync may still be in flight on the thread pool, so we
+        // count scheduled (not completed) captures.
+        if (context.ScheduledCaptures < context.TileCount)
+        {
+            context.ScheduledCaptures++;
+            _ = CaptureFrameAsync(cameraId, context);
+        }
 
-        // Check if we have all frames
-        if (context.CapturedFrames.Count >= context.TileCount)
+        if (context.ScheduledCaptures >= context.TileCount)
         {
             StopCapture(cameraId);
         }
@@ -135,23 +148,36 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
         {
             var pngBytes = await context.Pipeline.CaptureFrameAsync().ConfigureAwait(false);
 
+            int frameIndex;
             if (pngBytes is null || pngBytes.Length == 0)
             {
                 LogSnapshotCaptureNoData(cameraId);
-                context.CapturedFrames.Add(null);
-                return;
+                lock (context.FramesLock)
+                {
+                    context.CapturedFrames.Add(null);
+                    frameIndex = context.CapturedFrames.Count - 1;
+                }
+            }
+            else
+            {
+                using var memoryStream = new MemoryStream(pngBytes);
+                var bitmap = new Drawing.Bitmap(memoryStream);
+                lock (context.FramesLock)
+                {
+                    context.CapturedFrames.Add(bitmap);
+                    frameIndex = context.CapturedFrames.Count - 1;
+                }
             }
 
-            using var memoryStream = new MemoryStream(pngBytes);
-            var bitmap = new Drawing.Bitmap(memoryStream);
-            context.CapturedFrames.Add(bitmap);
-
-            LogCapturedFrame(context.CapturedFrames.Count - 1, cameraId);
+            LogCapturedFrame(frameIndex, cameraId);
         }
         catch (Exception ex)
         {
             LogFrameCaptureFailed(ex, cameraId);
-            context.CapturedFrames.Add(null);
+            lock (context.FramesLock)
+            {
+                context.CapturedFrames.Add(null);
+            }
         }
     }
 
@@ -159,7 +185,15 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
         Guid cameraId,
         ThumbnailCaptureContext context)
     {
-        if (context.CapturedFrames.Count == 0)
+        // Snapshot frames under lock; CaptureFrameAsync may still be running
+        // on a thread-pool thread when StopCapture invokes us
+        Drawing.Bitmap?[] frames;
+        lock (context.FramesLock)
+        {
+            frames = [.. context.CapturedFrames];
+        }
+
+        if (frames.Length == 0)
         {
             LogNoFramesCaptured(cameraId);
             return;
@@ -190,7 +224,7 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
             if (context.TileCount == 1)
             {
                 // Single tile: draw first frame scaled to fit
-                var frame = context.CapturedFrames.FirstOrDefault();
+                var frame = frames.Length > 0 ? frames[0] : null;
                 if (frame is not null)
                 {
                     var destRect = new Drawing.Rectangle(0, 0, FrameWidth, FrameHeight);
@@ -213,7 +247,7 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
 
                 for (var i = 0; i < context.TileCount; i++)
                 {
-                    var frame = i < context.CapturedFrames.Count ? context.CapturedFrames[i] : null;
+                    var frame = i < frames.Length ? frames[i] : null;
 
                     if (frame is not null)
                     {
@@ -241,7 +275,7 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
 
             LogGeneratedThumbnail(
                 cameraId,
-                context.CapturedFrames.Count(f => f is not null),
+                frames.Count(f => f is not null),
                 context.TileCount,
                 context.TileCount,
                 context.ThumbnailPath);
@@ -275,6 +309,10 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
 
         public List<Drawing.Bitmap?> CapturedFrames { get; } = [];
 
+        public Lock FramesLock { get; } = new();
+
         public DispatcherTimer? Timer { get; set; }
+
+        public int ScheduledCaptures { get; set; }
     }
 }
