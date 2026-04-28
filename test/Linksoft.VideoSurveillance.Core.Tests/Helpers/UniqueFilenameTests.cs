@@ -92,7 +92,7 @@ public class UniqueFilenameTests
         };
         for (var i = 2; i <= 999; i++)
         {
-            existing.Add(FormattableString.Invariant($@"C:\rec\Cam_{i}.mkv"));
+            existing.Add(string.Create(CultureInfo.InvariantCulture, $@"C:\rec\Cam_{i}.mkv"));
         }
 
         // Act
