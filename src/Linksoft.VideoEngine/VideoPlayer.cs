@@ -143,6 +143,31 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
         LogRecordingStopped();
     }
 
+    /// <summary>
+    /// Atomically transitions the active recording to a new file. Packets
+    /// arriving from the demux thread between Close and Open are no longer
+    /// silently dropped — they land in the previous segment or the new one.
+    /// </summary>
+    public void SwitchRecording(string newOutputFilePath)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+
+        if (state != PlayerState.Playing || demuxer is null)
+        {
+            throw new InvalidOperationException("Cannot switch recording: player is not playing.");
+        }
+
+        if (remuxer is null || !remuxer.IsOpen)
+        {
+            // Nothing to switch — fall back to a plain start.
+            StartRecording(newOutputFilePath);
+            return;
+        }
+
+        remuxer.SwitchTo(newOutputFilePath, demuxer.VideoCodecParameters, demuxer.VideoTimeBase, (int)rotation);
+        LogRecordingSwitched(newOutputFilePath);
+    }
+
     public void SetRotation(VideoRotation rotation)
     {
         this.rotation = rotation;

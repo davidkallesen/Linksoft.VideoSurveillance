@@ -351,16 +351,7 @@ public partial class RecordingService : IRecordingService, IDisposable
             // 1. Stop thumbnail capture for the old segment
             thumbnailService.StopCapture(cameraId);
 
-            // 2. Stop recording via media pipeline
-            pipeline.StopRecording();
-
-            // 3. Remove old session
-            sessions.TryRemove(cameraId, out _);
-
-            // 4. Fire state changed event for old segment completion
-            OnRecordingStateChanged(cameraId, oldState, RecordingState.Idle, oldFilePath);
-
-            // 5. Generate new filename with current timestamp
+            // 2. Generate new filename with current timestamp
             var format = GetEffectiveRecordingFormat(camera);
             var newFilePath = GenerateRecordingFilename(camera, format);
 
@@ -371,8 +362,17 @@ public partial class RecordingService : IRecordingService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            // 6. Start new recording via media pipeline
-            pipeline.StartRecording(newFilePath);
+            // 3. Atomically switch the recording so packets arriving from
+            // the demux thread between the two file boundaries land in
+            // either the previous segment or the new one — never dropped
+            // in the close/open gap.
+            pipeline.SwitchRecording(newFilePath);
+
+            // 4. Remove old session
+            sessions.TryRemove(cameraId, out _);
+
+            // 5. Fire state changed event for old segment completion
+            OnRecordingStateChanged(cameraId, oldState, RecordingState.Idle, oldFilePath);
 
             // 7. Create new session with preserved state
             var newState = isManualRecording ? RecordingState.Recording : RecordingState.RecordingMotion;

@@ -29,6 +29,20 @@ public interface IMediaPipeline : IDisposable
     void StopRecording();
 
     /// <summary>
+    /// Atomically transitions the active recording to a new output file.
+    /// Implementations should perform the close+open under a single lock so
+    /// that packets arriving mid-switch land in either the previous or the
+    /// new segment — never the close/open gap.
+    /// Default implementation falls back to <see cref="StopRecording"/>
+    /// followed by <see cref="StartRecording"/>; override for atomicity.
+    /// </summary>
+    void SwitchRecording(string newOutputFilePath)
+    {
+        StopRecording();
+        StartRecording(newOutputFilePath);
+    }
+
+    /// <summary>
     /// Gets a value indicating whether recording is currently active.
     /// </summary>
     bool IsRecordingActive { get; }
