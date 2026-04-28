@@ -6,10 +6,10 @@ public partial class CameraWallApp
     private partial void LogAppInitializing();
 
     [LoggerMessage(Level = LogLevel.Error, Message = "CurrentDomain Unhandled Exception: {ExceptionMessage}")]
-    private partial void LogCurrentDomainUnhandledException(string exceptionMessage);
+    private partial void LogCurrentDomainUnhandledException(Exception ex, string exceptionMessage);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Dispatcher Unhandled Exception: {ExceptionMessage}")]
-    private partial void LogDispatcherUnhandledException(string exceptionMessage);
+    private partial void LogDispatcherUnhandledException(Exception ex, string exceptionMessage);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "App starting")]
     private partial void LogAppStarting();

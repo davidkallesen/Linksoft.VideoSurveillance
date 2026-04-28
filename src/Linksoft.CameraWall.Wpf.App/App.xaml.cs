@@ -120,7 +120,7 @@ public partial class CameraWallApp
 
         var exceptionMessage = ex.GetMessage(true);
 
-        LogCurrentDomainUnhandledException(exceptionMessage);
+        LogCurrentDomainUnhandledException(ex, exceptionMessage);
 
         MessageBox.Show(
             exceptionMessage,
@@ -142,7 +142,7 @@ public partial class CameraWallApp
             return;
         }
 
-        LogDispatcherUnhandledException(exceptionMessage);
+        LogDispatcherUnhandledException(args.Exception, exceptionMessage);
 
         MessageBox.Show(
             exceptionMessage,
