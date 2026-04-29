@@ -17,6 +17,7 @@ public sealed partial class ServerRecordingSegmentationBackgroundService : IHost
 
     private Timer? checkTimer;
     private (DateOnly Date, int Slot) lastProcessed = (DateOnly.MinValue, -1);
+    private int tickInProgress;
     private bool disposed;
 
     public ServerRecordingSegmentationBackgroundService(
@@ -74,6 +75,17 @@ public sealed partial class ServerRecordingSegmentationBackgroundService : IHost
 
     private void OnCheckTimerTick(object? state)
     {
+        // System.Threading.Timer can overlap ticks if a previous tick takes
+        // longer than the interval (e.g. SwitchRecording stalls during an
+        // RTSP reconnect). Without this guard, two threads would compute
+        // identical currentSlot values and both call SegmentRecording on
+        // the same camera — the recording service's TryGetValue/mutate is
+        // not atomic, so the result would be undefined.
+        if (Interlocked.CompareExchange(ref tickInProgress, 1, 0) != 0)
+        {
+            return;
+        }
+
         try
         {
             PerformSegmentationCheck();
@@ -81,6 +93,10 @@ public sealed partial class ServerRecordingSegmentationBackgroundService : IHost
         catch (Exception ex)
         {
             LogSegmentationTickFailed(ex);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref tickInProgress, 0);
         }
     }
 
