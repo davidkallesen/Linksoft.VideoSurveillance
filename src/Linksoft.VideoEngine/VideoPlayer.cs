@@ -350,7 +350,18 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
             if (ret == AVERROR_EOF)
             {
                 LogEndOfStreamReached(source);
-                break;
+
+                // Surface as Error (not silent) so the upstream state machine
+                // routes through ConnectionFailed → TryAutoReconnect. Without
+                // this, the demux thread exits cleanly and the tile is left
+                // believing the stream is still Playing forever (recording
+                // dies, no recovery).
+                if (!stopRequested)
+                {
+                    SetState(PlayerState.Error, "End of stream");
+                }
+
+                return;
             }
 
             if (ret < 0)
@@ -359,7 +370,15 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
                 if (consecutiveErrors > MaxConsecutiveReadErrors)
                 {
                     LogExceededConsecutiveReadErrors(source, MaxConsecutiveReadErrors);
-                    break;
+
+                    // Same reasoning as the EOF path above: drive a real state
+                    // transition so auto-reconnect can fire.
+                    if (!stopRequested)
+                    {
+                        SetState(PlayerState.Error, "Exceeded consecutive read errors");
+                    }
+
+                    return;
                 }
 
                 continue;
