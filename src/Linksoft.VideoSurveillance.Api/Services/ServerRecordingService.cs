@@ -67,6 +67,10 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     }
 
     /// <inheritdoc/>
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "Pipeline is unconditionally disposed inside the TryRemove block via the explicit Dispose() call.")]
     public void StopRecording(Guid cameraId)
     {
         if (!sessions.TryRemove(cameraId, out var session))
