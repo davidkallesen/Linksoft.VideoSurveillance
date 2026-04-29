@@ -127,6 +127,42 @@ try
     // Map all generated REST endpoints
     app.MapEndpoints();
 
+    // Liveness probe and recording diagnostics. Kept out of the OpenAPI
+    // surface (ExcludeFromDescription) because they're operational
+    // endpoints, not part of the API contract. /health/recordings is the
+    // soak-monitoring surface — gives a single round-trip view of which
+    // sessions are alive and which are "stuck" (session present but the
+    // pipeline died and the reaper hasn't swept yet).
+    app
+        .MapGet("/health", () => Results.Ok(new { Status = "ok" }))
+        .ExcludeFromDescription();
+
+    app
+        .MapGet("/health/recordings", (ServerRecordingService recordingService) =>
+        {
+            var diagnostics = recordingService.GetDiagnostics();
+            var stuck = diagnostics.Count(d => !d.IsPipelineActive);
+            var startTime = System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime();
+            var uptime = DateTime.UtcNow - startTime;
+
+            return Results.Ok(new
+            {
+                UptimeSeconds = (long)uptime.TotalSeconds,
+                ActiveRecordings = diagnostics.Count,
+                StuckRecordings = stuck,
+                Sessions = diagnostics.Select(d => new
+                {
+                    d.CameraId,
+                    d.CameraName,
+                    d.FilePath,
+                    StartedAtUtc = d.StartedAtUtc.ToString("o", System.Globalization.CultureInfo.InvariantCulture),
+                    DurationSeconds = (long)d.Duration.TotalSeconds,
+                    d.IsPipelineActive,
+                }),
+            });
+        })
+        .ExcludeFromDescription();
+
     // Serve HLS stream segments as static files
     var hlsContentTypes = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider
     {
