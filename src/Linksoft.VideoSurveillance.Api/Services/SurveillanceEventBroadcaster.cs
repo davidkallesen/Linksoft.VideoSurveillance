@@ -50,13 +50,27 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         return Task.CompletedTask;
     }
 
-    private async void OnRecordingStateChanged(
+    // Sync event handlers that fire-and-forget a Task. async void in an event
+    // handler means an unhandled synchronous-portion exception escapes onto
+    // the firing thread (the demux thread for recording / motion events) —
+    // crashing recording. Routing through a Task keeps any failure isolated
+    // to the Task's faulted state, observable via the inner try/catch.
+    private void OnRecordingStateChanged(
         object? sender,
         RecordingStateChangedEventArgs e)
+        => _ = BroadcastRecordingStateChangedAsync(e);
+
+    private void OnMotionDetected(
+        object? sender,
+        MotionDetectedEventArgs e)
+        => _ = BroadcastMotionDetectedAsync(e);
+
+    private async Task BroadcastRecordingStateChangedAsync(
+        RecordingStateChangedEventArgs e)
     {
-        using var cts = new CancellationTokenSource(BroadcastTimeout);
         try
         {
+            using var cts = new CancellationTokenSource(BroadcastTimeout);
             await hubContext.Clients.All
                 .SendAsync(
                     "RecordingStateChanged",
@@ -77,13 +91,11 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         }
     }
 
-    private async void OnMotionDetected(
-        object? sender,
-        MotionDetectedEventArgs e)
+    private async Task BroadcastMotionDetectedAsync(MotionDetectedEventArgs e)
     {
-        using var cts = new CancellationTokenSource(BroadcastTimeout);
         try
         {
+            using var cts = new CancellationTokenSource(BroadcastTimeout);
             await hubContext.Clients.All
                 .SendAsync(
                     "MotionDetected",
