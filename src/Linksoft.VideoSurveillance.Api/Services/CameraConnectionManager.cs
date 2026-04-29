@@ -65,16 +65,27 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
                     continue;
                 }
 
-                // Detect dead pipelines: session exists but FFmpeg process has exited
-                if (recordingService.IsRecording(camera.Id) &&
-                    managedPipelines.TryGetValue(camera.Id, out var existingPipeline) &&
+                // Drop stale managedPipelines references whose underlying
+                // pipeline is no longer producing output. Two paths reach
+                // this state:
+                //   1. The pipeline died but recordingService still has the
+                //      session (we tell it to stop, which disposes).
+                //   2. The session was already cleared (by the reaper at the
+                //      top of this tick, or an external Stop) but CCM's
+                //      reference lingers. Without dropping it, the
+                //      TryStartRecordingForPipeline branch below would keep
+                //      hitting the disposed pipeline (FramesDecoded == 0)
+                //      and never recreate it.
+                if (managedPipelines.TryGetValue(camera.Id, out var existingPipeline) &&
                     !existingPipeline.IsRecordingActive)
                 {
                     LogDeadPipelineDetected(camera.Id, camera.Display.DisplayName);
 
-                    // recordingService.StopRecording disposes the pipeline.
-                    // Just drop the (now-disposed) reference from managedPipelines.
-                    recordingService.StopRecording(camera.Id);
+                    if (recordingService.IsRecording(camera.Id))
+                    {
+                        recordingService.StopRecording(camera.Id);
+                    }
+
                     managedPipelines.TryRemove(camera.Id, out _);
                 }
 
