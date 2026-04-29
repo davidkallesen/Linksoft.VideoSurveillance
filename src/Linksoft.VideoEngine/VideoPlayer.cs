@@ -258,7 +258,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
             localDemuxer = new Demuxer(logger);
             localDecoder = new VideoDecoder();
 
-            LogOpeningStream(source, streamUri.AbsoluteUri);
+            LogOpeningStream(source, UriRedactor.Redact(streamUri));
             localDemuxer.Open(streamUri, options, ct);
             LogStreamDemuxerOpened(source);
 
@@ -286,7 +286,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
                 IsHardwareAccelerated = localDecoder.IsHardwareAccelerated,
             };
 
-            LogStreamOpened(source, StreamInfo, streamUri.AbsoluteUri);
+            LogStreamOpened(source, StreamInfo, UriRedactor.Redact(streamUri));
 
             SetState(PlayerState.Playing);
 

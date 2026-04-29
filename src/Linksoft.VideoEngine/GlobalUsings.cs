@@ -8,6 +8,7 @@ global using Linksoft.VideoEngine.Capture;
 global using Linksoft.VideoEngine.Decoding;
 global using Linksoft.VideoEngine.Demuxing;
 global using Linksoft.VideoEngine.FFmpeg;
+global using Linksoft.VideoEngine.Helpers;
 global using Linksoft.VideoEngine.Recording;
 global using Microsoft.Extensions.Logging;
 global using static Flyleaf.FFmpeg.Raw;
