@@ -5,7 +5,7 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// Default implementation of <see cref="ICameraWallManager"/>.
 /// </summary>
 [Registration(Lifetime.Singleton)]
-public partial class CameraWallManager : ObservableObject, ICameraWallManager
+public sealed partial class CameraWallManager : ObservableObject, ICameraWallManager, IDisposable
 {
     private readonly ILogger<CameraWallManager> logger;
     private readonly ICameraStorageService storageService;
@@ -17,6 +17,9 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
     private readonly IGitHubReleaseService gitHubReleaseService;
     private readonly IToastNotificationService toastNotificationService;
     private readonly IVideoPlayerFactory videoPlayerFactory;
+
+    private bool sessionSwitchSubscribed;
+    private bool disposed;
 
     [ObservableProperty(DependentPropertyNames = [nameof(CanCreateNewLayout)])]
     private CameraGrid? cameraGrid;
@@ -147,6 +150,74 @@ public partial class CameraWallManager : ObservableObject, ICameraWallManager
 
         ApplyDisplaySettings();
         LoadStartupCameras();
+
+        // RDP disconnect/reconnect tears down the GPU desktop session, killing
+        // the D3D11 device the cameras render through. WPF fires Unloaded on the
+        // tiles during the disconnect but does not reliably fire Loaded on the
+        // way back, so we cannot recover via tile lifecycle alone. SessionSwitch
+        // is the deterministic signal — listen for it and rebuild the players
+        // (which rebuilds the GpuAccelerator and reopens the RTSP streams).
+        SubscribeToSessionSwitch();
+    }
+
+    private void SubscribeToSessionSwitch()
+    {
+        if (sessionSwitchSubscribed)
+        {
+            return;
+        }
+
+        Microsoft.Win32.SystemEvents.SessionSwitch += OnSessionSwitch;
+        sessionSwitchSubscribed = true;
+    }
+
+    private void OnSessionSwitch(
+        object sender,
+        Microsoft.Win32.SessionSwitchEventArgs e)
+    {
+        // We only care about transitions back into a usable desktop session.
+        // The disconnect side (RemoteDisconnect, ConsoleDisconnect, SessionLock)
+        // does not need recovery — the players keep running, they just can't
+        // render. The reconnect/unlock side is when we need to rebuild the GPU.
+        if (e.Reason is not (Microsoft.Win32.SessionSwitchReason.RemoteConnect
+            or Microsoft.Win32.SessionSwitchReason.ConsoleConnect
+            or Microsoft.Win32.SessionSwitchReason.SessionUnlock))
+        {
+            return;
+        }
+
+        var grid = CameraGrid;
+        if (grid is null)
+        {
+            return;
+        }
+
+        // SystemEvents handlers run on a private SystemEvents thread — must
+        // marshal to the UI dispatcher before touching CameraGrid/tiles.
+        _ = grid.Dispatcher.BeginInvoke(() =>
+        {
+            LogSessionSwitchReconnect(e.Reason.ToString());
+            grid.RecreateConnectedPlayers();
+        });
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+
+        if (sessionSwitchSubscribed)
+        {
+            Microsoft.Win32.SystemEvents.SessionSwitch -= OnSessionSwitch;
+            sessionSwitchSubscribed = false;
+        }
+
+        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />

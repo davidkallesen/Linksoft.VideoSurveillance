@@ -1,6 +1,6 @@
 namespace Linksoft.CameraWall.Wpf.Services;
 
-public partial class CameraWallManager
+public sealed partial class CameraWallManager
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "Camera connection state changed: '{CameraName}' - '{OldState}' -> '{NewState}'")]
     private partial void LogCameraConnectionStateChanged(string cameraName, string oldState, string newState);
@@ -25,4 +25,7 @@ public partial class CameraWallManager
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Recording settings - EnableRecordingOnConnect: {RecordOnConnect}, EnableRecordingOnMotion: {RecordOnMotion}")]
     private partial void LogRecordingSettings(bool recordOnConnect, bool recordOnMotion);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Session switch detected ({Reason}) — recreating connected players to rebuild GPU after desktop session change")]
+    private partial void LogSessionSwitchReconnect(string reason);
 }
