@@ -67,10 +67,6 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     }
 
     /// <inheritdoc/>
-    [SuppressMessage(
-        "Reliability",
-        "CA2000:Dispose objects before losing scope",
-        Justification = "Pipeline ownership belongs to the caller; this service only holds a non-owning reference for the recording lifetime.")]
     public void StopRecording(Guid cameraId)
     {
         if (!sessions.TryRemove(cameraId, out var session))
@@ -78,9 +74,30 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
             return;
         }
 
+        // The recording service owns the pipeline once StartRecording accepts
+        // it (the dictionary entry IS the ownership). Dispose here so manual
+        // Stop via REST/SignalR cleans up the underlying VideoPlayer's RTSP
+        // connection, decoder thread, and GPU resources. Without this, every
+        // Start/Stop cycle leaks an entire pipeline.
         if (pipelines.TryRemove(cameraId, out var pipeline))
         {
-            pipeline.StopRecording();
+            try
+            {
+                pipeline.StopRecording();
+            }
+            catch (Exception ex)
+            {
+                LogStopPipelineFailed(ex, cameraId);
+            }
+
+            try
+            {
+                pipeline.Dispose();
+            }
+            catch (Exception ex)
+            {
+                LogDisposePipelineFailed(ex, cameraId);
+            }
         }
 
         RaiseStateChanged(cameraId, RecordingState.Recording, RecordingState.Idle, session.CurrentFilePath);
@@ -203,6 +220,40 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     /// <inheritdoc/>
     public IReadOnlyList<RecordingSession> GetActiveSessions()
         => sessions.Values.ToList().AsReadOnly();
+
+    /// <inheritdoc/>
+    public int ReapInactiveSessions()
+    {
+        var reaped = 0;
+
+        // Snapshot so we can mutate sessions/pipelines via StopRecording inside
+        // the loop without ConcurrentDictionary enumeration surprises.
+        foreach (var cameraId in sessions.Keys.ToList())
+        {
+            if (!pipelines.TryGetValue(cameraId, out var pipeline))
+            {
+                // Session without a pipeline = stale entry; clear it.
+                LogReapingInactiveSession(cameraId);
+                StopRecording(cameraId);
+                reaped++;
+                continue;
+            }
+
+            if (!pipeline.IsRecordingActive)
+            {
+                LogReapingInactiveSession(cameraId);
+                StopRecording(cameraId);
+                reaped++;
+            }
+        }
+
+        if (reaped > 0)
+        {
+            LogReaperSwept(reaped);
+        }
+
+        return reaped;
+    }
 
     /// <inheritdoc/>
     public void Dispose()

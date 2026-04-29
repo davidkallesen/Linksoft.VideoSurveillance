@@ -81,6 +81,15 @@ public sealed partial class SurveillanceHub : Hub
         var pipeline = pipelineFactory.Create(camera);
         var started = recordingService.StartRecording(camera, pipeline);
 
+        // StartRecording returns false on a concurrent-start race (another
+        // caller already created the session). The recording service did
+        // NOT take ownership of our pipeline in that case — dispose it here
+        // so the RTSP connection / decoder thread / GPU don't leak.
+        if (!started)
+        {
+            pipeline.Dispose();
+        }
+
         LogRecordingResult(started ? "started" : "failed to start", cameraId);
     }
 
