@@ -40,4 +40,16 @@ public sealed partial class ServerMediaCleanupBackgroundService
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to enumerate active recording sessions; cleanup may delete an active recording")]
     private partial void LogActiveSessionLookupFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Disk space OK on '{Drive}': {FreeGb:F1} GB free")]
+    private partial void LogDiskSpaceOk(string drive, double freeGb);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Disk space LOW on '{Drive}': {FreeGb:F1} GB free — recordings will fail when full; reduce retention or free space")]
+    private partial void LogDiskSpaceLow(string drive, double freeGb);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Disk space CRITICAL on '{Drive}': {FreeGb:F1} GB free — recordings will corrupt mid-write at exhaustion")]
+    private partial void LogDiskSpaceCritical(string drive, double freeGb);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Disk space check failed for '{Path}'")]
+    private partial void LogDiskSpaceCheckFailed(Exception ex, string path);
 }
