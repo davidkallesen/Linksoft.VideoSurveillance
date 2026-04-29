@@ -38,7 +38,8 @@ public sealed class StartRecordingHandler(
             // open happens on the engine thread. Wait for Connected (or a
             // hard failure) before reporting success so the client sees a
             // definite outcome instead of a fire-and-forget "ok".
-            var connected = await WaitForConnectedAsync(pipeline, ConnectionTimeout, cancellationToken)
+            var connected = await PipelineConnectionWaiter
+                .WaitForConnectedAsync(pipeline, ConnectionTimeout, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!connected)
@@ -76,41 +77,5 @@ public sealed class StartRecordingHandler(
             StartedAt: session is not null ? new DateTimeOffset(session.StartTime, TimeSpan.Zero) : DateTimeOffset.UtcNow);
 
         return StartRecordingResult.Ok(status);
-    }
-
-    private static async Task<bool> WaitForConnectedAsync(
-        IMediaPipeline pipeline,
-        TimeSpan timeout,
-        CancellationToken cancellationToken)
-    {
-        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        EventHandler<Linksoft.VideoSurveillance.Events.ConnectionStateChangedEventArgs> handler = (
-            object? sender,
-            Linksoft.VideoSurveillance.Events.ConnectionStateChangedEventArgs e) =>
-        {
-            if (e.NewState == Linksoft.VideoSurveillance.Enums.ConnectionState.Connected)
-            {
-                tcs.TrySetResult(true);
-            }
-            else if (e.NewState == Linksoft.VideoSurveillance.Enums.ConnectionState.Error)
-            {
-                tcs.TrySetResult(false);
-            }
-        };
-
-        pipeline.ConnectionStateChanged += handler;
-        try
-        {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(timeout);
-            await using var reg = cts.Token.Register(() => tcs.TrySetResult(false));
-
-            return await tcs.Task.ConfigureAwait(false);
-        }
-        finally
-        {
-            pipeline.ConnectionStateChanged -= handler;
-        }
     }
 }

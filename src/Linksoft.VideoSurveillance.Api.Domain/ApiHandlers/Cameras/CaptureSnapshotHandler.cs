@@ -9,6 +9,10 @@ public sealed class CaptureSnapshotHandler(
     IMediaPipelineFactory pipelineFactory,
     IApplicationSettingsService settingsService) : ICaptureSnapshotHandler
 {
+    // Same envelope as StartRecording — long enough for a typical RTSP open
+    // (1-3s), short enough that a stuck client gets a definite answer.
+    private static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(15);
+
     public async Task<CaptureSnapshotResult> ExecuteAsync(
         CaptureSnapshotParameters parameters,
         CancellationToken cancellationToken = default)
@@ -22,6 +26,20 @@ public sealed class CaptureSnapshotHandler(
         }
 
         using var pipeline = pipelineFactory.Create(camera);
+
+        // pipelineFactory.Create returns before RTSP open completes; the
+        // player is in Opening state. CaptureFrameAsync returns null when
+        // state != Playing, so without this wait the handler reports
+        // "Failed to capture frame" on practically every cold call.
+        var connected = await PipelineConnectionWaiter
+            .WaitForConnectedAsync(pipeline, ConnectionTimeout, cancellationToken)
+            .ConfigureAwait(false);
+        if (!connected)
+        {
+            return CaptureSnapshotResult.NotFound(
+                $"Camera {parameters.CameraId} did not reach Connected within {ConnectionTimeout.TotalSeconds:N0}s.");
+        }
+
         var frame = await pipeline.CaptureFrameAsync(cancellationToken);
         if (frame is null)
         {
