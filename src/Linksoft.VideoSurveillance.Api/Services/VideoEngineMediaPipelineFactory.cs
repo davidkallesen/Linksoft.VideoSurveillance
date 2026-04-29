@@ -29,6 +29,12 @@ public sealed class VideoEngineMediaPipelineFactory : IMediaPipelineFactory
         {
             pipeline = new VideoEngineMediaPipeline(player, camera.Display.DisplayName);
             pipeline.Open(camera.BuildUri(), camera.Stream);
+
+            // Apply the camera's configured rotation so live snapshots and
+            // recordings come out the right way up. Without this, server-side
+            // recordings ignore camera.Display.Rotation entirely.
+            pipeline.SetRotation(camera.Display.Rotation);
+
             return pipeline;
         }
         catch
