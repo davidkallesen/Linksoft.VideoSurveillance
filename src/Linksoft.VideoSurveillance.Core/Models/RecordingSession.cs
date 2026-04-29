@@ -10,10 +10,12 @@ public class RecordingSession
     /// </summary>
     public RecordingSession(
         Guid cameraId,
+        string cameraName,
         string filePath,
         bool isManualRecording)
     {
         CameraId = cameraId;
+        CameraName = cameraName ?? throw new ArgumentNullException(nameof(cameraName));
         CurrentFilePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
         IsManualRecording = isManualRecording;
         State = isManualRecording ? RecordingState.Recording : RecordingState.RecordingMotion;
@@ -24,6 +26,12 @@ public class RecordingSession
     /// Gets the ID of the camera being recorded.
     /// </summary>
     public Guid CameraId { get; }
+
+    /// <summary>
+    /// Gets the display name of the camera being recorded. Used for log
+    /// readability so operators don't have to translate GUIDs by hand.
+    /// </summary>
+    public string CameraName { get; }
 
     /// <summary>
     /// Gets or sets the current recording state.
@@ -57,5 +65,5 @@ public class RecordingSession
 
     /// <inheritdoc />
     public override string ToString()
-        => $"RecordingSession {{ CameraId={CameraId.ToString().Substring(0, 8)}, State={State}, Manual={IsManualRecording} }}";
+        => $"RecordingSession {{ Camera='{CameraName}', State={State}, Manual={IsManualRecording} }}";
 }

@@ -28,11 +28,13 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
     /// <inheritdoc/>
     public void StartCapture(
         Guid cameraId,
+        string cameraName,
         IMediaPipeline pipeline,
         string videoFilePath,
         int tileCount = 4)
     {
         ArgumentNullException.ThrowIfNull(pipeline);
+        ArgumentNullException.ThrowIfNull(cameraName);
 
         // Validate tile count (must be 1 or 4)
         if (tileCount != 1 && tileCount != 4)
@@ -44,14 +46,14 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
         StopCapture(cameraId);
 
         var thumbnailPath = Path.ChangeExtension(videoFilePath, ".png");
-        var context = new ThumbnailCaptureContext(pipeline, thumbnailPath, tileCount);
+        var context = new ThumbnailCaptureContext(cameraName, pipeline, thumbnailPath, tileCount);
 
         if (!captures.TryAdd(cameraId, context))
         {
             return;
         }
 
-        LogStartingThumbnailCapture(cameraId, thumbnailPath, tileCount);
+        LogStartingThumbnailCapture(cameraName, thumbnailPath, tileCount);
 
         // Capture first frame immediately
         context.ScheduledCaptures++;
@@ -151,7 +153,7 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
             int frameIndex;
             if (pngBytes is null || pngBytes.Length == 0)
             {
-                LogSnapshotCaptureNoData(cameraId);
+                LogSnapshotCaptureNoData(context.CameraName);
                 lock (context.FramesLock)
                 {
                     context.CapturedFrames.Add(null);
@@ -169,11 +171,11 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
                 }
             }
 
-            LogCapturedFrame(frameIndex, cameraId);
+            LogCapturedFrame(frameIndex, context.CameraName);
         }
         catch (Exception ex)
         {
-            LogFrameCaptureFailed(ex, cameraId);
+            LogFrameCaptureFailed(ex, context.CameraName);
             lock (context.FramesLock)
             {
                 context.CapturedFrames.Add(null);
@@ -195,7 +197,7 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
 
         if (frames.Length == 0)
         {
-            LogNoFramesCaptured(cameraId);
+            LogNoFramesCaptured(context.CameraName);
             return;
         }
 
@@ -279,7 +281,7 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
             File.Move(tempPath, context.ThumbnailPath, overwrite: true);
 
             LogGeneratedThumbnail(
-                cameraId,
+                context.CameraName,
                 frames.Count(f => f is not null),
                 context.TileCount,
                 context.TileCount,
@@ -287,7 +289,7 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
         }
         catch (Exception ex)
         {
-            LogThumbnailGenerationFailed(ex, cameraId);
+            LogThumbnailGenerationFailed(ex, context.CameraName);
         }
     }
 
@@ -297,14 +299,18 @@ public partial class ThumbnailGeneratorService : IThumbnailGeneratorService
     private sealed class ThumbnailCaptureContext
     {
         public ThumbnailCaptureContext(
+            string cameraName,
             IMediaPipeline pipeline,
             string thumbnailPath,
             int tileCount = 4)
         {
+            CameraName = cameraName;
             Pipeline = pipeline;
             ThumbnailPath = thumbnailPath;
             TileCount = tileCount;
         }
+
+        public string CameraName { get; }
 
         public IMediaPipeline Pipeline { get; }
 

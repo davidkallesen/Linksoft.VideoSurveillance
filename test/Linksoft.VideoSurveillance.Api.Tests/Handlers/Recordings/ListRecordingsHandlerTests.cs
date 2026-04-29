@@ -49,7 +49,7 @@ public class ListRecordingsHandlerTests
         // Arrange
         var recordingService = Substitute.For<IRecordingService>();
         var cameraId = Guid.NewGuid();
-        var session = new RecordingSession(cameraId, @"C:\recordings\cam1.mp4", isManualRecording: true);
+        var session = new RecordingSession(cameraId, "TestCam", @"C:\recordings\cam1.mp4", isManualRecording: true);
         recordingService.GetActiveSessions().Returns([session]);
         var handler = CreateHandler(recordingService: recordingService);
 
@@ -72,8 +72,8 @@ public class ListRecordingsHandlerTests
         var recordingService = Substitute.For<IRecordingService>();
         var targetId = Guid.NewGuid();
         var otherId = Guid.NewGuid();
-        var session1 = new RecordingSession(targetId, @"C:\rec\cam1.mp4", isManualRecording: true);
-        var session2 = new RecordingSession(otherId, @"C:\rec\cam2.mp4", isManualRecording: true);
+        var session1 = new RecordingSession(targetId, "Target", @"C:\rec\cam1.mp4", isManualRecording: true);
+        var session2 = new RecordingSession(otherId, "Other", @"C:\rec\cam2.mp4", isManualRecording: true);
         recordingService.GetActiveSessions().Returns([session1, session2]);
         var handler = CreateHandler(recordingService: recordingService);
 

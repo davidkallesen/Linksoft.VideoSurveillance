@@ -7,6 +7,7 @@ public interface IThumbnailGeneratorService
 {
     void StartCapture(
         Guid cameraId,
+        string cameraName,
         IMediaPipeline pipeline,
         string videoFilePath,
         int tileCount = 4);

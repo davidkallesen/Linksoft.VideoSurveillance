@@ -91,7 +91,7 @@ public partial class RecordingService : IRecordingService, IDisposable
             pipeline.StartRecording(filePath);
 
             // Create session
-            var session = new RecordingSession(camera.Id, filePath, isManualRecording: true);
+            var session = new RecordingSession(camera.Id, camera.Display.DisplayName, filePath, isManualRecording: true);
             if (!sessions.TryAdd(camera.Id, session))
             {
                 pipeline.StopRecording();
@@ -108,7 +108,7 @@ public partial class RecordingService : IRecordingService, IDisposable
 
             // Start thumbnail capture with configured tile count
             var tileCount = GetEffectiveThumbnailTileCount(camera);
-            thumbnailService.StartCapture(camera.Id, pipeline, filePath, tileCount);
+            thumbnailService.StartCapture(camera.Id, camera.Display.DisplayName, pipeline, filePath, tileCount);
 
             return true;
         }
@@ -145,11 +145,11 @@ public partial class RecordingService : IRecordingService, IDisposable
             try
             {
                 pipeline.StopRecording();
-                LogRecordingStopped(cameraId, session.CurrentFilePath);
+                LogRecordingStopped(session.CameraName, session.CurrentFilePath);
             }
             catch (Exception ex)
             {
-                LogRecordingStopError(ex, cameraId);
+                LogRecordingStopError(ex, session.CameraName);
             }
         }
 
@@ -215,7 +215,7 @@ public partial class RecordingService : IRecordingService, IDisposable
             pipeline.StartRecording(filePath);
 
             // Create session
-            var session = new RecordingSession(camera.Id, filePath, isManualRecording: false)
+            var session = new RecordingSession(camera.Id, camera.Display.DisplayName, filePath, isManualRecording: false)
             {
                 LastMotionTime = DateTime.UtcNow,
             };
@@ -239,7 +239,7 @@ public partial class RecordingService : IRecordingService, IDisposable
 
             // Start thumbnail capture with configured tile count
             var tileCount = GetEffectiveThumbnailTileCount(camera);
-            thumbnailService.StartCapture(camera.Id, pipeline, filePath, tileCount);
+            thumbnailService.StartCapture(camera.Id, camera.Display.DisplayName, pipeline, filePath, tileCount);
 
             return true;
         }
@@ -327,7 +327,7 @@ public partial class RecordingService : IRecordingService, IDisposable
         // Get the pipeline
         if (!pipelines.TryGetValue(cameraId, out var pipeline))
         {
-            LogNoPipelineForSegment(cameraId);
+            LogNoPipelineForSegment(session.CameraName);
             return false;
         }
 
@@ -377,7 +377,7 @@ public partial class RecordingService : IRecordingService, IDisposable
 
             // 7. Create new session with preserved state
             var newState = isManualRecording ? RecordingState.Recording : RecordingState.RecordingMotion;
-            var newSession = new RecordingSession(cameraId, newFilePath, isManualRecording)
+            var newSession = new RecordingSession(cameraId, camera.Display.DisplayName, newFilePath, isManualRecording)
             {
                 LastMotionTime = lastMotionTime,
                 State = newState,
@@ -386,7 +386,7 @@ public partial class RecordingService : IRecordingService, IDisposable
             if (!sessions.TryAdd(cameraId, newSession))
             {
                 pipeline.StopRecording();
-                LogFailedToAddNewSession(cameraId);
+                LogFailedToAddNewSession(camera.Display.DisplayName);
                 return false;
             }
 
@@ -400,7 +400,7 @@ public partial class RecordingService : IRecordingService, IDisposable
 
             // 9. Start thumbnail capture for new segment with configured tile count
             var tileCount = GetEffectiveThumbnailTileCount(camera);
-            thumbnailService.StartCapture(cameraId, pipeline, newFilePath, tileCount);
+            thumbnailService.StartCapture(cameraId, camera.Display.DisplayName, pipeline, newFilePath, tileCount);
 
             return true;
         }
@@ -523,7 +523,7 @@ public partial class RecordingService : IRecordingService, IDisposable
             }
             catch (Exception ex)
             {
-                LogPostMotionTickFailed(ex, cameraId);
+                LogPostMotionTickFailed(ex, ResolveCameraName(cameraId));
             }
         };
 
@@ -555,7 +555,7 @@ public partial class RecordingService : IRecordingService, IDisposable
         if (elapsed >= postMotionSeconds)
         {
             // Post-motion period elapsed, stop recording
-            LogPostMotionPeriodElapsed(cameraId);
+            LogPostMotionPeriodElapsed(session.CameraName);
             StopRecording(cameraId);
         }
         else if (session.State == RecordingState.RecordingMotion && elapsed >= 1)
@@ -564,7 +564,7 @@ public partial class RecordingService : IRecordingService, IDisposable
             var oldState = session.State;
             session.State = RecordingState.RecordingPostMotion;
             LogTransitioningToPostMotion(
-                cameraId,
+                session.CameraName,
                 (postMotionSeconds - elapsed).ToString("F0", CultureInfo.InvariantCulture));
             OnRecordingStateChanged(cameraId, oldState, RecordingState.RecordingPostMotion, session.CurrentFilePath);
         }
@@ -576,9 +576,39 @@ public partial class RecordingService : IRecordingService, IDisposable
         RecordingState newState,
         string? filePath)
     {
-        RecordingStateChanged?.Invoke(
-            this,
-            new RecordingStateChangedEventArgs(cameraId, oldState, newState, filePath));
+        // Invoke each subscriber individually so a single failing handler
+        // (e.g. cross-thread DependencyProperty access from a tile that was
+        // not marshaled to the dispatcher) cannot abort segmentation for
+        // the remaining cameras in the same tick.
+        var handlers = RecordingStateChanged?.GetInvocationList();
+        if (handlers is null)
+        {
+            return;
+        }
+
+        var args = new RecordingStateChangedEventArgs(cameraId, oldState, newState, filePath);
+        foreach (var handler in handlers)
+        {
+            try
+            {
+                ((EventHandler<RecordingStateChangedEventArgs>)handler).Invoke(this, args);
+            }
+            catch (Exception ex)
+            {
+                LogRecordingStateChangedSubscriberFailed(ex, ResolveCameraName(cameraId));
+            }
+        }
+    }
+
+    private string ResolveCameraName(Guid cameraId)
+    {
+        if (sessions.TryGetValue(cameraId, out var session))
+        {
+            return session.CameraName;
+        }
+
+        var camera = cameraStorageService.GetCameraById(cameraId);
+        return camera?.Display.DisplayName ?? cameraId.ToString();
     }
 
     // Bounds recordingCooldowns over weeks of motion events. Iterating
