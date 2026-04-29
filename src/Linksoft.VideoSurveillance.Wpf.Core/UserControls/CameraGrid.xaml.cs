@@ -9,6 +9,16 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 /// </remarks>
 public partial class CameraGrid
 {
+    /// <summary>
+    /// Tiles that have been instantiated and are alive in memory. Maintained
+    /// independently of the visual tree because RDP disconnect causes WPF to
+    /// orphan the tiles (Unloaded fires, but Loaded never fires back), and the
+    /// ItemContainerGenerator-based lookup in <see cref="GetCameraTileAt"/>
+    /// returns null in that state. Recovery paths (e.g. session-switch driven
+    /// player recreation) need a registry that survives transient unloads.
+    /// </summary>
+    private readonly HashSet<CameraTile> trackedTiles = [];
+
     [DependencyProperty(DefaultValue = 1)]
     private int gridRowCount;
 
@@ -145,6 +155,81 @@ public partial class CameraGrid
     }
 
     /// <summary>
+    /// Registers a tile so it can be reached without a visual-tree walk.
+    /// Called by <see cref="CameraTile"/> on its first Loaded event. Idempotent.
+    /// </summary>
+    internal void RegisterTile(CameraTile tile)
+    {
+        ArgumentNullException.ThrowIfNull(tile);
+
+        // RDP-driven WPF teardowns can leave the original tile alive in memory
+        // (deferred Dispose) while WPF instantiates a brand-new tile to fill the
+        // ItemsControl container. Both end up registered with the same Camera.Id.
+        // The new tile is the one in the visual tree (what the user sees); the
+        // old one is a zombie holding a now-invisible player. Dispose the zombie
+        // so its player and recording shut down cleanly, then inject services
+        // into the new tile so it creates its own fresh player.
+        var cameraId = tile.Camera?.Id;
+        if (cameraId is not null)
+        {
+            var zombie = trackedTiles.FirstOrDefault(existing =>
+                !ReferenceEquals(existing, tile) &&
+                existing.Camera?.Id == cameraId);
+
+            if (zombie is not null)
+            {
+                trackedTiles.Remove(zombie);
+
+                var logger = TileLogger;
+                if (logger is not null)
+                {
+                    LogZombieReplaced(logger, zombie.Camera?.Display.DisplayName ?? "<no-camera>");
+                }
+
+                zombie.MarkForRemoval();
+                zombie.Dispose();
+            }
+        }
+
+        trackedTiles.Add(tile);
+
+        // Inject services into the new tile so its deferred player init runs
+        // (Camera DP was set before the factory was available, so Player is
+        // null until services arrive). Defer one dispatcher tick to let the
+        // visual tree settle around the new tile.
+        _ = Dispatcher.BeginInvoke(
+            DispatcherPriority.Loaded,
+            new Action(() => InitializeServicesForTile(tile)));
+    }
+
+    /// <summary>
+    /// Unregisters a tile when it's about to be permanently disposed.
+    /// </summary>
+    internal void UnregisterTile(CameraTile tile)
+    {
+        ArgumentNullException.ThrowIfNull(tile);
+        trackedTiles.Remove(tile);
+    }
+
+    private void InitializeServicesForTile(CameraTile tile)
+    {
+        if (!trackedTiles.Contains(tile))
+        {
+            // Tile was disposed before this deferred call ran.
+            return;
+        }
+
+        tile.InitializeServices(
+            RecordingService,
+            MotionDetectionService,
+            TimelapseService,
+            ToastNotificationService,
+            VideoPlayerFactory,
+            MediaPipelineFactory,
+            TileLogger);
+    }
+
+    /// <summary>
     /// Occurs when a full screen request is made for a camera.
     /// </summary>
     public event EventHandler<FullScreenRequestedEventArgs>? FullScreenRequested;
@@ -201,6 +286,9 @@ public partial class CameraGrid
             return false;
         }
 
+        var index = CameraTiles.IndexOf(camera);
+        GetCameraTileAt(index)?.MarkForRemoval();
+
         CameraTiles.Remove(camera);
         UpdateGridLayout();
         UpdateEmptyState();
@@ -249,18 +337,37 @@ public partial class CameraGrid
     /// </summary>
     public void RecreateConnectedPlayers()
     {
-        if (CameraTiles is null)
+        // Use the registry, not the visual tree — see trackedTiles docs.
+        // Snapshot first so RecreatePlayer mutations don't invalidate enumeration.
+        var snapshot = trackedTiles.ToArray();
+        var logger = TileLogger;
+
+        if (logger is not null)
         {
-            return;
+            LogRecreateTrackedCount(logger, snapshot.Length);
         }
 
-        for (var i = 0; i < CameraTiles.Count; i++)
+        foreach (var tile in snapshot)
         {
-            var tile = GetCameraTileAt(i);
-            if (tile is { ConnectionState: ConnectionState.Connected })
+            var name = tile.Camera?.Display.DisplayName ?? "<no-camera>";
+            var state = tile.ConnectionState;
+
+            if (state != ConnectionState.Connected)
             {
-                tile.RecreatePlayer();
+                if (logger is not null)
+                {
+                    LogRecreateSkipped(logger, name, state);
+                }
+
+                continue;
             }
+
+            if (logger is not null)
+            {
+                LogRecreateRecreating(logger, name);
+            }
+
+            tile.RecreatePlayer();
         }
     }
 
@@ -341,6 +448,10 @@ public partial class CameraGrid
         }
         else
         {
+            // Reorder fallback: ItemsControl recycles containers, so the source
+            // tile is torn down and a new one is generated at the target index.
+            // Mark the outgoing tile so OnUnloaded actually disposes its player.
+            GetCameraTileAt(sourceIndex)?.MarkForRemoval();
             CameraTiles.RemoveAt(sourceIndex);
             CameraTiles.Insert(targetIndex, sourceCamera);
         }
@@ -354,6 +465,11 @@ public partial class CameraGrid
     /// </summary>
     public void Clear()
     {
+        for (var i = 0; i < CameraTiles.Count; i++)
+        {
+            GetCameraTileAt(i)?.MarkForRemoval();
+        }
+
         CameraTiles.Clear();
         UpdateGridLayout();
         UpdateEmptyState();
@@ -422,6 +538,7 @@ public partial class CameraGrid
         {
             if (!targetIds.Contains(CameraTiles[i].Id))
             {
+                GetCameraTileAt(i)?.MarkForRemoval();
                 CameraTiles.RemoveAt(i);
             }
         }

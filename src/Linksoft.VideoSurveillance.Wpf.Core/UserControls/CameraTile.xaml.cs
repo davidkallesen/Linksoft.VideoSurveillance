@@ -169,6 +169,9 @@ public partial class CameraTile : IDisposable
     private float panStartY;
 
     private bool disposed;
+    private bool markedForRemoval;
+    private Window? subscribedWindow;
+    private CameraGrid? registeredWithGrid;
     private bool isReconnecting;
     private bool isSwapping;
     private bool isDragging;
@@ -692,6 +695,20 @@ public partial class CameraTile : IDisposable
 
         if (disposing)
         {
+            LogTileDispose(
+                Camera?.Display.DisplayName ?? "<no-camera>",
+                ConnectionState.ToString());
+
+            // Release the RecordingService session for this camera *before* the
+            // player goes away. Without this, the service's sessions dictionary
+            // keeps a stale entry pointing at the now-finalized file, and a new
+            // tile for the same camera (RDP-driven zombie replacement) cannot
+            // start a fresh recording — StartRecording bails on the duplicate.
+            if (recordingService is not null && Camera is not null)
+            {
+                recordingService.StopRecording(Camera.Id);
+            }
+
             // Fire disconnect event if camera was connected
             if (Camera is not null && ConnectionState != ConnectionState.Disconnected)
             {
@@ -734,6 +751,18 @@ public partial class CameraTile : IDisposable
 
             Loaded -= OnLoaded;
             Unloaded -= OnUnloaded;
+            if (subscribedWindow is not null)
+            {
+                subscribedWindow.Closing -= OnAncestorWindowClosing;
+                subscribedWindow = null;
+            }
+
+            if (registeredWithGrid is not null)
+            {
+                registeredWithGrid.UnregisterTile(this);
+                registeredWithGrid = null;
+            }
+
             VideoPlayer.OverlayCreated -= OnOverlayCreated;
             VideoPlayer.SurfaceCreated -= OnSurfaceCreated;
             InputManager.Current.PreProcessInput -= OnPreProcessInput;
@@ -769,6 +798,37 @@ public partial class CameraTile : IDisposable
         object sender,
         RoutedEventArgs e)
     {
+        var window = Window.GetWindow(this);
+        LogTileLoaded(
+            Camera?.Display.DisplayName ?? "<no-camera>",
+            window?.WindowState.ToString() ?? "<no-window>",
+            window is not null);
+
+        // Register with the owning CameraGrid so it can reach this tile without
+        // a visual-tree walk. RDP-driven Unloaded leaves the tile alive but
+        // orphaned from the tree, so visual lookup fails and recovery paths
+        // (session-switch driven RecreatePlayer) need this registry to find us.
+        if (registeredWithGrid is null)
+        {
+            registeredWithGrid = FindParentCameraGrid();
+            registeredWithGrid?.RegisterTile(this);
+        }
+
+        // Subscribe (once per ancestor window) to Closing so we can distinguish a
+        // real teardown from a transient unload (RDP session change, virtualization,
+        // theme reload). Without this, OnUnloaded cannot tell the two apart and
+        // disposing the player on a transient unload kills the live RTSP stream.
+        if (window is not null && !ReferenceEquals(subscribedWindow, window))
+        {
+            if (subscribedWindow is not null)
+            {
+                subscribedWindow.Closing -= OnAncestorWindowClosing;
+            }
+
+            subscribedWindow = window;
+            subscribedWindow.Closing += OnAncestorWindowClosing;
+        }
+
         // Try to subscribe if windows already exist
         SubscribeToMouseEvents();
 
@@ -776,13 +836,81 @@ public partial class CameraTile : IDisposable
         _ = Dispatcher.BeginInvoke(
             DispatcherPriority.Loaded,
             CacheOverlayReference);
+
+        // After a transient WPF unload (RDP session change, theme reload,
+        // virtualization, etc.) the player may have lost its stream while the
+        // visual tree was torn down — D3D11 device-removed during desktop
+        // session change is a common trigger. Force a reconnect on reload if
+        // the tile didn't come back in a Connected/Connecting state, so 24/7
+        // operation recovers automatically without operator intervention.
+        if (AutoConnectOnLoad &&
+            Camera is not null &&
+            Player is not null &&
+            ConnectionState is not ConnectionState.Connected
+                and not ConnectionState.Connecting)
+        {
+            LogReconnectingAfterReload(Camera.Display.DisplayName, ConnectionState.ToString());
+            Reconnect();
+        }
+    }
+
+    private void OnAncestorWindowClosing(
+        object? sender,
+        CancelEventArgs e)
+    {
+        // The user is closing the parent window. Subsequent Unloaded fires are
+        // real teardown (not transient), so allow Dispose to run.
+        markedForRemoval = true;
     }
 
     private void OnUnloaded(
         object sender,
         RoutedEventArgs e)
     {
-        Dispose();
+        var window = Window.GetWindow(this);
+        LogTileUnloaded(
+            Camera?.Display.DisplayName ?? "<no-camera>",
+            ConnectionState.ToString(),
+            IsLoaded,
+            window?.WindowState.ToString() ?? "<no-window>",
+            window is not null,
+            VisualTreeHelper.GetParent(this)?.GetType().Name ?? "<no-parent>");
+
+        // RDP session changes, layout virtualization, theme reloads, and other
+        // transient WPF rebuilds cause Unloaded to fire on a still-live tile.
+        // Disposing the player on those events kills 24/7 recording until the
+        // user manually intervenes. Only dispose when the tile has been
+        // explicitly removed (MarkForRemoval) or its window is closing.
+        if (markedForRemoval)
+        {
+            Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Marks this tile for real disposal on the next <see cref="OnUnloaded"/>.
+    /// Call this from <see cref="CameraGrid"/> just before removing the tile's
+    /// camera from the bound collection, so legitimate removals tear down the
+    /// player while transient WPF unload/reload cycles do not.
+    /// </summary>
+    public void MarkForRemoval()
+    {
+        markedForRemoval = true;
+    }
+
+    private CameraGrid? FindParentCameraGrid()
+    {
+        DependencyObject? current = this;
+        while (current is not null)
+        {
+            current = VisualTreeHelper.GetParent(current);
+            if (current is CameraGrid grid)
+            {
+                return grid;
+            }
+        }
+
+        return null;
     }
 
     private void OnOverlayCreated(
@@ -1151,6 +1279,15 @@ public partial class CameraTile : IDisposable
         if (Camera is null)
         {
             return;
+        }
+
+        // Release any active recording session tied to the old pipeline before
+        // we tear it down. Otherwise RecordingService keeps a stale session
+        // entry for this camera, and the new player's recording-on-connect
+        // will be silently rejected (StartRecording bails on duplicate keys).
+        if (recordingService is not null && recordingService.IsRecording(Camera.Id))
+        {
+            recordingService.StopRecording(Camera.Id);
         }
 
         // Keep reference to old player and pipeline
@@ -2082,13 +2219,17 @@ public partial class CameraTile : IDisposable
         object? sender,
         RecordingStateChangedEventArgs e)
     {
-        if (Camera is null || e.CameraId != Camera.Id)
+        // Marshal to the dispatcher BEFORE touching DependencyProperties.
+        // RecordingService now fires this event from a thread-pool thread
+        // (RecordingSegmentationService runs on a System.Threading.Timer),
+        // so any DP access on the calling thread throws.
+        _ = Dispatcher.BeginInvoke(() =>
         {
-            return;
-        }
+            if (Camera is null || e.CameraId != Camera.Id)
+            {
+                return;
+            }
 
-        Dispatcher.Invoke(() =>
-        {
             RecordingState = e.NewState;
             UpdateRecordingDurationTimer();
             UpdateOverlayRecordingState();
@@ -2102,18 +2243,20 @@ public partial class CameraTile : IDisposable
         object? sender,
         MotionDetectedEventArgs e)
     {
-        if (Camera is null || e.CameraId != Camera.Id)
+        // Marshal to the dispatcher BEFORE touching DependencyProperties.
+        // MotionDetectionService fires from a thread-pool thread.
+        _ = Dispatcher.BeginInvoke(() =>
         {
-            return;
-        }
+            if (Camera is null || e.CameraId != Camera.Id)
+            {
+                return;
+            }
 
-        Debug.WriteLine(
-            $"[MotionDetection] Motion event for '{Camera.Display.DisplayName}' - " +
-            $"IsActive={e.IsMotionActive}, BoundingBoxCount={e.BoundingBoxes.Count}, " +
-            $"ChangePercentage={e.ChangePercentage:F2}%");
+            Debug.WriteLine(
+                $"[MotionDetection] Motion event for '{Camera.Display.DisplayName}' - " +
+                $"IsActive={e.IsMotionActive}, BoundingBoxCount={e.BoundingBoxes.Count}, " +
+                $"ChangePercentage={e.ChangePercentage:F2}%");
 
-        Dispatcher.Invoke(() =>
-        {
             // Update motion state based on IsMotionActive
             var wasMotionDetected = IsMotionDetected;
             IsMotionDetected = e.IsMotionActive;
