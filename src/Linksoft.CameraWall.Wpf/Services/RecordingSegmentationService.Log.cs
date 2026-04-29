@@ -20,17 +20,17 @@ public partial class RecordingSegmentationService
     [LoggerMessage(Level = LogLevel.Debug, Message = "Segmentation check timer stopped")]
     private partial void LogSegmentationTimerStopped();
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Interval boundary detected for camera ID: {CameraId}, slot: {CurrentSlot} (interval: {Interval} min)")]
-    private partial void LogIntervalBoundaryDetected(Guid cameraId, int currentSlot, int interval);
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Interval boundary detected for camera '{CameraName}', slot: {CurrentSlot} (interval: {Interval} min)")]
+    private partial void LogIntervalBoundaryDetected(string cameraName, int currentSlot, int interval);
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Max duration reached for camera ID: {CameraId}, duration: {Duration}")]
-    private partial void LogMaxDurationReached(Guid cameraId, TimeSpan duration);
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Max duration reached for camera '{CameraName}', duration: {Duration}")]
+    private partial void LogMaxDurationReached(string cameraName, TimeSpan duration);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Segmenting recording for camera ID: {CameraId}, reason: {Reason}")]
-    private partial void LogSegmentingRecording(Guid cameraId, SegmentationReason reason);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Segmenting recording for camera '{CameraName}', reason: {Reason}")]
+    private partial void LogSegmentingRecording(string cameraName, SegmentationReason reason);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to segment recording for camera ID: {CameraId}")]
-    private partial void LogSegmentingFailed(Guid cameraId);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to segment recording for camera '{CameraName}'")]
+    private partial void LogSegmentingFailed(string cameraName);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Segmentation tick failed; will retry on next interval")]
     private partial void LogSegmentationTickFailed(Exception ex);

@@ -56,7 +56,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         pipeline.StartRecording(filePath);
         pipelines[camera.Id] = pipeline;
 
-        var session = new RecordingSession(camera.Id, filePath, isManualRecording: true);
+        var session = new RecordingSession(camera.Id, camera.Display.DisplayName, filePath, isManualRecording: true);
 
         sessions[camera.Id] = session;
 
@@ -185,7 +185,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
             return false;
         }
 
-        var newSession = new RecordingSession(cameraId, newFilePath, session.IsManualRecording)
+        var newSession = new RecordingSession(cameraId, session.CameraName, newFilePath, session.IsManualRecording)
         {
             LastMotionTime = session.LastMotionTime,
             State = session.State,

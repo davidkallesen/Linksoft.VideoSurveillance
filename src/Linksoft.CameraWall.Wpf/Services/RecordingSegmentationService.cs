@@ -189,20 +189,20 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
             {
                 shouldSegment = true;
                 reason = SegmentationReason.IntervalBoundary;
-                LogIntervalBoundaryDetected(session.CameraId, currentSlot.Slot, intervalMinutes);
+                LogIntervalBoundaryDetected(session.CameraName, currentSlot.Slot, intervalMinutes);
             }
             else if (session.Duration >= maxDuration)
             {
                 shouldSegment = true;
                 reason = SegmentationReason.MaxDurationReached;
-                LogMaxDurationReached(session.CameraId, session.Duration);
+                LogMaxDurationReached(session.CameraName, session.Duration);
             }
 
             if (shouldSegment)
             {
                 var previousFilePath = session.CurrentFilePath;
 
-                LogSegmentingRecording(session.CameraId, reason);
+                LogSegmentingRecording(session.CameraName, reason);
 
                 var success = recordingService.SegmentRecording(session.CameraId);
 
@@ -216,7 +216,7 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
                 }
                 else
                 {
-                    LogSegmentingFailed(session.CameraId);
+                    LogSegmentingFailed(session.CameraName);
                 }
             }
         }
