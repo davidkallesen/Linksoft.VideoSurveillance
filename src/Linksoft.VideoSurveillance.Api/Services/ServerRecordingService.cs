@@ -268,6 +268,34 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     public IReadOnlyList<RecordingSession> GetActiveSessions()
         => sessions.Values.ToList().AsReadOnly();
 
+    /// <summary>
+    /// Diagnostic snapshot of every active recording session, augmented with
+    /// the underlying pipeline's IsRecordingActive flag so an operator can
+    /// distinguish "recording" (session live and pipeline producing packets)
+    /// from "stuck" (session live but pipeline died and reaper hasn't swept
+    /// yet). Used by the /health/recordings endpoint.
+    /// </summary>
+    public IReadOnlyList<RecordingDiagnostics> GetDiagnostics()
+    {
+        var snapshot = sessions.Values.ToList();
+        var result = new List<RecordingDiagnostics>(snapshot.Count);
+        foreach (var session in snapshot)
+        {
+            var pipelineActive = pipelines.TryGetValue(session.CameraId, out var pipeline)
+                && pipeline.IsRecordingActive;
+
+            result.Add(new RecordingDiagnostics(
+                session.CameraId,
+                session.CameraName,
+                session.CurrentFilePath,
+                session.StartTime,
+                session.Duration,
+                pipelineActive));
+        }
+
+        return result;
+    }
+
     /// <inheritdoc/>
     public int ReapInactiveSessions()
     {
