@@ -48,7 +48,17 @@ public sealed class StartRecordingHandler(
                     $"Camera {parameters.CameraId} did not reach Connected within {ConnectionTimeout.TotalSeconds:N0}s.");
             }
 
-            recordingService.StartRecording(camera, pipeline);
+            // Race window: between the IsRecording check above and here, a
+            // concurrent caller (SignalR Hub.StartRecording, another REST
+            // request) may have already started this camera. StartRecording
+            // returns false on duplicate Camera.Id and does NOT take ownership
+            // of our pipeline, so dispose it here to avoid a leak.
+            if (!recordingService.StartRecording(camera, pipeline))
+            {
+                pipeline.Dispose();
+                return StartRecordingResult.Conflict(
+                    $"Camera {parameters.CameraId} is already recording (started by another caller).");
+            }
         }
         catch
         {

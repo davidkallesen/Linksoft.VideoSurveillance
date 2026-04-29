@@ -416,6 +416,15 @@ public partial class RecordingService : IRecordingService, IDisposable
         => sessions.Values.ToList();
 
     /// <summary>
+    /// No-op on WPF — the tile lifecycle (RecreatePlayer / Dispose, see
+    /// CameraTile) already reaps dead pipelines per-camera and a server-
+    /// style sweeper would race with the dispatcher-driven cleanup.
+    /// </summary>
+    [SuppressMessage("Major Code Smell", "S2325:Methods and properties that don't access instance data should be static", Justification = "Required interface implementation; cannot be static.")]
+    [SuppressMessage("Minor Code Smell", "S3400:Methods should not return constants", Justification = "Intentional interface no-op; tile lifecycle handles dead-pipeline reaping on WPF.")]
+    public int ReapInactiveSessions() => 0;
+
+    /// <summary>
     /// Disposes of the service resources.
     /// </summary>
     public void Dispose()

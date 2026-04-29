@@ -32,6 +32,12 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
     /// <inheritdoc />
     public override Task DoWorkAsync(CancellationToken stoppingToken)
     {
+        // Reap any session whose pipeline has died — including ones started
+        // via REST or SignalR which CCM doesn't track in managedPipelines.
+        // Without this, a single network blip on an API-started recording
+        // leaves the session "Recording" forever with no recovery.
+        recordingService.ReapInactiveSessions();
+
         var cameras = storageService.GetAllCameras();
         var appDefault = settingsService.Recording.EnableRecordingOnConnect;
 
@@ -66,8 +72,10 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
                 {
                     LogDeadPipelineDetected(camera.Id, camera.Display.DisplayName);
 
+                    // recordingService.StopRecording disposes the pipeline.
+                    // Just drop the (now-disposed) reference from managedPipelines.
                     recordingService.StopRecording(camera.Id);
-                    RemoveAndDisposePipeline(camera.Id);
+                    managedPipelines.TryRemove(camera.Id, out _);
                 }
 
                 if (recordingService.IsRecording(camera.Id))
@@ -149,6 +157,11 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
             {
                 LogStopRecordingShutdownError(ex, cameraId);
             }
+
+            // recordingService.StopRecording disposes the pipeline; drop the
+            // now-disposed reference so CCM.Dispose doesn't redundantly
+            // re-dispose (the call is idempotent but the iteration is wasted).
+            managedPipelines.TryRemove(cameraId, out _);
         }
     }
 
@@ -164,8 +177,16 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
 
         try
         {
-            recordingService.StartRecording(camera, pipeline);
-            LogRecordingOnConnectStartedFallback(camera.Id, camera.Display.DisplayName);
+            if (recordingService.StartRecording(camera, pipeline))
+            {
+                LogRecordingOnConnectStartedFallback(camera.Id, camera.Display.DisplayName);
+                return;
+            }
+
+            // Another path (REST/SignalR) won the race and is already
+            // recording. Our pipeline isn't owned by the recording service
+            // — drop it so we don't leak two demuxers per camera.
+            ScheduleDeferredDisposal(camera.Id);
         }
         catch (Exception ex)
         {
@@ -198,8 +219,17 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
 
             try
             {
-                recordingService.StartRecording(camera, pipeline);
-                LogRecordingOnConnectStarted(camera.Id, camera.Display.DisplayName);
+                if (recordingService.StartRecording(camera, pipeline))
+                {
+                    LogRecordingOnConnectStarted(camera.Id, camera.Display.DisplayName);
+                    return;
+                }
+
+                // Race lost: another caller started this camera between the
+                // IsRecording check above and here. Our pipeline isn't owned
+                // by the recording service — schedule disposal (deferred to
+                // the ThreadPool because we're on the demux thread).
+                ScheduleDeferredDisposal(camera.Id);
             }
             catch (Exception ex)
             {

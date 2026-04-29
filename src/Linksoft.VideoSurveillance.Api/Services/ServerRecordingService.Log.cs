@@ -19,4 +19,16 @@ public sealed partial class ServerRecordingService
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Segmentation failed for camera {CameraId}")]
     private partial void LogSegmentFailed(Exception ex, Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Stopping pipeline for camera {CameraId} threw")]
+    private partial void LogStopPipelineFailed(Exception ex, Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Disposing pipeline for camera {CameraId} threw")]
+    private partial void LogDisposePipelineFailed(Exception ex, Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Reaping inactive recording session for camera {CameraId} (pipeline died)")]
+    private partial void LogReapingInactiveSession(Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Reaper swept {ReapedCount} inactive recording session(s)")]
+    private partial void LogReaperSwept(int reapedCount);
 }

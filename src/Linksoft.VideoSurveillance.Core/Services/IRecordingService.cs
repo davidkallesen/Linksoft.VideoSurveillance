@@ -34,4 +34,13 @@ public interface IRecordingService
     bool SegmentRecording(Guid cameraId);
 
     IReadOnlyList<RecordingSession> GetActiveSessions();
+
+    /// <summary>
+    /// Stops any active recording session whose underlying pipeline is no
+    /// longer producing output (e.g. RTSP connection died, decoder exited).
+    /// Implementations release the dead pipeline and mark the session
+    /// stopped so a re-attempt can start a fresh recording.
+    /// Returns the number of sessions reaped.
+    /// </summary>
+    int ReapInactiveSessions();
 }
