@@ -38,7 +38,14 @@ try
     // Register Core service implementations for the server
     builder.Services.AddSingleton<ICameraStorageService, JsonCameraStorageService>();
     builder.Services.AddSingleton<IApplicationSettingsService, JsonApplicationSettingsService>();
-    builder.Services.AddSingleton<IRecordingService, ServerRecordingService>();
+
+    // Register both the concrete type and the interface to share one
+    // instance — the broadcaster subscribes to ServerRecordingService's
+    // server-only CameraConnectionStateChanged event (not on IRecordingService
+    // since WPF doesn't need it).
+    builder.Services.AddSingleton<ServerRecordingService>();
+    builder.Services.AddSingleton<IRecordingService>(sp =>
+        sp.GetRequiredService<ServerRecordingService>());
     builder.Services.AddSingleton<IMotionDetectionService, ServerMotionDetectionService>();
 
     // Initialize VideoEngine (FFmpeg in-process) and register services.

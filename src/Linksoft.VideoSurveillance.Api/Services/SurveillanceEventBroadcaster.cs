@@ -13,17 +13,20 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
 
     private readonly IHubContext<SurveillanceHub> hubContext;
     private readonly IRecordingService recordingService;
+    private readonly ServerRecordingService serverRecordingService;
     private readonly IMotionDetectionService motionDetectionService;
     private readonly ILogger<SurveillanceEventBroadcaster> logger;
 
     public SurveillanceEventBroadcaster(
         IHubContext<SurveillanceHub> hubContext,
         IRecordingService recordingService,
+        ServerRecordingService serverRecordingService,
         IMotionDetectionService motionDetectionService,
         ILogger<SurveillanceEventBroadcaster> logger)
     {
         this.hubContext = hubContext;
         this.recordingService = recordingService;
+        this.serverRecordingService = serverRecordingService;
         this.motionDetectionService = motionDetectionService;
         this.logger = logger;
     }
@@ -33,6 +36,7 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
     {
         recordingService.RecordingStateChanged += OnRecordingStateChanged;
         motionDetectionService.MotionDetected += OnMotionDetected;
+        serverRecordingService.CameraConnectionStateChanged += OnCameraConnectionStateChanged;
 
         LogBroadcasterStarted();
 
@@ -44,6 +48,7 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
     {
         recordingService.RecordingStateChanged -= OnRecordingStateChanged;
         motionDetectionService.MotionDetected -= OnMotionDetected;
+        serverRecordingService.CameraConnectionStateChanged -= OnCameraConnectionStateChanged;
 
         LogBroadcasterStopped();
 
@@ -64,6 +69,11 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         object? sender,
         MotionDetectedEventArgs e)
         => _ = BroadcastMotionDetectedAsync(e);
+
+    private void OnCameraConnectionStateChanged(
+        Guid cameraId,
+        ConnectionState newState)
+        => _ = BroadcastCameraConnectionStateChangedAsync(cameraId, newState);
 
     private async Task BroadcastRecordingStateChangedAsync(
         RecordingStateChangedEventArgs e)
@@ -88,6 +98,31 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         catch (Exception ex)
         {
             LogBroadcastRecordingFailed(ex, e.CameraId);
+        }
+    }
+
+    private async Task BroadcastCameraConnectionStateChangedAsync(
+        Guid cameraId,
+        ConnectionState newState)
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(BroadcastTimeout);
+            await hubContext.Clients.All
+                .SendAsync(
+                    "ConnectionStateChanged",
+                    new
+                    {
+                        CameraId = cameraId,
+                        NewState = newState.ToString(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                    },
+                    cts.Token)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogBroadcastConnectionFailed(ex, cameraId);
         }
     }
 
