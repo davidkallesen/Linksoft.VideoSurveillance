@@ -13,4 +13,7 @@ public sealed partial class SurveillanceEventBroadcaster
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to broadcast MotionDetected for camera {CameraId}")]
     private partial void LogBroadcastMotionFailed(Exception ex, Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to broadcast ConnectionStateChanged for camera {CameraId}")]
+    private partial void LogBroadcastConnectionFailed(Exception ex, Guid cameraId);
 }

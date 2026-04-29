@@ -11,6 +11,12 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     private readonly ConcurrentDictionary<Guid, RecordingSession> sessions = new();
     private readonly ConcurrentDictionary<Guid, IMediaPipeline> pipelines = new();
 
+    // Per-camera pipeline ConnectionStateChanged handlers, kept so we can
+    // unsubscribe at StopRecording time. Subscribing once at StartRecording
+    // gives the broadcaster a single aggregated event to listen to (vs.
+    // subscribing per-pipeline at every creation site).
+    private readonly ConcurrentDictionary<Guid, EventHandler<ConnectionStateChangedEventArgs>> connectionHandlers = new();
+
     public ServerRecordingService(
         IApplicationSettingsService settingsService,
         ICameraStorageService cameraStorageService,
@@ -23,6 +29,14 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
 
     /// <inheritdoc/>
     public event EventHandler<RecordingStateChangedEventArgs>? RecordingStateChanged;
+
+    /// <summary>
+    /// Raised when the connection state of an actively-recording camera's
+    /// pipeline changes. Server-only — used by SurveillanceEventBroadcaster
+    /// to forward connection events over SignalR. Cameras that aren't
+    /// recording (e.g. one-shot snapshot pipelines) are not represented.
+    /// </summary>
+    public event Action<Guid, ConnectionState>? CameraConnectionStateChanged;
 
     /// <inheritdoc/>
     public RecordingState GetRecordingState(Guid cameraId)
@@ -60,6 +74,22 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
 
         sessions[camera.Id] = session;
 
+        // Forward subsequent pipeline connection-state changes onto the
+        // aggregated event so the broadcaster (and any other observer) sees
+        // disconnect/reconnect transitions without subscribing per-pipeline.
+        var capturedId = camera.Id;
+        EventHandler<ConnectionStateChangedEventArgs> handler = (_, e) =>
+            CameraConnectionStateChanged?.Invoke(capturedId, e.NewState);
+        pipeline.ConnectionStateChanged += handler;
+        connectionHandlers[camera.Id] = handler;
+
+        // Synthetic "Connected" so subscribers that join after the pipeline
+        // has already reached Connected (the typical case — StartRecording
+        // is called *after* the connection wait succeeds) still see the
+        // current state. Without this, the Blazor live view would show
+        // "Disconnected" until the next genuine state change.
+        CameraConnectionStateChanged?.Invoke(camera.Id, ConnectionState.Connected);
+
         RaiseStateChanged(camera.Id, RecordingState.Idle, RecordingState.Recording, filePath);
         LogRecordingStarted(camera.Id, filePath);
 
@@ -85,6 +115,14 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         // Start/Stop cycle leaks an entire pipeline.
         if (pipelines.TryRemove(cameraId, out var pipeline))
         {
+            // Unsubscribe BEFORE Dispose so we don't surface a tear-down
+            // Disconnected event onto the aggregate (the synthetic
+            // Disconnected below covers the recording-ended case).
+            if (connectionHandlers.TryRemove(cameraId, out var handler))
+            {
+                pipeline.ConnectionStateChanged -= handler;
+            }
+
             try
             {
                 pipeline.StopRecording();
@@ -103,6 +141,11 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
                 LogDisposePipelineFailed(ex, cameraId);
             }
         }
+
+        // The recording lifecycle ended — let connection-state subscribers
+        // know the camera is no longer being observed by us. Mirrors the
+        // synthetic Connected we fired in StartRecording.
+        CameraConnectionStateChanged?.Invoke(cameraId, ConnectionState.Disconnected);
 
         RaiseStateChanged(cameraId, RecordingState.Recording, RecordingState.Idle, session.CurrentFilePath);
         LogRecordingStopped(cameraId);
