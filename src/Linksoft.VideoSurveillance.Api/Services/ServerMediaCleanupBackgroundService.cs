@@ -9,6 +9,14 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// </summary>
 public sealed partial class ServerMediaCleanupBackgroundService : IHostedService, IAsyncDisposable
 {
+    // Free-space thresholds for the recording drive. Below "low" we warn so
+    // operators can reduce retention or free space before recordings fail;
+    // below "critical" we promote to error level. We don't refuse new
+    // recordings here — that policy belongs upstream — but the alarm gives
+    // the operator time to act before MKVs corrupt mid-write.
+    private const double DiskSpaceLowGb = 10.0;
+    private const double DiskSpaceCriticalGb = 2.0;
+
     private static readonly string[] RecordingExtensions = [".mp4", ".mkv", ".avi"];
     private static readonly string[] SnapshotExtensions = [".png", ".jpg", ".jpeg", ".bmp"];
 
@@ -130,6 +138,8 @@ public sealed partial class ServerMediaCleanupBackgroundService : IHostedService
                 summary.DirectoriesRemoved,
                 FormatBytes(summary.BytesFreed),
                 summary.ErrorCount);
+
+            CheckDiskSpace(settingsService.Recording.RecordingPath);
         }
         finally
         {
@@ -137,6 +147,43 @@ public sealed partial class ServerMediaCleanupBackgroundService : IHostedService
             {
                 isRunning = false;
             }
+        }
+    }
+
+    private void CheckDiskSpace(string recordingPath)
+    {
+        if (string.IsNullOrEmpty(recordingPath))
+        {
+            return;
+        }
+
+        try
+        {
+            var root = Path.GetPathRoot(Path.GetFullPath(recordingPath));
+            if (string.IsNullOrEmpty(root))
+            {
+                return;
+            }
+
+            var drive = new DriveInfo(root);
+            var freeGb = drive.AvailableFreeSpace / (1024.0 * 1024.0 * 1024.0);
+
+            if (freeGb < DiskSpaceCriticalGb)
+            {
+                LogDiskSpaceCritical(root, freeGb);
+            }
+            else if (freeGb < DiskSpaceLowGb)
+            {
+                LogDiskSpaceLow(root, freeGb);
+            }
+            else
+            {
+                LogDiskSpaceOk(root, freeGb);
+            }
+        }
+        catch (Exception ex)
+        {
+            LogDiskSpaceCheckFailed(ex, recordingPath);
         }
     }
 
