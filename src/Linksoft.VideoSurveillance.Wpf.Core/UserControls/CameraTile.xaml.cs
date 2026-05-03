@@ -42,6 +42,15 @@ public partial class CameraTile : IDisposable
     [DependencyProperty(DefaultValue = VerticalAlignment.Top)]
     private VerticalAlignment overlayVerticalAlignment;
 
+    // Quick-action stack alignment is always the diagonal opposite of the
+    // overlay info box so the two never overlap. Computed in
+    // UpdateOverlayPosition alongside OverlayHorizontalAlignment/Vertical.
+    [DependencyProperty(DefaultValue = HorizontalAlignment.Right)]
+    private HorizontalAlignment quickActionsHorizontalAlignment;
+
+    [DependencyProperty(DefaultValue = VerticalAlignment.Bottom)]
+    private VerticalAlignment quickActionsVerticalAlignment;
+
     [DependencyProperty(DefaultValue = nameof(Brushes.Transparent))]
     private Brush selectionBorderBrush = Brushes.Transparent;
 
@@ -53,6 +62,9 @@ public partial class CameraTile : IDisposable
 
     [DependencyProperty(DefaultValue = true, PropertyChangedCallback = nameof(OnOverlaySettingsChanged))]
     private bool showOverlayConnectionStatus;
+
+    [DependencyProperty(DefaultValue = true, PropertyChangedCallback = nameof(OnShowOverlayQuickActionsChanged))]
+    private bool showOverlayQuickActions;
 
     [DependencyProperty(DefaultValue = false, PropertyChangedCallback = nameof(OnOverlaySettingsChanged))]
     private bool showOverlayTime;
@@ -206,6 +218,15 @@ public partial class CameraTile : IDisposable
     private int? previousOverrideMotionAnalysisHeight;
     private int? previousOverrideMotionCooldownSeconds;
     private int? previousOverridePostMotionDurationSeconds;
+
+    // Tracks whether the mouse is currently hovering the bottom-right
+    // corner of the tile. Drives the fullscreen quick-action button's
+    // visibility (show on hover, hide otherwise). Updated by the hover
+    // poll timer below — WPF mouse events don't fire reliably for hover
+    // detection inside the VideoHost overlay surface, so we poll the
+    // global cursor position instead.
+    private bool isTileHovered;
+    private DispatcherTimer? hoverPollTimer;
 
     /// <summary>
     /// Gets whether motion detection should run (for recording or bounding box display).
@@ -735,6 +756,13 @@ public partial class CameraTile : IDisposable
             recordingDurationTimer?.Stop();
             recordingDurationTimer = null;
 
+            if (hoverPollTimer is not null)
+            {
+                hoverPollTimer.Stop();
+                hoverPollTimer.Tick -= OnHoverPollTick;
+                hoverPollTimer = null;
+            }
+
             // Stop motion detection
             StopMotionDetection();
 
@@ -1005,6 +1033,7 @@ public partial class CameraTile : IDisposable
         if (d is CameraTile tile && e.NewValue is ConnectionState newState)
         {
             tile.UpdateOverlayConnectionState(newState);
+            tile.UpdateQuickActionVisibility();
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -1140,7 +1169,7 @@ public partial class CameraTile : IDisposable
                     CameraDescription = Camera?.Display.Description ?? string.Empty;
                     if (Camera is not null)
                     {
-                        UpdateOverlayPosition(Camera.Display.OverlayPosition);
+                        UpdateOverlayPosition(GetEffectiveOverlayPosition(Camera));
                     }
 
                     break;
@@ -1334,7 +1363,7 @@ public partial class CameraTile : IDisposable
 
             CameraName = cameraConfig.Display.DisplayName;
             CameraDescription = cameraConfig.Display.Description ?? string.Empty;
-            UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
+            UpdateOverlayPosition(GetEffectiveOverlayPosition(cameraConfig));
             ApplyRotation();
             InitializeOverrideTracking(cameraConfig);
             return;
@@ -1379,7 +1408,7 @@ public partial class CameraTile : IDisposable
         CameraName = cameraConfig.Display.DisplayName;
         CameraDescription = cameraConfig.Display.Description ?? string.Empty;
 
-        UpdateOverlayPosition(cameraConfig.Display.OverlayPosition);
+        UpdateOverlayPosition(GetEffectiveOverlayPosition(cameraConfig));
 
         // Defer player creation if the factory hasn't been injected yet.
         // InitializeServices will call InitializePlayer when the factory arrives.
@@ -1569,6 +1598,130 @@ public partial class CameraTile : IDisposable
             VideoPlayer.Surface.PreviewMouseWheel -= OnOverlayMouseWheel;
             VideoPlayer.Surface.PreviewMouseWheel += OnOverlayMouseWheel;
         }
+
+        EnsureHoverPollTimer();
+    }
+
+    /// <summary>
+    /// Polling-based hover detection for the bottom-right corner zone.
+    /// WPF mouse events on the VideoHost overlay surface don't fire
+    /// reliably for hover-only scenarios (right-click and wheel are routed
+    /// via Preview events that DO fire, but plain MouseEnter on the inner
+    /// Grid was empirically broken). Mouse.GetPosition reads the current
+    /// cursor position straight from Win32, so it's immune to whatever
+    /// hit-test corner case is biting us. ~7 ticks/second per tile.
+    /// </summary>
+    private void EnsureHoverPollTimer()
+    {
+        if (hoverPollTimer is null)
+        {
+            hoverPollTimer = new DispatcherTimer(DispatcherPriority.Input)
+            {
+                Interval = TimeSpan.FromMilliseconds(150),
+            };
+            hoverPollTimer.Tick += OnHoverPollTick;
+        }
+
+        if (ShowOverlayQuickActions)
+        {
+            if (!hoverPollTimer.IsEnabled)
+            {
+                hoverPollTimer.Start();
+            }
+        }
+        else if (hoverPollTimer.IsEnabled)
+        {
+            hoverPollTimer.Stop();
+
+            if (isTileHovered)
+            {
+                isTileHovered = false;
+                UpdateQuickActionVisibility();
+            }
+        }
+    }
+
+    private void OnHoverPollTick(
+        object? sender,
+        EventArgs e)
+    {
+        if (QuickActionsContainer is null || !QuickActionsContainer.IsLoaded)
+        {
+            return;
+        }
+
+        var width = QuickActionsContainer.ActualWidth;
+        var height = QuickActionsContainer.ActualHeight;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        var pos = Mouse.GetPosition(QuickActionsContainer);
+        var inside = pos.X >= 0 && pos.X <= width && pos.Y >= 0 && pos.Y <= height;
+
+        if (inside == isTileHovered)
+        {
+            return;
+        }
+
+        isTileHovered = inside;
+        UpdateQuickActionVisibility();
+    }
+
+    private static void OnShowOverlayQuickActionsChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraTile tile)
+        {
+            tile.EnsureHoverPollTimer();
+            tile.UpdateQuickActionVisibility();
+        }
+    }
+
+    /// <summary>
+    /// Recomputes visibility for the two quick-action buttons (zoom-reset,
+    /// fullscreen). Called from every input that affects the inputs:
+    /// hover events, zoom changes, connection state changes, and the
+    /// ShowOverlayQuickActions DP changing.
+    /// </summary>
+    private void UpdateQuickActionVisibility()
+    {
+        if (FullScreenQuickButton is null || ZoomResetQuickButton is null)
+        {
+            return;
+        }
+
+        if (!ShowOverlayQuickActions)
+        {
+            // Feature disabled — collapse both buttons completely so their
+            // space is reclaimed.
+            FullScreenQuickButton.Visibility = Visibility.Collapsed;
+            ZoomResetQuickButton.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        // Fullscreen button: only meaningful when the camera is connected
+        // (otherwise FullScreenCommand.CanExecute is false anyway), and only
+        // shown while the user is hovering the tile. Use Hidden (not
+        // Collapsed) when the show-conditions aren't met so the button's
+        // 32x32 + margin slot stays reserved in the StackPanel — otherwise
+        // the zoom-reset and zoom indicator below it would jump down each
+        // time the cursor approaches in top-anchored mode (where the stack
+        // grows downward instead of upward).
+        FullScreenQuickButton.Visibility =
+            isTileHovered &&
+            !isReconnecting &&
+            ConnectionState == ConnectionState.Connected
+                ? Visibility.Visible
+                : Visibility.Hidden;
+
+        // Zoom-reset: only meaningful when zoomed; visible regardless of
+        // hover so the user can always recover the default view.
+        ZoomResetQuickButton.Visibility = IsZoomed
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     private void UpdateConnectionState(
@@ -1893,7 +2046,7 @@ public partial class CameraTile : IDisposable
 
         CameraName = Camera.Display.DisplayName;
         CameraDescription = Camera.Display.Description ?? string.Empty;
-        UpdateOverlayPosition(Camera.Display.OverlayPosition);
+        UpdateOverlayPosition(GetEffectiveOverlayPosition(Camera));
         ApplyRotation();
     }
 
@@ -1930,6 +2083,15 @@ public partial class CameraTile : IDisposable
         });
     }
 
+    /// <summary>
+    /// Returns the effective overlay position for this camera, preferring
+    /// the per-camera override (set in the Overrides tab) when present and
+    /// falling back to the basic display setting otherwise.
+    /// </summary>
+    private static OverlayPosition GetEffectiveOverlayPosition(
+        CameraConfiguration cameraConfig)
+        => cameraConfig.Overrides?.CameraDisplay.OverlayPosition ?? cameraConfig.Display.OverlayPosition;
+
     private void UpdateOverlayPosition(OverlayPosition position)
     {
         OverlayHorizontalAlignment = position switch
@@ -1945,6 +2107,15 @@ public partial class CameraTile : IDisposable
             OverlayPosition.BottomLeft or OverlayPosition.BottomRight => VerticalAlignment.Bottom,
             _ => VerticalAlignment.Top,
         };
+
+        // Quick-action stack lives in the diagonal opposite corner.
+        QuickActionsHorizontalAlignment = OverlayHorizontalAlignment == HorizontalAlignment.Left
+            ? HorizontalAlignment.Right
+            : HorizontalAlignment.Left;
+
+        QuickActionsVerticalAlignment = OverlayVerticalAlignment == VerticalAlignment.Top
+            ? VerticalAlignment.Bottom
+            : VerticalAlignment.Top;
     }
 
     private void UpdateOverlayTitle(string title)
@@ -2932,5 +3103,9 @@ public partial class CameraTile : IDisposable
         {
             ZoomIndicatorBorder.Visibility = Visibility.Collapsed;
         }
+
+        // Zoom-reset quick-action button mirrors IsZoomed (gated by
+        // ShowOverlayQuickActions inside the recompute).
+        UpdateQuickActionVisibility();
     }
 }

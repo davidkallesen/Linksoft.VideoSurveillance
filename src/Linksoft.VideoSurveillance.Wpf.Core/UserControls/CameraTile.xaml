@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
+    xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:lve="clr-namespace:Linksoft.VideoPlayer.Wpf;assembly=Linksoft.VideoPlayer.Wpf"
     xmlns:local="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.UserControls"
@@ -14,6 +15,33 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <!--  Quick-action overlay button: rounded, semi-transparent, neutral hover. Mirrors the fullscreen close button style but smaller (32x32 vs 40x40) and not red on hover (since these are positive actions, not destructive).  -->
+        <Style x:Key="OverlayQuickActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#66000000" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="16">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#CC1E88E5" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <atc:GridEx>
@@ -65,23 +93,70 @@
                     x:Name="MotionOverlay"
                     IsHitTestVisible="False" />
 
-                <!--  Zoom Indicator  -->
-                <Border
-                    x:Name="ZoomIndicatorBorder"
+                <!--  Quick-action zone (positioned in the diagonal opposite corner of the overlay info box, computed in UpdateOverlayPosition). The outer Grid is a fixed-size, hit-test-visible hover hot-zone — the buttons inside collapse when hidden, so without this fixed shell the mouse would have nothing to hover when no quick action is currently visible. Visibility of the buttons is gated by ShowOverlayQuickActions, zoom state, hover, and connection state — toggled imperatively from CameraTile.xaml.cs.  -->
+                <Grid
+                    x:Name="QuickActionsContainer"
+                    Width="100"
+                    Height="120"
                     Margin="8"
-                    Padding="6,3"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom"
-                    Background="#99000000"
-                    CornerRadius="3"
-                    IsHitTestVisible="False"
-                    Visibility="Collapsed">
-                    <TextBlock
-                        x:Name="ZoomIndicator"
-                        FontSize="11"
-                        FontWeight="SemiBold"
-                        Foreground="White" />
-                </Border>
+                    HorizontalAlignment="{Binding QuickActionsHorizontalAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    VerticalAlignment="{Binding QuickActionsVerticalAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Background="Transparent">
+
+                    <StackPanel
+                        HorizontalAlignment="{Binding QuickActionsHorizontalAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        VerticalAlignment="{Binding QuickActionsVerticalAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Orientation="Vertical">
+
+                        <Button
+                            x:Name="FullScreenQuickButton"
+                            Margin="0,0,0,4"
+                            HorizontalAlignment="{Binding QuickActionsHorizontalAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Command="{Binding FullScreenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Style="{StaticResource OverlayQuickActionButtonStyle}"
+                            ToolTip="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                           Key=ShowInFullScreen}"
+                            Visibility="Hidden">
+                            <Path
+                                Width="14"
+                                Height="14"
+                                Data="M0,5 L0,0 L5,0 M9,0 L14,0 L14,5 M14,9 L14,14 L9,14 M5,14 L0,14 L0,9"
+                                Stroke="White"
+                                StrokeThickness="1.5" />
+                        </Button>
+
+                        <Button
+                            x:Name="ZoomResetQuickButton"
+                            Margin="0,0,0,4"
+                            HorizontalAlignment="{Binding QuickActionsHorizontalAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Command="{Binding ZoomResetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Style="{StaticResource OverlayQuickActionButtonStyle}"
+                            ToolTip="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                           Key=ResetZoom}"
+                            Visibility="Collapsed">
+                            <TextBlock
+                                FontSize="11"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="1:1" />
+                        </Button>
+
+                        <Border
+                            x:Name="ZoomIndicatorBorder"
+                            Padding="6,3"
+                            HorizontalAlignment="{Binding QuickActionsHorizontalAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Background="#99000000"
+                            CornerRadius="3"
+                            IsHitTestVisible="False"
+                            Visibility="Collapsed">
+                            <TextBlock
+                                x:Name="ZoomIndicator"
+                                FontSize="11"
+                                FontWeight="SemiBold"
+                                Foreground="White" />
+                        </Border>
+                    </StackPanel>
+                </Grid>
 
                 <!--  Zoom Selection Rectangle  -->
                 <Canvas
