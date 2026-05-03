@@ -5,6 +5,10 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// </summary>
 public sealed partial class ServerRecordingService : IRecordingService, IDisposable
 {
+    // Mirrors WPF's CameraTile stream-stale threshold — long enough to absorb
+    // a slow keyframe interval, short enough to recover within one CCM tick.
+    private const int StalePacketThresholdSeconds = 15;
+
     private readonly IApplicationSettingsService settingsService;
     private readonly ICameraStorageService cameraStorageService;
     private readonly ILogger<ServerRecordingService> logger;
@@ -91,7 +95,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         CameraConnectionStateChanged?.Invoke(camera.Id, ConnectionState.Connected);
 
         RaiseStateChanged(camera.Id, RecordingState.Idle, RecordingState.Recording, filePath);
-        LogRecordingStarted(camera.Id, filePath);
+        LogRecordingStarted(camera.Display.DisplayName, camera.Id, filePath);
 
         return true;
     }
@@ -148,7 +152,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         CameraConnectionStateChanged?.Invoke(cameraId, ConnectionState.Disconnected);
 
         RaiseStateChanged(cameraId, RecordingState.Recording, RecordingState.Idle, session.CurrentFilePath);
-        LogRecordingStopped(cameraId);
+        LogRecordingStopped(session.CameraName, cameraId);
     }
 
     /// <inheritdoc/>
@@ -260,7 +264,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         RaiseStateChanged(cameraId, session.State, RecordingState.Idle, oldFilePath);
         RaiseStateChanged(cameraId, RecordingState.Idle, newSession.State, newFilePath);
 
-        LogSegmented(cameraId, newFilePath);
+        LogSegmented(session.CameraName, cameraId, newFilePath);
         return true;
     }
 
@@ -300,15 +304,22 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     public int ReapInactiveSessions()
     {
         var reaped = 0;
+        var staleThreshold = TimeSpan.FromSeconds(StalePacketThresholdSeconds);
+        var nowUtc = DateTime.UtcNow;
 
         // Snapshot so we can mutate sessions/pipelines via StopRecording inside
         // the loop without ConcurrentDictionary enumeration surprises.
         foreach (var cameraId in sessions.Keys.ToList())
         {
+            if (!sessions.TryGetValue(cameraId, out var session))
+            {
+                continue;
+            }
+
             if (!pipelines.TryGetValue(cameraId, out var pipeline))
             {
                 // Session without a pipeline = stale entry; clear it.
-                LogReapingInactiveSession(cameraId);
+                LogReapingInactiveSession(session.CameraName, cameraId, "no pipeline registered");
                 StopRecording(cameraId);
                 reaped++;
                 continue;
@@ -316,7 +327,34 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
 
             if (!pipeline.IsRecordingActive)
             {
-                LogReapingInactiveSession(cameraId);
+                LogReapingInactiveSession(session.CameraName, cameraId, "pipeline IsRecordingActive=false");
+                StopRecording(cameraId);
+                reaped++;
+                continue;
+            }
+
+            // Stream-stale watchdog: a pipeline can have IsRecordingActive=true
+            // while wedged (RTP packets stop arriving but the underlying socket
+            // is technically still open). The VideoEngine's consecutive-read-
+            // errors detector only fires on read errors, not silent stalls, so
+            // without this watchdog the session would stay "Recording" until
+            // the next IsRecordingActive flip (which may never come). Skip
+            // sessions that haven't seen their first packet yet (LastPacketUtc
+            // == MinValue) — they're either still opening or genuinely brand
+            // new; let CCM/StartRecording handle that path instead.
+            var lastPacket = pipeline.LastPacketUtc;
+            if (lastPacket == DateTime.MinValue)
+            {
+                continue;
+            }
+
+            var idleFor = nowUtc - lastPacket;
+            if (idleFor > staleThreshold)
+            {
+                LogReapingInactiveSession(
+                    session.CameraName,
+                    cameraId,
+                    $"no packets for {(int)idleFor.TotalSeconds}s (threshold {StalePacketThresholdSeconds}s)");
                 StopRecording(cameraId);
                 reaped++;
             }
