@@ -147,34 +147,61 @@ Linksoft.VideoSurveillance/
 
 ### 🔗 Dependency Graph
 
-```
-Linksoft.VideoSurveillance.Core                    (net10.0, no WPF)
-    ^                ^               ^
-    |                |               |
-    |     Api.Contracts -----> Api.Domain
-    |           ^                    ^
-    |           |                    |
-    |     Linksoft.VideoSurveillance.Api (host)
-    |        ^  ^
-    |        |  |
-    |        |  Linksoft.VideoEngine (net10.0, cross-platform)
-    |        |       ^
-    |        |       |
-    |     Linksoft.VideoSurveillance.Aspire (orchestration)
-    |
-    |  Linksoft.VideoEngine -------> Linksoft.VideoEngine.DirectX (net10.0-windows)
-    |       ^                               ^
-    |       |                               |
-    |  Linksoft.VideoPlayer.Wpf (net10.0-windows)
-    |       ^
-    |       |
-    |  Linksoft.VideoSurveillance.Wpf.Core (shared WPF library)
-    |       ^               ^
-    |       |               |
-Linksoft.CameraWall.Wpf   Linksoft.VideoSurveillance.Wpf
-    ^                           ^
-    |                           |
-CameraWall.Wpf.App       VideoSurveillance.Wpf.App
+Arrows point from a project to the projects it depends on (compile-time `ProjectReference`).
+
+```mermaid
+flowchart TD
+    subgraph Foundation["📚 Foundation (cross-platform, net10.0)"]
+        Core[Linksoft.VideoSurveillance.Core]
+        VE[Linksoft.VideoEngine]
+    end
+
+    subgraph Server["☁️ Server (REST + SignalR)"]
+        Contracts[Linksoft.VideoSurveillance.Api.Contracts]
+        Domain[Linksoft.VideoSurveillance.Api.Domain]
+        Api[Linksoft.VideoSurveillance.Api]
+        Blazor[Linksoft.VideoSurveillance.Blazor.App]
+    end
+
+    subgraph Windows["🪟 Windows-only (net10.0-windows)"]
+        VEDx[Linksoft.VideoEngine.DirectX]
+        VPWpf[Linksoft.VideoPlayer.Wpf]
+        WpfCore[Linksoft.VideoSurveillance.Wpf.Core]
+        CamWall[Linksoft.CameraWall.Wpf]
+        VsWpf[Linksoft.VideoSurveillance.Wpf]
+    end
+
+    subgraph Apps["🚀 Applications"]
+        CamApp[Linksoft.CameraWall.Wpf.App]
+        VsApp[Linksoft.VideoSurveillance.Wpf.App]
+        Aspire[Linksoft.VideoSurveillance.Aspire]
+    end
+
+    %% Server stack
+    Contracts --> Core
+    Domain --> Contracts
+    Domain --> Core
+    Api --> Contracts
+    Api --> Domain
+    Api --> Core
+    Api --> VE
+
+    %% Windows / WPF stack
+    VEDx --> VE
+    VPWpf --> VEDx
+    WpfCore --> Core
+    WpfCore --> VPWpf
+    CamWall --> WpfCore
+    VsWpf --> Core
+    VsWpf --> WpfCore
+
+    %% App composition
+    CamApp --> CamWall
+    VsApp --> VsWpf
+    Aspire --> Api
+    Aspire --> Blazor
+    Aspire --> CamApp
+    Aspire --> VsApp
 ```
 
 ## 🔧 Services
