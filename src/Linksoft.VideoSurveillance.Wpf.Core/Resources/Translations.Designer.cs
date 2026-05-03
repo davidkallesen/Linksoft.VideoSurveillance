@@ -2680,6 +2680,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show quick-action buttons.
+        /// </summary>
+        public static string ShowCameraOverlayQuickActions {
+            get {
+                return ResourceManager.GetString("ShowCameraOverlayQuickActions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Show current time.
         /// </summary>
         public static string ShowCameraOverlayTime {

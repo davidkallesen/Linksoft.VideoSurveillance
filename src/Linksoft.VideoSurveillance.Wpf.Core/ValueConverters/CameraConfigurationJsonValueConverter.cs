@@ -426,9 +426,20 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
             target.ShowOverlayConnectionStatus = showStatus;
         }
 
+        if (TryGetNullableBoolProperty(element, "showOverlayQuickActions", "ShowOverlayQuickActions", out var showQuickActions))
+        {
+            target.ShowOverlayQuickActions = showQuickActions;
+        }
+
         if (TryGetNullableDoubleProperty(element, "overlayOpacity", "OverlayOpacity", out var opacity))
         {
             target.OverlayOpacity = opacity;
+        }
+
+        if (TryGetStringProperty(element, "overlayPosition", "OverlayPosition", out var overlayPosition) &&
+            Enum.TryParse<OverlayPosition>(overlayPosition, ignoreCase: true, out var positionEnum))
+        {
+            target.OverlayPosition = positionEnum;
         }
     }
 
@@ -641,9 +652,20 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
             overrides.CameraDisplay.ShowOverlayConnectionStatus = showStatus;
         }
 
+        if (TryGetNullableBoolProperty(element, "showOverlayQuickActions", "ShowOverlayQuickActions", out var showQuickActions))
+        {
+            overrides.CameraDisplay.ShowOverlayQuickActions = showQuickActions;
+        }
+
         if (TryGetNullableDoubleProperty(element, "overlayOpacity", "OverlayOpacity", out var opacity))
         {
             overrides.CameraDisplay.OverlayOpacity = opacity;
+        }
+
+        if (TryGetStringProperty(element, "overlayPosition", "OverlayPosition", out var overlayPosition) &&
+            Enum.TryParse<OverlayPosition>(overlayPosition, ignoreCase: true, out var positionEnum))
+        {
+            overrides.CameraDisplay.OverlayPosition = positionEnum;
         }
 
         // Recording overrides
@@ -942,9 +964,19 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
             writer.WriteBoolean("showOverlayConnectionStatus", display.ShowOverlayConnectionStatus.Value);
         }
 
+        if (display.ShowOverlayQuickActions.HasValue)
+        {
+            writer.WriteBoolean("showOverlayQuickActions", display.ShowOverlayQuickActions.Value);
+        }
+
         if (display.OverlayOpacity.HasValue)
         {
             writer.WriteNumber("overlayOpacity", display.OverlayOpacity.Value);
+        }
+
+        if (display.OverlayPosition.HasValue)
+        {
+            writer.WriteString("overlayPosition", display.OverlayPosition.Value.ToString());
         }
 
         writer.WriteEndObject();

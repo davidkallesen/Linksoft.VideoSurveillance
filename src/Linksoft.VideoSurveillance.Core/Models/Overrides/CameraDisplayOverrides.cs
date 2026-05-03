@@ -13,19 +13,25 @@ public class CameraDisplayOverrides
 
     public bool? ShowOverlayConnectionStatus { get; set; }
 
+    public bool? ShowOverlayQuickActions { get; set; }
+
     public double? OverlayOpacity { get; set; }
+
+    public OverlayPosition? OverlayPosition { get; set; }
 
     public bool HasAnyOverride()
         => ShowOverlayTitle.HasValue ||
            ShowOverlayDescription.HasValue ||
            ShowOverlayTime.HasValue ||
            ShowOverlayConnectionStatus.HasValue ||
-           OverlayOpacity.HasValue;
+           ShowOverlayQuickActions.HasValue ||
+           OverlayOpacity.HasValue ||
+           OverlayPosition.HasValue;
 
     /// <inheritdoc />
     public override string ToString()
     {
-        var count = new[] { ShowOverlayTitle.HasValue, ShowOverlayDescription.HasValue, ShowOverlayTime.HasValue, ShowOverlayConnectionStatus.HasValue, OverlayOpacity.HasValue }.Count(v => v);
+        var count = new[] { ShowOverlayTitle.HasValue, ShowOverlayDescription.HasValue, ShowOverlayTime.HasValue, ShowOverlayConnectionStatus.HasValue, ShowOverlayQuickActions.HasValue, OverlayOpacity.HasValue, OverlayPosition.HasValue }.Count(v => v);
         return $"CameraDisplayOverrides {{ NonNullOverrides={count.ToString(CultureInfo.InvariantCulture)} }}";
     }
 
@@ -36,7 +42,9 @@ public class CameraDisplayOverrides
             ShowOverlayDescription = ShowOverlayDescription,
             ShowOverlayTime = ShowOverlayTime,
             ShowOverlayConnectionStatus = ShowOverlayConnectionStatus,
+            ShowOverlayQuickActions = ShowOverlayQuickActions,
             OverlayOpacity = OverlayOpacity,
+            OverlayPosition = OverlayPosition,
         };
 
     public void CopyFrom(CameraDisplayOverrides? source)
@@ -45,7 +53,9 @@ public class CameraDisplayOverrides
         ShowOverlayDescription = source?.ShowOverlayDescription;
         ShowOverlayTime = source?.ShowOverlayTime;
         ShowOverlayConnectionStatus = source?.ShowOverlayConnectionStatus;
+        ShowOverlayQuickActions = source?.ShowOverlayQuickActions;
         OverlayOpacity = source?.OverlayOpacity;
+        OverlayPosition = source?.OverlayPosition;
     }
 
     public bool ValueEquals(CameraDisplayOverrides? other)
@@ -59,6 +69,8 @@ public class CameraDisplayOverrides
                ShowOverlayDescription == other.ShowOverlayDescription &&
                ShowOverlayTime == other.ShowOverlayTime &&
                ShowOverlayConnectionStatus == other.ShowOverlayConnectionStatus &&
-               OverlayOpacity.IsEqual(other.OverlayOpacity);
+               ShowOverlayQuickActions == other.ShowOverlayQuickActions &&
+               OverlayOpacity.IsEqual(other.OverlayOpacity) &&
+               OverlayPosition == other.OverlayPosition;
     }
 }

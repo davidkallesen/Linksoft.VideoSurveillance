@@ -13,6 +13,14 @@ public class CameraDisplayAppSettings
 
     public bool ShowOverlayConnectionStatus { get; set; } = true;
 
+    /// <summary>
+    /// Show the quick-action icon buttons (zoom-reset, full-screen) overlaid
+    /// on the tile. Each button has its own visibility rules (zoom-reset only
+    /// when zoomed; full-screen only on hover) — this toggle gates the whole
+    /// quick-action stack.
+    /// </summary>
+    public bool ShowOverlayQuickActions { get; set; } = true;
+
     public double OverlayOpacity { get; set; } = 0.7;
 
     public OverlayPosition OverlayPosition { get; set; } = OverlayPosition.TopLeft;

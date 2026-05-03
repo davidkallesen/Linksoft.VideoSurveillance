@@ -240,6 +240,7 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
         CameraGrid.ShowOverlayDescription = display.ShowOverlayDescription;
         CameraGrid.ShowOverlayConnectionStatus = display.ShowOverlayConnectionStatus;
         CameraGrid.ShowOverlayTime = display.ShowOverlayTime;
+        CameraGrid.ShowOverlayQuickActions = display.ShowOverlayQuickActions;
         CameraGrid.OverlayOpacity = display.OverlayOpacity;
         CameraGrid.AllowDragAndDropReorder = display.AllowDragAndDropReorder;
         CameraGrid.AutoSave = display.AutoSaveLayoutChanges;

@@ -296,6 +296,40 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
+    public bool UseDefaultShowOverlayQuickActions
+    {
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayQuickActions is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.CameraDisplay.ShowOverlayQuickActions = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.CameraDisplay.ShowOverlayQuickActions = settingsService.CameraDisplay.ShowOverlayQuickActions;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideShowOverlayQuickActions));
+        }
+    }
+
+    public bool OverrideShowOverlayQuickActions
+    {
+        get => Camera.Overrides?.CameraDisplay.ShowOverlayQuickActions ?? settingsService.CameraDisplay.ShowOverlayQuickActions;
+        set
+        {
+            EnsureOverrides();
+            Camera.Overrides!.CameraDisplay.ShowOverlayQuickActions = value;
+            RaisePropertyChanged();
+        }
+    }
+
     public bool UseDefaultOverlayOpacity
     {
         get => Camera.Overrides?.CameraDisplay.OverlayOpacity is null;
@@ -333,6 +367,43 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             {
                 EnsureOverrides();
                 Camera.Overrides!.CameraDisplay.OverlayOpacity = opacity;
+                RaisePropertyChanged();
+            }
+        }
+    }
+
+    public bool UseDefaultOverlayPosition
+    {
+        get => Camera.Overrides?.CameraDisplay.OverlayPosition is null;
+        set
+        {
+            if (value)
+            {
+                if (Camera.Overrides is not null)
+                {
+                    Camera.Overrides.CameraDisplay.OverlayPosition = null;
+                }
+            }
+            else
+            {
+                EnsureOverrides();
+                Camera.Overrides!.CameraDisplay.OverlayPosition = settingsService.CameraDisplay.OverlayPosition;
+            }
+
+            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(OverrideOverlayPositionKey));
+        }
+    }
+
+    public string OverrideOverlayPositionKey
+    {
+        get => (Camera.Overrides?.CameraDisplay.OverlayPosition ?? settingsService.CameraDisplay.OverlayPosition).ToString();
+        set
+        {
+            if (Enum.TryParse<OverlayPosition>(value, out var position))
+            {
+                EnsureOverrides();
+                Camera.Overrides!.CameraDisplay.OverlayPosition = position;
                 RaisePropertyChanged();
             }
         }

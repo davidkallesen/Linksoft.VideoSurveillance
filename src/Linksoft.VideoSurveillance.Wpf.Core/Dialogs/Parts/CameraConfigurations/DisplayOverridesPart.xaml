@@ -82,6 +82,20 @@
 
             <StackPanel Orientation="Horizontal">
                 <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultShowOverlayQuickActions, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelToggleSwitch
+                    IsEnabled="{Binding Path=UseDefaultShowOverlayQuickActions, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    IsOn="{Binding Path=OverrideShowOverlayQuickActions, Mode=TwoWay}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                    Key=ShowCameraOverlayQuickActions}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
                     IsOn="{Binding Path=UseDefaultOverlayOpacity, Mode=TwoWay}"
                     OffContent="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
                                                      Key=OverrideToggleLocal}"
@@ -94,6 +108,21 @@
                     Maximum="1.0"
                     Minimum="0.0"
                     Value="{Binding Path=OverrideOverlayOpacity, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <atc:ToggleSwitch
+                    IsOn="{Binding Path=UseDefaultOverlayPosition, Mode=TwoWay}"
+                    OffContent="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                     Key=OverrideToggleLocal}"
+                    OnContent="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                    Key=OverrideToggleMaster}" />
+                <atc:LabelComboBox
+                    IsEnabled="{Binding Path=UseDefaultOverlayPosition, Converter={x:Static valueConverters:BoolToInverseBoolValueConverter.Instance}}"
+                    Items="{Binding Path=OverlayPositionItems}"
+                    LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                    Key=OverlayPosition}"
+                    SelectedKey="{Binding Path=OverrideOverlayPositionKey, Mode=TwoWay}" />
             </StackPanel>
 
         </atc:UniformSpacingPanel>

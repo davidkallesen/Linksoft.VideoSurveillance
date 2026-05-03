@@ -438,6 +438,9 @@
   <data name="ShowCameraOverlayConnectionStatus" xml:space="preserve">
     <value>Show connection status</value>
   </data>
+  <data name="ShowCameraOverlayQuickActions" xml:space="preserve">
+    <value>Show quick-action buttons</value>
+  </data>
   <data name="OverlayOpacity" xml:space="preserve">
     <value>Overlay opacity</value>
   </data>

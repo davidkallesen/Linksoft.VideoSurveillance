@@ -60,6 +60,14 @@ public partial class SettingsDialogViewModel : ViewModelBase
     [ObservableProperty]
     private bool showCameraOverlayConnectionStatus = true;
 
+    // The API DTO (AppSettings) doesn't currently expose
+    // ShowOverlayQuickActions, so this round-trips in-memory only — the
+    // toggle is wired up so the shared XAML works in this dialog, and so
+    // settings change handlers can react locally during the session.
+    // Persist via API requires a YAML contract update (out of scope here).
+    [ObservableProperty]
+    private bool showCameraOverlayQuickActions = true;
+
     [ObservableProperty]
     private string selectedOverlayOpacity = DropDownItemsFactory.DefaultOverlayOpacity;
 
@@ -456,6 +464,7 @@ public partial class SettingsDialogViewModel : ViewModelBase
         ShowCameraOverlayDescription = true;
         ShowCameraOverlayTime = false;
         ShowCameraOverlayConnectionStatus = true;
+        ShowCameraOverlayQuickActions = true;
         SelectedOverlayOpacity = "0.7";
         SelectedOverlayPosition = "TopLeft";
         AllowDragAndDropReorder = true;
