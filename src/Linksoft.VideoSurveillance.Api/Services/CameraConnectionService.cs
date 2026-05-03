@@ -5,7 +5,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// when <see cref="RecordingSettings.EnableRecordingOnConnect"/> is enabled
 /// (respecting per-camera overrides).
 /// </summary>
-public sealed partial class CameraConnectionManager : BackgroundServiceBase<CameraConnectionManager>
+public sealed partial class CameraConnectionService : BackgroundServiceBase<CameraConnectionService>
 {
     private readonly ICameraStorageService storageService;
     private readonly IApplicationSettingsService settingsService;
@@ -14,8 +14,8 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
     private readonly ConcurrentDictionary<Guid, IMediaPipeline> managedPipelines = new();
     private readonly ConcurrentDictionary<Guid, BackoffState> backoffs = new();
 
-    public CameraConnectionManager(
-        ILogger<CameraConnectionManager> logger,
+    public CameraConnectionService(
+        ILogger<CameraConnectionService> logger,
         IBackgroundServiceOptions backgroundServiceOptions,
         ICameraStorageService storageService,
         IApplicationSettingsService settingsService,
@@ -114,7 +114,7 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
             catch (Exception ex)
             {
                 LogStartRecordingFailed(ex, camera.Id, camera.Display.DisplayName);
-                RecordFailure(camera.Id);
+                RecordFailure(camera);
                 RemoveAndDisposePipeline(camera.Id);
             }
         }
@@ -217,8 +217,13 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
         if (e.NewState == ConnectionState.Connected)
         {
             // Successful connect — clear any prior backoff so the next
-            // disconnect starts fresh from the base delay.
-            backoffs.TryRemove(camera.Id, out _);
+            // disconnect starts fresh from the base delay. If there was a
+            // prior failure streak, surface it so soak operators can see how
+            // many attempts the recovery took.
+            if (backoffs.TryRemove(camera.Id, out var clearedBackoff))
+            {
+                LogReconnected(camera.Display.DisplayName, camera.Id, clearedBackoff.ConsecutiveFailures);
+            }
 
             LogCameraConnected(camera.Id, camera.Display.DisplayName);
 
@@ -258,18 +263,20 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
         else if (e.NewState == ConnectionState.Error)
         {
             LogPipelineConnectionFailed(camera.Id, camera.Display.DisplayName);
-            RecordFailure(camera.Id);
+            RecordFailure(camera);
             ScheduleDeferredDisposal(camera.Id);
         }
     }
 
     // Bumps the camera's consecutive-failure count and schedules the next
     // attempt using capped exponential backoff; called from the demux
-    // thread on Error events.
-    private void RecordFailure(Guid cameraId)
+    // thread on Error events. The camera reference (rather than just the ID)
+    // is needed so the log line can include the friendly name without an
+    // extra storage lookup on the hot path.
+    private void RecordFailure(CameraConfiguration camera)
     {
-        backoffs.AddOrUpdate(
-            cameraId,
+        var updated = backoffs.AddOrUpdate(
+            camera.Id,
             _ => new BackoffState
             {
                 ConsecutiveFailures = 1,
@@ -284,6 +291,14 @@ public sealed partial class CameraConnectionManager : BackgroundServiceBase<Came
                     NextAttemptUtc = DateTime.UtcNow + ReconnectBackoff.ComputeDelay(next),
                 };
             });
+
+        var backoffSeconds = (int)(updated.NextAttemptUtc - DateTime.UtcNow).TotalSeconds;
+        LogBackoffScheduled(
+            camera.Display.DisplayName,
+            camera.Id,
+            updated.ConsecutiveFailures,
+            backoffSeconds,
+            updated.NextAttemptUtc);
     }
 
     private sealed class BackoffState

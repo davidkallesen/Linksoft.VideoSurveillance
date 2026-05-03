@@ -7,11 +7,11 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// and uses the shared <see cref="RecordingSlotCalculator"/> for boundary
 /// detection that is immune to NTP rollback, midnight, and DST.
 /// </summary>
-public sealed partial class ServerRecordingSegmentationBackgroundService : IHostedService, IAsyncDisposable
+public sealed partial class ServerRecordingSegmentationService : IHostedService, IAsyncDisposable
 {
     private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(30);
 
-    private readonly ILogger<ServerRecordingSegmentationBackgroundService> logger;
+    private readonly ILogger<ServerRecordingSegmentationService> logger;
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
 
@@ -20,8 +20,8 @@ public sealed partial class ServerRecordingSegmentationBackgroundService : IHost
     private int tickInProgress;
     private bool disposed;
 
-    public ServerRecordingSegmentationBackgroundService(
-        ILogger<ServerRecordingSegmentationBackgroundService> logger,
+    public ServerRecordingSegmentationService(
+        ILogger<ServerRecordingSegmentationService> logger,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService)
     {

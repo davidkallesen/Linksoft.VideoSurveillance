@@ -1,6 +1,6 @@
 namespace Linksoft.VideoSurveillance.Api.Services;
 
-public sealed partial class ServerRecordingSegmentationBackgroundService
+public sealed partial class ServerRecordingSegmentationService
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "Server recording segmentation disabled by configuration")]
     private partial void LogSegmentationDisabled();

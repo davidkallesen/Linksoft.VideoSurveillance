@@ -16,7 +16,7 @@ public sealed partial class JsonCameraStorageService : ICameraStorageService
     private readonly ILogger<JsonCameraStorageService> logger;
 
     // All access to data.Cameras / data.Layouts goes through this lock.
-    // Without it, CameraConnectionManager / handlers iterating GetAllCameras()
+    // Without it, CameraConnectionService / handlers iterating GetAllCameras()
     // would throw InvalidOperationException if a REST UpdateCamera mutated
     // the list mid-iteration. Reads return snapshots so callers can iterate
     // outside the lock without blocking writers.

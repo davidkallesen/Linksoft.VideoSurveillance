@@ -7,7 +7,7 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// dependency. Delegates the file-system work to the shared
 /// <see cref="MediaCleanupRunner"/>.
 /// </summary>
-public sealed partial class ServerMediaCleanupBackgroundService : IHostedService, IAsyncDisposable
+public sealed partial class ServerMediaCleanupService : IHostedService, IAsyncDisposable
 {
     // Free-space thresholds for the recording drive. Below "low" we warn so
     // operators can reduce retention or free space before recordings fail;
@@ -24,7 +24,7 @@ public sealed partial class ServerMediaCleanupBackgroundService : IHostedService
     // schedule). 4 hours is a safe default for autonomous service operation.
     private static readonly TimeSpan PeriodicInterval = TimeSpan.FromHours(4);
 
-    private readonly ILogger<ServerMediaCleanupBackgroundService> logger;
+    private readonly ILogger<ServerMediaCleanupService> logger;
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
     private readonly Lock runLock = new();
@@ -32,8 +32,8 @@ public sealed partial class ServerMediaCleanupBackgroundService : IHostedService
     private bool isRunning;
     private bool disposed;
 
-    public ServerMediaCleanupBackgroundService(
-        ILogger<ServerMediaCleanupBackgroundService> logger,
+    public ServerMediaCleanupService(
+        ILogger<ServerMediaCleanupService> logger,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService)
     {
