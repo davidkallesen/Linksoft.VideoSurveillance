@@ -69,6 +69,15 @@ public interface IMediaPipeline : IDisposable
     long FramesDecoded { get; }
 
     /// <summary>
+    /// Gets the UTC timestamp of the last packet successfully read from the
+    /// underlying demuxer, or <see cref="DateTime.MinValue"/> if no packet has
+    /// arrived yet. Used by the server-side stream-stale watchdog to detect
+    /// wedged pipelines (socket open but no packets) without waiting for the
+    /// VideoEngine's consecutive-read-errors threshold.
+    /// </summary>
+    DateTime LastPacketUtc { get; }
+
+    /// <summary>
     /// Occurs when the connection state changes.
     /// </summary>
     event EventHandler<ConnectionStateChangedEventArgs>? ConnectionStateChanged;
