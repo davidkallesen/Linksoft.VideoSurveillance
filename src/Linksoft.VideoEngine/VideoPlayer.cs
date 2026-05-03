@@ -29,6 +29,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
     private CancellationTokenSource? demuxCts;
     private volatile bool stopRequested;
     private int fpsFrameCount;
+    private long lastPacketTicks;
     private bool disposed;
 
     private PlayerState state = PlayerState.Stopped;
@@ -54,6 +55,10 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
     public double CurrentFps { get; private set; }
 
     public long FramesDecoded { get; private set; }
+
+    public DateTime LastPacketUtc => Interlocked.Read(ref lastPacketTicks) == 0
+        ? DateTime.MinValue
+        : new DateTime(Interlocked.Read(ref lastPacketTicks), DateTimeKind.Utc);
 
     public bool IsRecording => remuxer?.IsOpen ?? false;
 
@@ -334,6 +339,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
             StreamInfo = null;
             CurrentFps = 0;
             FramesDecoded = 0;
+            Interlocked.Exchange(ref lastPacketTicks, 0);
         }
     }
 
@@ -385,6 +391,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
             }
 
             consecutiveErrors = 0;
+            Interlocked.Exchange(ref lastPacketTicks, DateTime.UtcNow.Ticks);
 
             if (demuxer.IsVideoPacket)
             {

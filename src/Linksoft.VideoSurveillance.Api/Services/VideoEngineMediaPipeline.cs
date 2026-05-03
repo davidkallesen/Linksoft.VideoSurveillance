@@ -39,6 +39,9 @@ public sealed class VideoEngineMediaPipeline : IMediaPipeline
     public long FramesDecoded => player.FramesDecoded;
 
     /// <inheritdoc />
+    public DateTime LastPacketUtc => player.LastPacketUtc;
+
+    /// <inheritdoc />
     public void Open(
         Uri streamUri,
         StreamSettings settings)

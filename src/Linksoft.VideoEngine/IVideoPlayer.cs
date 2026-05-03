@@ -28,6 +28,16 @@ public interface IVideoPlayer : IDisposable
     long FramesDecoded { get; }
 
     /// <summary>
+    /// Gets the UTC timestamp of the last packet successfully read from the
+    /// demuxer, or <see cref="DateTime.MinValue"/> if no packet has arrived
+    /// since the most recent <see cref="Open"/>. Ticks at packet rate (typically
+    /// 25–60 Hz on RTSP), making it suitable for stream-stale detection by the
+    /// server reaper without waiting for the slower keyframe cadence implied by
+    /// <see cref="FramesDecoded"/>.
+    /// </summary>
+    DateTime LastPacketUtc { get; }
+
+    /// <summary>
     /// Gets a value indicating whether recording is currently active.
     /// </summary>
     bool IsRecording { get; }
