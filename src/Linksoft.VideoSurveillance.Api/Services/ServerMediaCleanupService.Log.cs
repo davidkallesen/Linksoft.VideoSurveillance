@@ -1,6 +1,6 @@
 namespace Linksoft.VideoSurveillance.Api.Services;
 
-public sealed partial class ServerMediaCleanupBackgroundService
+public sealed partial class ServerMediaCleanupService
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "Server media cleanup starting (schedule: {Schedule})")]
     private partial void LogServiceStarting(MediaCleanupSchedule schedule);

@@ -92,22 +92,30 @@ try
     // Register the camera connection manager for auto-recording on connect
     builder.Services.AddSingleton<IBackgroundServiceOptions>(new DefaultBackgroundServiceOptions
     {
-        ServiceName = nameof(CameraConnectionManager),
+        ServiceName = nameof(CameraConnectionService),
         StartupDelaySeconds = 3,
         RepeatIntervalSeconds = 30,
     });
 
-    builder.Services.AddHostedService<CameraConnectionManager>();
+    builder.Services.AddHostedService<CameraConnectionService>();
 
     // Periodic disk-retention enforcement; without this, continuous server
     // recording fills the disk and crashes the host. Mirrors the WPF app's
     // MediaCleanupService but runs on a System.Threading.Timer (no UI).
-    builder.Services.AddHostedService<ServerMediaCleanupBackgroundService>();
+    builder.Services.AddHostedService<ServerMediaCleanupService>();
 
     // Clock-aligned segment rollover so server recordings don't grow into
     // single multi-day files. Uses the shared RecordingSlotCalculator so
     // boundary detection is immune to NTP rollback, midnight, and DST.
-    builder.Services.AddHostedService<ServerRecordingSegmentationBackgroundService>();
+    builder.Services.AddHostedService<ServerRecordingSegmentationService>();
+
+    // Periodic liveness beacon so a 4-day soak log shows steady process /
+    // recording-state metrics rather than going silent between disruptions.
+    // Typed options (vs. the shared IBackgroundServiceOptions singleton CCM
+    // uses) so the two BackgroundServiceBase-derived services can coexist
+    // with different intervals.
+    builder.Services.AddSingleton(new ServerHeartbeatServiceOptions());
+    builder.Services.AddHostedService<ServerHeartbeatService>();
 
     var app = builder.Build();
 

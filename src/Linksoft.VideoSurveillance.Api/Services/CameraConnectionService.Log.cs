@@ -1,6 +1,6 @@
 namespace Linksoft.VideoSurveillance.Api.Services;
 
-public sealed partial class CameraConnectionManager
+public sealed partial class CameraConnectionService
 {
     [LoggerMessage(Level = LogLevel.Debug, Message = "Camera {CameraId} ({DisplayName}) - recording-on-connect disabled, skipping")]
     private partial void LogRecordingOnConnectDisabled(Guid cameraId, string displayName);
@@ -49,4 +49,10 @@ public sealed partial class CameraConnectionManager
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Error disposing pipeline for camera {CameraId} (deferred)")]
     private partial void LogDisposePipelineDeferredError(Exception ex, Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Camera '{DisplayName}' ({CameraId}) failure #{ConsecutiveFailures}, backing off {BackoffSeconds}s (next attempt at {NextAttemptUtc:HH:mm:ss} UTC)")]
+    private partial void LogBackoffScheduled(string displayName, Guid cameraId, int consecutiveFailures, int backoffSeconds, DateTime nextAttemptUtc);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Camera '{DisplayName}' ({CameraId}) reconnected after {ConsecutiveFailures} failure(s) (backoff cleared)")]
+    private partial void LogReconnected(string displayName, Guid cameraId, int consecutiveFailures);
 }
