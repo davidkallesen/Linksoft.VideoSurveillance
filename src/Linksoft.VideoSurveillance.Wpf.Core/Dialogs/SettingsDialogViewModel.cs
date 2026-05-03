@@ -58,6 +58,9 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     private bool showCameraOverlayConnectionStatus = true;
 
     [ObservableProperty]
+    private bool showCameraOverlayQuickActions = true;
+
+    [ObservableProperty]
     private string selectedOverlayOpacity = DropDownItemsFactory.DefaultOverlayOpacity;
 
     public IDictionary<string, string> OverlayOpacityItems
@@ -332,6 +335,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         ShowCameraOverlayDescription = true;
         ShowCameraOverlayTime = false;
         ShowCameraOverlayConnectionStatus = true;
+        ShowCameraOverlayQuickActions = true;
         SelectedOverlayOpacity = "0.7";
         SelectedOverlayPosition = "TopLeft";
         AllowDragAndDropReorder = true;
@@ -427,6 +431,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         ShowCameraOverlayDescription = cameraDisplay.ShowOverlayDescription;
         ShowCameraOverlayTime = cameraDisplay.ShowOverlayTime;
         ShowCameraOverlayConnectionStatus = cameraDisplay.ShowOverlayConnectionStatus;
+        ShowCameraOverlayQuickActions = cameraDisplay.ShowOverlayQuickActions;
         SelectedOverlayOpacity = cameraDisplay.OverlayOpacity.ToString("F1", CultureInfo.InvariantCulture);
         SelectedOverlayPosition = cameraDisplay.OverlayPosition.ToString();
         AllowDragAndDropReorder = cameraDisplay.AllowDragAndDropReorder;
@@ -536,6 +541,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
             ShowOverlayDescription = ShowCameraOverlayDescription,
             ShowOverlayTime = ShowCameraOverlayTime,
             ShowOverlayConnectionStatus = ShowCameraOverlayConnectionStatus,
+            ShowOverlayQuickActions = ShowCameraOverlayQuickActions,
             OverlayOpacity = opacity,
             OverlayPosition = overlayPosition,
             AllowDragAndDropReorder = AllowDragAndDropReorder,

@@ -37,6 +37,9 @@ public partial class CameraGrid
     [DependencyProperty(DefaultValue = true)]
     private bool showOverlayConnectionStatus;
 
+    [DependencyProperty(DefaultValue = true)]
+    private bool showOverlayQuickActions;
+
     [DependencyProperty(DefaultValue = false)]
     private bool showOverlayTime;
 

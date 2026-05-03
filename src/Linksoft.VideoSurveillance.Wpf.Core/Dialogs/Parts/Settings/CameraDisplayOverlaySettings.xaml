@@ -39,6 +39,12 @@
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
                                                 Key=ShowCameraOverlayConnectionStatus}" />
 
+            <atc:LabelToggleSwitch
+                IsOn="{Binding Path=ShowCameraOverlayQuickActions, Mode=TwoWay}"
+                LabelPosition="Right"
+                LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                Key=ShowCameraOverlayQuickActions}" />
+
             <atc:LabelComboBox
                 Items="{Binding Path=OverlayOpacityItems}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,

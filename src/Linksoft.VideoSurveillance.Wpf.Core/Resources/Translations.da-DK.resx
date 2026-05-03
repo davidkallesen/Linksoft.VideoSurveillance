@@ -438,6 +438,9 @@
   <data name="ShowCameraOverlayConnectionStatus" xml:space="preserve">
     <value>Vis forbindelsesstatus</value>
   </data>
+  <data name="ShowCameraOverlayQuickActions" xml:space="preserve">
+    <value>Vis hurtigknapper</value>
+  </data>
   <data name="OverlayOpacity" xml:space="preserve">
     <value>Overlay-gennemsigtighed</value>
   </data>

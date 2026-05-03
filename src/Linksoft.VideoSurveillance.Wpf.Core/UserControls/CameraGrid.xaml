@@ -64,6 +64,12 @@
                                 <Binding Path="ShowOverlayConnectionStatus" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
                             </MultiBinding>
                         </local:CameraTile.ShowOverlayConnectionStatus>
+                        <local:CameraTile.ShowOverlayQuickActions>
+                            <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
+                                <Binding Path="Overrides.CameraDisplay.ShowOverlayQuickActions" />
+                                <Binding Path="ShowOverlayQuickActions" RelativeSource="{RelativeSource AncestorType=local:CameraGrid}" />
+                            </MultiBinding>
+                        </local:CameraTile.ShowOverlayQuickActions>
                         <local:CameraTile.OverlayOpacity>
                             <MultiBinding Converter="{x:Static valueConverters:OverrideOrDefaultMultiValueConverter.Instance}">
                                 <Binding Path="Overrides.CameraDisplay.OverlayOpacity" />
