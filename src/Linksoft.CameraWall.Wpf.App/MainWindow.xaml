@@ -157,6 +157,18 @@
                                 <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Camera" />
                             </fluent:Button.LargeIcon>
                         </fluent:Button>
+                        <fluent:Button
+                            Command="{Binding Path=AddUsbCameraCommand}"
+                            Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                         Key=AddUsbCamera}"
+                            Size="Large">
+                            <fluent:Button.LargeIcon>
+                                <!--  Usb glyph lives in the FA Brand set, not Solid; using
+                                      ImageAwesomeBrand here keeps consistency with the rest
+                                      of the ribbon (FA Solid for Camera, Cog, etc.).  -->
+                                <fontIcons:ImageAwesomeBrand Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Usb" />
+                            </fluent:Button.LargeIcon>
+                        </fluent:Button>
                     </fluent:RibbonGroupBox>
 
                     <fluent:RibbonGroupBox Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations, Key=Actions}">
