@@ -171,6 +171,13 @@ public class ApplicationSettingsService : IApplicationSettingsService
     }
 
     /// <inheritdoc/>
+    public Task LoadAsync()
+    {
+        Load();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
     public void Save()
     {
         if (!SafeJsonFile.TryWrite(storagePath, appSettings, JsonOptions))

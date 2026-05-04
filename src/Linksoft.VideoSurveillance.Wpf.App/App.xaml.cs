@@ -21,9 +21,38 @@ public partial class App
 
     public App()
     {
+        // Configure paths first so the Serilog file sink can resolve the logs
+        // directory. ApplicationStartup will call Configure again with the same
+        // value — that's idempotent.
+        ApplicationPaths.Configure("VideoSurveillance");
+
+        // Drop framework Debug noise (Kestrel connection lifecycle, SignalR
+        // protocol negotiation, request matching) but keep Linksoft.* at Debug
+        // and keep Microsoft.* Information+ events (request finished, hosting
+        // lifetime, etc) for ops visibility.
         var loggerConfig = new LoggerConfiguration()
             .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .WriteTo.Debug(formatProvider: CultureInfo.InvariantCulture);
+
+        try
+        {
+            var logsDir = ApplicationPaths.DefaultLogsPath;
+            Directory.CreateDirectory(logsDir);
+
+            var logFile = Path.Combine(logsDir, "video-surveillance-wpf-.log");
+            loggerConfig.WriteTo.File(
+                logFile,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}",
+                formatProvider: CultureInfo.InvariantCulture);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Logs directory not writable — fall back to Debug sink only.
+            // The app must still start.
+        }
 
         Log.Logger = loggerConfig.CreateLogger();
     }
@@ -91,8 +120,15 @@ public partial class App
         object sender,
         StartupEventArgs args)
     {
-        // Configure application paths before anything uses them
-        ApplicationPaths.Configure("VideoSurveillanceApp");
+        // Configure application paths before anything uses them. Points at
+        // the same folder as the API server (Linksoft\VideoSurveillance\)
+        // so the "default" path labels shown in the Settings dialog (e.g.
+        // recordings / logs) match where the server actually keeps things.
+        // The WPF client itself never writes to those directories — its
+        // only on-disk file is the per-user prefs at %LocalAppData%
+        // \Linksoft\VideoSurveillance.Client\client-prefs.json, written by
+        // ApiApplicationSettingsService.
+        ApplicationPaths.Configure("VideoSurveillance");
 
         // 1. Resolve API base address
         var apiBaseAddress = ResolveApiBaseAddress(args.Args);
@@ -129,9 +165,13 @@ public partial class App
         RenderSplashMessage("Starting services...", 20);
         await host.StartAsync();
 
-        // Apply theme from local settings (50%)
+        // Apply theme from settings (50%). Settings are pulled from the
+        // API server (server-side fields) merged with local per-user
+        // prefs (theme / language / window state) — the cache must be
+        // populated before any consumer reads .General etc.
         RenderSplashMessage("Applying settings...", 50);
         var appSettingsService = host.Services.GetRequiredService<IApplicationSettingsService>();
+        await appSettingsService.LoadAsync();
         var generalSettings = appSettingsService.General;
         ThemeManagerHelper.SetThemeAndAccent(Current, $"{generalSettings.ThemeBase}.{generalSettings.ThemeAccent}");
 
@@ -241,8 +281,13 @@ public partial class App
             {
                 services.AddSingleton<IConfiguration>(configuration);
 
-                // Local application settings (stored at ProgramData\Linksoft\VideoSurveillanceApp\)
-                services.AddSingleton<IApplicationSettingsService, ApplicationSettingsService>();
+                // Settings service: server-side fields round-trip through
+                // the API; per-user-machine prefs (theme/language/window
+                // state) live in a tiny local file. Initial load happens
+                // explicitly via LoadAsync() during ApplicationStartup so
+                // the in-memory cache is populated before any consumer
+                // reads it.
+                services.AddSingleton<IApplicationSettingsService, ApiApplicationSettingsService>();
 
                 // Video engine services
                 services.AddSingleton<IGpuAcceleratorFactory, D3D11AcceleratorFactory>();

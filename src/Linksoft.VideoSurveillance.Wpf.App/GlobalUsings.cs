@@ -39,6 +39,7 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 
 global using Serilog;
+global using Serilog.Events;
 
 global using VideoSurveillance.Generated;
 global using VideoSurveillance.Generated.Cameras.Models;

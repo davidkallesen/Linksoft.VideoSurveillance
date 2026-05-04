@@ -9,6 +9,7 @@ global using System.Linq;
 global using System.Media;
 global using System.Net.Http;
 global using System.Text.Json;
+global using System.Text.Json.Serialization;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Windows;
@@ -31,6 +32,8 @@ global using Linksoft.VideoSurveillance.Wpf.Core;
 global using Linksoft.VideoSurveillance.Wpf.Core.Events;
 global using Linksoft.VideoSurveillance.Wpf.Core.Factories;
 global using Linksoft.VideoSurveillance.Wpf.Core.Helpers;
+global using Linksoft.VideoSurveillance.Wpf.Core.Models;
+global using Linksoft.VideoSurveillance.Wpf.Core.Services;
 global using Linksoft.VideoSurveillance.Wpf.Core.UserControls;
 global using Linksoft.VideoSurveillance.Wpf.Dialogs;
 global using Linksoft.VideoSurveillance.Wpf.Models;
@@ -39,6 +42,7 @@ global using Linksoft.VideoSurveillance.Wpf.ViewModels;
 global using Linksoft.VideoSurveillance.Wpf.Windows;
 
 global using Microsoft.AspNetCore.SignalR.Client;
+global using Microsoft.Extensions.Logging;
 
 global using VideoSurveillance.Generated.Cameras.Client;
 global using VideoSurveillance.Generated.Cameras.Endpoints.Interfaces;
