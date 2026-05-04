@@ -87,8 +87,37 @@ internal sealed unsafe partial class Demuxer : IDisposable
             timeoutSeconds = OpenTimeoutSeconds;
             timeoutWatch.Restart();
 
-            var url = streamUri.AbsoluteUri;
-            var ret = avformat_open_input(ref fmtCtx, url, null, ref dict);
+            // For local-device sources (dshow / v4l2 / avfoundation) the
+            // url is a raw device specifier such as `video=Logitech BRIO`
+            // which is not a valid Uri — we ignore streamUri and pass
+            // RawDeviceSpec directly. The input format must also be set
+            // explicitly because FFmpeg cannot sniff a non-URL string.
+            var inputFormatName = options.InputFormatName;
+            AVInputFormat* inputFormat = null;
+            string url;
+            if (inputFormatName is not null)
+            {
+                inputFormat = av_find_input_format(inputFormatName);
+                if (inputFormat is null)
+                {
+                    throw new InvalidOperationException(
+                        $"FFmpeg input format '{inputFormatName}' is not available in this build.");
+                }
+
+                if (string.IsNullOrEmpty(options.RawDeviceSpec))
+                {
+                    throw new InvalidOperationException(
+                        $"StreamOptions.RawDeviceSpec must be set when InputFormat is {options.InputFormat}.");
+                }
+
+                url = options.RawDeviceSpec;
+            }
+            else
+            {
+                url = streamUri.AbsoluteUri;
+            }
+
+            var ret = avformat_open_input(ref fmtCtx, url, inputFormat, ref dict);
 
             if (ret < 0)
             {
@@ -232,24 +261,83 @@ internal sealed unsafe partial class Demuxer : IDisposable
         ref AVDictionary* dict,
         StreamOptions options)
     {
-        av_dict_set(ref dict, "rtsp_transport", options.RtspTransport, DictWriteFlags.None);
-        av_dict_set(ref dict, "probesize", "50000000", DictWriteFlags.None);
-        av_dict_set(ref dict, "analyzeduration", "10000000", DictWriteFlags.None);
+        foreach (var (key, value) in BuildAvOptionPairs(options, FFmpegLoader.IsVersion8OrGreater))
+        {
+            av_dict_set(ref dict, key, value, DictWriteFlags.None);
+        }
+    }
 
+    /// <summary>
+    /// Pure helper that produces the (key, value) pairs to feed into
+    /// the FFmpeg <c>AVDictionary</c>. Split out from
+    /// <see cref="SetFormatOptions"/> so the option-selection logic
+    /// can be unit-tested without an AVDictionary.
+    /// </summary>
+    /// <param name="options">User-supplied options.</param>
+    /// <param name="isFFmpegV8">
+    /// <see langword="true"/> when running against FFmpeg 8+, which
+    /// renamed <c>stimeout</c> to <c>timeout</c>.
+    /// </param>
+    [SuppressMessage("Performance", "CA1822", Justification = "Static helper kept internal for testing")]
+    internal static IReadOnlyList<KeyValuePair<string, string>> BuildAvOptionPairs(
+        StreamOptions options,
+        bool isFFmpegV8)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var pairs = new List<KeyValuePair<string, string>>();
         var timeoutUs = (OpenTimeoutSeconds * 1_000_000).ToString(System.Globalization.CultureInfo.InvariantCulture);
-        if (FFmpegLoader.IsVersion8OrGreater)
+
+        switch (options.InputFormat)
         {
-            av_dict_set(ref dict, "timeout", timeoutUs, DictWriteFlags.None);
-        }
-        else
-        {
-            av_dict_set(ref dict, "stimeout", timeoutUs, DictWriteFlags.None);
+            case InputFormatKind.Auto:
+                pairs.Add(new("rtsp_transport", options.RtspTransport));
+                pairs.Add(new("probesize", "50000000"));
+                pairs.Add(new("analyzeduration", "10000000"));
+                pairs.Add(new(isFFmpegV8 ? "timeout" : "stimeout", timeoutUs));
+
+                if (options.UseLowLatencyMode)
+                {
+                    pairs.Add(new("fflags", "nobuffer"));
+                    pairs.Add(new("flags", "low_delay"));
+                }
+
+                break;
+
+            case InputFormatKind.Dshow:
+                // dshow's recommended big-buffer setting; without this
+                // FFmpeg drops frames on slow (or temporarily blocked)
+                // disk-bound recording paths.
+                pairs.Add(new("rtbufsize", "100000000"));
+                AddIfPresent(pairs, "video_size", options.VideoSize);
+                AddIfPresent(pairs, "framerate", options.FrameRate);
+                AddIfPresent(pairs, "pixel_format", options.PixelFormat);
+                break;
+
+            case InputFormatKind.V4l2:
+                AddIfPresent(pairs, "video_size", options.VideoSize);
+                AddIfPresent(pairs, "framerate", options.FrameRate);
+                AddIfPresent(pairs, "input_format", options.PixelFormat);
+                break;
+
+            case InputFormatKind.AVFoundation:
+                AddIfPresent(pairs, "video_size", options.VideoSize);
+                AddIfPresent(pairs, "framerate", options.FrameRate);
+                AddIfPresent(pairs, "pixel_format", options.PixelFormat);
+                break;
         }
 
-        if (options.UseLowLatencyMode)
+        return pairs;
+    }
+
+    private static void AddIfPresent(
+        List<KeyValuePair<string, string>> pairs,
+        string key,
+        string? value)
+    {
+        if (!string.IsNullOrEmpty(value))
         {
-            av_dict_set(ref dict, "fflags", "nobuffer", DictWriteFlags.None);
-            av_dict_set(ref dict, "flags", "low_delay", DictWriteFlags.None);
+            pairs.Add(new(key, value));
         }
     }
 
