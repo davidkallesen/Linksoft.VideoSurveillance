@@ -7,6 +7,7 @@ A multi-assembly video surveillance platform with a WPF desktop app and a headle
 - `Linksoft.VideoSurveillance.Core` - Shared library: models, enums, events, service interfaces, helpers (net10.0, no WPF)
 - `Linksoft.VideoEngine` - Cross-platform video engine (net10.0): demux, decode, record, capture via in-process FFmpeg
 - `Linksoft.VideoEngine.DirectX` - D3D11VA GPU acceleration, Video Processor, swap chain (net10.0-windows)
+- `Linksoft.VideoEngine.Windows` - Windows-only USB camera enumeration (Media Foundation) + hot-plug watcher (WMI), `IUsbCameraEnumerator` / `IUsbCameraWatcher` implementations (net10.0-windows)
 - `Linksoft.VideoPlayer.Wpf` - WPF VideoHost control with DComp surface + XAML overlay (net10.0-windows)
 - `Linksoft.CameraWall.Wpf` - Reusable WPF library (NuGet package) with UI, dialogs, VideoEngine integration
 - `Linksoft.CameraWall.Wpf.App` - Thin shell WPF application using the library (standalone, connects directly to cameras)
@@ -22,6 +23,7 @@ A multi-assembly video surveillance platform with a WPF desktop app and a headle
 The solution follows a layered architecture with Core at the base:
 - **Core** contains all shared models, enums, events, service interfaces, and helpers (zero UI dependencies)
 - **VideoEngine** provides cross-platform video: demuxing, decoding (CPU/D3D11VA), recording, snapshots. DirectX project adds GPU rendering for WPF.
+- **VideoEngine.Windows** provides USB / DirectShow source support: Media Foundation device enumeration, WMI hot-plug events, and the dshow demuxer wiring needed by the engine to open `video=Friendly Name` sources.
 - **CameraWall WPF library** references Core and VideoEngine, adds UI controls, dialogs, VideoHost-based media pipeline
 - **CameraWall WPF App** is a standalone thin shell with Ribbon UI delegating to `ICameraWallManager` (connects directly to cameras)
 - **VideoSurveillance WPF library** references Core and VideoPlayer, provides `GatewayService` (OpenAPI REST client) and `SurveillanceHubService` (SignalR client)
@@ -252,6 +254,19 @@ public static string ToScheme(this CameraProtocol protocol)
         // ...
     };
 ```
+
+### Camera Source vs. Protocol
+`CameraProtocol` is the wire protocol for **network** cameras (RTSP / HTTP / HTTPS). `CameraSource` is the higher-level discriminator and selects between configuration shapes:
+
+```csharp
+public enum CameraSource
+{
+    Network = 0,  // uses Connection.IpAddress / Port / Protocol / Path
+    Usb = 1,      // uses Connection.Usb (UsbConnectionSettings)
+}
+```
+
+`ConnectionSettings.Source` defaults to `Network` so existing JSON-stored cameras keep working without migration. USB cameras populate `Connection.Usb` with `DeviceId` (the stable Media Foundation symbolic link), `FriendlyName`, optional `Format` (`UsbStreamFormat` — width × height × FPS × pixel-format), and `PreferAudio`. Use `CameraUriHelper.BuildSourceLocator(camera)` instead of `camera.BuildUri()` whenever the code path needs to handle both source kinds — `BuildUri()` throws on USB cameras to fail fast.
 
 ## ViewModels
 - Inherit from `ViewModelDialogBase` for dialog ViewModels
