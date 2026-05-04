@@ -1,4 +1,5 @@
 global using Linksoft.VideoSurveillance.Api.Domain.ApiHandlers.Cameras;
+global using Linksoft.VideoSurveillance.Api.Domain.ApiHandlers.Devices;
 global using Linksoft.VideoSurveillance.Api.Domain.ApiHandlers.Layouts;
 global using Linksoft.VideoSurveillance.Api.Domain.ApiHandlers.Recordings;
 global using Linksoft.VideoSurveillance.Api.Domain.ApiHandlers.Settings;
@@ -17,4 +18,6 @@ global using VideoSurveillance.Generated.Recordings.Parameters;
 global using VideoSurveillance.Generated.Settings.Models;
 global using VideoSurveillance.Generated.Settings.Parameters;
 global using ApiCameraProtocol = VideoSurveillance.Generated.Cameras.Models.CameraProtocol;
+global using ApiCameraSource = VideoSurveillance.Generated.Cameras.Models.CameraSource;
 global using CoreCameraProtocol = Linksoft.VideoSurveillance.Enums.CameraProtocol;
+global using CoreCameraSource = Linksoft.VideoSurveillance.Enums.CameraSource;

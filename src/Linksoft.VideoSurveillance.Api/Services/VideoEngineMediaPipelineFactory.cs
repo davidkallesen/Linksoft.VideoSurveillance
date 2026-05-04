@@ -28,7 +28,13 @@ public sealed class VideoEngineMediaPipelineFactory : IMediaPipelineFactory
         try
         {
             pipeline = new VideoEngineMediaPipeline(player, camera.Display.DisplayName);
-            pipeline.Open(camera.BuildUri(), camera.Stream);
+
+            // BuildSourceLocator handles network and USB cameras
+            // uniformly. For network cameras it's equivalent to the
+            // old camera.BuildUri() path; for USB it injects the
+            // dshow input format + device spec + capture-format
+            // options the demuxer needs.
+            pipeline.Open(CameraUriHelper.BuildSourceLocator(camera), camera.Stream);
 
             // Apply the camera's configured rotation so live snapshots and
             // recordings come out the right way up. Without this, server-side

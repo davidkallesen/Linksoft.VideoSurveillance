@@ -55,4 +55,10 @@ public sealed partial class CameraConnectionService
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Camera '{DisplayName}' ({CameraId}) reconnected after {ConsecutiveFailures} failure(s) (backoff cleared)")]
     private partial void LogReconnected(string displayName, Guid cameraId, int consecutiveFailures);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "USB camera {CameraId} ('{FriendlyName}') unplugged — pipeline torn down, reconnect-backoff suspended")]
+    private partial void LogUsbCameraUnplugged(Guid cameraId, string friendlyName);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "USB camera {CameraId} ('{FriendlyName}') replugged — backoff cleared, will reconnect on next tick")]
+    private partial void LogUsbCameraReplugged(Guid cameraId, string friendlyName);
 }

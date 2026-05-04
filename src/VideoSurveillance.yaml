@@ -224,6 +224,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /devices/usb:
+    get:
+      summary: List USB cameras visible to the server host
+      operationId: listUsbDevices
+      tags:
+        - devices
+      responses:
+        '200':
+          description: A list of USB camera descriptors currently enumerable on the server.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UsbDeviceDescriptor"
+        '503':
+          description: USB enumeration is not supported on this host (e.g. headless Linux without v4l2 yet).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /layouts:
     get:
       summary: List all layouts
@@ -420,9 +442,6 @@ components:
       required:
         - id
         - displayName
-        - ipAddress
-        - port
-        - protocol
       properties:
         id:
           type: string
@@ -431,6 +450,10 @@ components:
           type: string
         description:
           type: string
+        source:
+          type: string
+          enum: [network, usb]
+          default: network
         ipAddress:
           type: string
         port:
@@ -443,6 +466,24 @@ components:
           type: string
         username:
           type: string
+        # USB-camera fields — populated only when source = usb
+        usbDeviceId:
+          type: string
+        usbFriendlyName:
+          type: string
+        usbWidth:
+          type: integer
+          format: int32
+        usbHeight:
+          type: integer
+          format: int32
+        usbFrameRate:
+          type: number
+          format: double
+        usbPixelFormat:
+          type: string
+        usbCaptureAudio:
+          type: boolean
         overlayPosition:
           type: string
           enum: [topLeft, topRight, bottomLeft, bottomRight]
@@ -459,20 +500,67 @@ components:
           format: int32
         connectionState:
           type: string
-          enum: [disconnected, connecting, connected, reconnecting, error]
+          enum: [disconnected, connecting, connected, reconnecting, error, deviceUnplugged]
         isRecording:
           type: boolean
+
+    UsbDeviceDescriptor:
+      type: object
+      required:
+        - deviceId
+        - friendlyName
+      properties:
+        deviceId:
+          type: string
+          description: Stable Media Foundation symbolic link.
+        friendlyName:
+          type: string
+        vendorId:
+          type: string
+          description: Hex 4-digit USB vendor id.
+        productId:
+          type: string
+          description: Hex 4-digit USB product id.
+        isPresent:
+          type: boolean
+        capabilities:
+          type: array
+          description: Capture-format triples the device advertises (resolution × frame-rate × pixel-format).
+          items:
+            $ref: "#/components/schemas/UsbStreamFormat"
+
+    UsbStreamFormat:
+      type: object
+      required:
+        - width
+        - height
+      properties:
+        width:
+          type: integer
+          format: int32
+        height:
+          type: integer
+          format: int32
+        frameRate:
+          type: number
+          format: double
+        pixelFormat:
+          type: string
+          description: FFmpeg pixel-format string (nv12 / yuyv422 / mjpeg / h264 / etc).
 
     CreateCameraRequest:
       type: object
       required:
         - displayName
-        - ipAddress
       properties:
         displayName:
           type: string
         description:
           type: string
+        source:
+          type: string
+          enum: [network, usb]
+          default: network
         ipAddress:
           type: string
         port:
@@ -489,6 +577,23 @@ components:
           type: string
         password:
           type: string
+        usbDeviceId:
+          type: string
+        usbFriendlyName:
+          type: string
+        usbWidth:
+          type: integer
+          format: int32
+        usbHeight:
+          type: integer
+          format: int32
+        usbFrameRate:
+          type: number
+          format: double
+        usbPixelFormat:
+          type: string
+        usbCaptureAudio:
+          type: boolean
         overlayPosition:
           type: string
           enum: [topLeft, topRight, bottomLeft, bottomRight]
@@ -511,6 +616,9 @@ components:
           type: string
         description:
           type: string
+        source:
+          type: string
+          enum: [network, usb]
         ipAddress:
           type: string
         port:
@@ -525,6 +633,23 @@ components:
           type: string
         password:
           type: string
+        usbDeviceId:
+          type: string
+        usbFriendlyName:
+          type: string
+        usbWidth:
+          type: integer
+          format: int32
+        usbHeight:
+          type: integer
+          format: int32
+        usbFrameRate:
+          type: number
+          format: double
+        usbPixelFormat:
+          type: string
+        usbCaptureAudio:
+          type: boolean
         overlayPosition:
           type: string
           enum: [topLeft, topRight, bottomLeft, bottomRight]

@@ -16,4 +16,7 @@ public sealed partial class SurveillanceEventBroadcaster
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to broadcast ConnectionStateChanged for camera {CameraId}")]
     private partial void LogBroadcastConnectionFailed(Exception ex, Guid cameraId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to broadcast UsbCameraLifecycleChanged for camera {CameraId}")]
+    private partial void LogBroadcastUsbLifecycleFailed(Exception ex, Guid cameraId);
 }
