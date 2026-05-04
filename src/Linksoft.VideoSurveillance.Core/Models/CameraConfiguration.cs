@@ -36,11 +36,24 @@ public class CameraConfiguration
     public CameraOverrides Overrides { get; set; } = new();
 
     /// <summary>
-    /// Builds the camera stream URI based on the configuration.
+    /// Builds the camera stream URI based on the configuration. Only
+    /// supported for network cameras; USB cameras have no URL and must
+    /// be resolved through
+    /// <see cref="Helpers.CameraUriHelper.BuildSourceLocator(CameraConfiguration)"/>.
     /// </summary>
     /// <returns>The constructed URI for the camera stream.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when <see cref="Models.Settings.ConnectionSettings.Source"/>
+    /// is not <see cref="CameraSource.Network"/>.
+    /// </exception>
     public Uri BuildUri()
     {
+        if (Connection.Source != CameraSource.Network)
+        {
+            throw new InvalidOperationException(
+                $"Cannot build a URI for a {Connection.Source} camera; use CameraUriHelper.BuildSourceLocator(camera) instead.");
+        }
+
         var scheme = Connection.Protocol.ToScheme();
 
         var userInfo = !string.IsNullOrEmpty(Authentication.UserName)

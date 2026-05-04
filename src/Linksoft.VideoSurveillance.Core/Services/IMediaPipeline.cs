@@ -7,10 +7,31 @@ namespace Linksoft.VideoSurveillance.Services;
 public interface IMediaPipeline : IDisposable
 {
     /// <summary>
-    /// Opens a stream from the specified URI.
+    /// Opens a stream from the specified URI. Network-camera shortcut
+    /// equivalent to
+    /// <c>Open(new SourceLocator(streamUri), settings)</c>; default
+    /// implementation forwards to the source-locator overload so
+    /// implementations only need to override one method.
     /// </summary>
     void Open(
         Uri streamUri,
+        StreamSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(streamUri);
+        Open(new SourceLocator(streamUri), settings);
+    }
+
+    /// <summary>
+    /// Opens a source described by a <see cref="SourceLocator"/>.
+    /// Implementations that support local-device sources (USB,
+    /// DirectShow, V4L2) read
+    /// <see cref="SourceLocator.InputFormat"/> and
+    /// <see cref="SourceLocator.RawDeviceSpec"/> from the locator;
+    /// implementations that only support network sources can fall back
+    /// to <see cref="SourceLocator.Uri"/>.
+    /// </summary>
+    void Open(
+        SourceLocator locator,
         StreamSettings settings);
 
     /// <summary>
