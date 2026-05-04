@@ -29,4 +29,13 @@ public enum ConnectionState
     /// The camera connection has encountered an error.
     /// </summary>
     Error,
+
+    /// <summary>
+    /// USB-only state — the camera was previously enumerated but is no
+    /// longer present (cable unplugged, device powered off). Distinct
+    /// from <see cref="Error"/> because no amount of reconnect-backoff
+    /// will help: the host must wait for the device to come back via
+    /// <see cref="Services.IUsbCameraWatcher.DeviceArrived"/>.
+    /// </summary>
+    DeviceUnplugged,
 }

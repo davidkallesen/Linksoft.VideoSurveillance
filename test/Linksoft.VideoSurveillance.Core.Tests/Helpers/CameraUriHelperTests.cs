@@ -130,4 +130,237 @@ public class CameraUriHelperTests
         // Assert
         port.Should().Be(554);
     }
+
+    [Theory]
+    [InlineData(CameraSource.Network, 554)]
+    [InlineData(CameraSource.Usb, 0)]
+    public void GetDefaultPort_BySource_Returns_Expected(
+        CameraSource source,
+        int expected)
+    {
+        CameraUriHelper.GetDefaultPort(source).Should().Be(expected);
+    }
+
+    [Fact]
+    public void BuildUri_UsbCamera_Throws()
+    {
+        var camera = new CameraConfiguration
+        {
+            Connection = { Source = CameraSource.Usb, Usb = new UsbConnectionSettings { FriendlyName = "Cam" } },
+        };
+
+        var act = () => CameraUriHelper.BuildUri(camera);
+
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void BuildSourceLocator_NetworkCamera_ReturnsRtspUri()
+    {
+        var camera = new CameraConfiguration();
+        camera.Connection.IpAddress = "192.168.1.10";
+        camera.Connection.Port = 554;
+        camera.Connection.Path = "stream1";
+
+        var locator = CameraUriHelper.BuildSourceLocator(camera);
+
+        locator.Uri.ToString().Should().Be("rtsp://192.168.1.10:554/stream1");
+        locator.IsLocalDevice.Should().BeFalse();
+        locator.InputFormat.Should().BeNull();
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_ReturnsDshowLocator_WithFormatOptions()
+    {
+        var camera = new CameraConfiguration
+        {
+            Connection =
+            {
+                Source = CameraSource.Usb,
+                Usb = new UsbConnectionSettings
+                {
+                    DeviceId = @"\\?\usb#vid_046d&pid_085e",
+                    FriendlyName = "Logitech BRIO",
+                    Format = new UsbStreamFormat
+                    {
+                        Width = 1920,
+                        Height = 1080,
+                        FrameRate = 30,
+                        PixelFormat = "nv12",
+                    },
+                },
+            },
+        };
+
+        var locator = CameraUriHelper.BuildSourceLocator(camera);
+
+        locator.IsLocalDevice.Should().BeTrue();
+        locator.InputFormat.Should().Be("dshow");
+        locator.RawDeviceSpec.Should().Be("video=Logitech BRIO");
+        locator.VideoSize.Should().Be("1920x1080");
+        locator.FrameRate.Should().Be("30");
+        locator.PixelFormat.Should().Be("nv12");
+        locator.Uri.Scheme.Should().Be("dshow");
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_WithoutFormat_OmitsFormatOptions()
+    {
+        var camera = new CameraConfiguration
+        {
+            Connection =
+            {
+                Source = CameraSource.Usb,
+                Usb = new UsbConnectionSettings { FriendlyName = "Cam" },
+            },
+        };
+
+        var locator = CameraUriHelper.BuildSourceLocator(camera);
+
+        locator.VideoSize.Should().BeNull();
+        locator.FrameRate.Should().BeNull();
+        locator.PixelFormat.Should().BeNull();
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_FractionalFrameRate_FormatsInvariant()
+    {
+        var camera = new CameraConfiguration
+        {
+            Connection =
+            {
+                Source = CameraSource.Usb,
+                Usb = new UsbConnectionSettings
+                {
+                    FriendlyName = "Cam",
+                    Format = new UsbStreamFormat { Width = 1920, Height = 1080, FrameRate = 29.97 },
+                },
+            },
+        };
+
+        var locator = CameraUriHelper.BuildSourceLocator(camera);
+
+        locator.FrameRate.Should().Be("29.97");
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_FallsBackToDeviceId_WhenFriendlyNameMissing()
+    {
+        var camera = new CameraConfiguration
+        {
+            Connection =
+            {
+                Source = CameraSource.Usb,
+                Usb = new UsbConnectionSettings { DeviceId = @"\\?\usb#abc" },
+            },
+        };
+
+        var locator = CameraUriHelper.BuildSourceLocator(camera);
+
+        locator.RawDeviceSpec.Should().Be(@"video=\\?\usb#abc");
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_NoIdentity_Throws()
+    {
+        var camera = new CameraConfiguration
+        {
+            Connection = { Source = CameraSource.Usb, Usb = new UsbConnectionSettings() },
+        };
+
+        var act = () => CameraUriHelper.BuildSourceLocator(camera);
+
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_MissingUsbSettings_Throws()
+    {
+        var camera = new CameraConfiguration
+        {
+            Connection = { Source = CameraSource.Usb, Usb = null },
+        };
+
+        var act = () => CameraUriHelper.BuildSourceLocator(camera);
+
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_AudioOptIn_AppendsCompanionAudioDevice()
+    {
+        // FFmpeg's dshow demuxer accepts a combined `video=X:audio=Y`
+        // spec to open the camera and its microphone in one open call —
+        // the right shape for capturing UVC cameras that expose an
+        // integrated mic. Both the opt-in flag and a non-empty device
+        // name are required (see the next two tests).
+        var camera = new CameraConfiguration
+        {
+            Connection =
+            {
+                Source = CameraSource.Usb,
+                Usb = new UsbConnectionSettings
+                {
+                    FriendlyName = "Logitech BRIO",
+                    PreferAudio = true,
+                    AudioDeviceName = "Microphone (Logitech BRIO)",
+                },
+            },
+        };
+
+        var locator = CameraUriHelper.BuildSourceLocator(camera);
+
+        locator.RawDeviceSpec.Should().Be("video=Logitech BRIO:audio=Microphone (Logitech BRIO)");
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_AudioOptOut_OmitsAudio()
+    {
+        // PreferAudio = false should suppress the audio half even if a
+        // device name is sitting in the model — the dialog can keep the
+        // value while the operator toggles audio off without losing it
+        // (matches the reasoning in UsbConnectionSettings.PreferAudio).
+        var camera = new CameraConfiguration
+        {
+            Connection =
+            {
+                Source = CameraSource.Usb,
+                Usb = new UsbConnectionSettings
+                {
+                    FriendlyName = "Logitech BRIO",
+                    PreferAudio = false,
+                    AudioDeviceName = "Microphone (Logitech BRIO)",
+                },
+            },
+        };
+
+        var locator = CameraUriHelper.BuildSourceLocator(camera);
+
+        locator.RawDeviceSpec.Should().Be("video=Logitech BRIO");
+    }
+
+    [Fact]
+    public void BuildSourceLocator_UsbCamera_PreferAudioWithoutName_OmitsAudio()
+    {
+        // PreferAudio without a device name is meaningless — we don't
+        // blindly grab the first audio endpoint on the host. This pins
+        // the safe fallback so a half-configured camera still opens.
+        var camera = new CameraConfiguration
+        {
+            Connection =
+            {
+                Source = CameraSource.Usb,
+                Usb = new UsbConnectionSettings
+                {
+                    FriendlyName = "Logitech BRIO",
+                    PreferAudio = true,
+                    AudioDeviceName = string.Empty,
+                },
+            },
+        };
+
+        var locator = CameraUriHelper.BuildSourceLocator(camera);
+
+        locator.RawDeviceSpec.Should().Be("video=Logitech BRIO");
+    }
 }
