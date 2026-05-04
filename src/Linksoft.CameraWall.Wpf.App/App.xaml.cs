@@ -11,9 +11,11 @@ public partial class CameraWallApp
         // Load advanced settings early to configure logging before Host is built
         var advancedSettings = LoadAdvancedSettingsForLogging();
 
-        // Configure Serilog based on settings
+        // Configure Serilog based on settings. Drop framework Debug noise but
+        // keep Linksoft.* at Debug and Microsoft.* Information+ for ops.
         var loggerConfig = new LoggerConfiguration()
             .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .WriteTo.Debug(formatProvider: CultureInfo.InvariantCulture);
 
         if (advancedSettings.EnableDebugLogging)

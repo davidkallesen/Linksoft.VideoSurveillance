@@ -2,8 +2,13 @@
 // ReSharper disable SeparateLocalFunctionsWithJumpStatement
 var advancedSettings = LoadAdvancedSettingsForLogging();
 
+// Drop framework Debug noise (Kestrel connection lifecycle, SignalR protocol
+// negotiation, request matching, static file middleware) but keep Linksoft.*
+// at Debug and keep Microsoft.* Information+ events (request finished,
+// hosting lifetime, etc) for ops visibility.
 var loggerConfig = new LoggerConfiguration()
     .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
     .WriteTo.Console(formatProvider: System.Globalization.CultureInfo.InvariantCulture);
 
 if (advancedSettings.EnableDebugLogging)
