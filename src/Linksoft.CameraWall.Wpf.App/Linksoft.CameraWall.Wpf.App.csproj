@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Linksoft.CameraWall.Wpf\Linksoft.CameraWall.Wpf.csproj" />
+    <ProjectReference Include="..\Linksoft.VideoEngine.Windows\Linksoft.VideoEngine.Windows.csproj" />
   </ItemGroup>
 
   <ItemGroup>
