@@ -4,7 +4,7 @@ namespace Linksoft.CameraWall.Wpf.App;
 public partial class CameraWallApp
 {
     private readonly IHost host;
-    private ILogger<CameraWallApp> logger;
+    private readonly ILogger<CameraWallApp> logger;
 
     public CameraWallApp()
     {
@@ -41,6 +41,15 @@ public partial class CameraWallApp
                 // Video engine services
                 services.AddSingleton<IGpuAcceleratorFactory, D3D11AcceleratorFactory>();
                 services.AddSingleton<IVideoPlayerFactory, VideoPlayerFactory>();
+
+                // USB camera enumeration + hot-plug watcher (Windows-specific
+                // Media Foundation + WMI implementation). The Null* fallbacks
+                // are registered first so non-Windows hosts (future) still
+                // compose; AddWindowsUsbCameraSupport replaces them.
+                services.AddSingleton<IUsbCameraEnumerator>(NullUsbCameraEnumerator.Instance);
+                services.AddSingleton<IUsbCameraWatcher, NullUsbCameraWatcher>();
+                Linksoft.VideoEngine.Windows.DependencyInjection.ServiceCollectionExtensions
+                    .AddWindowsUsbCameraSupport(services);
 
                 // Library services (auto-registered via [Registration] attribute)
                 services.AddDependencyRegistrationsFromWpf(includeReferencedAssemblies: true);
@@ -124,11 +133,7 @@ public partial class CameraWallApp
 
         LogCurrentDomainUnhandledException(ex, exceptionMessage);
 
-        MessageBox.Show(
-            exceptionMessage,
-            "CurrentDomain Unhandled Exception",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        ShowFatalErrorDialog(exceptionMessage, Translations.CurrentDomainUnhandledException);
     }
 
     private void ApplicationOnDispatcherUnhandledException(
@@ -146,14 +151,38 @@ public partial class CameraWallApp
 
         LogDispatcherUnhandledException(args.Exception, exceptionMessage);
 
-        MessageBox.Show(
-            exceptionMessage,
-            "Dispatcher Unhandled Exception",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        ShowFatalErrorDialog(exceptionMessage, Translations.DispatcherUnhandledException);
 
         args.Handled = true;
         Shutdown(-1);
+    }
+
+    /// <summary>
+    /// Shows the fatal-error dialog using <see cref="InfoDialogBox"/>
+    /// when an owner window is reachable. The handler runs while the
+    /// app is collapsing — if no window is up yet (early-startup
+    /// crash) we silently skip the popup; the original exception is
+    /// already in the Serilog file sink.
+    /// </summary>
+    private static void ShowFatalErrorDialog(
+        string message,
+        string title)
+    {
+        var owner = Application.Current?.MainWindow
+                    ?? Application.Current?.Windows.OfType<Window>().FirstOrDefault();
+        if (owner is null)
+        {
+            return;
+        }
+
+        var settings = new DialogBoxSettings(DialogBoxType.Ok, LogCategoryType.Error)
+        {
+            TitleBarText = title,
+            Width = 500,
+        };
+
+        var dialog = new InfoDialogBox(owner, settings, message);
+        dialog.ShowDialog();
     }
 
     private async void ApplicationStartup(

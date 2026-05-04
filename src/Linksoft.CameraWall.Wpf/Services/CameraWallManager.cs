@@ -17,8 +17,10 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
     private readonly IGitHubReleaseService gitHubReleaseService;
     private readonly IToastNotificationService toastNotificationService;
     private readonly IVideoPlayerFactory videoPlayerFactory;
+    private readonly IUsbCameraWatcher usbCameraWatcher;
 
     private bool sessionSwitchSubscribed;
+    private bool usbWatcherSubscribed;
     private bool disposed;
 
     [ObservableProperty(DependentPropertyNames = [nameof(CanCreateNewLayout)])]
@@ -62,6 +64,7 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
     /// <param name="gitHubReleaseService">The GitHub release service.</param>
     /// <param name="toastNotificationService">The toast notification service.</param>
     /// <param name="videoPlayerFactory">The video player factory.</param>
+    /// <param name="usbCameraWatcher">The USB hot-plug watcher (Null fallback on non-Windows hosts is a no-op).</param>
     public CameraWallManager(
         ILogger<CameraWallManager> logger,
         ICameraStorageService storageService,
@@ -72,7 +75,8 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
         ITimelapseService timelapseService,
         IGitHubReleaseService gitHubReleaseService,
         IToastNotificationService toastNotificationService,
-        IVideoPlayerFactory videoPlayerFactory)
+        IVideoPlayerFactory videoPlayerFactory,
+        IUsbCameraWatcher usbCameraWatcher)
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(storageService);
@@ -84,6 +88,7 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
         ArgumentNullException.ThrowIfNull(gitHubReleaseService);
         ArgumentNullException.ThrowIfNull(toastNotificationService);
         ArgumentNullException.ThrowIfNull(videoPlayerFactory);
+        ArgumentNullException.ThrowIfNull(usbCameraWatcher);
 
         this.logger = logger;
         this.storageService = storageService;
@@ -95,6 +100,7 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
         this.gitHubReleaseService = gitHubReleaseService;
         this.toastNotificationService = toastNotificationService;
         this.videoPlayerFactory = videoPlayerFactory;
+        this.usbCameraWatcher = usbCameraWatcher;
 
         Layouts = new ObservableCollection<CameraLayout>(storageService.GetAllLayouts());
 
@@ -158,6 +164,94 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
         // is the deterministic signal — listen for it and rebuild the players
         // (which rebuilds the GpuAccelerator and reopens the RTSP streams).
         SubscribeToSessionSwitch();
+
+        // Hot-plug toast notifications for stored USB cameras. The watcher
+        // is started here (after Initialize, so the dispatcher we marshal
+        // toasts to is the camera-grid's UI thread).
+        SubscribeToUsbWatcher();
+    }
+
+    private void SubscribeToUsbWatcher()
+    {
+        if (usbWatcherSubscribed)
+        {
+            return;
+        }
+
+        usbCameraWatcher.DeviceArrived += OnUsbDeviceArrived;
+        usbCameraWatcher.DeviceRemoved += OnUsbDeviceRemoved;
+        usbCameraWatcher.Start();
+        usbWatcherSubscribed = true;
+    }
+
+    private void OnUsbDeviceArrived(
+        object? sender,
+        UsbCameraEventArgs e)
+        => ShowUsbHotPlugToast(e.Device.DeviceId, isArrival: true);
+
+    private void OnUsbDeviceRemoved(
+        object? sender,
+        UsbCameraEventArgs e)
+        => ShowUsbHotPlugToast(e.Device.DeviceId, isArrival: false);
+
+    private void ShowUsbHotPlugToast(
+        string deviceId,
+        bool isArrival)
+    {
+        if (string.IsNullOrEmpty(deviceId))
+        {
+            return;
+        }
+
+        // The watcher fires on its own thread (WMI on Windows). Resolve
+        // the camera + format the message off the UI thread, then marshal
+        // the toast call into the dispatcher so the notification can
+        // touch UI-affinity APIs safely.
+        var camera = ResolveStoredUsbCamera(deviceId);
+        if (camera is null)
+        {
+            return;
+        }
+
+        var displayName = camera.Display.DisplayName;
+        var template = isArrival
+            ? Translations.UsbCameraReconnectedToast1
+            : Translations.UsbCameraUnpluggedToast1;
+        var message = string.Format(CultureInfo.CurrentCulture, template, displayName);
+
+        var dispatcher = CameraGrid?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            toastNotificationService.ShowInformation(displayName, message, useDesktop: true, expirationTime: TimeSpan.FromSeconds(5));
+        }
+        else
+        {
+            _ = dispatcher.BeginInvoke(() => toastNotificationService.ShowInformation(
+                displayName,
+                message,
+                useDesktop: true,
+                expirationTime: TimeSpan.FromSeconds(5)));
+        }
+    }
+
+    private CameraConfiguration? ResolveStoredUsbCamera(string deviceId)
+    {
+        foreach (var camera in storageService.GetAllCameras())
+        {
+            if (camera.Connection.Source != CameraSource.Usb)
+            {
+                continue;
+            }
+
+            var usbDeviceId = camera.Connection.Usb?.DeviceId;
+            if (!string.IsNullOrEmpty(usbDeviceId) &&
+                string.Equals(usbDeviceId, deviceId, StringComparison.OrdinalIgnoreCase))
+            {
+                return camera;
+            }
+        }
+
+        return null;
     }
 
     private void SubscribeToSessionSwitch()
@@ -215,6 +309,14 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
         {
             Microsoft.Win32.SystemEvents.SessionSwitch -= OnSessionSwitch;
             sessionSwitchSubscribed = false;
+        }
+
+        if (usbWatcherSubscribed)
+        {
+            usbCameraWatcher.DeviceArrived -= OnUsbDeviceArrived;
+            usbCameraWatcher.DeviceRemoved -= OnUsbDeviceRemoved;
+            usbCameraWatcher.Stop();
+            usbWatcherSubscribed = false;
         }
 
         GC.SuppressFinalize(this);
@@ -295,11 +397,31 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
 
     /// <inheritdoc />
     public void AddCamera()
+        => AddCameraInternal(preSelectedSource: CameraSource.Network);
+
+    /// <inheritdoc />
+    public void AddUsbCamera()
+        => AddCameraInternal(preSelectedSource: CameraSource.Usb);
+
+    private void AddCameraInternal(CameraSource preSelectedSource)
     {
         UpdateStatus(Translations.AddCameraDialog);
 
+        // Pre-build the camera so the dialog opens on the right source.
+        // Passing null would let the dialog default to Network, defeating
+        // the whole point of the USB-specific ribbon shortcut.
+        var seedCamera = new CameraConfiguration
+        {
+            Display = { DisplayName = Translations.NewCamera },
+        };
+        seedCamera.Connection.Source = preSelectedSource;
+        if (preSelectedSource == CameraSource.Usb)
+        {
+            seedCamera.Connection.Usb = new UsbConnectionSettings();
+        }
+
         var existingEndpoints = GetExistingCameraEndpoints(excludeCameraId: null);
-        var camera = dialogService.ShowCameraConfigurationDialog(camera: null, isNew: true, existingEndpoints);
+        var camera = dialogService.ShowCameraConfigurationDialog(seedCamera, isNew: true, existingEndpoints);
 
         if (camera is not null)
         {

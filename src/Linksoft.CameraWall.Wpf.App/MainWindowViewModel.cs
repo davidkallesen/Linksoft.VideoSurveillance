@@ -267,6 +267,10 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     private void AddCamera()
         => Manager.AddCamera();
 
+    [RelayCommand]
+    private void AddUsbCamera()
+        => Manager.AddUsbCamera();
+
     [RelayCommand(CanExecute = nameof(CanNewLayout))]
     private void NewLayout()
         => Manager.CreateNewLayout();
