@@ -71,28 +71,12 @@
                             <Ellipse
                                 Width="10"
                                 Height="10"
-                                Margin="0,0,6,0">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
-                                        <Setter Property="Fill" Value="Gray" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=HostDataContext.ConnectionState}" Value="connected">
-                                                <Setter Property="Fill" Value="LimeGreen" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Path=HostDataContext.ConnectionState}" Value="connecting">
-                                                <Setter Property="Fill" Value="Orange" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Path=HostDataContext.ConnectionState}" Value="error">
-                                                <Setter Property="Fill" Value="Red" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
+                                Margin="0,0,6,0"
+                                Fill="{Binding Path=HostDataContext.ConnectionState, Converter={StaticResource ConnectionStateToColorConverter}}" />
                             <TextBlock
                                 FontSize="11"
                                 Foreground="#AAAAAA"
-                                Text="{Binding Path=HostDataContext.ConnectionState}" />
+                                Text="{Binding Path=HostDataContext.ConnectionState, Converter={StaticResource ConnectionStateToTextConverter}}" />
                         </StackPanel>
                         <!--  Recording indicator  -->
                         <StackPanel Orientation="Horizontal">
@@ -113,8 +97,9 @@
                                 Fill="Red" />
                             <TextBlock
                                 FontSize="11"
+                                FontWeight="SemiBold"
                                 Foreground="Red"
-                                Text="REC" />
+                                Text="{Binding Path=HostDataContext.RecordingDurationText}" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

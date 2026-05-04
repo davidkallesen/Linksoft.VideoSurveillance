@@ -1,4 +1,6 @@
 // ReSharper disable GCSuppressFinalizeForTypeWithoutDestructor
+using ConnectionState = Atc.Network.ConnectionState;
+
 namespace Linksoft.VideoSurveillance.Wpf.Windows;
 
 /// <summary>
@@ -23,13 +25,17 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelBase, IDi
     private string cameraDescription = string.Empty;
 
     [ObservableProperty]
-    private string connectionState = "disconnected";
+    private ConnectionState connectionState = ConnectionState.Disconnected;
 
     [ObservableProperty]
     private bool isOverlayVisible = true;
 
-    [ObservableProperty]
     private bool isRecording;
+    private DispatcherTimer? recordingTimer;
+    private DateTime recordingStartUtc;
+
+    [ObservableProperty]
+    private string recordingDurationText = "00:00:00";
 
     [ObservableProperty]
     private bool isMotionDetected;
@@ -65,11 +71,11 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelBase, IDi
 
             ConnectionState = existingPlayer.State switch
             {
-                PlayerState.Playing => "connected",
-                PlayerState.Opening => "connecting",
-                PlayerState.Stopped => "disconnected",
-                PlayerState.Error => "error",
-                _ => "disconnected",
+                PlayerState.Playing => ConnectionState.Connected,
+                PlayerState.Opening => ConnectionState.Connecting,
+                PlayerState.Stopped => ConnectionState.Disconnected,
+                PlayerState.Error => ConnectionState.ConnectionFailed,
+                _ => ConnectionState.Disconnected,
             };
         }
 
@@ -84,6 +90,22 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelBase, IDi
     /// Occurs when the window requests to be closed.
     /// </summary>
     public event EventHandler<DialogClosedEventArgs>? CloseRequested;
+
+    public bool IsRecording
+    {
+        get => isRecording;
+        set
+        {
+            if (isRecording == value)
+            {
+                return;
+            }
+
+            isRecording = value;
+            RaisePropertyChanged(nameof(IsRecording));
+            UpdateRecordingDurationTimer(value);
+        }
+    }
 
     /// <summary>
     /// Called when the mouse moves in the window.
@@ -116,11 +138,11 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelBase, IDi
         {
             ConnectionState = e.NewState switch
             {
-                PlayerState.Playing => "connected",
-                PlayerState.Opening => "connecting",
-                PlayerState.Stopped => "disconnected",
-                PlayerState.Error => "error",
-                _ => "disconnected",
+                PlayerState.Playing => ConnectionState.Connected,
+                PlayerState.Opening => ConnectionState.Connecting,
+                PlayerState.Stopped => ConnectionState.Disconnected,
+                PlayerState.Error => ConnectionState.ConnectionFailed,
+                _ => ConnectionState.Disconnected,
             };
         });
     }
@@ -135,9 +157,20 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelBase, IDi
 
         Application.Current?.Dispatcher.Invoke(() =>
         {
-            ConnectionState = e.NewState.ToLowerInvariant();
+            ConnectionState = ParseHubConnectionState(e.NewState);
         });
     }
+
+    private static ConnectionState ParseHubConnectionState(string? wireValue)
+        => wireValue switch
+        {
+            "Connected" => ConnectionState.Connected,
+            "Connecting" => ConnectionState.Connecting,
+            "Reconnecting" => ConnectionState.Reconnecting,
+            "Error" => ConnectionState.ConnectionFailed,
+            "Disconnected" => ConnectionState.Disconnected,
+            _ => ConnectionState.Disconnected,
+        };
 
     private void OnHubRecordingStateChanged(
         SurveillanceHubService.RecordingStateEvent e)
@@ -181,6 +214,39 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelBase, IDi
         });
     }
 
+    private void UpdateRecordingDurationTimer(bool nowRecording)
+    {
+        if (nowRecording)
+        {
+            recordingStartUtc = DateTime.UtcNow;
+            RecordingDurationText = TimeSpan.Zero.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
+
+            if (recordingTimer is null)
+            {
+                recordingTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(1),
+                };
+                recordingTimer.Tick += OnRecordingTimerTick;
+            }
+
+            recordingTimer.Start();
+        }
+        else
+        {
+            recordingTimer?.Stop();
+            RecordingDurationText = TimeSpan.Zero.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
+        }
+    }
+
+    private void OnRecordingTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        var elapsed = DateTime.UtcNow - recordingStartUtc;
+        RecordingDurationText = elapsed.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
+    }
+
     private void StartOverlayHideTimer()
     {
         overlayHideTimer = new DispatcherTimer
@@ -208,6 +274,13 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelBase, IDi
         {
             overlayHideTimer?.Stop();
             overlayHideTimer = null;
+
+            if (recordingTimer is not null)
+            {
+                recordingTimer.Stop();
+                recordingTimer.Tick -= OnRecordingTimerTick;
+                recordingTimer = null;
+            }
 
             hubService.OnConnectionStateChanged -= OnHubConnectionStateChanged;
             hubService.OnRecordingStateChanged -= OnHubRecordingStateChanged;

@@ -6,9 +6,15 @@
     xmlns:lve="clr-namespace:Linksoft.VideoPlayer.Wpf;assembly=Linksoft.VideoPlayer.Wpf"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:coreControls="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.UserControls;assembly=Linksoft.VideoSurveillance.Wpf.Core"
+    xmlns:coreConverters="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.ValueConverters;assembly=Linksoft.VideoSurveillance.Wpf.Core"
     xmlns:viewModels="clr-namespace:Linksoft.VideoSurveillance.Wpf.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewModels:CameraTileViewModel}"
     mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <coreConverters:ConnectionStateToColorValueConverter x:Key="ConnectionStateToColorConverter" />
+        <coreConverters:ConnectionStateToTextValueConverter x:Key="ConnectionStateToTextConverter" />
+    </UserControl.Resources>
 
     <!--  ReSharper disable Xaml.BindingWithContextNotResolved  -->
     <Grid Background="Black">
@@ -35,29 +41,13 @@
                             <Ellipse
                                 Width="6"
                                 Height="6"
-                                VerticalAlignment="Center">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
-                                        <Setter Property="Fill" Value="Gray" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=HostDataContext.ConnectionState}" Value="connected">
-                                                <Setter Property="Fill" Value="LimeGreen" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Path=HostDataContext.ConnectionState}" Value="connecting">
-                                                <Setter Property="Fill" Value="Orange" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Path=HostDataContext.ConnectionState}" Value="error">
-                                                <Setter Property="Fill" Value="Red" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
+                                VerticalAlignment="Center"
+                                Fill="{Binding Path=HostDataContext.ConnectionState, Converter={StaticResource ConnectionStateToColorConverter}}" />
                             <TextBlock
                                 Margin="4,0,0,0"
                                 FontSize="9"
                                 Foreground="#AAAAAA"
-                                Text="{Binding Path=HostDataContext.ConnectionState}" />
+                                Text="{Binding Path=HostDataContext.ConnectionState, Converter={StaticResource ConnectionStateToTextConverter}}" />
                         </StackPanel>
                         <!--  Recording indicator (red dot, visible when IsRecording)  -->
                         <StackPanel Orientation="Horizontal">
@@ -79,8 +69,9 @@
                             <TextBlock
                                 Margin="4,0,0,0"
                                 FontSize="9"
+                                FontWeight="SemiBold"
                                 Foreground="Red"
-                                Text="REC" />
+                                Text="{Binding Path=HostDataContext.RecordingDurationText}" />
                         </StackPanel>
                         <!--  Motion indicator (orange dot, visible when IsMotionDetected)  -->
                         <StackPanel Orientation="Horizontal">
