@@ -82,11 +82,10 @@ public partial class LayoutListViewModel : ViewModelBase
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to create layout: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToCreateLayout1,
+                    ex.Message)));
         }
     }
 
@@ -136,11 +135,10 @@ public partial class LayoutListViewModel : ViewModelBase
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to update layout: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToUpdateLayout1,
+                    ex.Message)));
         }
     }
 
@@ -152,13 +150,12 @@ public partial class LayoutListViewModel : ViewModelBase
             return;
         }
 
-        var confirmed = MessageBox.Show(
-            $"Are you sure you want to delete layout '{item.Name}'?",
-            "Confirm Delete",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (confirmed != MessageBoxResult.Yes)
+        if (!UserDialog.Confirm(
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.ConfirmDeleteLayout1,
+                    item.Name),
+                Translations.DeleteLayout))
         {
             return;
         }
@@ -174,11 +171,10 @@ public partial class LayoutListViewModel : ViewModelBase
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to delete layout: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToDeleteLayout1,
+                    ex.Message)));
         }
     }
 
@@ -197,20 +193,20 @@ public partial class LayoutListViewModel : ViewModelBase
                 .ConfigureAwait(false);
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Layout '{item.Name}' applied successfully.",
-                    "Layout Applied",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information));
+                UserDialog.ShowInfo(
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        Translations.LayoutAppliedSuccessfully1,
+                        item.Name),
+                    Translations.LayoutApplied));
         }
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to apply layout: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToApplyLayout1,
+                    ex.Message)));
         }
     }
 }

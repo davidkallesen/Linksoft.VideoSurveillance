@@ -1,6 +1,7 @@
 using ApiCamera = VideoSurveillance.Generated.Cameras.Models.Camera;
 using ApiCameraOverlayPosition = VideoSurveillance.Generated.Cameras.Models.CameraOverlayPosition;
 using ApiCameraProtocol = VideoSurveillance.Generated.Cameras.Models.CameraProtocol;
+using ApiCameraSource = VideoSurveillance.Generated.Cameras.Models.CameraSource;
 using ApiCameraStreamRtspTransport = VideoSurveillance.Generated.Cameras.Models.CameraStreamRtspTransport;
 
 using CoreCameraProtocol = Linksoft.VideoSurveillance.Enums.CameraProtocol;
@@ -30,7 +31,7 @@ public static class CameraModelMappingExtensions
 
         config.Connection.IpAddress = camera.IpAddress;
         config.Connection.Port = camera.Port;
-        config.Connection.Protocol = camera.Protocol.ToCoreProtocol();
+        config.Connection.Protocol = camera.Protocol?.ToCoreProtocol() ?? CoreCameraProtocol.Rtsp;
 
         config.Authentication.UserName = camera.Username ?? string.Empty;
 
@@ -66,17 +67,25 @@ public static class CameraModelMappingExtensions
         return new CreateCameraRequest(
             DisplayName: config.Display.DisplayName,
             Description: config.Display.Description ?? string.Empty,
+            Source: ApiCameraSource.Network,
             IpAddress: config.Connection.IpAddress,
-            Port: config.Connection.Port,
             Protocol: config.Connection.Protocol.ToApiProtocol(),
             Path: string.Empty,
             Username: username,
             Password: pwd,
+            UsbDeviceId: string.Empty,
+            UsbFriendlyName: string.Empty,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: string.Empty,
+            UsbCaptureAudio: false,
             OverlayPosition: config.Display.OverlayPosition.ToApiOverlayPosition(),
             StreamUseLowLatencyMode: config.Stream.UseLowLatencyMode,
             StreamMaxLatencyMs: config.Stream.MaxLatencyMs,
             StreamRtspTransport: config.Stream.RtspTransport.ToApiRtspTransport(),
-            StreamBufferDurationMs: config.Stream.BufferDurationMs);
+            StreamBufferDurationMs: config.Stream.BufferDurationMs,
+            Port: config.Connection.Port);
     }
 
     /// <summary>
@@ -99,12 +108,20 @@ public static class CameraModelMappingExtensions
         return new UpdateCameraRequest(
             DisplayName: config.Display.DisplayName,
             Description: config.Display.Description ?? string.Empty,
+            Source: ApiCameraSource.Network,
             IpAddress: config.Connection.IpAddress,
             Port: config.Connection.Port,
             Protocol: config.Connection.Protocol.ToApiProtocol(),
             Path: string.Empty,
             Username: username,
             Password: pwd,
+            UsbDeviceId: string.Empty,
+            UsbFriendlyName: string.Empty,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: string.Empty,
+            UsbCaptureAudio: false,
             OverlayPosition: config.Display.OverlayPosition.ToApiOverlayPosition(),
             StreamUseLowLatencyMode: config.Stream.UseLowLatencyMode,
             StreamMaxLatencyMs: config.Stream.MaxLatencyMs,

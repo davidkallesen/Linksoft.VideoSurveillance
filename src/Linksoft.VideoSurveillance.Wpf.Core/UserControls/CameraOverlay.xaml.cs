@@ -66,6 +66,15 @@ public partial class CameraOverlay
     private bool enableRecordingOnMotion;
 
     /// <summary>
+    /// True when the camera being rendered is a USB / webcam source.
+    /// Drives the small "USB" badge in the corner of the overlay so
+    /// operators can tell at a glance which tiles are local devices vs
+    /// network cameras (especially useful in mixed deployments).
+    /// </summary>
+    [DependencyProperty(DefaultValue = false)]
+    private bool isUsbSource;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="CameraOverlay"/> class.
     /// </summary>
     public CameraOverlay()

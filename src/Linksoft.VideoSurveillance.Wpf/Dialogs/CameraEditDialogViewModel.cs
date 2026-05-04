@@ -109,7 +109,7 @@ public partial class CameraEditDialogViewModel : ViewModelBase
         description = camera.Description ?? string.Empty;
         ipAddress = camera.IpAddress;
         port = camera.Port;
-        selectedProtocol = camera.Protocol;
+        selectedProtocol = camera.Protocol ?? CameraProtocol.Rtsp;
         path = camera.Path ?? string.Empty;
         username = camera.Username ?? string.Empty;
         selectedOverlayPosition = camera.OverlayPosition ?? CameraOverlayPosition.TopLeft;
@@ -126,11 +126,19 @@ public partial class CameraEditDialogViewModel : ViewModelBase
         => new(
             DisplayName: DisplayName,
             Description: Description,
+            Source: CameraSource.Network,
             IpAddress: IpAddress,
             Protocol: SelectedProtocol,
             Path: Path,
             Username: Username,
             Password: string.IsNullOrEmpty(Password) ? null! : Password,
+            UsbDeviceId: string.Empty,
+            UsbFriendlyName: string.Empty,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: string.Empty,
+            UsbCaptureAudio: false,
             OverlayPosition: SelectedOverlayPosition,
             StreamUseLowLatencyMode: StreamUseLowLatencyMode,
             StreamMaxLatencyMs: StreamMaxLatencyMs,
@@ -145,12 +153,20 @@ public partial class CameraEditDialogViewModel : ViewModelBase
         => new(
             DisplayName: DisplayName,
             Description: Description,
+            Source: CameraSource.Network,
             IpAddress: IpAddress,
             Port: Port,
             Protocol: SelectedProtocol,
             Path: Path,
             Username: Username,
             Password: string.IsNullOrEmpty(Password) ? null! : Password,
+            UsbDeviceId: string.Empty,
+            UsbFriendlyName: string.Empty,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: string.Empty,
+            UsbCaptureAudio: false,
             OverlayPosition: SelectedOverlayPosition,
             StreamUseLowLatencyMode: StreamUseLowLatencyMode,
             StreamMaxLatencyMs: StreamMaxLatencyMs,
