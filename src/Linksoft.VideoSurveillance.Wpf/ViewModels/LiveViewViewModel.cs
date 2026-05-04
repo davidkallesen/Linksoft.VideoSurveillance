@@ -1,3 +1,5 @@
+using ConnectionState = Atc.Network.ConnectionState;
+
 namespace Linksoft.VideoSurveillance.Wpf.ViewModels;
 
 /// <summary>
@@ -71,7 +73,7 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
                         CameraId = camera.Id,
                         DisplayName = camera.DisplayName,
                         Description = camera.Description ?? string.Empty,
-                        ConnectionState = camera.ConnectionState?.ToString()?.ToLowerInvariant() ?? "disconnected",
+                        ConnectionState = MapApiConnectionState(camera.ConnectionState),
                         IsRecording = camera.IsRecording,
                     };
 
@@ -92,24 +94,41 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
                 {
                     await tile.StartStreamAsync().ConfigureAwait(false);
                 }
-                catch (HttpRequestException)
+                catch (Exception ex) when (ex is HttpRequestException or Microsoft.AspNetCore.SignalR.HubException)
                 {
-                    // Stream start failed - tile will show "No Stream"
+                    // Per-tile stream start failed — tile shows "No Stream".
+                    // HubException covers SignalR-side failures (e.g. the
+                    // server-side FFmpeg playlist-ready timeout we throw
+                    // from SurveillanceHub.StartStream); HttpRequestException
+                    // covers transport-level failures. A single tile failing
+                    // must not abort the rest of the live-view load.
                 }
             }
         }
-        catch (HttpRequestException)
+        catch (Exception ex) when (ex is HttpRequestException or Microsoft.AspNetCore.SignalR.HubException)
         {
-            await Application.Current.Dispatcher.InvokeAsync(() =>
+            var app = Application.Current;
+            if (app is not null)
             {
-                StopAndDisposeTiles();
-                GridRows = 0;
-                GridColumns = 0;
-            });
+                await app.Dispatcher.InvokeAsync(() =>
+                {
+                    StopAndDisposeTiles();
+                    GridRows = 0;
+                    GridColumns = 0;
+                });
+            }
         }
         finally
         {
-            await Application.Current.Dispatcher.InvokeAsync(() => IsLoading = false);
+            // Application.Current can be null if a fatal exception triggered
+            // App.ApplicationOnDispatcherUnhandledException → Shutdown while
+            // this finally is unwinding. The app is going away anyway, so a
+            // missed IsLoading = false is harmless.
+            var app = Application.Current;
+            if (app is not null)
+            {
+                await app.Dispatcher.InvokeAsync(() => IsLoading = false);
+            }
         }
     }
 
@@ -160,7 +179,19 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
         }
 
         disposed = true;
-        StopAndDisposeTiles();
+
+        // DI scope teardown at app shutdown calls Dispose on a worker
+        // thread, so mutating CameraTiles (which is bound to a WPF
+        // CollectionView) would throw NotSupportedException —
+        // CollectionViews require dispatcher-thread mutation. Tile
+        // disposal itself is non-UI work and safe from any thread; the
+        // bound collection is going away with the app, so we skip the
+        // cosmetic emptying of it on this path.
+        foreach (var tile in CameraTiles)
+        {
+            tile.Dispose();
+        }
+
         GC.SuppressFinalize(this);
     }
 
@@ -173,4 +204,15 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
 
         CameraTiles.Clear();
     }
+
+    private static ConnectionState MapApiConnectionState(
+        CameraConnectionState? apiState)
+        => apiState switch
+        {
+            CameraConnectionState.Connected => ConnectionState.Connected,
+            CameraConnectionState.Connecting => ConnectionState.Connecting,
+            CameraConnectionState.Reconnecting => ConnectionState.Reconnecting,
+            CameraConnectionState.Error => ConnectionState.ConnectionFailed,
+            _ => ConnectionState.Disconnected,
+        };
 }

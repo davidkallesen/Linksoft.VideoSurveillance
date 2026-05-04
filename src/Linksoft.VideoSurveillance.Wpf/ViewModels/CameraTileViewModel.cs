@@ -1,3 +1,5 @@
+using ConnectionState = Atc.Network.ConnectionState;
+
 namespace Linksoft.VideoSurveillance.Wpf.ViewModels;
 
 /// <summary>
@@ -6,6 +8,9 @@ namespace Linksoft.VideoSurveillance.Wpf.ViewModels;
 /// </summary>
 public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
 {
+    private const int MaxStreamRetries = 5;
+    private static readonly TimeSpan StreamRetryDelay = TimeSpan.FromSeconds(5);
+
     private readonly SurveillanceHubService hubService;
     private readonly string apiBaseAddress;
     private bool disposed;
@@ -20,10 +25,14 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
     private string description = string.Empty;
 
     [ObservableProperty]
-    private string connectionState = "disconnected";
+    private ConnectionState connectionState = ConnectionState.Disconnected;
+
+    private bool isRecording;
+    private DispatcherTimer? recordingTimer;
+    private DateTime recordingStartUtc;
 
     [ObservableProperty]
-    private bool isRecording;
+    private string recordingDurationText = "00:00:00";
 
     [ObservableProperty]
     private bool isMotionDetected;
@@ -40,8 +49,17 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private IVideoPlayer? player;
 
-    [ObservableProperty]
     private bool isStreaming;
+    private DispatcherTimer? heartbeatTimer;
+
+    // Auto-recover: when the HLS player drops (e.g. server reaped a stale
+    // session, transient network blip, FFmpeg restart), retry StartStream
+    // up to MaxStreamRetries times instead of leaving the tile stuck on
+    // Disconnected. userStopInProgress suppresses the retry loop when the
+    // stop was initiated by us (StopStreamAsync / Dispose).
+    private bool userStopInProgress;
+    private DispatcherTimer? retryTimer;
+    private int retryAttempt;
 
     public CameraTileViewModel(
         IVideoPlayerFactory videoPlayerFactory,
@@ -63,11 +81,45 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
         hubService.OnMotionDetected += OnHubMotionDetected;
     }
 
+    public bool IsRecording
+    {
+        get => isRecording;
+        set
+        {
+            if (isRecording == value)
+            {
+                return;
+            }
+
+            isRecording = value;
+            RaisePropertyChanged(nameof(IsRecording));
+            UpdateRecordingDurationTimer(value);
+        }
+    }
+
+    public bool IsStreaming
+    {
+        get => isStreaming;
+        set
+        {
+            if (isStreaming == value)
+            {
+                return;
+            }
+
+            isStreaming = value;
+            RaisePropertyChanged(nameof(IsStreaming));
+            UpdateHeartbeatTimer(value);
+        }
+    }
+
     public Task StartStreamAsync()
         => hubService.StartStreamAsync(CameraId);
 
     public Task StopStreamAsync()
     {
+        userStopInProgress = true;
+        CancelStreamRetry();
         Player?.Close();
 
         _ = Application.Current?.Dispatcher.InvokeAsync(() => IsStreaming = false);
@@ -88,6 +140,27 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
         hubService.OnConnectionStateChanged -= OnHubConnectionStateChanged;
         hubService.OnRecordingStateChanged -= OnHubRecordingStateChanged;
         hubService.OnMotionDetected -= OnHubMotionDetected;
+
+        if (recordingTimer is not null)
+        {
+            recordingTimer.Stop();
+            recordingTimer.Tick -= OnRecordingTimerTick;
+            recordingTimer = null;
+        }
+
+        if (heartbeatTimer is not null)
+        {
+            heartbeatTimer.Stop();
+            heartbeatTimer.Tick -= OnHeartbeatTimerTick;
+            heartbeatTimer = null;
+        }
+
+        if (retryTimer is not null)
+        {
+            retryTimer.Stop();
+            retryTimer.Tick -= OnRetryTimerTick;
+            retryTimer = null;
+        }
 
         if (Player is not null)
         {
@@ -124,7 +197,11 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
             }
         });
 
-        _ = Application.Current?.Dispatcher.InvokeAsync(() => IsStreaming = true);
+        _ = Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            retryAttempt = 0;
+            IsStreaming = true;
+        });
     }
 
     private void OnPlayerStateChanged(
@@ -135,16 +212,24 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
         {
             ConnectionState = e.NewState switch
             {
-                PlayerState.Playing => "connected",
-                PlayerState.Opening => "connecting",
-                PlayerState.Stopped => "disconnected",
-                PlayerState.Error => "error",
-                _ => "disconnected",
+                PlayerState.Playing => ConnectionState.Connected,
+                PlayerState.Opening => ConnectionState.Connecting,
+                PlayerState.Stopped => ConnectionState.Disconnected,
+                PlayerState.Error => ConnectionState.ConnectionFailed,
+                _ => ConnectionState.Disconnected,
             };
 
             if (e.NewState is PlayerState.Stopped or PlayerState.Error)
             {
+                var wasStreaming = IsStreaming;
                 IsStreaming = false;
+
+                if (wasStreaming && !userStopInProgress && !disposed)
+                {
+                    ScheduleStreamRetry();
+                }
+
+                userStopInProgress = false;
             }
         });
     }
@@ -159,9 +244,20 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
 
         _ = Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            ConnectionState = e.NewState.ToLowerInvariant();
+            ConnectionState = ParseHubConnectionState(e.NewState);
         });
     }
+
+    private static ConnectionState ParseHubConnectionState(string? wireValue)
+        => wireValue switch
+        {
+            "Connected" => ConnectionState.Connected,
+            "Connecting" => ConnectionState.Connecting,
+            "Reconnecting" => ConnectionState.Reconnecting,
+            "Error" => ConnectionState.ConnectionFailed,
+            "Disconnected" => ConnectionState.Disconnected,
+            _ => ConnectionState.Disconnected,
+        };
 
     private void OnHubRecordingStateChanged(
         SurveillanceHubService.RecordingStateEvent e)
@@ -176,6 +272,140 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
             IsRecording = string.Equals(e.NewState, "recording", StringComparison.OrdinalIgnoreCase) ||
                           string.Equals(e.NewState, "recordingMotion", StringComparison.OrdinalIgnoreCase);
         });
+    }
+
+    private void UpdateRecordingDurationTimer(bool nowRecording)
+    {
+        if (nowRecording)
+        {
+            recordingStartUtc = DateTime.UtcNow;
+            RecordingDurationText = TimeSpan.Zero.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
+
+            if (recordingTimer is null)
+            {
+                recordingTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(1),
+                };
+                recordingTimer.Tick += OnRecordingTimerTick;
+            }
+
+            recordingTimer.Start();
+        }
+        else
+        {
+            recordingTimer?.Stop();
+            RecordingDurationText = TimeSpan.Zero.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
+        }
+    }
+
+    private void OnRecordingTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        var elapsed = DateTime.UtcNow - recordingStartUtc;
+        RecordingDurationText = elapsed.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
+    }
+
+    // Server-side StreamingService reaps an HLS session after 60s of inactivity
+    // unless the hub method StreamHeartbeat is invoked. HLS playlist/segment HTTP
+    // requests go through StaticFileMiddleware and do NOT touch the session
+    // timestamp, so without this timer the FFmpeg transcoder is killed under us
+    // and the tile flips to Disconnected. 30s heartbeat = 30s margin (safe across
+    // a single dropped tick from a Wi-Fi blip or GC pause).
+    private void UpdateHeartbeatTimer(bool nowStreaming)
+    {
+        if (nowStreaming)
+        {
+            if (heartbeatTimer is null)
+            {
+                heartbeatTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(30),
+                };
+                heartbeatTimer.Tick += OnHeartbeatTimerTick;
+            }
+
+            heartbeatTimer.Start();
+        }
+        else
+        {
+            heartbeatTimer?.Stop();
+        }
+    }
+
+    private void OnHeartbeatTimerTick(
+        object? sender,
+        EventArgs e)
+        => _ = SendHeartbeatAsync();
+
+    private async Task SendHeartbeatAsync()
+    {
+        try
+        {
+            await hubService.StreamHeartbeatAsync(CameraId).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is Microsoft.AspNetCore.SignalR.HubException or InvalidOperationException or HttpRequestException)
+        {
+            // Hub temporarily unavailable; the SignalR auto-reconnect will recover
+            // and the next 30s tick will refresh activity. Reaper margin is 30s
+            // so a single missed heartbeat is fine.
+        }
+    }
+
+    private void ScheduleStreamRetry()
+    {
+        if (retryAttempt >= MaxStreamRetries)
+        {
+            return;
+        }
+
+        retryAttempt++;
+
+        if (retryTimer is null)
+        {
+            retryTimer = new DispatcherTimer
+            {
+                Interval = StreamRetryDelay,
+            };
+            retryTimer.Tick += OnRetryTimerTick;
+        }
+
+        retryTimer.Stop();
+        retryTimer.Start();
+    }
+
+    private void CancelStreamRetry()
+    {
+        retryTimer?.Stop();
+        retryAttempt = 0;
+    }
+
+    private void OnRetryTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        retryTimer?.Stop();
+        _ = TryStartStreamForRetryAsync();
+    }
+
+    private async Task TryStartStreamForRetryAsync()
+    {
+        if (disposed || userStopInProgress)
+        {
+            return;
+        }
+
+        try
+        {
+            await StartStreamAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is Microsoft.AspNetCore.SignalR.HubException or InvalidOperationException or HttpRequestException)
+        {
+            // Hub or transport down — schedule another attempt directly,
+            // since the player won't transition state without our doing.
+            _ = Application.Current?.Dispatcher.InvokeAsync(ScheduleStreamRetry);
+        }
     }
 
     private void OnHubMotionDetected(

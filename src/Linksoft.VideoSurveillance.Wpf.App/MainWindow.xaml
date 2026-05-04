@@ -256,7 +256,9 @@
                 </TextBlock>
             </StatusBarItem>
             <Separator />
-            <StatusBarItem HorizontalAlignment="Right">
+            <StatusBarItem
+                HorizontalAlignment="Right"
+                Margin="0,0,16,0">
                 <TextBlock>
                     <Run Text="Latency: " /><Run Text="{Binding Path=ServerLatency, Mode=OneWay}" />
                 </TextBlock>

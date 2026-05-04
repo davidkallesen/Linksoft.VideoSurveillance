@@ -154,6 +154,16 @@ public sealed class SurveillanceHubService : IAsyncDisposable
         }
     }
 
+    public async Task StreamHeartbeatAsync(Guid cameraId)
+    {
+        if (hubConnection?.State == HubConnectionState.Connected)
+        {
+            await hubConnection
+                .InvokeAsync("StreamHeartbeat", cameraId)
+                .ConfigureAwait(false);
+        }
+    }
+
     public async Task DisconnectAsync()
     {
         if (hubConnection is not null)
