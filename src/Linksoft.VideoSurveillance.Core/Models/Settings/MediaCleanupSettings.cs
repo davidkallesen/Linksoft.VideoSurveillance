@@ -5,7 +5,7 @@ namespace Linksoft.VideoSurveillance.Models.Settings;
 /// </summary>
 public class MediaCleanupSettings
 {
-    public MediaCleanupSchedule Schedule { get; set; } = MediaCleanupSchedule.Disabled;
+    public MediaCleanupSchedule Schedule { get; set; } = MediaCleanupSchedule.OnStartupAndPeriodically;
 
     public int RecordingRetentionDays { get; set; } = 30;
 

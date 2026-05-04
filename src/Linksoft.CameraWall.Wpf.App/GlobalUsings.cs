@@ -38,6 +38,7 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 
 global using Serilog;
+global using Serilog.Events;
 
 global using ApplicationHelper = Linksoft.VideoSurveillance.Helpers.ApplicationHelper;
 global using IMediaCleanupService = Linksoft.VideoSurveillance.Services.IMediaCleanupService;

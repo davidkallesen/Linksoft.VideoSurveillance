@@ -9,9 +9,12 @@ public sealed partial class StreamingService : IDisposable
     // A client that drops its socket without calling StopStream leaves the
     // viewer count > 0 and the FFmpeg transcoder running. With CPU-heavy
     // libx264 transcoding per camera, even a few orphaned streams can
-    // saturate a multi-camera server. Aggressive defaults: 45s inactivity,
-    // 10s reaper sweep.
-    private static readonly TimeSpan InactivityTimeout = TimeSpan.FromSeconds(45);
+    // saturate a multi-camera server.
+    //
+    // 60s inactivity with a 30s client heartbeat gives 30s of margin — a
+    // single dropped heartbeat (Wi-Fi blip, GC pause) won't kill the stream.
+    // Reaper sweeps every 10s so worst-case lag from drop to reap is ~70s.
+    private static readonly TimeSpan InactivityTimeout = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan ReaperInterval = TimeSpan.FromSeconds(10);
 
     private readonly ICameraStorageService storage;
@@ -302,6 +305,15 @@ public sealed partial class StreamingService : IDisposable
         // / PCMU which HLS / browser MSE cannot demux. Cameras with non-
         // H.264/H.265 video will fail under this default — for those, add
         // a future per-camera "force transcoding" setting.
+        // hls_flags split_by_time is critical for stream-copied input
+        // (-c:v copy): without it, the HLS muxer only cuts segments at
+        // keyframe boundaries, so a camera with a long GOP (30s+ between
+        // I-frames) won't produce its first .ts file — and therefore won't
+        // produce stream.m3u8 — within the StartStream playlist-ready
+        // timeout. split_by_time relaxes that to cut at hls_time boundaries
+        // regardless of keyframes; the first segment may briefly fail to
+        // decode until the browser finds a keyframe, but playback recovers
+        // within a fraction of a second and the stream actually starts.
         var args = string.Join(
             ' ',
             "-v info",
@@ -317,7 +329,7 @@ public sealed partial class StreamingService : IDisposable
             "-f hls",
             "-hls_time 2",
             "-hls_list_size 5",
-            "-hls_flags delete_segments",
+            "-hls_flags delete_segments+split_by_time",
             $"\"{playlistPath}\"");
 
         var psi = new ProcessStartInfo

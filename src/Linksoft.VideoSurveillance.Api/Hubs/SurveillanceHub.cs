@@ -117,23 +117,28 @@ public sealed partial class SurveillanceHub : Hub
 
     /// <summary>
     /// Starts HLS streaming for a camera. Returns the playlist URL.
+    /// Cancellation comes from <see cref="HubCallerContext.ConnectionAborted"/>
+    /// directly rather than via a method parameter — SignalR's JSON binder
+    /// treats a parameter-level CancellationToken as a required client
+    /// argument and rejects the invocation with "Invocation provides 1
+    /// argument(s) but target expects 2" before the method body runs.
     /// </summary>
     /// <param name="cameraId">The camera to stream.</param>
-    /// <param name="cancellationToken">
-    /// Aborts the playlist-ready wait when the SignalR client disconnects;
-    /// SignalR injects this from <c>HubCallerContext.ConnectionAborted</c>.
-    /// </param>
-    public async Task StartStream(
-        Guid cameraId,
-        CancellationToken cancellationToken = default)
+    public async Task StartStream(Guid cameraId)
     {
+        var cancellationToken = Context.ConnectionAborted;
         var connectionId = Context.ConnectionId;
         try
         {
             var playlistPath = streamingService.StartStream(cameraId, connectionId);
 
-            // Wait for FFmpeg to create the playlist and first segment (up to 30 seconds)
-            var timeout = TimeSpan.FromSeconds(30);
+            // Wait for FFmpeg to create the playlist and first segment (up to 60 seconds).
+            // 60s gives a comfortable margin for cameras with long GOPs and slow RTSP
+            // handshakes; the StreamingService FFmpeg invocation now uses split_by_time
+            // so segments cut at hls_time boundaries instead of keyframes, but a slow
+            // camera or network can still take noticeably longer than the 30s we used
+            // to bound here.
+            var timeout = TimeSpan.FromSeconds(60);
             var start = DateTime.UtcNow;
             var playlistDir = Path.GetDirectoryName(playlistPath)!;
 
@@ -159,7 +164,10 @@ public sealed partial class SurveillanceHub : Hub
                     var errors = streamingService.GetProcessError(cameraId);
                     streamingService.StopStream(cameraId, connectionId);
                     throw new TimeoutException(
-                        $"FFmpeg did not produce the HLS playlist in time. Last output: {errors}");
+                        $"FFmpeg did not produce the HLS playlist within {timeout.TotalSeconds:F0}s. " +
+                        "The most common cause is a very long camera GOP (keyframe interval) — " +
+                        "reduce it in the camera's encoder settings if possible. " +
+                        $"Last FFmpeg output: {errors}");
                 }
 
                 await Task.Delay(500, cancellationToken).ConfigureAwait(false);

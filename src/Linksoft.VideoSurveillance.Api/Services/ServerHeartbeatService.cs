@@ -16,6 +16,14 @@ public sealed partial class ServerHeartbeatService : BackgroundServiceBase<Serve
     private readonly IApplicationSettingsService settingsService;
     private readonly DateTime processStartUtc = Process.GetCurrentProcess().StartTime.ToUniversalTime();
 
+    // Baseline + peak counters captured at first tick. Letting an operator (or
+    // the soak-report script) read drift directly off the heartbeat line is
+    // worth far more than chasing each datapoint manually — handle climb is
+    // only meaningful relative to a known starting point.
+    private int? baselineHandleCount;
+    private int peakHandleCount;
+    private double peakWorkingSetMb;
+
     public ServerHeartbeatService(
         ILogger<ServerHeartbeatService> logger,
         ServerHeartbeatServiceOptions backgroundServiceOptions,
@@ -51,6 +59,19 @@ public sealed partial class ServerHeartbeatService : BackgroundServiceBase<Serve
         var handleCount = process.HandleCount;
         var threadCount = process.Threads.Count;
 
+        baselineHandleCount ??= handleCount;
+        var handleDelta = handleCount - baselineHandleCount.Value;
+
+        if (handleCount > peakHandleCount)
+        {
+            peakHandleCount = handleCount;
+        }
+
+        if (workingSetMb > peakWorkingSetMb)
+        {
+            peakWorkingSetMb = workingSetMb;
+        }
+
         var gen0 = GC.CollectionCount(0);
         var gen1 = GC.CollectionCount(1);
         var gen2 = GC.CollectionCount(2);
@@ -63,7 +84,10 @@ public sealed partial class ServerHeartbeatService : BackgroundServiceBase<Serve
             stuckCount,
             cameraNames,
             workingSetMb,
+            peakWorkingSetMb,
             handleCount,
+            handleDelta,
+            peakHandleCount,
             threadCount,
             gen0,
             gen1,
