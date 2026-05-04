@@ -120,6 +120,13 @@ public interface IApplicationSettingsService
     void Load();
 
     /// <summary>
+    /// Reloads settings from storage asynchronously. Required for backends
+    /// where loading is naturally async (e.g. an HTTP-based settings store);
+    /// the local-file implementation just wraps <see cref="Load"/>.
+    /// </summary>
+    Task LoadAsync();
+
+    /// <summary>
     /// Saves all settings to storage.
     /// </summary>
     void Save();
