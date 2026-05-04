@@ -11,6 +11,7 @@ public sealed partial class CameraConnectionService : BackgroundServiceBase<Came
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
     private readonly IMediaPipelineFactory pipelineFactory;
+    private readonly IUsbCameraLifecycleCoordinator usbLifecycle;
     private readonly ConcurrentDictionary<Guid, IMediaPipeline> managedPipelines = new();
     private readonly ConcurrentDictionary<Guid, BackoffState> backoffs = new();
 
@@ -21,13 +22,20 @@ public sealed partial class CameraConnectionService : BackgroundServiceBase<Came
         ICameraStorageService storageService,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService,
-        IMediaPipelineFactory pipelineFactory)
+        IMediaPipelineFactory pipelineFactory,
+        IUsbCameraLifecycleCoordinator usbLifecycle)
         : base(logger, options, healthService)
     {
         this.storageService = storageService;
         this.settingsService = settingsService;
         this.recordingService = recordingService;
         this.pipelineFactory = pipelineFactory;
+        this.usbLifecycle = usbLifecycle;
+
+        // Subscribe before Start so we never miss the first event the
+        // watcher emits after subscription. Start is idempotent.
+        this.usbLifecycle.StateChanged += OnUsbLifecycleChanged;
+        this.usbLifecycle.Start();
 
         healthService.SetMaxStalenessInSeconds(
             ServiceName,
@@ -51,6 +59,34 @@ public sealed partial class CameraConnectionService : BackgroundServiceBase<Came
             if (stoppingToken.IsCancellationRequested)
             {
                 break;
+            }
+
+            // Skip USB cameras whose physical device is currently
+            // unplugged. Reconnecting is impossible until the watcher
+            // reports the device back, so polling here would just
+            // reproduce the ~1 M attempts/year anti-pattern in a more
+            // expensive way (we'd actually try to open the dshow
+            // source and burn FFmpeg time on each tick).
+            if (usbLifecycle.IsUnplugged(camera.Id))
+            {
+                if (managedPipelines.ContainsKey(camera.Id))
+                {
+                    if (recordingService.IsRecording(camera.Id))
+                    {
+                        try
+                        {
+                            recordingService.StopRecording(camera.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogStopRecordingShutdownError(ex, camera.Id);
+                        }
+                    }
+
+                    ScheduleDeferredDisposal(camera.Id);
+                }
+
+                continue;
             }
 
             // Skip cameras still inside their backoff window so a
@@ -143,6 +179,8 @@ public sealed partial class CameraConnectionService : BackgroundServiceBase<Came
     /// <inheritdoc />
     public override void Dispose()
     {
+        usbLifecycle.StateChanged -= OnUsbLifecycleChanged;
+
         // Pipelines should already be stopped by StopAsync; dispose cleans up remaining resources
         foreach (var kvp in managedPipelines)
         {
@@ -158,6 +196,53 @@ public sealed partial class CameraConnectionService : BackgroundServiceBase<Came
 
         managedPipelines.Clear();
         base.Dispose();
+    }
+
+    /// <summary>
+    /// Reacts to USB hot-plug transitions surfaced by
+    /// <see cref="IUsbCameraLifecycleCoordinator"/>. Unplug → tear
+    /// down the active pipeline + recording so resources are freed
+    /// promptly. Replug → clear the backoff entry so the next
+    /// <see cref="DoWorkAsync"/> tick attempts the camera fresh, no
+    /// matter how long it was gone.
+    /// </summary>
+    private void OnUsbLifecycleChanged(
+        object? sender,
+        UsbCameraLifecycleChangedEventArgs e)
+    {
+        switch (e.Phase)
+        {
+            case UsbCameraLifecyclePhase.Unplugged:
+                LogUsbCameraUnplugged(e.CameraId, e.Device.FriendlyName);
+
+                if (recordingService.IsRecording(e.CameraId))
+                {
+                    try
+                    {
+                        recordingService.StopRecording(e.CameraId);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogStopRecordingShutdownError(ex, e.CameraId);
+                    }
+                }
+
+                if (managedPipelines.ContainsKey(e.CameraId))
+                {
+                    ScheduleDeferredDisposal(e.CameraId);
+                }
+
+                break;
+
+            case UsbCameraLifecyclePhase.Replugged:
+                // Clearing the backoff is the trigger that lets the
+                // next DoWorkAsync tick re-attempt the camera. Without
+                // this, an unplug while in the middle of a long
+                // backoff window would survive the replug.
+                backoffs.TryRemove(e.CameraId, out _);
+                LogUsbCameraReplugged(e.CameraId, e.Device.FriendlyName);
+                break;
+        }
     }
 
     private void StopAllManagedRecordings()

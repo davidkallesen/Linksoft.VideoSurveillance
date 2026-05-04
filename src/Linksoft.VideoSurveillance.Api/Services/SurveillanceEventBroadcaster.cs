@@ -15,6 +15,7 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
     private readonly IRecordingService recordingService;
     private readonly ServerRecordingService serverRecordingService;
     private readonly IMotionDetectionService motionDetectionService;
+    private readonly IUsbCameraLifecycleCoordinator usbLifecycle;
     private readonly ILogger<SurveillanceEventBroadcaster> logger;
 
     public SurveillanceEventBroadcaster(
@@ -22,12 +23,14 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         IRecordingService recordingService,
         ServerRecordingService serverRecordingService,
         IMotionDetectionService motionDetectionService,
+        IUsbCameraLifecycleCoordinator usbLifecycle,
         ILogger<SurveillanceEventBroadcaster> logger)
     {
         this.hubContext = hubContext;
         this.recordingService = recordingService;
         this.serverRecordingService = serverRecordingService;
         this.motionDetectionService = motionDetectionService;
+        this.usbLifecycle = usbLifecycle;
         this.logger = logger;
     }
 
@@ -37,6 +40,7 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         recordingService.RecordingStateChanged += OnRecordingStateChanged;
         motionDetectionService.MotionDetected += OnMotionDetected;
         serverRecordingService.CameraConnectionStateChanged += OnCameraConnectionStateChanged;
+        usbLifecycle.StateChanged += OnUsbLifecycleChanged;
 
         LogBroadcasterStarted();
 
@@ -49,6 +53,7 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         recordingService.RecordingStateChanged -= OnRecordingStateChanged;
         motionDetectionService.MotionDetected -= OnMotionDetected;
         serverRecordingService.CameraConnectionStateChanged -= OnCameraConnectionStateChanged;
+        usbLifecycle.StateChanged -= OnUsbLifecycleChanged;
 
         LogBroadcasterStopped();
 
@@ -74,6 +79,11 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         Guid cameraId,
         ConnectionState newState)
         => _ = BroadcastCameraConnectionStateChangedAsync(cameraId, newState);
+
+    private void OnUsbLifecycleChanged(
+        object? sender,
+        UsbCameraLifecycleChangedEventArgs e)
+        => _ = BroadcastUsbLifecycleChangedAsync(e);
 
     private async Task BroadcastRecordingStateChangedAsync(
         RecordingStateChangedEventArgs e)
@@ -123,6 +133,32 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
         catch (Exception ex)
         {
             LogBroadcastConnectionFailed(ex, cameraId);
+        }
+    }
+
+    private async Task BroadcastUsbLifecycleChangedAsync(
+        UsbCameraLifecycleChangedEventArgs e)
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(BroadcastTimeout);
+            await hubContext.Clients.All
+                .SendAsync(
+                    "UsbCameraLifecycleChanged",
+                    new
+                    {
+                        e.CameraId,
+                        Phase = e.Phase.ToString(),
+                        e.Device.DeviceId,
+                        e.Device.FriendlyName,
+                        Timestamp = DateTimeOffset.UtcNow,
+                    },
+                    cts.Token)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogBroadcastUsbLifecycleFailed(ex, e.CameraId);
         }
     }
 

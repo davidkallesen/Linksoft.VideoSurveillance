@@ -141,7 +141,7 @@ else
                 description = camera.Description ?? string.Empty;
                 ipAddress = camera.IpAddress;
                 port = camera.Port;
-                protocol = camera.Protocol;
+                protocol = camera.Protocol ?? CameraProtocol.Rtsp;
                 path = camera.Path ?? string.Empty;
                 username = camera.Username ?? string.Empty;
                 overlayPosition = camera.OverlayPosition ?? CameraOverlayPosition.TopLeft;
@@ -170,12 +170,20 @@ else
             var request = new UpdateCameraRequest(
                 DisplayName: displayName,
                 Description: description,
+                Source: CameraSource.Network,
                 IpAddress: ipAddress,
                 Port: port,
                 Protocol: protocol,
                 Path: path,
                 Username: username,
                 Password: password,
+                UsbDeviceId: string.Empty,
+                UsbFriendlyName: string.Empty,
+                UsbWidth: 0,
+                UsbHeight: 0,
+                UsbFrameRate: 0,
+                UsbPixelFormat: string.Empty,
+                UsbCaptureAudio: false,
                 OverlayPosition: overlayPosition,
                 StreamUseLowLatencyMode: streamUseLowLatencyMode,
                 StreamMaxLatencyMs: streamMaxLatencyMs,
@@ -198,17 +206,25 @@ else
             var request = new CreateCameraRequest(
                 DisplayName: displayName,
                 Description: description,
+                Source: CameraSource.Network,
                 IpAddress: ipAddress,
-                Port: port,
                 Protocol: protocol,
                 Path: path,
                 Username: username,
                 Password: password,
+                UsbDeviceId: string.Empty,
+                UsbFriendlyName: string.Empty,
+                UsbWidth: 0,
+                UsbHeight: 0,
+                UsbFrameRate: 0,
+                UsbPixelFormat: string.Empty,
+                UsbCaptureAudio: false,
                 OverlayPosition: overlayPosition,
                 StreamUseLowLatencyMode: streamUseLowLatencyMode,
                 StreamMaxLatencyMs: streamMaxLatencyMs,
                 StreamRtspTransport: streamRtspTransport,
-                StreamBufferDurationMs: streamBufferDurationMs);
+                StreamBufferDurationMs: streamBufferDurationMs,
+                Port: port);
 
             var result = await Gateway.CreateCameraAsync(request);
             if (result is not null)

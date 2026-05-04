@@ -62,6 +62,25 @@ try
     builder.Services.AddSingleton<IMediaPipelineFactory, VideoEngineMediaPipelineFactory>();
     builder.Services.AddSingleton<StreamingService>();
 
+    // USB-camera support — Null fallback first so non-Windows hosts
+    // still compose; Windows then replaces the binding via
+    // AddWindowsUsbCameraSupport. The /devices/usb endpoint inspects
+    // the bound implementation and returns 503 when it's still the
+    // Null fallback.
+    builder.Services.AddSingleton<IUsbCameraEnumerator>(NullUsbCameraEnumerator.Instance);
+    builder.Services.AddSingleton<IUsbCameraWatcher, NullUsbCameraWatcher>();
+    if (OperatingSystem.IsWindows())
+    {
+        Linksoft.VideoEngine.Windows.DependencyInjection.ServiceCollectionExtensions
+            .AddWindowsUsbCameraSupport(builder.Services);
+    }
+
+    // Lifecycle coordinator translates raw watcher events into
+    // per-camera Unplugged / Replugged transitions for
+    // CameraConnectionService. Singleton so the unplugged-set
+    // survives across DoWorkAsync ticks.
+    builder.Services.AddSingleton<IUsbCameraLifecycleCoordinator, UsbCameraLifecycleCoordinator>();
+
     // Configure CORS for Blazor client (AllowCredentials required for SignalR WebSocket transport).
     // Origins are loaded from configuration (Cors:AllowedOrigins). With AllowCredentials,
     // wildcard origins are forbidden — populate the section explicitly when fronting the

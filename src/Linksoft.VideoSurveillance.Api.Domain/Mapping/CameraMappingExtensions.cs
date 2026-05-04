@@ -1,8 +1,11 @@
 using CoreCameraConfiguration = Linksoft.VideoSurveillance.Models.CameraConfiguration;
 using CoreCameraProtocol = Linksoft.VideoSurveillance.Enums.CameraProtocol;
+using CoreCameraSource = Linksoft.VideoSurveillance.Enums.CameraSource;
 using CoreConnectionState = Linksoft.VideoSurveillance.Enums.ConnectionState;
 using CoreOverlayPosition = Linksoft.VideoSurveillance.Enums.OverlayPosition;
 using CoreRecordingState = Linksoft.VideoSurveillance.Enums.RecordingState;
+using CoreUsbConnectionSettings = Linksoft.VideoSurveillance.Models.Settings.UsbConnectionSettings;
+using CoreUsbStreamFormat = Linksoft.VideoSurveillance.Models.UsbStreamFormat;
 
 namespace Linksoft.VideoSurveillance.Api.Domain.Mapping;
 
@@ -12,15 +15,27 @@ internal static class CameraMappingExtensions
         this CoreCameraConfiguration core,
         CoreConnectionState? connectionState = null,
         bool isRecording = false)
-        => new(
+    {
+        var usb = core.Connection.Usb;
+        var format = usb?.Format;
+
+        return new Camera(
             Id: core.Id,
             DisplayName: core.Display.DisplayName,
             Description: core.Display.Description ?? string.Empty,
+            Source: core.Connection.Source.ToApiSource(),
             IpAddress: core.Connection.IpAddress,
             Port: core.Connection.Port,
             Protocol: core.Connection.Protocol.ToApiProtocol(),
             Path: core.Connection.Path ?? string.Empty,
             Username: core.Authentication.UserName ?? string.Empty,
+            UsbDeviceId: usb?.DeviceId ?? string.Empty,
+            UsbFriendlyName: usb?.FriendlyName ?? string.Empty,
+            UsbWidth: format?.Width ?? 0,
+            UsbHeight: format?.Height ?? 0,
+            UsbFrameRate: format?.FrameRate ?? 0,
+            UsbPixelFormat: format?.PixelFormat ?? string.Empty,
+            UsbCaptureAudio: usb?.PreferAudio ?? false,
             OverlayPosition: ToApiOverlayPosition(core.Display.OverlayPosition),
             StreamUseLowLatencyMode: core.Stream.UseLowLatencyMode,
             StreamMaxLatencyMs: core.Stream.MaxLatencyMs,
@@ -28,18 +43,23 @@ internal static class CameraMappingExtensions
             StreamBufferDurationMs: core.Stream.BufferDurationMs,
             ConnectionState: connectionState?.ToApiConnectionState(),
             IsRecording: isRecording);
+    }
 
     public static CoreCameraConfiguration ToCoreModel(
         this CreateCameraRequest request)
     {
+        var source = request.Source?.ToCoreSource() ?? CoreCameraSource.Network;
+
         var camera = new CoreCameraConfiguration
         {
             Connection =
             {
-                IpAddress = request.IpAddress,
+                Source = source,
+                IpAddress = request.IpAddress ?? string.Empty,
                 Port = request.Port,
                 Protocol = request.Protocol?.ToCoreProtocol() ?? CoreCameraProtocol.Rtsp,
                 Path = request.Path,
+                Usb = source == CoreCameraSource.Usb ? BuildUsbSettings(request) : null,
             },
             Authentication =
             {
@@ -92,6 +112,11 @@ internal static class CameraMappingExtensions
             core.Display.Description = request.Description;
         }
 
+        if (request.Source is not null)
+        {
+            core.Connection.Source = request.Source.Value.ToCoreSource();
+        }
+
         if (!string.IsNullOrEmpty(request.IpAddress))
         {
             core.Connection.IpAddress = request.IpAddress;
@@ -121,6 +146,8 @@ internal static class CameraMappingExtensions
         {
             core.Authentication.Password = request.Password;
         }
+
+        ApplyUsbUpdate(core, request);
 
         if (request.OverlayPosition is not null)
         {
@@ -162,6 +189,20 @@ internal static class CameraMappingExtensions
             _ => CoreCameraProtocol.Rtsp,
         };
 
+    public static CameraSource ToApiSource(this CoreCameraSource source)
+        => source switch
+        {
+            CoreCameraSource.Usb => CameraSource.Usb,
+            _ => CameraSource.Network,
+        };
+
+    public static CoreCameraSource ToCoreSource(this CameraSource source)
+        => source switch
+        {
+            CameraSource.Usb => CoreCameraSource.Usb,
+            _ => CoreCameraSource.Network,
+        };
+
     public static CameraConnectionState ToApiConnectionState(
         this CoreConnectionState state)
         => state switch
@@ -170,6 +211,7 @@ internal static class CameraMappingExtensions
             CoreConnectionState.Connected => CameraConnectionState.Connected,
             CoreConnectionState.Reconnecting => CameraConnectionState.Reconnecting,
             CoreConnectionState.Error => CameraConnectionState.Error,
+            CoreConnectionState.DeviceUnplugged => CameraConnectionState.DeviceUnplugged,
             _ => CameraConnectionState.Disconnected,
         };
 
@@ -214,5 +256,87 @@ internal static class CameraMappingExtensions
         return string.Equals(transport, "udp", StringComparison.OrdinalIgnoreCase)
             ? CameraStreamRtspTransport.Udp
             : CameraStreamRtspTransport.Tcp;
+    }
+
+    private static CoreUsbConnectionSettings BuildUsbSettings(
+        CreateCameraRequest request)
+        => new()
+        {
+            DeviceId = request.UsbDeviceId ?? string.Empty,
+            FriendlyName = request.UsbFriendlyName ?? string.Empty,
+            PreferAudio = request.UsbCaptureAudio,
+            Format = (request.UsbWidth > 0 && request.UsbHeight > 0)
+                ? new CoreUsbStreamFormat
+                {
+                    Width = request.UsbWidth,
+                    Height = request.UsbHeight,
+                    FrameRate = request.UsbFrameRate,
+                    PixelFormat = request.UsbPixelFormat ?? string.Empty,
+                }
+                : null,
+        };
+
+    private static void ApplyUsbUpdate(
+        CoreCameraConfiguration core,
+        UpdateCameraRequest request)
+    {
+        var hasUsbField = request.UsbDeviceId is not null
+            || request.UsbFriendlyName is not null
+            || request.UsbWidth > 0
+            || request.UsbHeight > 0
+            || request.UsbFrameRate > 0
+            || request.UsbPixelFormat is not null
+            || request.UsbCaptureAudio;
+
+        if (!hasUsbField && core.Connection.Source != CoreCameraSource.Usb)
+        {
+            return;
+        }
+
+        core.Connection.Usb ??= new CoreUsbConnectionSettings();
+
+        if (request.UsbDeviceId is not null)
+        {
+            core.Connection.Usb.DeviceId = request.UsbDeviceId;
+        }
+
+        if (request.UsbFriendlyName is not null)
+        {
+            core.Connection.Usb.FriendlyName = request.UsbFriendlyName;
+        }
+
+        // PreferAudio is a non-nullable bool — only overwrite when the
+        // request explicitly carries `true` so existing-camera updates
+        // that omit the field don't silently disable audio.
+        if (request.UsbCaptureAudio)
+        {
+            core.Connection.Usb.PreferAudio = true;
+        }
+
+        if (request.UsbWidth > 0 || request.UsbHeight > 0 ||
+            request.UsbFrameRate > 0 || request.UsbPixelFormat is not null)
+        {
+            core.Connection.Usb.Format ??= new CoreUsbStreamFormat();
+
+            if (request.UsbWidth > 0)
+            {
+                core.Connection.Usb.Format.Width = request.UsbWidth;
+            }
+
+            if (request.UsbHeight > 0)
+            {
+                core.Connection.Usb.Format.Height = request.UsbHeight;
+            }
+
+            if (request.UsbFrameRate > 0)
+            {
+                core.Connection.Usb.Format.FrameRate = request.UsbFrameRate;
+            }
+
+            if (request.UsbPixelFormat is not null)
+            {
+                core.Connection.Usb.Format.PixelFormat = request.UsbPixelFormat;
+            }
+        }
     }
 }
