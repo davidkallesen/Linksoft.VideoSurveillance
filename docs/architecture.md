@@ -37,6 +37,7 @@ graph BT
     Core["Linksoft.VideoSurveillance.Core<br/><i>net10.0</i>"]
     VE["Linksoft.VideoEngine<br/><i>net10.0</i>"]
     DX["Linksoft.VideoEngine.DirectX<br/><i>net10.0-windows</i>"]
+    VW["Linksoft.VideoEngine.Windows<br/><i>net10.0-windows</i>"]
     VP["Linksoft.VideoPlayer.Wpf<br/><i>net10.0-windows</i>"]
     CW["Linksoft.CameraWall.Wpf<br/><i>net10.0-windows</i>"]
     App["Linksoft.CameraWall.Wpf.App<br/><i>net10.0-windows</i>"]
@@ -44,15 +45,17 @@ graph BT
     VSApp["VideoSurveillance.Wpf.App<br/><i>net10.0-windows</i>"]
     Contracts["Api.Contracts<br/><i>net10.0</i>"]
     Domain["Api.Domain<br/><i>net10.0</i>"]
-    API["Api<br/><i>net10.0</i>"]
+    API["Api<br/><i>net10.0-windows</i>"]
     Blazor["Blazor.App<br/><i>net10.0</i>"]
     Aspire["Aspire<br/><i>net10.0</i>"]
 
     DX --> VE
     VP --> DX
+    VW --> Core
     CW --> Core
     CW --> VP
     App --> CW
+    App --> VW
     VSWpf --> Core
     VSWpf --> VP
     VSApp --> VSWpf
@@ -63,10 +66,13 @@ graph BT
     API --> Contracts
     API --> Core
     API --> VE
+    API --> VW
     Aspire --> API
     Aspire --> Blazor
     Aspire --> VSApp
 ```
+
+`Linksoft.VideoEngine.Windows` is the optional Windows-only USB layer — Media Foundation device enumeration plus a WMI hot-plug watcher. The Core abstraction (`IUsbCameraEnumerator` / `IUsbCameraWatcher`) lives in `Linksoft.VideoSurveillance.Core` so non-Windows hosts can compose with `NullUsbCameraEnumerator` / `NullUsbCameraWatcher` and a future V4L2 / AVFoundation implementation can drop in without touching consumers. The `Api` host targets `net10.0-windows` so it can reference `VideoEngine.Windows` directly; Linux server support is deferred to Phase 10 of [`roadmap-usb-cameras.md`](roadmap-usb-cameras.md).
 
 ## 📊 Layered Architecture
 

@@ -32,6 +32,7 @@ A professional video surveillance platform for live monitoring of multiple RTSP/
 - **Network Scanner** - Auto-discover cameras on the local network (integrated in Add Camera dialog)
 - **Test Connection** - Validate camera connectivity before saving
 - **Multiple Protocols** - RTSP, HTTP, and HTTPS support with configurable ports and paths
+- **USB / Webcam Support** - Mix DirectShow / UVC USB cameras with IP cameras in the same grid (Windows). Devices are enumerated via Media Foundation; hot-plug events surface via WMI so unplugged devices transition cleanly to a `DeviceUnplugged` state instead of thrashing in a reconnect loop. See [`docs/usb-cameras.md`](docs/usb-cameras.md).
 - **Per-Camera Overrides** - Override any application-level setting on a per-camera basis (connection, display, performance, recording, motion detection)
 
 ### 🔴 Recording
