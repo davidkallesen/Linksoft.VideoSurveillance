@@ -90,11 +90,10 @@ public partial class CameraListViewModel : ViewModelBase
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to create camera: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToCreateCamera1,
+                    ex.Message)));
         }
     }
 
@@ -116,11 +115,7 @@ public partial class CameraListViewModel : ViewModelBase
         catch (HttpRequestException)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    "Failed to load camera details.",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(Translations.FailedToLoadCameraDetails));
             return;
         }
 
@@ -159,11 +154,10 @@ public partial class CameraListViewModel : ViewModelBase
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to update camera: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToUpdateCamera1,
+                    ex.Message)));
         }
     }
 
@@ -175,13 +169,12 @@ public partial class CameraListViewModel : ViewModelBase
             return;
         }
 
-        var confirmed = MessageBox.Show(
-            $"Are you sure you want to delete camera '{item.DisplayName}'?",
-            "Confirm Delete",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (confirmed != MessageBoxResult.Yes)
+        if (!UserDialog.Confirm(
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.ConfirmDeleteCamera1,
+                    item.DisplayName),
+                Translations.DeleteCamera))
         {
             return;
         }
@@ -197,11 +190,10 @@ public partial class CameraListViewModel : ViewModelBase
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to delete camera: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToDeleteCamera1,
+                    ex.Message)));
         }
     }
 
@@ -224,11 +216,10 @@ public partial class CameraListViewModel : ViewModelBase
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to start recording: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToStartRecording1,
+                    ex.Message)));
         }
     }
 
@@ -251,11 +242,10 @@ public partial class CameraListViewModel : ViewModelBase
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to stop recording: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToStopRecording1,
+                    ex.Message)));
         }
     }
 
@@ -276,11 +266,7 @@ public partial class CameraListViewModel : ViewModelBase
             if (string.IsNullOrEmpty(snapshotData))
             {
                 await Application.Current.Dispatcher.InvokeAsync(() =>
-                    MessageBox.Show(
-                        "No snapshot data returned.",
-                        "Snapshot",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning));
+                    UserDialog.ShowWarning(Translations.NoSnapshotData, Translations.Snapshot));
                 return;
             }
 
@@ -298,22 +284,22 @@ public partial class CameraListViewModel : ViewModelBase
                     var bytes = Convert.FromBase64String(snapshotData);
                     System.IO.File.WriteAllBytes(saveDialog.FileName, bytes);
 
-                    MessageBox.Show(
-                        $"Snapshot saved to {saveDialog.FileName}",
-                        "Snapshot Saved",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    UserDialog.ShowInfo(
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            Translations.SnapshotSavedTo1,
+                            saveDialog.FileName),
+                        Translations.SnapshotSaved);
                 }
             });
         }
         catch (HttpRequestException ex)
         {
             await Application.Current.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(
-                    $"Failed to capture snapshot: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error));
+                UserDialog.ShowError(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Translations.FailedToCaptureSnapshot1,
+                    ex.Message)));
         }
     }
 

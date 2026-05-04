@@ -101,6 +101,42 @@ public partial class ConnectionSettings : ObservableObject
     }
 
     /// <summary>
+    /// Gets or sets the source kind (Network vs USB). USB cameras
+    /// surface their device identity through <see cref="Usb"/>.
+    /// </summary>
+    public CameraSource Source
+    {
+        get => Core.Source;
+        set
+        {
+            if (Core.Source == value)
+            {
+                return;
+            }
+
+            Core.Source = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the USB-specific settings. <see langword="null"/>
+    /// for network cameras. Mutations are wired straight to Core —
+    /// the WPF wrapper doesn't add change notification on the nested
+    /// <see cref="UsbConnectionSettings"/> object since the dialog
+    /// rebuilds the whole part on Source switch anyway.
+    /// </summary>
+    public CoreSettings.UsbConnectionSettings? Usb
+    {
+        get => Core.Usb;
+        set
+        {
+            Core.Usb = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
     /// Creates a deep copy of this instance.
     /// </summary>
     public ConnectionSettings Clone()
@@ -113,10 +149,12 @@ public partial class ConnectionSettings : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(source);
 
+        Source = source.Source;
         IpAddress = source.IpAddress;
         Protocol = source.Protocol;
         Port = source.Port;
         Path = source.Path;
+        Usb = source.Usb is null ? null : source.Usb.Clone();
     }
 
     /// <summary>

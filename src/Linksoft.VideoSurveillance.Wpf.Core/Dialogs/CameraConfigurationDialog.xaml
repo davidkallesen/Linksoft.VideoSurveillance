@@ -20,6 +20,8 @@
     mc:Ignorable="d">
 
     <atc:NiceWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
         <!--  Network Scanner Template - only instantiated when IsNew is true  -->
         <DataTemplate x:Key="NetworkScannerTemplate">
             <cameraConfigs:NetworkScannerPart />
@@ -48,22 +50,33 @@
 
                         <StackPanel Margin="15,15,0,15">
 
-                            <!--  Network Scanner (only instantiated when adding new camera)  -->
+                            <!--  Source picker (Network / USB)  -->
+                            <cameraConfigs:SourceTypePart />
+
+                            <!--  Network Scanner (only when adding a new *network* camera)  -->
                             <ContentControl Content="{Binding}">
                                 <ContentControl.Style>
                                     <Style TargetType="ContentControl">
                                         <Setter Property="ContentTemplate" Value="{StaticResource EmptyTemplate}" />
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=IsNew}" Value="True">
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Path=IsNew}" Value="True" />
+                                                    <Condition Binding="{Binding Path=IsNetworkSource}" Value="True" />
+                                                </MultiDataTrigger.Conditions>
                                                 <Setter Property="ContentTemplate" Value="{StaticResource NetworkScannerTemplate}" />
-                                            </DataTrigger>
+                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </ContentControl.Style>
                             </ContentControl>
 
-                            <!--  Form Content - 3 Column Layout  -->
-                            <atc:GroupBoxExpander Margin="0,0,0,20" Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations, Key=CameraConfiguration}">
+                            <!--  Network branch — 3-column basic settings  -->
+                            <atc:GroupBoxExpander
+                                Margin="0,0,0,20"
+                                Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                        Key=CameraConfiguration}"
+                                Visibility="{Binding Path=IsNetworkSource, Converter={StaticResource BoolToVisibility}}">
                                 <atc:GridEx
                                     Margin="0,20,0,0"
                                     Columns="*,20,*,20,*"
@@ -71,6 +84,21 @@
                                     <cameraConfigs:BasicDisplaySettingsPart Grid.Row="0" Grid.Column="0" />
                                     <cameraConfigs:BasicConnectionSettingsPart Grid.Row="0" Grid.Column="2" />
                                     <cameraConfigs:BasicAuthenticationSettingsPart Grid.Row="0" Grid.Column="4" />
+                                </atc:GridEx>
+                            </atc:GroupBoxExpander>
+
+                            <!--  USB branch — display name + device picker side by side  -->
+                            <atc:GroupBoxExpander
+                                Margin="0,0,0,20"
+                                Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                        Key=CameraConfiguration}"
+                                Visibility="{Binding Path=IsUsbSource, Converter={StaticResource BoolToVisibility}}">
+                                <atc:GridEx
+                                    Margin="0,20,0,0"
+                                    Columns="*,20,*"
+                                    Rows="Auto">
+                                    <cameraConfigs:BasicDisplaySettingsPart Grid.Row="0" Grid.Column="0" />
+                                    <cameraConfigs:UsbDevicePart Grid.Row="0" Grid.Column="2" />
                                 </atc:GridEx>
                             </atc:GroupBoxExpander>
 

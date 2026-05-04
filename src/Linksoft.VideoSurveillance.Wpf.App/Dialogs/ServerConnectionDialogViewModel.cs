@@ -181,13 +181,18 @@ public sealed partial class ServerConnectionDialogViewModel : ObservableObject
             return;
         }
 
-        var result = MessageBox.Show(
-            $"Delete profile '{SelectedProfile.Name}'?",
-            "Confirm Delete",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+        var dialog = new QuestionDialogBox(
+            Application.Current.MainWindow!,
+            Translations.DeleteProfile,
+            string.Format(
+                CultureInfo.CurrentCulture,
+                Translations.ConfirmDeleteProfile1,
+                SelectedProfile.Name))
+        {
+            Width = 400,
+        };
 
-        if (result != MessageBoxResult.Yes)
+        if (dialog.ShowDialog() != true)
         {
             return;
         }

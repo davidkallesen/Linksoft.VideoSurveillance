@@ -181,7 +181,7 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
         Player.StateChanged += OnPlayerStateChanged;
 
         // Defer stream opening to avoid blocking UI during window creation
-        var uri = camera.BuildUri();
+        var locator = camera.BuildSourceLocator();
         var options = new StreamOptions
         {
             Source = camera.Display.DisplayName,
@@ -189,7 +189,19 @@ public sealed partial class FullScreenCameraWindowViewModel : ViewModelDialogBas
             MaxLatencyMs = camera.Stream.MaxLatencyMs,
             RtspTransport = camera.Stream.RtspTransport,
             BufferDurationMs = camera.Stream.BufferDurationMs,
+            InputFormat = locator.InputFormat switch
+            {
+                "dshow" => InputFormatKind.Dshow,
+                "v4l2" => InputFormatKind.V4l2,
+                "avfoundation" => InputFormatKind.AVFoundation,
+                _ => InputFormatKind.Auto,
+            },
+            RawDeviceSpec = locator.RawDeviceSpec,
+            VideoSize = locator.VideoSize,
+            FrameRate = locator.FrameRate,
+            PixelFormat = locator.PixelFormat,
         };
+        var uri = locator.Uri;
 
         _ = Task.Run(() =>
         {

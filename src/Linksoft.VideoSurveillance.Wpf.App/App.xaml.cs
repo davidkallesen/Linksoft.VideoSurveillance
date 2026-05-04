@@ -84,11 +84,7 @@ public partial class App
 
         LogCurrentDomainUnhandledException(exceptionMessage);
 
-        MessageBox.Show(
-            exceptionMessage,
-            "CurrentDomain Unhandled Exception",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        ShowFatalErrorDialog(exceptionMessage, Translations.CurrentDomainUnhandledException);
     }
 
     private void ApplicationOnDispatcherUnhandledException(
@@ -106,14 +102,38 @@ public partial class App
 
         LogDispatcherUnhandledException(exceptionMessage);
 
-        MessageBox.Show(
-            exceptionMessage,
-            "Dispatcher Unhandled Exception",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        ShowFatalErrorDialog(exceptionMessage, Translations.DispatcherUnhandledException);
 
         args.Handled = true;
         Shutdown(-1);
+    }
+
+    /// <summary>
+    /// Shows the fatal-error dialog using <see cref="InfoDialogBox"/>
+    /// when an owner window is reachable. The handler runs while the
+    /// app is collapsing — if no window is up yet (early-startup
+    /// crash) we silently skip the popup; the original exception is
+    /// already in the Serilog file sink.
+    /// </summary>
+    private static void ShowFatalErrorDialog(
+        string message,
+        string title)
+    {
+        var owner = Application.Current?.MainWindow
+                    ?? Application.Current?.Windows.OfType<Window>().FirstOrDefault();
+        if (owner is null)
+        {
+            return;
+        }
+
+        var settings = new DialogBoxSettings(DialogBoxType.Ok, LogCategoryType.Error)
+        {
+            TitleBarText = title,
+            Width = 500,
+        };
+
+        var dialog = new InfoDialogBox(owner, settings, message);
+        dialog.ShowDialog();
     }
 
     private async void ApplicationStartup(
@@ -313,6 +333,19 @@ public partial class App
                 });
 
                 services.AddSingleton(new SurveillanceHubService(apiBaseAddress));
+
+                // USB camera enumeration + hot-plug via the API server.
+                // RemoteUsbCameraEnumerator delegates to GET /devices/usb
+                // so the dialog dropdown shows devices attached to the
+                // *server* host. RemoteUsbCameraWatcher subscribes to
+                // the SignalR `UsbCameraLifecycleChanged` event the
+                // SurveillanceEventBroadcaster pushes when the server's
+                // IUsbCameraLifecycleCoordinator transitions a device
+                // between Unplugged and Replugged.
+                services.AddSingleton<IUsbCameraGateway, GatewayUsbCameraGateway>();
+                services.AddSingleton<Linksoft.VideoSurveillance.Services.IUsbCameraEnumerator, RemoteUsbCameraEnumerator>();
+                services.AddSingleton<IUsbLifecycleHubChannel, SurveillanceHubLifecycleChannel>();
+                services.AddSingleton<Linksoft.VideoSurveillance.Services.IUsbCameraWatcher, RemoteUsbCameraWatcher>();
 
                 // GitHub release service
                 services.AddSingleton<IGitHubReleaseService, GitHubReleaseService>();

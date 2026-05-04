@@ -10,6 +10,7 @@ public class DialogService : IDialogService
     private readonly IApplicationSettingsService settingsService;
     private readonly IMotionDetectionService motionDetectionService;
     private readonly IVideoPlayerFactory videoPlayerFactory;
+    private readonly Linksoft.VideoSurveillance.Services.IUsbCameraEnumerator usbCameraEnumerator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DialogService"/> class.
@@ -17,14 +18,24 @@ public class DialogService : IDialogService
     /// <param name="settingsService">The application settings service.</param>
     /// <param name="motionDetectionService">The motion detection service.</param>
     /// <param name="videoPlayerFactory">The video player factory.</param>
+    /// <param name="usbCameraEnumerator">
+    /// The USB camera enumerator. Both hosted apps register a real
+    /// implementation via DI (Media Foundation on the standalone,
+    /// gateway-backed on the API client); the Null fallback only
+    /// surfaces on non-Windows hosts. Without this parameter the dialog
+    /// VM defaulted to the Null enumerator and the device dropdown
+    /// stayed empty no matter how many cameras were attached.
+    /// </param>
     public DialogService(
         IApplicationSettingsService settingsService,
         IMotionDetectionService motionDetectionService,
-        IVideoPlayerFactory videoPlayerFactory)
+        IVideoPlayerFactory videoPlayerFactory,
+        Linksoft.VideoSurveillance.Services.IUsbCameraEnumerator usbCameraEnumerator)
     {
         this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         this.motionDetectionService = motionDetectionService ?? throw new ArgumentNullException(nameof(motionDetectionService));
         this.videoPlayerFactory = videoPlayerFactory ?? throw new ArgumentNullException(nameof(videoPlayerFactory));
+        this.usbCameraEnumerator = usbCameraEnumerator ?? throw new ArgumentNullException(nameof(usbCameraEnumerator));
     }
 
     /// <inheritdoc />
@@ -41,7 +52,14 @@ public class DialogService : IDialogService
             settingsService.ApplyDefaultsToCamera(cameraConfig);
         }
 
-        var viewModel = new CameraConfigurationDialogViewModel(cameraConfig, isNew, existingEndpoints, settingsService, videoPlayerFactory);
+        var viewModel = new CameraConfigurationDialogViewModel(
+            cameraConfig,
+            isNew,
+            existingEndpoints,
+            settingsService,
+            videoPlayerFactory,
+            usbCameraEnumerator);
+
         var dialog = new CameraConfigurationDialog(viewModel)
         {
             Owner = Application.Current.MainWindow,
@@ -97,7 +115,7 @@ public class DialogService : IDialogService
             };
 
             // Initial validation check
-            var initialText = labelTextBox.Text?.Trim() ?? string.Empty;
+            var initialText = labelTextBox.Text.Trim();
             if (forbiddenSet.Contains(initialText))
             {
                 labelTextBox.ValidationText = forbiddenValueError;
@@ -135,12 +153,18 @@ public class DialogService : IDialogService
         string message,
         string? title = null)
     {
-        MessageBox.Show(
+        var settings = new Atc.Wpf.Forms.Dialogs.DialogBoxSettings(
+            Atc.Wpf.Forms.Dialogs.DialogBoxType.Ok,
+            Atc.LogCategoryType.Error)
+        {
+            TitleBarText = title ?? Translations.Error,
+            Width = 400,
+        };
+        var dialog = new InfoDialogBox(
             Application.Current.MainWindow!,
-            message,
-            title ?? Translations.Error,
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+            settings,
+            message);
+        dialog.ShowDialog();
     }
 
     /// <inheritdoc />
@@ -148,12 +172,14 @@ public class DialogService : IDialogService
         string message,
         string? title = null)
     {
-        MessageBox.Show(
+        var dialog = new InfoDialogBox(
             Application.Current.MainWindow!,
-            message,
             title ?? Translations.Information,
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
+            message)
+        {
+            Width = 400,
+        };
+        dialog.ShowDialog();
     }
 
     /// <inheritdoc />
@@ -186,7 +212,7 @@ public class DialogService : IDialogService
     /// <inheritdoc />
     public void ShowFullScreenCamera(
         CameraConfiguration camera,
-        UserControls.CameraTile? sourceTile = null)
+        CameraTile? sourceTile = null)
     {
         ArgumentNullException.ThrowIfNull(camera);
 

@@ -520,9 +520,9 @@ public partial class CameraTile : IDisposable
 
         try
         {
-            var uri = Camera.BuildUri();
+            var locator = Camera.BuildSourceLocator();
             var options = BuildStreamOptions(Camera);
-            Player.Open(uri, options);
+            Player.Open(locator.Uri, options);
         }
         catch (Exception ex)
         {
@@ -1364,6 +1364,7 @@ public partial class CameraTile : IDisposable
             CameraName = cameraConfig.Display.DisplayName;
             CameraDescription = cameraConfig.Display.Description ?? string.Empty;
             UpdateOverlayPosition(GetEffectiveOverlayPosition(cameraConfig));
+            UpdateOverlayIsUsbSource();
             ApplyRotation();
             InitializeOverrideTracking(cameraConfig);
             return;
@@ -1409,6 +1410,7 @@ public partial class CameraTile : IDisposable
         CameraDescription = cameraConfig.Display.Description ?? string.Empty;
 
         UpdateOverlayPosition(GetEffectiveOverlayPosition(cameraConfig));
+        UpdateOverlayIsUsbSource();
 
         // Defer player creation if the factory hasn't been injected yet.
         // InitializeServices will call InitializePlayer when the factory arrives.
@@ -1446,7 +1448,9 @@ public partial class CameraTile : IDisposable
         => videoPlayerFactory!.Create();
 
     private StreamOptions BuildStreamOptions(CameraConfiguration camera)
-        => new()
+    {
+        var locator = camera.BuildSourceLocator();
+        return new StreamOptions
         {
             Source = camera.Display.DisplayName,
             UseLowLatencyMode = camera.Stream.UseLowLatencyMode,
@@ -1455,6 +1459,21 @@ public partial class CameraTile : IDisposable
             BufferDurationMs = camera.Stream.BufferDurationMs,
             HardwareAcceleration = HardwareAcceleration,
             MaxVerticalResolution = DropDownItemsFactory.GetMaxResolutionFromQuality(VideoQuality),
+            InputFormat = MapInputFormat(locator.InputFormat),
+            RawDeviceSpec = locator.RawDeviceSpec,
+            VideoSize = locator.VideoSize,
+            FrameRate = locator.FrameRate,
+            PixelFormat = locator.PixelFormat,
+        };
+    }
+
+    private static InputFormatKind MapInputFormat(string? name)
+        => name switch
+        {
+            "dshow" => InputFormatKind.Dshow,
+            "v4l2" => InputFormatKind.V4l2,
+            "avfoundation" => InputFormatKind.AVFoundation,
+            _ => InputFormatKind.Auto,
         };
 
     private void OnPlayerStateChanged(
@@ -2047,6 +2066,7 @@ public partial class CameraTile : IDisposable
         CameraName = Camera.Display.DisplayName;
         CameraDescription = Camera.Display.Description ?? string.Empty;
         UpdateOverlayPosition(GetEffectiveOverlayPosition(Camera));
+        UpdateOverlayIsUsbSource();
         ApplyRotation();
     }
 
@@ -2124,6 +2144,15 @@ public partial class CameraTile : IDisposable
         overlay?.Title = title;
     }
 
+    private void UpdateOverlayIsUsbSource()
+    {
+        var overlay = GetCameraOverlay();
+        if (overlay is not null)
+        {
+            overlay.IsUsbSource = Camera?.Connection.Source == CameraSource.Usb;
+        }
+    }
+
     private CameraOverlay? GetCameraOverlay()
     {
         // Return cached reference if available
@@ -2158,8 +2187,9 @@ public partial class CameraTile : IDisposable
             // Ignore Close() errors - we'll try to Open() anyway
         }
 
-        // Build URI and options on the UI thread (they access DependencyProperties)
-        var uri = capturedCamera.BuildUri();
+        // Build locator and options on the UI thread (they access DependencyProperties)
+        var locator = capturedCamera.BuildSourceLocator();
+        var uri = locator.Uri;
         var options = BuildStreamOptions(capturedCamera);
 
         // Start status check timer before background operation

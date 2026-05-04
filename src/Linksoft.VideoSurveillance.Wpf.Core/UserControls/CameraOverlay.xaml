@@ -25,6 +25,26 @@
     </UserControl.Resources>
 
     <Grid>
+        <!--  USB source badge — small pill in the opposite corner from
+              the info box so it doesn't fight with title/status text.
+              Visibility cascades off IsUsbSource only — settings can
+              hide source badges by leaving CameraConfiguration.Source
+              at Network.  -->
+        <Border
+            Padding="6,2"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Background="#CC0078D4"
+            CornerRadius="3"
+            Opacity="{Binding Path=OverlayOpacity, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            Visibility="{Binding Path=IsUsbSource, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock
+                FontSize="9"
+                FontWeight="Bold"
+                Foreground="White"
+                Text="USB" />
+        </Border>
+
         <Border
             Padding="8,4"
             HorizontalAlignment="Left"

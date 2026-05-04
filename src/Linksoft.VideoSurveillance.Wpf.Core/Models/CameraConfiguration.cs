@@ -166,10 +166,20 @@ public partial class CameraConfiguration : ObservableObject
 
     /// <summary>
     /// Builds the camera stream URI based on the configuration.
+    /// Throws on USB cameras — use
+    /// <see cref="BuildSourceLocator"/> instead.
     /// </summary>
     /// <returns>The constructed URI for the camera stream.</returns>
     public Uri BuildUri()
         => Core.BuildUri();
+
+    /// <summary>
+    /// Builds an FFmpeg-ready locator that handles both network and
+    /// USB cameras. Prefer this over <see cref="BuildUri"/> in new
+    /// code.
+    /// </summary>
+    public Linksoft.VideoSurveillance.Helpers.SourceLocator BuildSourceLocator()
+        => Linksoft.VideoSurveillance.Helpers.CameraUriHelper.BuildSourceLocator(Core);
 
     /// <summary>
     /// Returns the display name of the camera.

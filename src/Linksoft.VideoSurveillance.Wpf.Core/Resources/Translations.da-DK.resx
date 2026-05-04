@@ -135,6 +135,75 @@
   <data name="Error" xml:space="preserve">
     <value>Fejl</value>
   </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Advarsel</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Bekræft sletning</value>
+  </data>
+  <data name="ConfirmDeleteProfile1" xml:space="preserve">
+    <value>Slet profilen '{0}'?</value>
+  </data>
+  <data name="CurrentDomainUnhandledException" xml:space="preserve">
+    <value>Uhåndteret undtagelse (CurrentDomain)</value>
+  </data>
+  <data name="DeleteProfile" xml:space="preserve">
+    <value>Slet profil</value>
+  </data>
+  <data name="DispatcherUnhandledException" xml:space="preserve">
+    <value>Uhåndteret undtagelse (Dispatcher)</value>
+  </data>
+  <data name="FailedToApplyLayout1" xml:space="preserve">
+    <value>Kunne ikke anvende layout: {0}</value>
+  </data>
+  <data name="FailedToCaptureSnapshot1" xml:space="preserve">
+    <value>Kunne ikke tage snapshot: {0}</value>
+  </data>
+  <data name="FailedToCreateCamera1" xml:space="preserve">
+    <value>Kunne ikke oprette kamera: {0}</value>
+  </data>
+  <data name="FailedToCreateLayout1" xml:space="preserve">
+    <value>Kunne ikke oprette layout: {0}</value>
+  </data>
+  <data name="FailedToDeleteCamera1" xml:space="preserve">
+    <value>Kunne ikke slette kamera: {0}</value>
+  </data>
+  <data name="FailedToDeleteLayout1" xml:space="preserve">
+    <value>Kunne ikke slette layout: {0}</value>
+  </data>
+  <data name="FailedToLoadCameraDetails" xml:space="preserve">
+    <value>Kunne ikke indlæse kameradetaljer.</value>
+  </data>
+  <data name="FailedToStartRecording1" xml:space="preserve">
+    <value>Kunne ikke starte optagelse: {0}</value>
+  </data>
+  <data name="FailedToStopRecording1" xml:space="preserve">
+    <value>Kunne ikke stoppe optagelse: {0}</value>
+  </data>
+  <data name="FailedToUpdateCamera1" xml:space="preserve">
+    <value>Kunne ikke opdatere kamera: {0}</value>
+  </data>
+  <data name="FailedToUpdateLayout1" xml:space="preserve">
+    <value>Kunne ikke opdatere layout: {0}</value>
+  </data>
+  <data name="LayoutApplied" xml:space="preserve">
+    <value>Layout anvendt</value>
+  </data>
+  <data name="LayoutAppliedSuccessfully1" xml:space="preserve">
+    <value>Layout '{0}' anvendt.</value>
+  </data>
+  <data name="NoSnapshotData" xml:space="preserve">
+    <value>Intet snapshot-data returneret.</value>
+  </data>
+  <data name="Snapshot" xml:space="preserve">
+    <value>Snapshot</value>
+  </data>
+  <data name="SnapshotSaved" xml:space="preserve">
+    <value>Snapshot gemt</value>
+  </data>
+  <data name="SnapshotSavedTo1" xml:space="preserve">
+    <value>Snapshot gemt til {0}</value>
+  </data>
   <data name="Unknown" xml:space="preserve">
     <value>Ukendt</value>
   </data>
@@ -1142,5 +1211,50 @@
   </data>
   <data name="RecordingFormatMkv" xml:space="preserve">
     <value>MKV (Matroska)</value>
+  </data>
+  <data name="AddUsbCamera" xml:space="preserve">
+    <value>Tilføj USB-kamera</value>
+  </data>
+  <data name="Source" xml:space="preserve">
+    <value>Kilde</value>
+  </data>
+  <data name="SourceTypeNetwork" xml:space="preserve">
+    <value>Netværkskamera</value>
+  </data>
+  <data name="SourceTypeUsb" xml:space="preserve">
+    <value>USB / Webcam</value>
+  </data>
+  <data name="SelectUsbDevice" xml:space="preserve">
+    <value>USB-enhed</value>
+  </data>
+  <data name="UsbWidth" xml:space="preserve">
+    <value>Bredde</value>
+  </data>
+  <data name="UsbHeight" xml:space="preserve">
+    <value>Højde</value>
+  </data>
+  <data name="UsbResolution" xml:space="preserve">
+    <value>Opløsning</value>
+  </data>
+  <data name="UsbFrameRate" xml:space="preserve">
+    <value>Billedhastighed</value>
+  </data>
+  <data name="UsbPixelFormat" xml:space="preserve">
+    <value>Pixelformat</value>
+  </data>
+  <data name="UsbCaptureAudio" xml:space="preserve">
+    <value>Optag lyd</value>
+  </data>
+  <data name="UsbAudioDeviceName" xml:space="preserve">
+    <value>Lydenhed</value>
+  </data>
+  <data name="UsbDeviceUnplugged" xml:space="preserve">
+    <value>Enhed frakoblet</value>
+  </data>
+  <data name="UsbCameraUnpluggedToast1" xml:space="preserve">
+    <value>USB-kamera '{0}' blev frakoblet</value>
+  </data>
+  <data name="UsbCameraReconnectedToast1" xml:space="preserve">
+    <value>USB-kamera '{0}' er tilsluttet igen</value>
   </data>
 </root>

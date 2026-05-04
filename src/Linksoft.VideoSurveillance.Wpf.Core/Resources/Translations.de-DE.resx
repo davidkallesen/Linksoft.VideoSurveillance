@@ -135,6 +135,75 @@
   <data name="Error" xml:space="preserve">
     <value>Fehler</value>
   </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warnung</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Löschen bestätigen</value>
+  </data>
+  <data name="ConfirmDeleteProfile1" xml:space="preserve">
+    <value>Profil '{0}' löschen?</value>
+  </data>
+  <data name="CurrentDomainUnhandledException" xml:space="preserve">
+    <value>Unbehandelte Ausnahme (CurrentDomain)</value>
+  </data>
+  <data name="DeleteProfile" xml:space="preserve">
+    <value>Profil löschen</value>
+  </data>
+  <data name="DispatcherUnhandledException" xml:space="preserve">
+    <value>Unbehandelte Ausnahme (Dispatcher)</value>
+  </data>
+  <data name="FailedToApplyLayout1" xml:space="preserve">
+    <value>Fehler beim Anwenden des Layouts: {0}</value>
+  </data>
+  <data name="FailedToCaptureSnapshot1" xml:space="preserve">
+    <value>Fehler beim Aufnehmen des Schnappschusses: {0}</value>
+  </data>
+  <data name="FailedToCreateCamera1" xml:space="preserve">
+    <value>Fehler beim Erstellen der Kamera: {0}</value>
+  </data>
+  <data name="FailedToCreateLayout1" xml:space="preserve">
+    <value>Fehler beim Erstellen des Layouts: {0}</value>
+  </data>
+  <data name="FailedToDeleteCamera1" xml:space="preserve">
+    <value>Fehler beim Löschen der Kamera: {0}</value>
+  </data>
+  <data name="FailedToDeleteLayout1" xml:space="preserve">
+    <value>Fehler beim Löschen des Layouts: {0}</value>
+  </data>
+  <data name="FailedToLoadCameraDetails" xml:space="preserve">
+    <value>Fehler beim Laden der Kameradetails.</value>
+  </data>
+  <data name="FailedToStartRecording1" xml:space="preserve">
+    <value>Fehler beim Starten der Aufnahme: {0}</value>
+  </data>
+  <data name="FailedToStopRecording1" xml:space="preserve">
+    <value>Fehler beim Stoppen der Aufnahme: {0}</value>
+  </data>
+  <data name="FailedToUpdateCamera1" xml:space="preserve">
+    <value>Fehler beim Aktualisieren der Kamera: {0}</value>
+  </data>
+  <data name="FailedToUpdateLayout1" xml:space="preserve">
+    <value>Fehler beim Aktualisieren des Layouts: {0}</value>
+  </data>
+  <data name="LayoutApplied" xml:space="preserve">
+    <value>Layout angewendet</value>
+  </data>
+  <data name="LayoutAppliedSuccessfully1" xml:space="preserve">
+    <value>Layout '{0}' erfolgreich angewendet.</value>
+  </data>
+  <data name="NoSnapshotData" xml:space="preserve">
+    <value>Keine Schnappschussdaten zurückgegeben.</value>
+  </data>
+  <data name="Snapshot" xml:space="preserve">
+    <value>Schnappschuss</value>
+  </data>
+  <data name="SnapshotSaved" xml:space="preserve">
+    <value>Schnappschuss gespeichert</value>
+  </data>
+  <data name="SnapshotSavedTo1" xml:space="preserve">
+    <value>Schnappschuss gespeichert nach {0}</value>
+  </data>
   <data name="Unknown" xml:space="preserve">
     <value>Unbekannt</value>
   </data>
@@ -1142,5 +1211,50 @@
   </data>
   <data name="RecordingFormatMkv" xml:space="preserve">
     <value>MKV (Matroska)</value>
+  </data>
+  <data name="AddUsbCamera" xml:space="preserve">
+    <value>USB-Kamera hinzufügen</value>
+  </data>
+  <data name="Source" xml:space="preserve">
+    <value>Quelle</value>
+  </data>
+  <data name="SourceTypeNetwork" xml:space="preserve">
+    <value>Netzwerkkamera</value>
+  </data>
+  <data name="SourceTypeUsb" xml:space="preserve">
+    <value>USB / Webcam</value>
+  </data>
+  <data name="SelectUsbDevice" xml:space="preserve">
+    <value>USB-Gerät</value>
+  </data>
+  <data name="UsbWidth" xml:space="preserve">
+    <value>Breite</value>
+  </data>
+  <data name="UsbHeight" xml:space="preserve">
+    <value>Höhe</value>
+  </data>
+  <data name="UsbResolution" xml:space="preserve">
+    <value>Auflösung</value>
+  </data>
+  <data name="UsbFrameRate" xml:space="preserve">
+    <value>Bildrate</value>
+  </data>
+  <data name="UsbPixelFormat" xml:space="preserve">
+    <value>Pixelformat</value>
+  </data>
+  <data name="UsbCaptureAudio" xml:space="preserve">
+    <value>Audio aufnehmen</value>
+  </data>
+  <data name="UsbAudioDeviceName" xml:space="preserve">
+    <value>Audiogerät</value>
+  </data>
+  <data name="UsbDeviceUnplugged" xml:space="preserve">
+    <value>Gerät getrennt</value>
+  </data>
+  <data name="UsbCameraUnpluggedToast1" xml:space="preserve">
+    <value>USB-Kamera '{0}' wurde getrennt</value>
+  </data>
+  <data name="UsbCameraReconnectedToast1" xml:space="preserve">
+    <value>USB-Kamera '{0}' wieder verbunden</value>
   </data>
 </root>

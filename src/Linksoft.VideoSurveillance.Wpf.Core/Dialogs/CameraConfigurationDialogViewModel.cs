@@ -9,6 +9,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     private readonly IReadOnlyCollection<(string IpAddress, string? Path)> existingEndpoints;
     private readonly IApplicationSettingsService settingsService;
     private readonly IVideoPlayerFactory videoPlayerFactory;
+    private readonly Linksoft.VideoSurveillance.Services.IUsbCameraEnumerator usbEnumerator;
 
     [ObservableProperty(AfterChangedCallback = nameof(OnIsTestingChanged))]
     private bool isTesting;
@@ -43,11 +44,13 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         bool isNew,
         IReadOnlyCollection<(string IpAddress, string? Path)> existingEndpoints,
         IApplicationSettingsService settingsService,
-        IVideoPlayerFactory videoPlayerFactory)
+        IVideoPlayerFactory videoPlayerFactory,
+        Linksoft.VideoSurveillance.Services.IUsbCameraEnumerator usbEnumerator)
     {
         ArgumentNullException.ThrowIfNull(camera);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(videoPlayerFactory);
+        ArgumentNullException.ThrowIfNull(usbEnumerator);
 
         originalCamera = camera;
         this.isNew = isNew;
@@ -55,11 +58,29 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         this.settingsService = settingsService;
         this.videoPlayerFactory = videoPlayerFactory;
 
+        // Required, not nullable-with-Null-default. The previous shape
+        // let DialogService silently forget to pass the enumerator,
+        // which left the dropdown empty in the standalone app even
+        // though the Windows MF enumerator was registered. Force every
+        // caller to think about which enumerator they want.
+        this.usbEnumerator = usbEnumerator;
+
+        UsbDevices = [];
+
         // Create a clone for editing - changes only apply when Save is clicked
         Camera = camera.Clone();
 
         Camera.PropertyChanged += OnCameraPropertyChanged;
         NetworkScanner.EntrySelected += OnNetworkScannerEntrySelected;
+
+        // Pre-populate USB devices for cameras that already use the
+        // USB source (edit mode). The collection stays empty for
+        // network cameras and re-fills on demand when the operator
+        // flips the source radio.
+        if (Camera.Connection.Source == CameraSource.Usb)
+        {
+            RefreshUsbDevices();
+        }
     }
 
     private static void OnIsTestingChanged()
@@ -90,6 +111,86 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     /// Connection settings are only editable for new cameras.
     /// </summary>
     public bool CanEditConnectionSettings => isNew;
+
+    /// <summary>
+    /// Gets a value indicating whether the Source radio (Network / USB)
+    /// can be changed. Disabled on existing cameras because changing
+    /// source = different camera; the dropdown should match the
+    /// existing <see cref="CanEditConnectionSettings"/> rule.
+    /// </summary>
+    public bool CanEditSource => isNew;
+
+    /// <summary>
+    /// Convenience predicate for XAML visibility triggers — the
+    /// network-only branch (BasicConnectionSettings, Authentication,
+    /// NetworkScanner) is shown when this is <see langword="true"/>.
+    /// </summary>
+    public bool IsNetworkSource
+    {
+        get => Camera.Connection.Source == CameraSource.Network;
+        set
+        {
+            if (value && Camera.Connection.Source != CameraSource.Network)
+            {
+                SwitchToNetworkSource();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Convenience predicate for XAML visibility triggers — the USB
+    /// branch (UsbDevicePart) is shown when this is
+    /// <see langword="true"/>.
+    /// </summary>
+    public bool IsUsbSource
+    {
+        get => Camera.Connection.Source == CameraSource.Usb;
+        set
+        {
+            if (value && Camera.Connection.Source != CameraSource.Usb)
+            {
+                SwitchToUsbSource();
+            }
+        }
+    }
+
+    private void SwitchToNetworkSource()
+    {
+        Camera.Connection.Source = CameraSource.Network;
+
+        // Reset USB-specific fields so a half-saved USB config can't
+        // leak into a network camera. Keep ip/port/protocol since the
+        // user may still edit them; defaults already populate fresh
+        // cameras.
+        Camera.Connection.Usb = null;
+
+        ClearTestResult();
+        OnPropertyChanged(nameof(IsNetworkSource));
+        OnPropertyChanged(nameof(IsUsbSource));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void SwitchToUsbSource()
+    {
+        Camera.Connection.Source = CameraSource.Usb;
+
+        // Reset network-specific fields so a half-saved network config
+        // can't leak into a USB camera (e.g. an IP address with a
+        // dshow pipeline behind it makes no sense).
+        Camera.Connection.IpAddress = string.Empty;
+        Camera.Connection.Port = 0;
+        Camera.Connection.Path = null;
+        Camera.Authentication.UserName = string.Empty;
+        Camera.Authentication.Password = string.Empty;
+        Camera.Connection.Usb ??= new UsbConnectionSettings();
+
+        ClearTestResult();
+        IpAddressError = null;
+        OnPropertyChanged(nameof(IsNetworkSource));
+        OnPropertyChanged(nameof(IsUsbSource));
+        OnPropertyChanged(nameof(SelectedProtocolKey));
+        CommandManager.InvalidateRequerySuggested();
+    }
 
     public IDictionary<string, string> ProtocolItems { get; } = Enum<CameraProtocol>.ToDictionaryWithStringKey();
 
@@ -1354,6 +1455,15 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
     private bool IsCameraEndpointUnique()
     {
+        // USB cameras don't pass through the existing-endpoint
+        // collision check — duplicate USB camera entries are
+        // operator-meaningful (same device, two recording configs)
+        // and OS-level single-open enforcement applies regardless.
+        if (Camera.Connection.Source == CameraSource.Usb)
+        {
+            return true;
+        }
+
         if (string.IsNullOrWhiteSpace(Camera.Connection.IpAddress))
         {
             return true;
@@ -1377,8 +1487,12 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
         try
         {
-            var uri = Camera.BuildUri();
-            await TestStreamWithPlayerAsync(uri).ConfigureAwait(false);
+            // BuildSourceLocator handles both Network (rtsp://) and
+            // USB (dshow:video=...) paths transparently; the player
+            // reads the locator's InputFormat / RawDeviceSpec to pick
+            // the right FFmpeg open path.
+            var locator = Linksoft.VideoSurveillance.Helpers.CameraUriHelper.BuildSourceLocator(Camera.Core);
+            await TestStreamWithPlayerAsync(locator).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1390,7 +1504,8 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
-    private async Task TestStreamWithPlayerAsync(Uri uri)
+    private async Task TestStreamWithPlayerAsync(
+        Linksoft.VideoSurveillance.Helpers.SourceLocator locator)
     {
         using var player = videoPlayerFactory.Create();
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -1400,7 +1515,22 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
         try
         {
-            player.Open(uri);
+            var options = new StreamOptions
+            {
+                Source = Camera.Display.DisplayName,
+                InputFormat = locator.InputFormat switch
+                {
+                    "dshow" => InputFormatKind.Dshow,
+                    "v4l2" => InputFormatKind.V4l2,
+                    "avfoundation" => InputFormatKind.AVFoundation,
+                    _ => InputFormatKind.Auto,
+                },
+                RawDeviceSpec = locator.RawDeviceSpec,
+                VideoSize = locator.VideoSize,
+                FrameRate = locator.FrameRate,
+                PixelFormat = locator.PixelFormat,
+            };
+            player.Open(locator.Uri, options);
             await WaitForConnectionResultAsync(tcs, cts.Token).ConfigureAwait(false);
         }
         finally
@@ -1443,7 +1573,7 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     }
 
     private bool CanTestConnection()
-        => !string.IsNullOrWhiteSpace(Camera.Connection.IpAddress) && !IsTesting;
+        => !IsTesting && HasMinimumSourceIdentity();
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private void Save()
@@ -1454,9 +1584,18 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         CloseRequested?.Invoke(this, new DialogClosedEventArgs(dialogResult: true));
     }
 
+    private bool HasMinimumSourceIdentity()
+        => Camera.Connection.Source switch
+        {
+            CameraSource.Usb => Camera.Connection.Usb is not null
+                && (!string.IsNullOrWhiteSpace(Camera.Connection.Usb.DeviceId)
+                    || !string.IsNullOrWhiteSpace(Camera.Connection.Usb.FriendlyName)),
+            _ => !string.IsNullOrWhiteSpace(Camera.Connection.IpAddress),
+        };
+
     private bool CanSave()
         => !string.IsNullOrWhiteSpace(Camera.Display.DisplayName) &&
-           !string.IsNullOrWhiteSpace(Camera.Connection.IpAddress) &&
+           HasMinimumSourceIdentity() &&
            IsCameraEndpointUnique() &&
            HasChanges();
 
@@ -1476,5 +1615,343 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     private void Cancel()
     {
         CloseRequested?.Invoke(this, new DialogClosedEventArgs(dialogResult: false));
+    }
+
+    // -- USB device picker ---------------------------------------
+
+    /// <summary>
+    /// Snapshot of devices visible to the host's enumerator. Refreshed
+    /// on demand via <see cref="RefreshUsbDevicesCommand"/> and on
+    /// initial Source=Usb load. The list is intentionally an
+    /// <see cref="ObservableCollection{T}"/> so the XAML combo binds
+    /// directly without an intermediate copy.
+    /// </summary>
+    public ObservableCollection<Linksoft.VideoSurveillance.Models.UsbDeviceDescriptor> UsbDevices { get; }
+
+    /// <summary>
+    /// Currently-selected device. Setting this writes back to
+    /// <see cref="CameraConfiguration.Connection"/>.<c>Usb</c> so the
+    /// camera carries the right symbolic-link identity at Save time.
+    /// </summary>
+    public Linksoft.VideoSurveillance.Models.UsbDeviceDescriptor? SelectedUsbDevice
+    {
+        get
+        {
+            var deviceId = Camera.Connection.Usb?.DeviceId;
+            if (string.IsNullOrEmpty(deviceId))
+            {
+                return null;
+            }
+
+            foreach (var d in UsbDevices)
+            {
+                if (string.Equals(d.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return d;
+                }
+            }
+
+            return null;
+        }
+
+        set
+        {
+            EnsureUsbConnectionSettings();
+
+            Camera.Connection.Usb!.DeviceId = value?.DeviceId ?? string.Empty;
+            Camera.Connection.Usb.FriendlyName = value?.FriendlyName ?? string.Empty;
+
+            // Reset the format triple when the device changes — the
+            // previous selection's format may be unsupported by the
+            // newly-picked device.
+            Camera.Connection.Usb.Format = null;
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UsbWidth));
+            OnPropertyChanged(nameof(UsbHeight));
+            OnPropertyChanged(nameof(UsbFrameRate));
+            OnPropertyChanged(nameof(UsbPixelFormat));
+            OnPropertyChanged(nameof(UsbResolutionItems));
+            OnPropertyChanged(nameof(SelectedUsbResolution));
+            OnPropertyChanged(nameof(UsbFrameRateItems));
+            OnPropertyChanged(nameof(UsbPixelFormatItems));
+            ClearTestResult();
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    public int UsbWidth
+    {
+        get => Camera.Connection.Usb?.Format?.Width ?? 0;
+        set
+        {
+            EnsureUsbFormat();
+            Camera.Connection.Usb!.Format!.Width = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedUsbResolution));
+            OnPropertyChanged(nameof(UsbFrameRateItems));
+            OnPropertyChanged(nameof(UsbPixelFormatItems));
+        }
+    }
+
+    public int UsbHeight
+    {
+        get => Camera.Connection.Usb?.Format?.Height ?? 0;
+        set
+        {
+            EnsureUsbFormat();
+            Camera.Connection.Usb!.Format!.Height = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedUsbResolution));
+            OnPropertyChanged(nameof(UsbFrameRateItems));
+            OnPropertyChanged(nameof(UsbPixelFormatItems));
+        }
+    }
+
+    public double UsbFrameRate
+    {
+        get => Camera.Connection.Usb?.Format?.FrameRate ?? 0;
+        set
+        {
+            EnsureUsbFormat();
+            Camera.Connection.Usb!.Format!.FrameRate = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UsbPixelFormatItems));
+        }
+    }
+
+    public string UsbPixelFormat
+    {
+        get => Camera.Connection.Usb?.Format?.PixelFormat ?? string.Empty;
+        set
+        {
+            EnsureUsbFormat();
+            Camera.Connection.Usb!.Format!.PixelFormat = value ?? string.Empty;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool UsbCaptureAudio
+    {
+        get => Camera.Connection.Usb?.PreferAudio ?? false;
+        set
+        {
+            EnsureUsbConnectionSettings();
+            Camera.Connection.Usb!.PreferAudio = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// DirectShow friendly name of the companion audio capture device
+    /// (e.g. <c>Microphone (Logitech BRIO)</c>). Free-form because the
+    /// dshow demuxer accepts whatever shows up in
+    /// <c>ffmpeg -list_devices true -f dshow -i dummy</c>. Only consulted
+    /// at stream-open time when <see cref="UsbCaptureAudio"/> is true —
+    /// the empty / set-while-disabled state is safe.
+    /// </summary>
+    public string UsbAudioDeviceName
+    {
+        get => Camera.Connection.Usb?.AudioDeviceName ?? string.Empty;
+        set
+        {
+            EnsureUsbConnectionSettings();
+            Camera.Connection.Usb!.AudioDeviceName = value ?? string.Empty;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Distinct <c>"Width × Height"</c> strings derived from the
+    /// selected device's capability list. The dialog binds the
+    /// resolution combo to this so operators only see triples the
+    /// device actually advertises.
+    /// </summary>
+    public IReadOnlyList<string> UsbResolutionItems
+    {
+        get
+        {
+            var device = SelectedUsbDevice;
+            if (device is null)
+            {
+                return [];
+            }
+
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var items = new List<string>();
+            foreach (var c in device.Capabilities)
+            {
+                var label = FormatResolution(c.Width, c.Height);
+                if (seen.Add(label))
+                {
+                    items.Add(label);
+                }
+            }
+
+            // Largest first — common UX convention for capture pickers.
+            items.Sort((a, b) =>
+            {
+                var aDim = ParseResolution(a);
+                var bDim = ParseResolution(b);
+                return (bDim.W * bDim.H).CompareTo(aDim.W * aDim.H);
+            });
+
+            return items;
+        }
+    }
+
+    public string SelectedUsbResolution
+    {
+        get
+        {
+            if (UsbWidth > 0 && UsbHeight > 0)
+            {
+                return FormatResolution(UsbWidth, UsbHeight);
+            }
+
+            return string.Empty;
+        }
+
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return;
+            }
+
+            var (w, h) = ParseResolution(value);
+            if (w == 0 || h == 0)
+            {
+                return;
+            }
+
+            EnsureUsbFormat();
+            Camera.Connection.Usb!.Format!.Width = w;
+            Camera.Connection.Usb.Format.Height = h;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UsbWidth));
+            OnPropertyChanged(nameof(UsbHeight));
+            OnPropertyChanged(nameof(UsbFrameRateItems));
+            OnPropertyChanged(nameof(UsbPixelFormatItems));
+        }
+    }
+
+    /// <summary>
+    /// Distinct frame-rate values for the selected device + currently
+    /// selected resolution. Cascades from <see cref="SelectedUsbResolution"/>
+    /// so operators only see frame rates the device supports at that
+    /// size.
+    /// </summary>
+    public IReadOnlyList<double> UsbFrameRateItems
+    {
+        get
+        {
+            var device = SelectedUsbDevice;
+            if (device is null || UsbWidth == 0 || UsbHeight == 0)
+            {
+                return [];
+            }
+
+            var seen = new HashSet<double>();
+            var items = new List<double>();
+            foreach (var c in device.Capabilities)
+            {
+                if (c.Width == UsbWidth && c.Height == UsbHeight && c.FrameRate > 0 && seen.Add(c.FrameRate))
+                {
+                    items.Add(c.FrameRate);
+                }
+            }
+
+            items.Sort((a, b) => b.CompareTo(a));
+            return items;
+        }
+    }
+
+    /// <summary>
+    /// Distinct pixel-format strings for the selected device +
+    /// resolution + frame rate.
+    /// </summary>
+    public IReadOnlyList<string> UsbPixelFormatItems
+    {
+        get
+        {
+            var device = SelectedUsbDevice;
+            if (device is null || UsbWidth == 0 || UsbHeight == 0)
+            {
+                return [];
+            }
+
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var items = new List<string>();
+            foreach (var c in device.Capabilities)
+            {
+                if (c.Width == UsbWidth
+                    && c.Height == UsbHeight
+                    && (UsbFrameRate < 0.0001 || Math.Abs(c.FrameRate - UsbFrameRate) < 0.05)
+                    && !string.IsNullOrEmpty(c.PixelFormat)
+                    && seen.Add(c.PixelFormat))
+                {
+                    items.Add(c.PixelFormat);
+                }
+            }
+
+            items.Sort(StringComparer.Ordinal);
+            return items;
+        }
+    }
+
+    private static string FormatResolution(
+        int width,
+        int height)
+        => string.Create(CultureInfo.InvariantCulture, $"{width} × {height}");
+
+    private static (int W, int H) ParseResolution(string label)
+    {
+        if (string.IsNullOrEmpty(label))
+        {
+            return (0, 0);
+        }
+
+        var parts = label.Split('×', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2)
+        {
+            return (0, 0);
+        }
+
+        if (int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var w) &&
+            int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var h))
+        {
+            return (w, h);
+        }
+
+        return (0, 0);
+    }
+
+    [RelayCommand]
+    private void RefreshUsbDevices()
+    {
+        var devices = usbEnumerator.EnumerateDevices();
+
+        UsbDevices.Clear();
+        foreach (var d in devices)
+        {
+            UsbDevices.Add(d);
+        }
+
+        // Re-broadcast SelectedUsbDevice — the dropdown stays correct
+        // when a refresh re-finds the previously-selected device, and
+        // bind-clears when it doesn't.
+        OnPropertyChanged(nameof(SelectedUsbDevice));
+    }
+
+    private void EnsureUsbConnectionSettings()
+    {
+        Camera.Connection.Usb ??= new UsbConnectionSettings();
+    }
+
+    private void EnsureUsbFormat()
+    {
+        EnsureUsbConnectionSettings();
+        Camera.Connection.Usb!.Format ??= new Linksoft.VideoSurveillance.Models.UsbStreamFormat();
     }
 }

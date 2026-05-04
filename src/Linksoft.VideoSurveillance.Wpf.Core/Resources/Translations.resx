@@ -135,6 +135,75 @@
   <data name="Error" xml:space="preserve">
     <value>Error</value>
   </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Confirm Delete</value>
+  </data>
+  <data name="ConfirmDeleteProfile1" xml:space="preserve">
+    <value>Delete profile '{0}'?</value>
+  </data>
+  <data name="CurrentDomainUnhandledException" xml:space="preserve">
+    <value>Unhandled Exception (CurrentDomain)</value>
+  </data>
+  <data name="DeleteProfile" xml:space="preserve">
+    <value>Delete Profile</value>
+  </data>
+  <data name="DispatcherUnhandledException" xml:space="preserve">
+    <value>Unhandled Exception (Dispatcher)</value>
+  </data>
+  <data name="FailedToApplyLayout1" xml:space="preserve">
+    <value>Failed to apply layout: {0}</value>
+  </data>
+  <data name="FailedToCaptureSnapshot1" xml:space="preserve">
+    <value>Failed to capture snapshot: {0}</value>
+  </data>
+  <data name="FailedToCreateCamera1" xml:space="preserve">
+    <value>Failed to create camera: {0}</value>
+  </data>
+  <data name="FailedToCreateLayout1" xml:space="preserve">
+    <value>Failed to create layout: {0}</value>
+  </data>
+  <data name="FailedToDeleteCamera1" xml:space="preserve">
+    <value>Failed to delete camera: {0}</value>
+  </data>
+  <data name="FailedToDeleteLayout1" xml:space="preserve">
+    <value>Failed to delete layout: {0}</value>
+  </data>
+  <data name="FailedToLoadCameraDetails" xml:space="preserve">
+    <value>Failed to load camera details.</value>
+  </data>
+  <data name="FailedToStartRecording1" xml:space="preserve">
+    <value>Failed to start recording: {0}</value>
+  </data>
+  <data name="FailedToStopRecording1" xml:space="preserve">
+    <value>Failed to stop recording: {0}</value>
+  </data>
+  <data name="FailedToUpdateCamera1" xml:space="preserve">
+    <value>Failed to update camera: {0}</value>
+  </data>
+  <data name="FailedToUpdateLayout1" xml:space="preserve">
+    <value>Failed to update layout: {0}</value>
+  </data>
+  <data name="LayoutApplied" xml:space="preserve">
+    <value>Layout Applied</value>
+  </data>
+  <data name="LayoutAppliedSuccessfully1" xml:space="preserve">
+    <value>Layout '{0}' applied successfully.</value>
+  </data>
+  <data name="NoSnapshotData" xml:space="preserve">
+    <value>No snapshot data returned.</value>
+  </data>
+  <data name="Snapshot" xml:space="preserve">
+    <value>Snapshot</value>
+  </data>
+  <data name="SnapshotSaved" xml:space="preserve">
+    <value>Snapshot Saved</value>
+  </data>
+  <data name="SnapshotSavedTo1" xml:space="preserve">
+    <value>Snapshot saved to {0}</value>
+  </data>
   <data name="Unknown" xml:space="preserve">
     <value>Unknown</value>
   </data>
@@ -179,6 +248,9 @@
   </data>
   <data name="AddCamera" xml:space="preserve">
     <value>Add Camera</value>
+  </data>
+  <data name="AddUsbCamera" xml:space="preserve">
+    <value>Add USB Camera</value>
   </data>
   <data name="NewCamera" xml:space="preserve">
     <value>New Camera</value>
@@ -1142,5 +1214,47 @@
   </data>
   <data name="RecordingFormatMkv" xml:space="preserve">
     <value>MKV (Matroska)</value>
+  </data>
+  <data name="Source" xml:space="preserve">
+    <value>Source:</value>
+  </data>
+  <data name="SourceTypeNetwork" xml:space="preserve">
+    <value>Network camera</value>
+  </data>
+  <data name="SourceTypeUsb" xml:space="preserve">
+    <value>USB / Webcam</value>
+  </data>
+  <data name="SelectUsbDevice" xml:space="preserve">
+    <value>USB Device</value>
+  </data>
+  <data name="UsbWidth" xml:space="preserve">
+    <value>Width</value>
+  </data>
+  <data name="UsbHeight" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="UsbResolution" xml:space="preserve">
+    <value>Resolution</value>
+  </data>
+  <data name="UsbFrameRate" xml:space="preserve">
+    <value>Frame rate</value>
+  </data>
+  <data name="UsbPixelFormat" xml:space="preserve">
+    <value>Pixel format</value>
+  </data>
+  <data name="UsbCaptureAudio" xml:space="preserve">
+    <value>Capture audio</value>
+  </data>
+  <data name="UsbAudioDeviceName" xml:space="preserve">
+    <value>Audio device</value>
+  </data>
+  <data name="UsbDeviceUnplugged" xml:space="preserve">
+    <value>Device unplugged</value>
+  </data>
+  <data name="UsbCameraUnpluggedToast1" xml:space="preserve">
+    <value>USB camera '{0}' was unplugged</value>
+  </data>
+  <data name="UsbCameraReconnectedToast1" xml:space="preserve">
+    <value>USB camera '{0}' reconnected</value>
   </data>
 </root>

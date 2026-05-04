@@ -36,6 +36,8 @@ public sealed class SurveillanceHubService : IAsyncDisposable
 
     public event Action<StreamStartedEvent>? OnStreamStarted;
 
+    public event Action<UsbCameraLifecycleEvent>? OnUsbCameraLifecycleChanged;
+
     public event Action<string>? OnHubConnectionStateChanged;
 
     public bool IsConnected
@@ -83,6 +85,11 @@ public sealed class SurveillanceHubService : IAsyncDisposable
         hubConnection.On<StreamStartedEvent>("StreamStarted", e =>
         {
             OnStreamStarted?.Invoke(e);
+        });
+
+        hubConnection.On<UsbCameraLifecycleEvent>("UsbCameraLifecycleChanged", e =>
+        {
+            OnUsbCameraLifecycleChanged?.Invoke(e);
         });
 
         hubConnection.Reconnecting += _ =>
@@ -195,4 +202,19 @@ public sealed class SurveillanceHubService : IAsyncDisposable
     public sealed record MotionBoundingBox(double X, double Y, double Width, double Height);
 
     public sealed record StreamStartedEvent(Guid CameraId, string PlaylistUrl);
+
+    /// <summary>
+    /// Server-broadcast notification that a USB camera attached to the
+    /// API host transitioned between <c>Unplugged</c> and
+    /// <c>Replugged</c>. <see cref="Phase"/> matches the
+    /// <c>UsbCameraLifecyclePhase</c> enum (<c>"Unplugged"</c> /
+    /// <c>"Replugged"</c>) — string-typed so the contract survives
+    /// deliberate enum extensions without forcing client redeploys.
+    /// </summary>
+    public sealed record UsbCameraLifecycleEvent(
+        Guid CameraId,
+        string Phase,
+        string DeviceId,
+        string FriendlyName,
+        DateTimeOffset Timestamp);
 }

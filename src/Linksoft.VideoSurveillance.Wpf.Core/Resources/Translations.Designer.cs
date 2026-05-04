@@ -124,6 +124,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add USB Camera.
+        /// </summary>
+        public static string AddUsbCamera {
+            get {
+                return ResourceManager.GetString("AddUsbCamera", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Advanced.
         /// </summary>
         public static string Advanced {
@@ -592,6 +601,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Confirm Delete.
+        /// </summary>
+        public static string ConfirmDelete {
+            get {
+                return ResourceManager.GetString("ConfirmDelete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you sure you want to delete camera &apos;{0}&apos;?.
         /// </summary>
         public static string ConfirmDeleteCamera1 {
@@ -606,6 +624,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         public static string ConfirmDeleteLayout1 {
             get {
                 return ResourceManager.GetString("ConfirmDeleteLayout1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Delete profile &apos;{0}&apos;?.
+        /// </summary>
+        public static string ConfirmDeleteProfile1 {
+            get {
+                return ResourceManager.GetString("ConfirmDeleteProfile1", resourceCulture);
             }
         }
         
@@ -736,6 +763,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unhandled Exception (CurrentDomain).
+        /// </summary>
+        public static string CurrentDomainUnhandledException {
+            get {
+                return ResourceManager.GetString("CurrentDomainUnhandledException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Current Layout.
         /// </summary>
         public static string CurrentLayoutGroup {
@@ -835,6 +871,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Delete Profile.
+        /// </summary>
+        public static string DeleteProfile {
+            get {
+                return ResourceManager.GetString("DeleteProfile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Delete.
         /// </summary>
         public static string DeleteRecording {
@@ -858,6 +903,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         public static string Disconnected {
             get {
                 return ResourceManager.GetString("Disconnected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unhandled Exception (Dispatcher).
+        /// </summary>
+        public static string DispatcherUnhandledException {
+            get {
+                return ResourceManager.GetString("DispatcherUnhandledException", resourceCulture);
             }
         }
         
@@ -1159,6 +1213,105 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to apply layout: {0}.
+        /// </summary>
+        public static string FailedToApplyLayout1 {
+            get {
+                return ResourceManager.GetString("FailedToApplyLayout1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to capture snapshot: {0}.
+        /// </summary>
+        public static string FailedToCaptureSnapshot1 {
+            get {
+                return ResourceManager.GetString("FailedToCaptureSnapshot1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to create camera: {0}.
+        /// </summary>
+        public static string FailedToCreateCamera1 {
+            get {
+                return ResourceManager.GetString("FailedToCreateCamera1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to create layout: {0}.
+        /// </summary>
+        public static string FailedToCreateLayout1 {
+            get {
+                return ResourceManager.GetString("FailedToCreateLayout1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to delete camera: {0}.
+        /// </summary>
+        public static string FailedToDeleteCamera1 {
+            get {
+                return ResourceManager.GetString("FailedToDeleteCamera1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to delete layout: {0}.
+        /// </summary>
+        public static string FailedToDeleteLayout1 {
+            get {
+                return ResourceManager.GetString("FailedToDeleteLayout1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to load camera details..
+        /// </summary>
+        public static string FailedToLoadCameraDetails {
+            get {
+                return ResourceManager.GetString("FailedToLoadCameraDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to start recording: {0}.
+        /// </summary>
+        public static string FailedToStartRecording1 {
+            get {
+                return ResourceManager.GetString("FailedToStartRecording1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to stop recording: {0}.
+        /// </summary>
+        public static string FailedToStopRecording1 {
+            get {
+                return ResourceManager.GetString("FailedToStopRecording1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to update camera: {0}.
+        /// </summary>
+        public static string FailedToUpdateCamera1 {
+            get {
+                return ResourceManager.GetString("FailedToUpdateCamera1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to update layout: {0}.
+        /// </summary>
+        public static string FailedToUpdateLayout1 {
+            get {
+                return ResourceManager.GetString("FailedToUpdateLayout1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed: {0}.
         /// </summary>
         public static string FailedWithStatus1 {
@@ -1443,6 +1596,24 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         public static string Layout {
             get {
                 return ResourceManager.GetString("Layout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Layout Applied.
+        /// </summary>
+        public static string LayoutApplied {
+            get {
+                return ResourceManager.GetString("LayoutApplied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Layout &apos;{0}&apos; applied successfully..
+        /// </summary>
+        public static string LayoutAppliedSuccessfully1 {
+            get {
+                return ResourceManager.GetString("LayoutAppliedSuccessfully1", resourceCulture);
             }
         }
         
@@ -1866,6 +2037,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         public static string NoRecordingsFound {
             get {
                 return ResourceManager.GetString("NoRecordingsFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No snapshot data returned..
+        /// </summary>
+        public static string NoSnapshotData {
+            get {
+                return ResourceManager.GetString("NoSnapshotData", resourceCulture);
             }
         }
         
@@ -2617,6 +2797,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to USB Device.
+        /// </summary>
+        public static string SelectUsbDevice {
+            get {
+                return ResourceManager.GetString("SelectUsbDevice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Set as Startup.
         /// </summary>
         public static string SetAsStartup {
@@ -2752,6 +2941,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Snapshot.
+        /// </summary>
+        public static string Snapshot {
+            get {
+                return ResourceManager.GetString("Snapshot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Snapshot folder.
         /// </summary>
         public static string SnapshotPath {
@@ -2770,11 +2968,56 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Snapshot Saved.
+        /// </summary>
+        public static string SnapshotSaved {
+            get {
+                return ResourceManager.GetString("SnapshotSaved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Snapshot saved to {0}.
+        /// </summary>
+        public static string SnapshotSavedTo1 {
+            get {
+                return ResourceManager.GetString("SnapshotSavedTo1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Snapshot Settings.
         /// </summary>
         public static string SnapshotSettings {
             get {
                 return ResourceManager.GetString("SnapshotSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Source:.
+        /// </summary>
+        public static string Source {
+            get {
+                return ResourceManager.GetString("Source", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Network camera.
+        /// </summary>
+        public static string SourceTypeNetwork {
+            get {
+                return ResourceManager.GetString("SourceTypeNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to USB / Webcam.
+        /// </summary>
+        public static string SourceTypeUsb {
+            get {
+                return ResourceManager.GetString("SourceTypeUsb", resourceCulture);
             }
         }
         
@@ -3040,6 +3283,96 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Audio device.
+        /// </summary>
+        public static string UsbAudioDeviceName {
+            get {
+                return ResourceManager.GetString("UsbAudioDeviceName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to USB camera &apos;{0}&apos; reconnected.
+        /// </summary>
+        public static string UsbCameraReconnectedToast1 {
+            get {
+                return ResourceManager.GetString("UsbCameraReconnectedToast1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to USB camera &apos;{0}&apos; was unplugged.
+        /// </summary>
+        public static string UsbCameraUnpluggedToast1 {
+            get {
+                return ResourceManager.GetString("UsbCameraUnpluggedToast1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capture audio.
+        /// </summary>
+        public static string UsbCaptureAudio {
+            get {
+                return ResourceManager.GetString("UsbCaptureAudio", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Device unplugged.
+        /// </summary>
+        public static string UsbDeviceUnplugged {
+            get {
+                return ResourceManager.GetString("UsbDeviceUnplugged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Frame rate.
+        /// </summary>
+        public static string UsbFrameRate {
+            get {
+                return ResourceManager.GetString("UsbFrameRate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Height.
+        /// </summary>
+        public static string UsbHeight {
+            get {
+                return ResourceManager.GetString("UsbHeight", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pixel format.
+        /// </summary>
+        public static string UsbPixelFormat {
+            get {
+                return ResourceManager.GetString("UsbPixelFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolution.
+        /// </summary>
+        public static string UsbResolution {
+            get {
+                return ResourceManager.GetString("UsbResolution", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Width.
+        /// </summary>
+        public static string UsbWidth {
+            get {
+                return ResourceManager.GetString("UsbWidth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use default.
         /// </summary>
         public static string UseDefaultSetting {
@@ -3126,6 +3459,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         public static string View {
             get {
                 return ResourceManager.GetString("View", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Warning.
+        /// </summary>
+        public static string Warning {
+            get {
+                return ResourceManager.GetString("Warning", resourceCulture);
             }
         }
         
