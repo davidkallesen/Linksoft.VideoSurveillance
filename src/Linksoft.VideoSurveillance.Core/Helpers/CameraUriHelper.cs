@@ -1,13 +1,18 @@
 namespace Linksoft.VideoSurveillance.Helpers;
 
 /// <summary>
-/// Helper class for building camera stream URIs.
+/// Helper class for building camera stream URIs and source locators.
 /// </summary>
 public static class CameraUriHelper
 {
     /// <summary>
     /// Builds a URI for the specified camera configuration.
     /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the camera's <see cref="ConnectionSettings.Source"/>
+    /// is not <see cref="CameraSource.Network"/> (USB cameras must be
+    /// resolved through <see cref="BuildSourceLocator"/> instead).
+    /// </exception>
     public static Uri BuildUri(CameraConfiguration camera)
     {
         ArgumentNullException.ThrowIfNull(camera);
@@ -34,6 +39,8 @@ public static class CameraUriHelper
 
     /// <summary>
     /// Gets the default port for the specified protocol.
+    /// USB cameras have no port — see
+    /// <see cref="GetDefaultPort(CameraSource)"/>.
     /// </summary>
     public static int GetDefaultPort(CameraProtocol protocol) => protocol switch
     {
@@ -42,6 +49,104 @@ public static class CameraUriHelper
         CameraProtocol.Https => 443,
         _ => 554,
     };
+
+    /// <summary>
+    /// Source-aware default-port helper. Returns 0 for non-network
+    /// sources so callers don't accidentally write 554 into a USB
+    /// camera's <see cref="ConnectionSettings.Port"/>.
+    /// </summary>
+    public static int GetDefaultPort(CameraSource source) => source switch
+    {
+        CameraSource.Network => 554,
+        _ => 0,
+    };
+
+    /// <summary>
+    /// Builds the FFmpeg-ready locator for the given camera. Handles
+    /// both network and USB sources transparently.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// USB camera has no <see cref="UsbConnectionSettings.DeviceId"/>.
+    /// </exception>
+    public static SourceLocator BuildSourceLocator(CameraConfiguration camera)
+    {
+        ArgumentNullException.ThrowIfNull(camera);
+
+        return camera.Connection.Source switch
+        {
+            CameraSource.Usb => BuildUsbLocator(camera),
+            _ => new SourceLocator(camera.BuildUri()),
+        };
+    }
+
+    private static SourceLocator BuildUsbLocator(CameraConfiguration camera)
+    {
+        var usb = camera.Connection.Usb
+                  ?? throw new InvalidOperationException(
+                      "USB camera has no UsbConnectionSettings.");
+
+        if (string.IsNullOrWhiteSpace(usb.FriendlyName) && string.IsNullOrWhiteSpace(usb.DeviceId))
+        {
+            throw new InvalidOperationException(
+                "USB camera requires either a FriendlyName or a DeviceId.");
+        }
+
+        // FFmpeg dshow takes either the friendly name or the symbolic
+        // link. Prefer the friendly name so logs read naturally; the
+        // demuxer falls back to the device id only when names collide.
+        var deviceName = !string.IsNullOrWhiteSpace(usb.FriendlyName)
+            ? usb.FriendlyName
+            : usb.DeviceId;
+
+        // FFmpeg dshow accepts a combined `video=X:audio=Y` spec to open
+        // the video device and the companion audio capture in one call.
+        // We require BOTH PreferAudio and AudioDeviceName: an opt-in flag
+        // without a name is meaningless, and a name without the flag is
+        // treated as deliberately disabled (the dialog can keep the name
+        // while the user toggles audio off without losing it).
+        var includeAudio = usb.PreferAudio && !string.IsNullOrWhiteSpace(usb.AudioDeviceName);
+        var rawDeviceSpec = includeAudio
+            ? $"video={deviceName}:audio={usb.AudioDeviceName}"
+            : $"video={deviceName}";
+
+        // The synthetic Uri keeps log lines and exception messages
+        // tidy. Escaping is loose: the value is for human reading.
+        var placeholder = new Uri($"dshow:{Uri.EscapeDataString(deviceName)}", UriKind.Absolute);
+
+        var format = usb.Format;
+        var videoSize = FormatVideoSize(format);
+        var frameRate = FormatFrameRate(format);
+
+        return new SourceLocator(
+            uri: placeholder,
+            inputFormat: "dshow",
+            rawDeviceSpec: rawDeviceSpec,
+            videoSize: videoSize,
+            frameRate: frameRate,
+            pixelFormat: format?.PixelFormat);
+    }
+
+    private static string? FormatVideoSize(UsbStreamFormat? format)
+    {
+        if (format is not { Width: > 0, Height: > 0 })
+        {
+            return null;
+        }
+
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"{format.Width}x{format.Height}");
+    }
+
+    private static string? FormatFrameRate(UsbStreamFormat? format)
+    {
+        if (format is not { FrameRate: > 0 })
+        {
+            return null;
+        }
+
+        return format.FrameRate.ToString("0.##", CultureInfo.InvariantCulture);
+    }
 
     private static string BuildUserInfo(
         string? userName,
