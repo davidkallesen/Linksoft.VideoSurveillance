@@ -57,6 +57,13 @@ public interface ICameraWallManager : INotifyPropertyChanged
     void AddCamera();
 
     /// <summary>
+    /// Adds a new camera with the source pre-set to USB / webcam. The
+    /// dialog opens directly on the USB device picker so the operator
+    /// can pick a local device without first toggling the source radio.
+    /// </summary>
+    void AddUsbCamera();
+
+    /// <summary>
     /// Edits an existing camera.
     /// </summary>
     /// <param name="camera">The camera to edit.</param>

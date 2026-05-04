@@ -235,6 +235,85 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
         {
             settings.Path = path;
         }
+
+        if (TryGetStringProperty(element, "source", "Source", out var source) &&
+            Enum.TryParse<CameraSource>(source, ignoreCase: true, out var sourceEnum))
+        {
+            settings.Source = sourceEnum;
+        }
+
+        if ((element.TryGetProperty("usb", out var usbElement) ||
+             element.TryGetProperty("Usb", out usbElement)) &&
+            usbElement.ValueKind == JsonValueKind.Object)
+        {
+            settings.Usb = ReadUsbConnectionSettings(usbElement);
+        }
+    }
+
+    private static UsbConnectionSettings ReadUsbConnectionSettings(
+        JsonElement element)
+    {
+        var usb = new UsbConnectionSettings();
+
+        if (TryGetStringProperty(element, "deviceId", "DeviceId", out var deviceId))
+        {
+            usb.DeviceId = deviceId;
+        }
+
+        if (TryGetStringProperty(element, "friendlyName", "FriendlyName", out var friendlyName))
+        {
+            usb.FriendlyName = friendlyName;
+        }
+
+        if (TryGetBoolProperty(element, "preferAudio", "PreferAudio", out var preferAudio))
+        {
+            usb.PreferAudio = preferAudio;
+        }
+
+        if (TryGetStringProperty(element, "audioDeviceName", "AudioDeviceName", out var audioDeviceName))
+        {
+            usb.AudioDeviceName = audioDeviceName;
+        }
+
+        if ((element.TryGetProperty("format", out var formatElement) ||
+             element.TryGetProperty("Format", out formatElement)) &&
+            formatElement.ValueKind == JsonValueKind.Object)
+        {
+            usb.Format = ReadUsbStreamFormat(formatElement);
+        }
+
+        return usb;
+    }
+
+    private static Linksoft.VideoSurveillance.Models.UsbStreamFormat ReadUsbStreamFormat(
+        JsonElement element)
+    {
+        var fmt = new Linksoft.VideoSurveillance.Models.UsbStreamFormat();
+
+        if (TryGetInt32Property(element, "width", "Width", out var width))
+        {
+            fmt.Width = width;
+        }
+
+        if (TryGetInt32Property(element, "height", "Height", out var height))
+        {
+            fmt.Height = height;
+        }
+
+        if ((element.TryGetProperty("frameRate", out var fpsProp) ||
+             element.TryGetProperty("FrameRate", out fpsProp)) &&
+            fpsProp.ValueKind == JsonValueKind.Number &&
+            fpsProp.TryGetDouble(out var fps))
+        {
+            fmt.FrameRate = fps;
+        }
+
+        if (TryGetStringProperty(element, "pixelFormat", "PixelFormat", out var pixelFormat))
+        {
+            fmt.PixelFormat = pixelFormat;
+        }
+
+        return fmt;
     }
 
     private static void ReadAuthenticationSettings(
@@ -792,6 +871,47 @@ public sealed class CameraConfigurationJsonValueConverter : JsonConverter<Camera
         else
         {
             writer.WriteNull("path");
+        }
+
+        // Only emit the USB-specific fields when this is actually a USB
+        // camera. Network cameras stay byte-identical to the v1 on-disk
+        // shape so we don't churn the file for the existing user-base.
+        if (settings.Source != CameraSource.Network)
+        {
+            writer.WriteString("source", settings.Source.ToString());
+        }
+
+        if (settings.Usb is not null)
+        {
+            writer.WritePropertyName("usb");
+            WriteUsbConnectionSettings(writer, settings.Usb);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteUsbConnectionSettings(
+        Utf8JsonWriter writer,
+        UsbConnectionSettings usb)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("deviceId", usb.DeviceId);
+        writer.WriteString("friendlyName", usb.FriendlyName);
+        writer.WriteBoolean("preferAudio", usb.PreferAudio);
+        if (!string.IsNullOrEmpty(usb.AudioDeviceName))
+        {
+            writer.WriteString("audioDeviceName", usb.AudioDeviceName);
+        }
+
+        if (usb.Format is not null)
+        {
+            writer.WritePropertyName("format");
+            writer.WriteStartObject();
+            writer.WriteNumber("width", usb.Format.Width);
+            writer.WriteNumber("height", usb.Format.Height);
+            writer.WriteNumber("frameRate", usb.Format.FrameRate);
+            writer.WriteString("pixelFormat", usb.Format.PixelFormat ?? string.Empty);
+            writer.WriteEndObject();
         }
 
         writer.WriteEndObject();
