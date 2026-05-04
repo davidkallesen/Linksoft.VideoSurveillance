@@ -54,20 +54,15 @@ public class CameraMappingExtensionsTests
     public void ToCoreModel_MapsCreateRequestToConfiguration()
     {
         // Arrange
-        var request = new CreateCameraRequest(
-            DisplayName: "New Camera",
-            Description: "Test description",
-            IpAddress: "10.0.0.5",
-            Protocol: ApiCameraProtocol.Http,
-            Path: "/mjpeg",
-            Username: "user",
-            Password: "secret",
-            OverlayPosition: null,
-            StreamUseLowLatencyMode: true,
-            StreamMaxLatencyMs: 500,
-            StreamRtspTransport: null,
-            StreamBufferDurationMs: 0,
-            Port: 8080);
+        var request = NetworkCreateRequest(
+            displayName: "New Camera",
+            description: "Test description",
+            ipAddress: "10.0.0.5",
+            port: 8080,
+            protocol: ApiCameraProtocol.Http,
+            path: "/mjpeg",
+            username: "user",
+            password: "secret");
 
         // Act
         var core = request.ToCoreModel();
@@ -88,20 +83,11 @@ public class CameraMappingExtensionsTests
     public void ToCoreModel_NullProtocol_DefaultsToRtsp()
     {
         // Arrange
-        var request = new CreateCameraRequest(
-            DisplayName: "Cam",
-            Description: null!,
-            IpAddress: "10.0.0.1",
-            Protocol: null,
-            Path: null!,
-            Username: null!,
-            Password: null!,
-            OverlayPosition: null,
-            StreamUseLowLatencyMode: true,
-            StreamMaxLatencyMs: 500,
-            StreamRtspTransport: null,
-            StreamBufferDurationMs: 0,
-            Port: 554);
+        var request = NetworkCreateRequest(
+            displayName: "Cam",
+            ipAddress: "10.0.0.1",
+            port: 554,
+            protocol: null);
 
         // Act
         var core = request.ToCoreModel();
@@ -120,20 +106,7 @@ public class CameraMappingExtensionsTests
         core.Connection.IpAddress = "192.168.1.1";
         core.Connection.Port = 554;
 
-        var request = new UpdateCameraRequest(
-            DisplayName: "Updated",
-            Description: null!,
-            IpAddress: null!,
-            Port: 0,
-            Protocol: null,
-            Path: null!,
-            Username: null!,
-            Password: null!,
-            OverlayPosition: null,
-            StreamUseLowLatencyMode: true,
-            StreamMaxLatencyMs: 500,
-            StreamRtspTransport: null,
-            StreamBufferDurationMs: 0);
+        var request = NetworkUpdateRequest(displayName: "Updated");
 
         // Act
         core.ApplyUpdate(request);
@@ -195,4 +168,145 @@ public class CameraMappingExtensionsTests
         // Act & Assert
         core.ToApiRecordingState().Should().Be(expected);
     }
+
+    [Fact]
+    public void ToApiModel_UsbCamera_MapsAllUsbFields()
+    {
+        var core = new CameraConfiguration();
+        core.Connection.Source = CoreCameraSource.Usb;
+        core.Connection.Usb = new UsbConnectionSettings
+        {
+            DeviceId = "abc",
+            FriendlyName = "Logitech BRIO",
+            PreferAudio = true,
+            Format = new UsbStreamFormat { Width = 1920, Height = 1080, FrameRate = 30, PixelFormat = "nv12" },
+        };
+        core.Display.DisplayName = "USB Cam";
+
+        var api = core.ToApiModel();
+
+        api.Source.Should().Be(ApiCameraSource.Usb);
+        api.UsbDeviceId.Should().Be("abc");
+        api.UsbFriendlyName.Should().Be("Logitech BRIO");
+        api.UsbWidth.Should().Be(1920);
+        api.UsbHeight.Should().Be(1080);
+        api.UsbFrameRate.Should().Be(30);
+        api.UsbPixelFormat.Should().Be("nv12");
+        api.UsbCaptureAudio.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ToCoreModel_UsbRequest_PopulatesUsbConnectionSettings()
+    {
+        var request = new CreateCameraRequest(
+            DisplayName: "USB Cam",
+            Description: string.Empty,
+            Source: ApiCameraSource.Usb,
+            IpAddress: string.Empty,
+            Protocol: null,
+            Path: string.Empty,
+            Username: string.Empty,
+            Password: string.Empty,
+            UsbDeviceId: "device-1",
+            UsbFriendlyName: "Logitech BRIO",
+            UsbWidth: 1280,
+            UsbHeight: 720,
+            UsbFrameRate: 60,
+            UsbPixelFormat: "mjpeg",
+            UsbCaptureAudio: true,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0,
+            Port: 0);
+
+        var core = request.ToCoreModel();
+
+        core.Connection.Source.Should().Be(CoreCameraSource.Usb);
+        core.Connection.Usb.Should().NotBeNull();
+        core.Connection.Usb!.DeviceId.Should().Be("device-1");
+        core.Connection.Usb.FriendlyName.Should().Be("Logitech BRIO");
+        core.Connection.Usb.PreferAudio.Should().BeTrue();
+        core.Connection.Usb.Format.Should().NotBeNull();
+        core.Connection.Usb.Format!.Width.Should().Be(1280);
+        core.Connection.Usb.Format.Height.Should().Be(720);
+        core.Connection.Usb.Format.FrameRate.Should().Be(60);
+        core.Connection.Usb.Format.PixelFormat.Should().Be("mjpeg");
+    }
+
+    [Fact]
+    public void ToCoreModel_NetworkRequest_LeavesUsbNull()
+    {
+        var request = NetworkCreateRequest(
+            displayName: "Net Cam",
+            ipAddress: "10.0.0.1",
+            port: 554,
+            protocol: ApiCameraProtocol.Rtsp);
+
+        var core = request.ToCoreModel();
+
+        core.Connection.Source.Should().Be(CoreCameraSource.Network);
+        core.Connection.Usb.Should().BeNull();
+    }
+
+    private static CreateCameraRequest NetworkCreateRequest(
+        string displayName,
+        string description = "",
+        string ipAddress = "",
+        int port = 554,
+        ApiCameraProtocol? protocol = ApiCameraProtocol.Rtsp,
+        string path = "",
+        string username = "",
+        string password = "")
+        => new(
+            DisplayName: displayName,
+            Description: description,
+            Source: ApiCameraSource.Network,
+            IpAddress: ipAddress,
+            Protocol: protocol,
+            Path: path,
+            Username: username,
+            Password: password,
+            UsbDeviceId: string.Empty,
+            UsbFriendlyName: string.Empty,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: string.Empty,
+            UsbCaptureAudio: false,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0,
+            Port: port);
+
+    // Mirrors the original "minimal update" shape from before USB
+    // landed: every nullable field is null so ApplyUpdate's "only
+    // overwrite when non-null" semantics keep existing values.
+    private static UpdateCameraRequest NetworkUpdateRequest(
+        string displayName = "")
+        => new(
+            DisplayName: displayName,
+            Description: null!,
+            Source: null,
+            IpAddress: null!,
+            Port: 0,
+            Protocol: null,
+            Path: null!,
+            Username: null!,
+            Password: null!,
+            UsbDeviceId: null!,
+            UsbFriendlyName: null!,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: null!,
+            UsbCaptureAudio: false,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0);
 }

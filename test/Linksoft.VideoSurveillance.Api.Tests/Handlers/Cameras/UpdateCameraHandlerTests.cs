@@ -14,20 +14,7 @@ public class UpdateCameraHandlerTests
         storage.GetCameraById(cameraId).Returns(camera);
         var handler = new UpdateCameraHandler(storage);
 
-        var request = new UpdateCameraRequest(
-            DisplayName: "New Name",
-            Description: null!,
-            IpAddress: null!,
-            Port: 0,
-            Protocol: null,
-            Path: null!,
-            Username: null!,
-            Password: null!,
-            OverlayPosition: null,
-            StreamUseLowLatencyMode: true,
-            StreamMaxLatencyMs: 500,
-            StreamRtspTransport: null,
-            StreamBufferDurationMs: 0);
+        var request = MinimalUpdate("New Name");
 
         // Act
         var result = await handler.ExecuteAsync(
@@ -51,20 +38,7 @@ public class UpdateCameraHandlerTests
         storage.GetCameraById(cameraId).Returns((CameraConfiguration?)null);
         var handler = new UpdateCameraHandler(storage);
 
-        var request = new UpdateCameraRequest(
-            DisplayName: "Name",
-            Description: null!,
-            IpAddress: null!,
-            Port: 0,
-            Protocol: null,
-            Path: null!,
-            Username: null!,
-            Password: null!,
-            OverlayPosition: null,
-            StreamUseLowLatencyMode: true,
-            StreamMaxLatencyMs: 500,
-            StreamRtspTransport: null,
-            StreamBufferDurationMs: 0);
+        var request = MinimalUpdate("Name");
 
         // Act
         var result = await handler.ExecuteAsync(
@@ -91,12 +65,20 @@ public class UpdateCameraHandlerTests
         var request = new UpdateCameraRequest(
             DisplayName: null!,
             Description: "New description",
+            Source: null,
             IpAddress: null!,
             Port: 0,
             Protocol: null,
             Path: null!,
             Username: null!,
             Password: null!,
+            UsbDeviceId: null!,
+            UsbFriendlyName: null!,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: null!,
+            UsbCaptureAudio: false,
             OverlayPosition: null,
             StreamUseLowLatencyMode: true,
             StreamMaxLatencyMs: 500,
@@ -114,4 +96,28 @@ public class UpdateCameraHandlerTests
         okResult.Value.Description.Should().Be("New description");
         okResult.Value.IpAddress.Should().Be("192.168.1.1");
     }
+
+    private static UpdateCameraRequest MinimalUpdate(string displayName)
+        => new(
+            DisplayName: displayName,
+            Description: null!,
+            Source: null,
+            IpAddress: null!,
+            Port: 0,
+            Protocol: null,
+            Path: null!,
+            Username: null!,
+            Password: null!,
+            UsbDeviceId: null!,
+            UsbFriendlyName: null!,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: null!,
+            UsbCaptureAudio: false,
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0);
 }

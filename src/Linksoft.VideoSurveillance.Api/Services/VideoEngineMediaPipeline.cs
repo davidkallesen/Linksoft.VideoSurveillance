@@ -43,10 +43,10 @@ public sealed class VideoEngineMediaPipeline : IMediaPipeline
 
     /// <inheritdoc />
     public void Open(
-        Uri streamUri,
+        SourceLocator locator,
         StreamSettings settings)
     {
-        ArgumentNullException.ThrowIfNull(streamUri);
+        ArgumentNullException.ThrowIfNull(locator);
         ArgumentNullException.ThrowIfNull(settings);
 
         var options = new StreamOptions
@@ -56,10 +56,24 @@ public sealed class VideoEngineMediaPipeline : IMediaPipeline
             MaxLatencyMs = settings.MaxLatencyMs,
             RtspTransport = settings.RtspTransport,
             BufferDurationMs = settings.BufferDurationMs,
+            InputFormat = MapInputFormat(locator.InputFormat),
+            RawDeviceSpec = locator.RawDeviceSpec,
+            VideoSize = locator.VideoSize,
+            FrameRate = locator.FrameRate,
+            PixelFormat = locator.PixelFormat,
         };
 
-        player.Open(streamUri, options);
+        player.Open(locator.Uri, options);
     }
+
+    private static InputFormatKind MapInputFormat(string? name)
+        => name switch
+        {
+            "dshow" => InputFormatKind.Dshow,
+            "v4l2" => InputFormatKind.V4l2,
+            "avfoundation" => InputFormatKind.AVFoundation,
+            _ => InputFormatKind.Auto,
+        };
 
     /// <inheritdoc />
     public void Close()
