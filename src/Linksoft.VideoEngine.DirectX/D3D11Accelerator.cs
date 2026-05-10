@@ -11,6 +11,7 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
     private readonly D3D11Device d3d11Device;
     private readonly HwAccelContext hwAccelContext;
     private readonly VideoProcessorRenderer renderer;
+    private readonly CpuFrameUploader cpuUploader;
     private readonly GpuSnapshotCapture snapshotCapture;
     private readonly Lock frameLock = new();
 
@@ -26,6 +27,7 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
         d3d11Device = new D3D11Device();
         hwAccelContext = new HwAccelContext(d3d11Device);
         renderer = new VideoProcessorRenderer(d3d11Device);
+        cpuUploader = new CpuFrameUploader(d3d11Device);
         snapshotCapture = new GpuSnapshotCapture(d3d11Device);
 
         LogGpuAcceleratorInitialized();
@@ -44,17 +46,46 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
 
     public event Action? FrameReady;
 
-    [SuppressMessage(
-        "Reliability",
-        "CA2000:Dispose objects before losing scope",
-        Justification = "nv12Texture is a non-owning wrapper around an FFmpeg-owned texture pointer; disposing it would corrupt FFmpeg's HW frames context.")]
     public void OnFrameDecoded(AVFrame* frame)
     {
-        if (frame is null || (AVPixelFormat)frame->format != AVPixelFormat.D3d11)
+        if (frame is null)
         {
             return;
         }
 
+        var srcFormat = (AVPixelFormat)frame->format;
+
+        try
+        {
+            // Hold frameLock during GPU processing + present to prevent
+            // CaptureSnapshot from reading the output texture mid-write.
+            // D3D11 immediate context is single-threaded.
+            lock (frameLock)
+            {
+                if (srcFormat == AVPixelFormat.D3d11)
+                {
+                    ProcessHardwareFrame(frame);
+                }
+                else
+                {
+                    ProcessSoftwareFrame(frame);
+                }
+
+                FrameReady?.Invoke();
+            }
+        }
+        catch (Exception ex)
+        {
+            LogGpuFrameProcessingFailed(ex);
+        }
+    }
+
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "nv12Texture is a non-owning wrapper around an FFmpeg-owned texture pointer; disposing it would corrupt FFmpeg's HW frames context.")]
+    private void ProcessHardwareFrame(AVFrame* frame)
+    {
         var texturePtr = frame->data[0];
         var arrayIndex = (int)frame->data[1];
 
@@ -74,26 +105,28 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
         int width = frame->width;
         int height = frame->height;
 
-        try
-        {
-            // Hold frameLock during GPU processing + present to prevent
-            // CaptureSnapshot from reading the output texture mid-write.
-            // D3D11 immediate context is single-threaded.
-            lock (frameLock)
-            {
-                renderer.ProcessFrame(nv12Texture, arrayIndex, width, height);
+        renderer.ProcessFrame(nv12Texture, arrayIndex, width, height);
 
-                latestBgraTexture = renderer.OutputTexture;
-                latestWidth = renderer.OutputWidth;
-                latestHeight = renderer.OutputHeight;
+        latestBgraTexture = renderer.OutputTexture;
+        latestWidth = renderer.OutputWidth;
+        latestHeight = renderer.OutputHeight;
+    }
 
-                FrameReady?.Invoke();
-            }
-        }
-        catch (Exception ex)
+    private void ProcessSoftwareFrame(AVFrame* frame)
+    {
+        // CPU-decoded path — typically MJPEG (no D3D11VA hwaccel on
+        // Windows) or any codec that falls back to a software decoder.
+        // The uploader converts the YUV (or RGB) plane to BGRA via
+        // libswscale and refreshes a cached D3D11 texture that the
+        // SwapChainPresenter can blit directly.
+        if (!cpuUploader.Upload(frame))
         {
-            LogGpuFrameProcessingFailed(ex);
+            return;
         }
+
+        latestBgraTexture = cpuUploader.BgraTexture;
+        latestWidth = cpuUploader.Width;
+        latestHeight = cpuUploader.Height;
     }
 
     /// <summary>
@@ -164,6 +197,7 @@ public sealed unsafe partial class D3D11Accelerator : IGpuAccelerator
         }
 
         snapshotCapture.Dispose();
+        cpuUploader.Dispose();
         renderer.Dispose();
         hwAccelContext.Dispose();
         d3d11Device.Dispose();

@@ -20,6 +20,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Dialogs.Parts.CameraConfigurations
 public partial class LocalUsbDevicePart
 {
     private Atc.Wpf.Hardware.Pickers.UsbCameraPicker? innerPicker;
+    private Atc.Wpf.Hardware.Pickers.AudioInputPicker? innerAudioPicker;
 
     public LocalUsbDevicePart()
     {
@@ -33,14 +34,19 @@ public partial class LocalUsbDevicePart
         object sender,
         RoutedEventArgs e)
     {
-        innerPicker ??= FindInnerPicker(PartUsbCameraPicker);
-        if (innerPicker is null)
+        innerPicker ??= FindInner<Atc.Wpf.Hardware.Pickers.UsbCameraPicker>(PartUsbCameraPicker);
+        if (innerPicker is not null)
         {
-            return;
+            innerPicker.Cameras.CollectionChanged += OnPickerCamerasCollectionChanged;
+            TryRebindFromCamera();
         }
 
-        innerPicker.Cameras.CollectionChanged += OnPickerCamerasCollectionChanged;
-        TryRebindFromCamera();
+        innerAudioPicker ??= FindInner<Atc.Wpf.Hardware.Pickers.AudioInputPicker>(PartAudioInputPicker);
+        if (innerAudioPicker is not null)
+        {
+            innerAudioPicker.Devices.CollectionChanged += OnAudioPickerDevicesCollectionChanged;
+            TryRebindAudioFromCamera();
+        }
     }
 
     private void OnUnloaded(
@@ -50,6 +56,11 @@ public partial class LocalUsbDevicePart
         if (innerPicker is not null)
         {
             innerPicker.Cameras.CollectionChanged -= OnPickerCamerasCollectionChanged;
+        }
+
+        if (innerAudioPicker is not null)
+        {
+            innerAudioPicker.Devices.CollectionChanged -= OnAudioPickerDevicesCollectionChanged;
         }
     }
 
@@ -63,6 +74,11 @@ public partial class LocalUsbDevicePart
         // CollectionChanged event.
         TryRebindFromCamera();
     }
+
+    private void OnAudioPickerDevicesCollectionChanged(
+        object? sender,
+        NotifyCollectionChangedEventArgs e)
+        => TryRebindAudioFromCamera();
 
     private void TryRebindFromCamera()
     {
@@ -96,28 +112,61 @@ public partial class LocalUsbDevicePart
         }
     }
 
+    private void TryRebindAudioFromCamera()
+    {
+        if (innerAudioPicker is null ||
+            DataContext is not CameraConfigurationDialogViewModel vm)
+        {
+            return;
+        }
+
+        // The model stores only the DirectShow friendly name (free-form
+        // string consumed by the dshow demuxer). That's the strongest
+        // identity we have for the rebind, so match against
+        // AudioDeviceInfo.FriendlyName when the picker's enumeration
+        // catches up.
+        var savedName = vm.Camera.Connection.Usb?.AudioDeviceName;
+        if (string.IsNullOrEmpty(savedName))
+        {
+            return;
+        }
+
+        if (vm.SelectedAudioInput is not null)
+        {
+            return;
+        }
+
+        var match = innerAudioPicker.Devices.FirstOrDefault(d =>
+            string.Equals(d.FriendlyName, savedName, StringComparison.OrdinalIgnoreCase));
+
+        if (match is not null)
+        {
+            innerAudioPicker.Value = match;
+        }
+    }
+
     // Try the logical tree first — for templated UserControl hosts
     // (LabelControl → LabelContent → picker) it's the cheapest walk.
     // Some Atc templates attach content via a ContentPresenter which
     // doesn't show in the logical tree on first probe, so fall back
     // to a visual-tree walk if logical comes up empty.
-    private static Atc.Wpf.Hardware.Pickers.UsbCameraPicker? FindInnerPicker(
-        DependencyObject root)
-        => FindInLogicalTree(root) ?? FindInVisualTree(root);
+    private static T? FindInner<T>(DependencyObject root)
+        where T : DependencyObject
+        => FindInLogicalTree<T>(root) ?? FindInVisualTree<T>(root);
 
-    private static Atc.Wpf.Hardware.Pickers.UsbCameraPicker? FindInLogicalTree(
-        DependencyObject root)
+    private static T? FindInLogicalTree<T>(DependencyObject root)
+        where T : DependencyObject
     {
-        if (root is Atc.Wpf.Hardware.Pickers.UsbCameraPicker picker)
+        if (root is T match)
         {
-            return picker;
+            return match;
         }
 
         foreach (var child in LogicalTreeHelper.GetChildren(root))
         {
             if (child is DependencyObject depChild)
             {
-                var found = FindInLogicalTree(depChild);
+                var found = FindInLogicalTree<T>(depChild);
                 if (found is not null)
                 {
                     return found;
@@ -128,19 +177,19 @@ public partial class LocalUsbDevicePart
         return null;
     }
 
-    private static Atc.Wpf.Hardware.Pickers.UsbCameraPicker? FindInVisualTree(
-        DependencyObject root)
+    private static T? FindInVisualTree<T>(DependencyObject root)
+        where T : DependencyObject
     {
-        if (root is Atc.Wpf.Hardware.Pickers.UsbCameraPicker picker)
+        if (root is T match)
         {
-            return picker;
+            return match;
         }
 
         var count = VisualTreeHelper.GetChildrenCount(root);
         for (var i = 0; i < count; i++)
         {
             var child = VisualTreeHelper.GetChild(root, i);
-            var found = FindInVisualTree(child);
+            var found = FindInVisualTree<T>(child);
             if (found is not null)
             {
                 return found;

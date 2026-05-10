@@ -70,7 +70,20 @@ internal sealed unsafe class VideoDecoder : IDisposable
             throw new FFmpegException(ret, "Failed to copy codec parameters");
         }
 
-        if (hwDeviceCtx is not null)
+        // Only wire the hardware-accelerated path when the codec
+        // actually advertises a D3D11VA config. Codecs like mjpeg list
+        // CUDA / VAAPI / NVDEC hwaccels but no D3D11VA, and FFmpeg
+        // would otherwise probe each registered hwaccel against the
+        // wrong device context and emit
+        //   "Invalid setup for format <cuda|vaapi>: does not match the
+        //   type of the provided device context"
+        // before silently falling back to a CPU decoder. Pre-filtering
+        // skips the noise and lets us report IsHardwareAccelerated
+        // honestly (it stays false when D3D11VA isn't applicable).
+        var canUseHwAccel = hwDeviceCtx is not null
+            && CodecSupportsD3d11va(codec);
+
+        if (canUseHwAccel)
         {
             // HW-accelerated decoding must be single-threaded to avoid
             // D3D11 device context conflicts (matches Flyleaf behavior).
@@ -97,7 +110,40 @@ internal sealed unsafe class VideoDecoder : IDisposable
             throw new InvalidOperationException("Failed to allocate AVFrame.");
         }
 
-        hwAccelActive = hwDeviceCtx is not null;
+        hwAccelActive = canUseHwAccel;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="codec"/> ships
+    /// a hwaccel entry for D3D11VA. Codecs without a matching entry are
+    /// always decoded on the CPU on Windows — passing an
+    /// <c>hw_device_ctx</c> to them only triggers FFmpeg's probe of the
+    /// other registered hwaccels (CUDA / VAAPI / NVDEC), all of which
+    /// fail against a D3D11 device.
+    /// </summary>
+    private static bool CodecSupportsD3d11va(AVCodec* codec)
+    {
+        if (codec is null)
+        {
+            return false;
+        }
+
+        var i = 0;
+        while (true)
+        {
+            var cfg = avcodec_get_hw_config(codec, i);
+            if (cfg is null)
+            {
+                return false;
+            }
+
+            if (cfg->device_type == AVHWDeviceType.D3d11va)
+            {
+                return true;
+            }
+
+            i++;
+        }
     }
 
     private static AVPixelFormat GetHwFormat(

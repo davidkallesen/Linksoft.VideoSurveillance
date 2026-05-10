@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
     xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
+    xmlns:atcValueConverters="https://github.com/atc-net/atc-wpf/tree/main/schemas/value-converters"
     xmlns:cameraConfigs="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.Dialogs.Parts.CameraConfigurations"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dialogs="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.Dialogs"
@@ -20,8 +21,6 @@
     mc:Ignorable="d">
 
     <atc:NiceWindow.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-
         <!--  Network Scanner Template - only instantiated when IsNew is true  -->
         <DataTemplate x:Key="NetworkScannerTemplate">
             <cameraConfigs:NetworkScannerPart />
@@ -30,16 +29,20 @@
         <!--  Empty template for editing mode  -->
         <DataTemplate x:Key="EmptyTemplate" />
 
-        <!--  Local-host (Atc.Wpf.Hardware) USB picker — used by the
-              standalone CameraWall app where USB enumeration runs
-              in-process via Media Foundation.  -->
+        <!--
+            Local-host (Atc.Wpf.Hardware) USB picker — used by the
+            standalone CameraWall app where USB enumeration runs
+            in-process via Media Foundation.
+        -->
         <DataTemplate x:Key="LocalUsbDeviceTemplate">
             <cameraConfigs:LocalUsbDevicePart />
         </DataTemplate>
 
-        <!--  Remote (gateway-backed) USB picker — used by the API-client
-              app where /devices/usb on the server is the source of
-              truth for connected cameras.  -->
+        <!--
+            Remote (gateway-backed) USB picker — used by the API-client
+            app where /devices/usb on the server is the source of
+            truth for connected cameras.
+        -->
         <DataTemplate x:Key="RemoteUsbDeviceTemplate">
             <cameraConfigs:UsbDevicePart />
         </DataTemplate>
@@ -89,8 +92,8 @@
                             <atc:GroupBoxExpander
                                 Margin="0,0,0,20"
                                 Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
-                                                        Key=CameraConfiguration}"
-                                Visibility="{Binding Path=IsNetworkSource, Converter={StaticResource BoolToVisibility}}">
+                                                             Key=CameraConfiguration}"
+                                Visibility="{Binding Path=IsNetworkSource, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
                                 <atc:GridEx
                                     Margin="0,20,0,0"
                                     Columns="*,20,*,20,*"
@@ -105,18 +108,20 @@
                             <atc:GroupBoxExpander
                                 Margin="0,0,0,20"
                                 Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
-                                                        Key=CameraConfiguration}"
-                                Visibility="{Binding Path=IsUsbSource, Converter={StaticResource BoolToVisibility}}">
+                                                             Key=CameraConfiguration}"
+                                Visibility="{Binding Path=IsUsbSource, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
                                 <atc:GridEx
                                     Margin="0,20,0,0"
                                     Columns="*,20,*"
                                     Rows="Auto">
                                     <cameraConfigs:BasicDisplaySettingsPart Grid.Row="0" Grid.Column="0" />
 
-                                    <!--  Source-specific USB picker. Standalone app uses
-                                          the local Atc.Wpf.Hardware picker (live preview,
-                                          in-process enumeration); API client keeps the
-                                          gateway-backed dropdown.  -->
+                                    <!--
+                                        Source-specific USB picker. Standalone app uses
+                                        the local Atc.Wpf.Hardware picker (live preview,
+                                        in-process enumeration); API client keeps the
+                                        gateway-backed dropdown.
+                                    -->
                                     <ContentControl
                                         Grid.Row="0"
                                         Grid.Column="2"
@@ -135,8 +140,14 @@
                                 </atc:GridEx>
                             </atc:GroupBoxExpander>
 
-                            <!--  Advanced Settings  -->
-                            <atc:GroupBoxExpander Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations, Key=AdvancedSettings}">
+                            <!--
+                                Advanced Settings — RTSP-only knobs
+                                (low-latency, jitter buffer, transport).
+                                None apply to local DirectShow USB
+                                capture, so the whole groupbox is
+                                hidden when Source = USB.
+                            -->
+                            <atc:GroupBoxExpander Header="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations, Key=AdvancedSettings}" Visibility="{Binding Path=IsNetworkSource, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
                                 <cameraConfigs:AdvancedStreamSettingsPart Margin="10,15,0,-5" />
                             </atc:GroupBoxExpander>
 

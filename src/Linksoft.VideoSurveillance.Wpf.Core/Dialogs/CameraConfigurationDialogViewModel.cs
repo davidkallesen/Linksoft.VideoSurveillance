@@ -1680,6 +1680,12 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             OnPropertyChanged(nameof(SelectedUsbResolution));
             OnPropertyChanged(nameof(UsbFrameRateItems));
             OnPropertyChanged(nameof(UsbPixelFormatItems));
+
+            // Pick the highest-resolution capability triple by default
+            // so the operator sees a usable selection immediately rather
+            // than three empty combos.
+            TryApplyDefaultUsbFormat();
+
             ClearTestResult();
             CommandManager.InvalidateRequerySuggested();
         }
@@ -1756,6 +1762,14 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             OnPropertyChanged(nameof(SelectedUsbResolution));
             OnPropertyChanged(nameof(UsbFrameRateItems));
             OnPropertyChanged(nameof(UsbPixelFormatItems));
+
+            // For the synchronous descriptor path, capabilities are
+            // immediately available — pre-fill defaults so the combos
+            // aren't empty. The local-picker path runs again from
+            // OnSelectedUsbCameraPropertyChanged once SupportedFormats
+            // arrives lazily.
+            TryApplyDefaultUsbFormat();
+
             ClearTestResult();
             CommandManager.InvalidateRequerySuggested();
         }
@@ -1777,6 +1791,10 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         OnPropertyChanged(nameof(UsbFrameRateItems));
         OnPropertyChanged(nameof(UsbPixelFormatItems));
         OnPropertyChanged(nameof(SelectedUsbResolution));
+
+        // SupportedFormats arrived — populate any missing format fields
+        // so the cascading combos render with defaults.
+        TryApplyDefaultUsbFormat();
     }
 
     /// <summary>
@@ -1825,6 +1843,11 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             Camera.Connection.Usb!.Format!.FrameRate = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(UsbPixelFormatItems));
+
+            // Cascade: pixel format may be invalid at the new frame
+            // rate. Pick the first valid format so the combo never
+            // shows a stale value.
+            TryApplyDefaultUsbFormat();
         }
     }
 
@@ -1866,6 +1889,40 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             EnsureUsbConnectionSettings();
             Camera.Connection.Usb!.AudioDeviceName = value ?? string.Empty;
             OnPropertyChanged();
+        }
+    }
+
+    private Atc.Wpf.Hardware.Models.AudioDeviceInfo? selectedAudioInputField;
+
+    /// <summary>
+    /// Companion to <see cref="UsbAudioDeviceName"/>. Bound TwoWay to
+    /// the local <c>atc:LabelAudioInputPicker</c> so the dialog round-
+    /// trips an <see cref="Atc.Wpf.Hardware.Models.AudioDeviceInfo"/>
+    /// instead of forcing the operator to type a DirectShow friendly
+    /// name. Writes the picked device's <c>FriendlyName</c> back to
+    /// <see cref="UsbAudioDeviceName"/> so the dshow URL builder keeps
+    /// working unchanged. Edit-mode rebind by friendly name happens in
+    /// the part's code-behind once the picker's <c>Devices</c>
+    /// collection populates.
+    /// </summary>
+    public Atc.Wpf.Hardware.Models.AudioDeviceInfo? SelectedAudioInput
+    {
+        get => selectedAudioInputField;
+
+        set
+        {
+            if (ReferenceEquals(selectedAudioInputField, value))
+            {
+                return;
+            }
+
+            selectedAudioInputField = value;
+
+            EnsureUsbConnectionSettings();
+            Camera.Connection.Usb!.AudioDeviceName = value?.FriendlyName ?? string.Empty;
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UsbAudioDeviceName));
         }
     }
 
@@ -1939,6 +1996,12 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
             OnPropertyChanged(nameof(UsbHeight));
             OnPropertyChanged(nameof(UsbFrameRateItems));
             OnPropertyChanged(nameof(UsbPixelFormatItems));
+
+            // Cascade: the previously-selected frame rate / pixel format
+            // may not be supported at the new resolution. Replace them
+            // with the highest valid FPS and first valid pixel format
+            // so the operator never sees an inconsistent triple.
+            TryApplyDefaultUsbFormat();
         }
     }
 
@@ -2011,13 +2074,146 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     /// this enumerable is empty. The remote/descriptor path
     /// (<see cref="SelectedUsbDevice"/>) ships a synchronous snapshot.
     /// </summary>
+    /// <summary>
+    /// Fills in missing or stale entries of
+    /// <see cref="UsbConnectionSettings.Format"/> from the selected
+    /// device's capability list:
+    /// <list type="bullet">
+    /// <item>Resolution: highest pixel-count if not set.</item>
+    /// <item>Frame rate: highest valid FPS at the current resolution if
+    ///     the current FPS is missing or unsupported.</item>
+    /// <item>Pixel format: first valid pixel format at the current
+    ///     resolution + FPS if the current value is missing or
+    ///     unsupported.</item>
+    /// </list>
+    /// Idempotent — re-running with a fully-valid format is a no-op,
+    /// so edit-mode rebinds keep saved selections intact.
+    /// </summary>
+    private void TryApplyDefaultUsbFormat()
+    {
+        if (Camera.Connection.Usb is null)
+        {
+            return;
+        }
+
+        var caps = new List<(int Width, int Height, double FrameRate, string PixelFormat)>();
+        foreach (var c in EnumerateSelectedDeviceCapabilities())
+        {
+            caps.Add(c);
+        }
+
+        if (caps.Count == 0)
+        {
+            return;
+        }
+
+        // 1. Resolution — only apply when no resolution is set yet.
+        if (UsbWidth <= 0 || UsbHeight <= 0)
+        {
+            var best = caps[0];
+            for (var i = 1; i < caps.Count; i++)
+            {
+                if (caps[i].Width * caps[i].Height > best.Width * best.Height)
+                {
+                    best = caps[i];
+                }
+            }
+
+            EnsureUsbFormat();
+            Camera.Connection.Usb!.Format!.Width = best.Width;
+            Camera.Connection.Usb.Format.Height = best.Height;
+            OnPropertyChanged(nameof(UsbWidth));
+            OnPropertyChanged(nameof(UsbHeight));
+            OnPropertyChanged(nameof(SelectedUsbResolution));
+            OnPropertyChanged(nameof(UsbFrameRateItems));
+            OnPropertyChanged(nameof(UsbPixelFormatItems));
+        }
+
+        // 2. Frame rate — restrict to triples at the current resolution
+        //    and replace when the saved value isn't in that set.
+        double bestFps = 0;
+        var fpsAvailable = false;
+        var fpsCurrentMatches = false;
+        for (var i = 0; i < caps.Count; i++)
+        {
+            var c = caps[i];
+            if (c.Width != UsbWidth || c.Height != UsbHeight || c.FrameRate <= 0)
+            {
+                continue;
+            }
+
+            fpsAvailable = true;
+            if (c.FrameRate > bestFps)
+            {
+                bestFps = c.FrameRate;
+            }
+
+            if (UsbFrameRate > 0.0001 && Math.Abs(c.FrameRate - UsbFrameRate) < 0.05)
+            {
+                fpsCurrentMatches = true;
+            }
+        }
+
+        if (fpsAvailable && !fpsCurrentMatches)
+        {
+            EnsureUsbFormat();
+            Camera.Connection.Usb!.Format!.FrameRate = bestFps;
+            OnPropertyChanged(nameof(UsbFrameRate));
+            OnPropertyChanged(nameof(UsbPixelFormatItems));
+        }
+
+        // 3. Pixel format — first valid format at the current
+        //    resolution + frame rate. Skip when nothing is advertised
+        //    so we don't write an empty string back.
+        string? firstPixelFormat = null;
+        var pfCurrentMatches = false;
+        for (var i = 0; i < caps.Count; i++)
+        {
+            var c = caps[i];
+            if (c.Width != UsbWidth || c.Height != UsbHeight)
+            {
+                continue;
+            }
+
+            if (UsbFrameRate > 0.0001 && Math.Abs(c.FrameRate - UsbFrameRate) >= 0.05)
+            {
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(c.PixelFormat))
+            {
+                continue;
+            }
+
+            firstPixelFormat ??= c.PixelFormat;
+            if (string.Equals(c.PixelFormat, UsbPixelFormat, StringComparison.Ordinal))
+            {
+                pfCurrentMatches = true;
+            }
+        }
+
+        if (firstPixelFormat is not null && !pfCurrentMatches)
+        {
+            EnsureUsbFormat();
+            Camera.Connection.Usb!.Format!.PixelFormat = firstPixelFormat;
+            OnPropertyChanged(nameof(UsbPixelFormat));
+        }
+    }
+
     private IEnumerable<(int Width, int Height, double FrameRate, string PixelFormat)> EnumerateSelectedDeviceCapabilities()
     {
         if (SelectedUsbCamera?.SupportedFormats is { } supported)
         {
             foreach (var f in supported)
             {
-                yield return ((int)f.Width, (int)f.Height, f.FrameRate, f.Subtype ?? string.Empty);
+                // Translate the WinRT MediaEncodingSubtypes string
+                // ("NV12", "YUY2", "MJPG", …) to the FFmpeg pixel-format
+                // spelling the dshow demuxer expects ("nv12", "yuyv422",
+                // "mjpeg"). Without this the picker would store "NV12"
+                // and FFmpeg would reject pixel_format=NV12 with
+                // "Unable to parse option value as pixel format".
+                var pf = Linksoft.VideoSurveillance.Helpers.MediaSubtypeMapper.MapToFFmpeg(f.Subtype);
+                yield return ((int)f.Width, (int)f.Height, f.FrameRate, pf);
             }
 
             yield break;
