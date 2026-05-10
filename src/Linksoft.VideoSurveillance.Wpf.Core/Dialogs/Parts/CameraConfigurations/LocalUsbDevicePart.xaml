@@ -87,15 +87,25 @@
                                           Key=UsbCaptureAudio}"
             IsChecked="{Binding Path=UsbCaptureAudio, Mode=TwoWay}" />
 
-        <!--  Audio device name. Greyed out unless the Capture audio
-              checkbox above is ticked.  -->
-        <atc:LabelTextBox
+        <!--  Audio capture picker. Greyed out unless the Capture audio
+              checkbox above is ticked. Mirrors LabelUsbCameraPicker —
+              the inner picker enumerates capture endpoints via WinRT
+              DeviceInformation. Edit-mode rebind by FriendlyName lives
+              in the part's code-behind because the inner combo's
+              SelectedItem compares by reference.  -->
+        <atc:LabelAudioInputPicker
+            x:Name="PartAudioInputPicker"
             Grid.Row="5"
             Margin="0,8,0,0"
+            AutoRebindOnReconnect="True"
+            AutoRefreshOnDeviceChange="True"
+            AutoSelectFirstAvailable="False"
+            ClearValueOnDisconnect="False"
             IsEnabled="{Binding Path=UsbCaptureAudio}"
             LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
                                             Key=UsbAudioDeviceName}"
-            Text="{Binding Path=UsbAudioDeviceName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            ShowRefreshButton="True"
+            Value="{Binding Path=SelectedAudioInput, Mode=TwoWay}" />
 
     </atc:GridEx>
 </UserControl>

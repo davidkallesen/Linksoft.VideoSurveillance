@@ -199,7 +199,12 @@ public class CameraUriHelperTests
         locator.RawDeviceSpec.Should().Be("video=Logitech BRIO");
         locator.VideoSize.Should().Be("1920x1080");
         locator.FrameRate.Should().Be("30");
-        locator.PixelFormat.Should().Be("nv12");
+
+        // Pixel format is intentionally NOT forwarded to dshow even
+        // when the camera config carries one — see the explanatory
+        // comment in CameraUriHelper.BuildUsbLocator. The saved value
+        // remains on the model for UI / forensic use.
+        locator.PixelFormat.Should().BeNull();
         locator.Uri.Scheme.Should().Be("dshow");
     }
 

@@ -117,13 +117,25 @@ public static class CameraUriHelper
         var videoSize = FormatVideoSize(format);
         var frameRate = FormatFrameRate(format);
 
+        // We deliberately do NOT forward Format.PixelFormat to FFmpeg
+        // for USB sources. The Atc.Wpf.Hardware picker enumerates via
+        // WinRT MediaCapture (Media Foundation), which exposes MF's
+        // *transcoded* format list — e.g. an MJPG-only USB 2.0 webcam
+        // appears to MF as offering NV12 / YUY2 / RGB24 because MF
+        // performs the conversion in-process. dshow only sees the
+        // camera's raw output, so asking it for pixel_format=nv12 on
+        // such a camera makes the filter graph fail with
+        // "Could not set video options". Letting dshow pick its own
+        // format at the requested resolution + framerate works for
+        // every USB camera we've tested. The saved Format.PixelFormat
+        // is still kept on the model for forensic / UI purposes.
         return new SourceLocator(
             uri: placeholder,
             inputFormat: "dshow",
             rawDeviceSpec: rawDeviceSpec,
             videoSize: videoSize,
             frameRate: frameRate,
-            pixelFormat: format?.PixelFormat);
+            pixelFormat: null);
     }
 
     private static string? FormatVideoSize(UsbStreamFormat? format)
