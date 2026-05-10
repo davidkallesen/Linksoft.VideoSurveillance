@@ -58,6 +58,8 @@ public sealed class RemoteUsbCameraEnumerator : IUsbCameraEnumerator
         this.cacheTtl = cacheTtl;
     }
 
+    public bool IsLocalEnumerator => false;
+
     public IReadOnlyList<UsbDeviceDescriptor> EnumerateDevices(
         CancellationToken cancellationToken = default)
     {

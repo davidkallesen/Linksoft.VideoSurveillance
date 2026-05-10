@@ -76,8 +76,13 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         // Pre-populate USB devices for cameras that already use the
         // USB source (edit mode). The collection stays empty for
         // network cameras and re-fills on demand when the operator
-        // flips the source radio.
-        if (Camera.Connection.Source == CameraSource.Usb)
+        // flips the source radio. Skipped when the local picker drives
+        // the dialog: the Atc.Wpf.Hardware picker enumerates via WinRT
+        // DeviceInformation in its own service, so calling our Media
+        // Foundation enumerator here would just duplicate work — and on
+        // .NET 10 the in-process MF probe is brittle (MF_E_ATTRIBUTENOTFOUND
+        // out of MFEnumDeviceSources on STA→MTA hand-off).
+        if (Camera.Connection.Source == CameraSource.Usb && !UseLocalUsbPicker)
         {
             RefreshUsbDevices();
         }
@@ -1680,6 +1685,109 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
         }
     }
 
+    private Atc.Wpf.Hardware.Models.UsbCameraInfo? selectedUsbCameraField;
+
+    /// <summary>
+    /// Local-picker counterpart to <see cref="SelectedUsbDevice"/>.
+    /// Bound TwoWay to <c>atc:LabelUsbCameraPicker.Value</c> so the
+    /// <see cref="Atc.Wpf.Hardware.Pickers.UsbCameraPicker"/>'s internal
+    /// <c>UsbCameraService</c> drives selection. Only consulted when
+    /// <see cref="UseLocalUsbPicker"/> is <see langword="true"/>; the
+    /// API-client app keeps the existing <see cref="SelectedUsbDevice"/>
+    /// path against the gateway-backed enumerator.
+    /// </summary>
+    public Atc.Wpf.Hardware.Models.UsbCameraInfo? SelectedUsbCamera
+    {
+        get => selectedUsbCameraField;
+
+        set
+        {
+            if (ReferenceEquals(selectedUsbCameraField, value))
+            {
+                return;
+            }
+
+            // Detach the previous camera's PropertyChanged hook so we
+            // stop reacting to its SupportedFormats updates after a
+            // different device is picked.
+            if (selectedUsbCameraField is not null)
+            {
+                selectedUsbCameraField.PropertyChanged -= OnSelectedUsbCameraPropertyChanged;
+            }
+
+            selectedUsbCameraField = value;
+
+            if (selectedUsbCameraField is not null)
+            {
+                selectedUsbCameraField.PropertyChanged += OnSelectedUsbCameraPropertyChanged;
+            }
+
+            // Capture the previously-bound device id BEFORE we mutate
+            // Camera.Connection.Usb. This drives the format-reset
+            // decision below: in edit-mode the code-behind rebinds the
+            // picker to the *same* device the camera was loaded with,
+            // and we must keep the saved Width/Height/FrameRate/PixelFormat
+            // intact rather than wiping them as if the user had picked
+            // a different device.
+            var previousDeviceId = Camera.Connection.Usb?.DeviceId;
+
+            EnsureUsbConnectionSettings();
+
+            var newDeviceId = value?.DeviceId ?? string.Empty;
+            Camera.Connection.Usb!.DeviceId = newDeviceId;
+            Camera.Connection.Usb.FriendlyName = value?.FriendlyName ?? string.Empty;
+
+            // Reset the format triple only when the device actually
+            // changes — the previous selection's format may be
+            // unsupported by the newly-picked device. Initial edit-mode
+            // rebind hits this setter with the same device id and must
+            // not clobber the saved choice.
+            if (!string.Equals(previousDeviceId, newDeviceId, StringComparison.OrdinalIgnoreCase))
+            {
+                Camera.Connection.Usb.Format = null;
+            }
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UsbWidth));
+            OnPropertyChanged(nameof(UsbHeight));
+            OnPropertyChanged(nameof(UsbFrameRate));
+            OnPropertyChanged(nameof(UsbPixelFormat));
+            OnPropertyChanged(nameof(UsbResolutionItems));
+            OnPropertyChanged(nameof(SelectedUsbResolution));
+            OnPropertyChanged(nameof(UsbFrameRateItems));
+            OnPropertyChanged(nameof(UsbPixelFormatItems));
+            ClearTestResult();
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    private void OnSelectedUsbCameraPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        // SupportedFormats is the only field the live preview populates
+        // lazily; everything else is set in the constructor and never
+        // changes for the same UsbCameraInfo instance.
+        if (e.PropertyName != nameof(Atc.Wpf.Hardware.Models.UsbCameraInfo.SupportedFormats))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(UsbResolutionItems));
+        OnPropertyChanged(nameof(UsbFrameRateItems));
+        OnPropertyChanged(nameof(UsbPixelFormatItems));
+        OnPropertyChanged(nameof(SelectedUsbResolution));
+    }
+
+    /// <summary>
+    /// <see langword="true"/> when the dialog is hosted by an app that
+    /// enumerates USB cameras on the local Windows host (the standalone
+    /// CameraWall app). Drives whether the camera-source view shows the
+    /// new <c>atc:LabelUsbCameraPicker</c> with live preview, or keeps
+    /// the descriptor-driven dropdown used by the API-client.
+    /// </summary>
+    public bool UseLocalUsbPicker => usbEnumerator.IsLocalEnumerator;
+
     public int UsbWidth
     {
         get => Camera.Connection.Usb?.Format?.Width ?? 0;
@@ -1765,21 +1873,19 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     /// Distinct <c>"Width × Height"</c> strings derived from the
     /// selected device's capability list. The dialog binds the
     /// resolution combo to this so operators only see triples the
-    /// device actually advertises.
+    /// device actually advertises. Sources from
+    /// <see cref="SelectedUsbCamera"/>'s lazy
+    /// <see cref="Atc.Wpf.Hardware.Models.UsbCameraInfo.SupportedFormats"/>
+    /// when the local picker is in use, otherwise the descriptor's
+    /// synchronous capability list.
     /// </summary>
     public IReadOnlyList<string> UsbResolutionItems
     {
         get
         {
-            var device = SelectedUsbDevice;
-            if (device is null)
-            {
-                return [];
-            }
-
             var seen = new HashSet<string>(StringComparer.Ordinal);
             var items = new List<string>();
-            foreach (var c in device.Capabilities)
+            foreach (var c in EnumerateSelectedDeviceCapabilities())
             {
                 var label = FormatResolution(c.Width, c.Height);
                 if (seen.Add(label))
@@ -1846,15 +1952,14 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     {
         get
         {
-            var device = SelectedUsbDevice;
-            if (device is null || UsbWidth == 0 || UsbHeight == 0)
+            if (UsbWidth == 0 || UsbHeight == 0)
             {
                 return [];
             }
 
             var seen = new HashSet<double>();
             var items = new List<double>();
-            foreach (var c in device.Capabilities)
+            foreach (var c in EnumerateSelectedDeviceCapabilities())
             {
                 if (c.Width == UsbWidth && c.Height == UsbHeight && c.FrameRate > 0 && seen.Add(c.FrameRate))
                 {
@@ -1875,15 +1980,14 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     {
         get
         {
-            var device = SelectedUsbDevice;
-            if (device is null || UsbWidth == 0 || UsbHeight == 0)
+            if (UsbWidth == 0 || UsbHeight == 0)
             {
                 return [];
             }
 
             var seen = new HashSet<string>(StringComparer.Ordinal);
             var items = new List<string>();
-            foreach (var c in device.Capabilities)
+            foreach (var c in EnumerateSelectedDeviceCapabilities())
             {
                 if (c.Width == UsbWidth
                     && c.Height == UsbHeight
@@ -1897,6 +2001,34 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
 
             items.Sort(StringComparer.Ordinal);
             return items;
+        }
+    }
+
+    /// <summary>
+    /// Yields capability triples from whichever picker is driving the
+    /// dialog. The local picker (<see cref="SelectedUsbCamera"/>)
+    /// publishes formats lazily after live preview opens — until then
+    /// this enumerable is empty. The remote/descriptor path
+    /// (<see cref="SelectedUsbDevice"/>) ships a synchronous snapshot.
+    /// </summary>
+    private IEnumerable<(int Width, int Height, double FrameRate, string PixelFormat)> EnumerateSelectedDeviceCapabilities()
+    {
+        if (SelectedUsbCamera?.SupportedFormats is { } supported)
+        {
+            foreach (var f in supported)
+            {
+                yield return ((int)f.Width, (int)f.Height, f.FrameRate, f.Subtype ?? string.Empty);
+            }
+
+            yield break;
+        }
+
+        if (SelectedUsbDevice is { } device)
+        {
+            foreach (var c in device.Capabilities)
+            {
+                yield return (c.Width, c.Height, c.FrameRate, c.PixelFormat ?? string.Empty);
+            }
         }
     }
 

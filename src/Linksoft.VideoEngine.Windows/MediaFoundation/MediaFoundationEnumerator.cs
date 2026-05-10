@@ -32,6 +32,9 @@ public sealed class MediaFoundationEnumerator : IUsbCameraEnumerator
     }
 
     /// <inheritdoc />
+    public bool IsLocalEnumerator => true;
+
+    /// <inheritdoc />
     public IReadOnlyList<UsbDeviceDescriptor> EnumerateDevices(
         CancellationToken cancellationToken = default)
     {

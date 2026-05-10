@@ -9,6 +9,8 @@ public sealed class NullUsbCameraEnumerator : IUsbCameraEnumerator
 {
     public static NullUsbCameraEnumerator Instance { get; } = new();
 
+    public bool IsLocalEnumerator => false;
+
     public IReadOnlyList<UsbDeviceDescriptor> EnumerateDevices(
         CancellationToken cancellationToken = default)
         => [];
