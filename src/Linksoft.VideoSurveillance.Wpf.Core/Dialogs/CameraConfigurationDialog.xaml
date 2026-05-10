@@ -29,6 +29,20 @@
 
         <!--  Empty template for editing mode  -->
         <DataTemplate x:Key="EmptyTemplate" />
+
+        <!--  Local-host (Atc.Wpf.Hardware) USB picker — used by the
+              standalone CameraWall app where USB enumeration runs
+              in-process via Media Foundation.  -->
+        <DataTemplate x:Key="LocalUsbDeviceTemplate">
+            <cameraConfigs:LocalUsbDevicePart />
+        </DataTemplate>
+
+        <!--  Remote (gateway-backed) USB picker — used by the API-client
+              app where /devices/usb on the server is the source of
+              truth for connected cameras.  -->
+        <DataTemplate x:Key="RemoteUsbDeviceTemplate">
+            <cameraConfigs:UsbDevicePart />
+        </DataTemplate>
     </atc:NiceWindow.Resources>
 
     <atc:BusyOverlay IsBusy="{Binding Path=IsTesting}">
@@ -98,7 +112,26 @@
                                     Columns="*,20,*"
                                     Rows="Auto">
                                     <cameraConfigs:BasicDisplaySettingsPart Grid.Row="0" Grid.Column="0" />
-                                    <cameraConfigs:UsbDevicePart Grid.Row="0" Grid.Column="2" />
+
+                                    <!--  Source-specific USB picker. Standalone app uses
+                                          the local Atc.Wpf.Hardware picker (live preview,
+                                          in-process enumeration); API client keeps the
+                                          gateway-backed dropdown.  -->
+                                    <ContentControl
+                                        Grid.Row="0"
+                                        Grid.Column="2"
+                                        Content="{Binding}">
+                                        <ContentControl.Style>
+                                            <Style TargetType="ContentControl">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource RemoteUsbDeviceTemplate}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=UseLocalUsbPicker}" Value="True">
+                                                        <Setter Property="ContentTemplate" Value="{StaticResource LocalUsbDeviceTemplate}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ContentControl.Style>
+                                    </ContentControl>
                                 </atc:GridEx>
                             </atc:GroupBoxExpander>
 
