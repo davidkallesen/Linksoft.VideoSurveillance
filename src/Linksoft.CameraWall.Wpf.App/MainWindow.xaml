@@ -5,6 +5,7 @@
     xmlns:app="clr-namespace:Linksoft.CameraWall.Wpf.App"
     xmlns:atcTheming="https://github.com/atc-net/atc-wpf/tree/main/schemas"
     xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
+    xmlns:atcValueConverters="https://github.com/atc-net/atc-wpf/tree/main/schemas/value-converters"
     xmlns:cw="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.UserControls;assembly=Linksoft.VideoSurveillance.Wpf.Core"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:fluent="urn:fluent-ribbon"
@@ -20,10 +21,6 @@
     WindowStartupLocation="CenterScreen"
     WindowState="{Binding Path=WindowState}"
     mc:Ignorable="d">
-
-    <atcTheming:NiceWindow.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    </atcTheming:NiceWindow.Resources>
 
     <AdornerDecorator>
         <atcTheming:GridEx Rows="Auto,*,Auto">
@@ -163,9 +160,11 @@
                                                          Key=AddUsbCamera}"
                             Size="Large">
                             <fluent:Button.LargeIcon>
-                                <!--  Usb glyph lives in the FA Brand set, not Solid; using
-                                      ImageAwesomeBrand here keeps consistency with the rest
-                                      of the ribbon (FA Solid for Camera, Cog, etc.).  -->
+                                <!--
+                                    Usb glyph lives in the FA Brand set, not Solid; using
+                                    ImageAwesomeBrand here keeps consistency with the rest
+                                    of the ribbon (FA Solid for Camera, Cog, etc.).
+                                -->
                                 <fontIcons:ImageAwesomeBrand Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Usb" />
                             </fluent:Button.LargeIcon>
                         </fluent:Button>
@@ -231,9 +230,9 @@
                     </TextBlock>
                 </StatusBarItem>
                 <StatusBarItem
-                    HorizontalAlignment="Right"
                     Margin="0,0,16,0"
-                    Visibility="{Binding Path=IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    HorizontalAlignment="Right"
+                    Visibility="{Binding Path=IsUpdateAvailable, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
                     <TextBlock>
                         <Hyperlink Command="{Binding Path=DownloadUpdateCommand}">
                             <Hyperlink.Style>

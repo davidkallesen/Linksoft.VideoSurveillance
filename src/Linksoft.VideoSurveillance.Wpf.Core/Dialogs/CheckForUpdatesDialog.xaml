@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
     xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
+    xmlns:atcValueConverters="https://github.com/atc-net/atc-wpf/tree/main/schemas/value-converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dialogs="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.Dialogs"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -18,10 +19,6 @@
     WindowStartupLocation="CenterOwner"
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
-
-    <atc:NiceWindow.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    </atc:NiceWindow.Resources>
 
     <atc:BusyOverlay IsBusy="{Binding Path=IsChecking}">
         <atc:GridEx Margin="20" Rows="Auto,Auto,Auto,*,Auto">
@@ -85,7 +82,7 @@
                     Command="{Binding Path=DownloadLatestCommand}"
                     Content="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
                                                   Key=DownloadLatest}"
-                    Visibility="{Binding Path=HasNewVersion, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding Path=HasNewVersion, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}" />
                 <Button
                     MinWidth="80"
                     Padding="16,8"

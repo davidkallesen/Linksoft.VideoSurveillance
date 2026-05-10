@@ -10,16 +10,13 @@
     Title="Connect to Server"
     Width="520"
     Height="480"
+    d:DataContext="{d:DesignInstance Type=dialogs:ServerConnectionDialogViewModel,
+                                     IsDesignTimeCreatable=False}"
     ResizeMode="NoResize"
     ShowInTaskbar="True"
     WindowStartupLocation="CenterScreen"
     WindowStyle="ToolWindow"
-    d:DataContext="{d:DesignInstance Type=dialogs:ServerConnectionDialogViewModel, IsDesignTimeCreatable=False}"
     mc:Ignorable="d">
-
-    <atcTheming:NiceWindow.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    </atcTheming:NiceWindow.Resources>
 
     <atc:GridEx Margin="20" Rows="Auto,*,Auto,Auto,Auto,Auto">
 
@@ -37,9 +34,7 @@
             BorderBrush="{DynamicResource MahApps.Brushes.Gray6}"
             BorderThickness="1"
             CornerRadius="4">
-            <ListBox
-                ItemsSource="{Binding Path=Profiles}"
-                SelectedItem="{Binding Path=SelectedProfile}">
+            <ListBox ItemsSource="{Binding Path=Profiles}" SelectedItem="{Binding Path=SelectedProfile}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Margin="4,2">

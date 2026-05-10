@@ -4,9 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
     xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
+    xmlns:atcValueConverters="https://github.com/atc-net/atc-wpf/tree/main/schemas/value-converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:lve="clr-namespace:Linksoft.VideoPlayer.Wpf;assembly=Linksoft.VideoPlayer.Wpf"
     xmlns:local="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.UserControls"
+    xmlns:lve="clr-namespace:Linksoft.VideoPlayer.Wpf;assembly=Linksoft.VideoPlayer.Wpf"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="240"
     d:DesignWidth="320"
@@ -14,8 +15,6 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-
         <!--  Quick-action overlay button: rounded, semi-transparent, neutral hover. Mirrors the fullscreen close button style but smaller (32x32 vs 40x40) and not red on hover (since these are positive actions, not destructive).  -->
         <Style x:Key="OverlayQuickActionButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#66000000" />
@@ -49,10 +48,8 @@
         <Border
             x:Name="PlayerLentPlaceholder"
             Background="#2D2D2D"
-            Visibility="{Binding IsPlayerLent, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
+            Visibility="{Binding IsPlayerLent, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock
                     FontSize="14"
                     Foreground="#AAAAAA"
@@ -73,14 +70,14 @@
                 <!--  Drag capture layer - must be hit-test visible to capture mouse events  -->
                 <Border
                     x:Name="DragCaptureLayer"
-                    Background="Transparent"
                     AllowDrop="True"
-                    MouseLeftButtonDown="OnDragCaptureLayerMouseLeftButtonDown"
-                    MouseMove="OnDragCaptureLayerMouseMove"
+                    Background="Transparent"
                     DragOver="OnDragCaptureLayerDragOver"
-                    Drop="OnDragCaptureLayerDrop" />
+                    Drop="OnDragCaptureLayerDrop"
+                    MouseLeftButtonDown="OnDragCaptureLayerMouseLeftButtonDown"
+                    MouseMove="OnDragCaptureLayerMouseMove" />
 
-                <!--  Camera Overlay (Properties updated programmatically from CameraTile code-behind) -->
+                <!--  Camera Overlay (Properties updated programmatically from CameraTile code-behind)  -->
                 <local:CameraOverlay
                     x:Name="OverlayControl"
                     Margin="8"
@@ -89,9 +86,7 @@
                     IsHitTestVisible="False" />
 
                 <!--  Motion Bounding Box Overlay  -->
-                <local:MotionBoundingBoxOverlay
-                    x:Name="MotionOverlay"
-                    IsHitTestVisible="False" />
+                <local:MotionBoundingBoxOverlay x:Name="MotionOverlay" IsHitTestVisible="False" />
 
                 <!--  Quick-action zone (positioned in the diagonal opposite corner of the overlay info box, computed in UpdateOverlayPosition). The outer Grid is a fixed-size, hit-test-visible hover hot-zone — the buttons inside collapse when hidden, so without this fixed shell the mouse would have nothing to hover when no quick action is currently visible. Visibility of the buttons is gated by ShowOverlayQuickActions, zoom state, hover, and connection state — toggled imperatively from CameraTile.xaml.cs.  -->
                 <Grid
@@ -115,7 +110,7 @@
                             Command="{Binding FullScreenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             Style="{StaticResource OverlayQuickActionButtonStyle}"
                             ToolTip="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
-                                                           Key=ShowInFullScreen}"
+                                                          Key=ShowInFullScreen}"
                             Visibility="Hidden">
                             <Path
                                 Width="14"
@@ -132,7 +127,7 @@
                             Command="{Binding ZoomResetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             Style="{StaticResource OverlayQuickActionButtonStyle}"
                             ToolTip="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
-                                                           Key=ResetZoom}"
+                                                          Key=ResetZoom}"
                             Visibility="Collapsed">
                             <TextBlock
                                 FontSize="11"

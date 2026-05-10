@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
+    xmlns:atcValueConverters="https://github.com/atc-net/atc-wpf/tree/main/schemas/value-converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="50"
@@ -11,8 +12,6 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-
         <!--  Blinking animation for recording indicator  -->
         <Storyboard x:Key="RecordingBlinkAnimation" RepeatBehavior="Forever">
             <DoubleAnimation
@@ -25,11 +24,13 @@
     </UserControl.Resources>
 
     <Grid>
-        <!--  USB source badge — small pill in the opposite corner from
-              the info box so it doesn't fight with title/status text.
-              Visibility cascades off IsUsbSource only — settings can
-              hide source badges by leaving CameraConfiguration.Source
-              at Network.  -->
+        <!--
+            USB source badge — small pill in the opposite corner from
+            the info box so it doesn't fight with title/status text.
+            Visibility cascades off IsUsbSource only — settings can
+            hide source badges by leaving CameraConfiguration.Source
+            at Network.
+        -->
         <Border
             Padding="6,2"
             HorizontalAlignment="Right"
@@ -37,7 +38,7 @@
             Background="#CC0078D4"
             CornerRadius="3"
             Opacity="{Binding Path=OverlayOpacity, RelativeSource={RelativeSource AncestorType=UserControl}}"
-            Visibility="{Binding Path=IsUsbSource, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+            Visibility="{Binding Path=IsUsbSource, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
             <TextBlock
                 FontSize="9"
                 FontWeight="Bold"
@@ -61,7 +62,7 @@
                     Foreground="White"
                     Text="{Binding Path=Title, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     TextTrimming="CharacterEllipsis"
-                    Visibility="{Binding Path=ShowTitle, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding Path=ShowTitle, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}" />
 
                 <TextBlock
                     x:Name="DescriptionTextBlock"
@@ -93,10 +94,10 @@
                     FontSize="10"
                     Foreground="#CCCCCC"
                     Text="{Binding Path=CurrentTime, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Visibility="{Binding Path=ShowTime, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding Path=ShowTime, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}" />
 
                 <!--  Connection status row  -->
-                <StackPanel Orientation="Horizontal" Visibility="{Binding Path=ShowConnectionStatus, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" Visibility="{Binding Path=ShowConnectionStatus, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
                     <Ellipse
                         x:Name="StatusIndicator"
                         Width="8"
