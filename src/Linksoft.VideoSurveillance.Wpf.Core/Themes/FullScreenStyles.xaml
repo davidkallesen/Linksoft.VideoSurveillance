@@ -4,7 +4,6 @@
     xmlns:valueConverters="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.ValueConverters">
 
     <!--  Converters  -->
-    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <valueConverters:BoolToOpacityValueConverter x:Key="BoolToOpacityConverter" />
     <valueConverters:ConnectionStateToColorValueConverter x:Key="ConnectionStateToColorConverter" />
     <valueConverters:ConnectionStateToTextValueConverter x:Key="ConnectionStateToTextConverter" />

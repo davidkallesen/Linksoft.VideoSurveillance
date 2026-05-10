@@ -28,9 +28,7 @@
     <!--  ReSharper disable Xaml.BindingWithContextNotResolved  -->
     <Grid x:Name="RootGrid">
         <!--  Video Player with visual overlay inside (required due to DirectX airspace)  -->
-        <lve:VideoHost
-            x:Name="VideoPlayer"
-            Player="{Binding Path=Player}">
+        <lve:VideoHost x:Name="VideoPlayer" Player="{Binding Path=Player}">
 
             <!--  Visual overlay content - renders on top of video  -->
             <Grid Background="Transparent">
@@ -50,13 +48,13 @@
                             FontWeight="SemiBold"
                             Foreground="White"
                             Text="{Binding Path=HostDataContext.CameraName}"
-                            Visibility="{Binding Path=HostDataContext.ShowOverlayTitle, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            Visibility="{Binding Path=HostDataContext.ShowOverlayTitle, Converter={x:Static valueConverters:BoolToVisibilityVisibleValueConverter.Instance}}" />
                         <!--  Camera Description (only shown if enabled AND not empty)  -->
                         <TextBlock
                             FontSize="12"
                             Foreground="#AAAAAA"
                             Text="{Binding Path=HostDataContext.CameraDescription}"
-                            Visibility="{Binding Path=HostDataContext.ShowOverlayDescription, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            Visibility="{Binding Path=HostDataContext.ShowOverlayDescription, Converter={x:Static valueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Style.Triggers>
@@ -72,12 +70,12 @@
                             x:Name="TimeDisplay"
                             FontSize="12"
                             Foreground="#AAAAAA"
-                            Visibility="{Binding Path=HostDataContext.ShowOverlayTime, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            Visibility="{Binding Path=HostDataContext.ShowOverlayTime, Converter={x:Static valueConverters:BoolToVisibilityVisibleValueConverter.Instance}}" />
                         <!--  Connection Status  -->
                         <StackPanel
                             Margin="0,4,0,0"
                             Orientation="Horizontal"
-                            Visibility="{Binding Path=HostDataContext.ShowOverlayConnectionStatus, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            Visibility="{Binding Path=HostDataContext.ShowOverlayConnectionStatus, Converter={x:Static valueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
                             <Ellipse
                                 Width="10"
                                 Height="10"
