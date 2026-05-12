@@ -36,17 +36,17 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Atc.Network" Version="1.0.236" />
-    <PackageReference Include="Atc.Wpf" Version="4.0.204" />
-    <PackageReference Include="Atc.Wpf.Components" Version="4.0.204" />
-    <PackageReference Include="Atc.Wpf.Controls" Version="4.0.204" />
-    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.0.204" />
-    <PackageReference Include="Atc.Wpf.Forms" Version="4.0.204" />
-    <PackageReference Include="Atc.Wpf.Network" Version="4.0.204" />
-    <PackageReference Include="Atc.Wpf.Theming" Version="4.0.204" />
+    <PackageReference Include="Atc.Wpf" Version="4.0.213" />
+    <PackageReference Include="Atc.Wpf.Components" Version="4.0.213" />
+    <PackageReference Include="Atc.Wpf.Controls" Version="4.0.213" />
+    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.0.213" />
+    <PackageReference Include="Atc.Wpf.Forms" Version="4.0.213" />
+    <PackageReference Include="Atc.Wpf.Network" Version="4.0.213" />
+    <PackageReference Include="Atc.Wpf.Theming" Version="4.0.213" />
     <PackageReference Include="Atc.XamlToolkit" Version="3.1.1" />
     <PackageReference Include="Atc.XamlToolkit.Wpf" Version="3.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.8" />
   </ItemGroup>
 
   <ItemGroup>

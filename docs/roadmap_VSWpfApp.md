@@ -131,7 +131,7 @@ Communication:
 - [x] Add ProjectReference to Wpf.Core (replaces direct VideoPlayer.Wpf reference)
 - [x] Remove transitive NuGet packages now provided by Wpf.Core
 - [x] Verify VideoSurveillance.Wpf.App builds (0 errors)
-- [x] Delete duplicates: DialogClosedEventArgs, ConnectionStateToColorConverter, BoolToOpacityValueConverter, GridLayoutHelper, FullScreenStyles.xaml
+- [x] Delete duplicates: DialogClosedEventArgs, GridLayoutHelper, FullScreenStyles.xaml
 - [x] Update GlobalUsings to Wpf.Core namespaces (Events, Helpers)
 - [x] Update XAML references (CameraListView converter, FullScreen windows ResourceDictionary)
 - [x] Add CameraModelMappingExtensions (API Camera ↔ Wpf.Core CameraConfiguration, with enum mappings)

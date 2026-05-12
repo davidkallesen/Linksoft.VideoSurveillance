@@ -18,8 +18,8 @@
 
   <ItemGroup>
     <PackageReference Include="Atc" Version="3.0.67" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.8" />
   </ItemGroup>
 
 </Project>
