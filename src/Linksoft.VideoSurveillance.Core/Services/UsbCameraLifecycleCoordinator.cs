@@ -33,6 +33,9 @@ public sealed class UsbCameraLifecycleCoordinator : IUsbCameraLifecycleCoordinat
     public bool IsUnplugged(Guid cameraId)
         => unpluggedCameras.ContainsKey(cameraId);
 
+    public void ClearUnpluggedState(Guid cameraId)
+        => unpluggedCameras.TryRemove(cameraId, out _);
+
     public void Start()
     {
         ObjectDisposedException.ThrowIf(disposed, this);

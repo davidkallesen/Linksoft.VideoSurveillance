@@ -7,9 +7,10 @@ public class DeleteCameraHandlerTests
     {
         // Arrange
         var storage = Substitute.For<ICameraStorageService>();
+        var lifecycle = Substitute.For<IUsbCameraLifecycleCoordinator>();
         var cameraId = Guid.NewGuid();
         storage.DeleteCamera(cameraId).Returns(true);
-        var handler = new DeleteCameraHandler(storage);
+        var handler = new DeleteCameraHandler(storage, lifecycle);
 
         // Act
         var result = await handler.ExecuteAsync(
@@ -27,9 +28,10 @@ public class DeleteCameraHandlerTests
     {
         // Arrange
         var storage = Substitute.For<ICameraStorageService>();
+        var lifecycle = Substitute.For<IUsbCameraLifecycleCoordinator>();
         var cameraId = Guid.NewGuid();
         storage.DeleteCamera(cameraId).Returns(false);
-        var handler = new DeleteCameraHandler(storage);
+        var handler = new DeleteCameraHandler(storage, lifecycle);
 
         // Act
         var result = await handler.ExecuteAsync(
@@ -39,5 +41,27 @@ public class DeleteCameraHandlerTests
         // Assert
         result.Result.Should().BeOfType<NotFound<string>>();
         storage.DidNotReceive().Save();
+        lifecycle.DidNotReceive().ClearUnpluggedState(Arg.Any<Guid>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_DeletesCamera_ClearsCoordinatorUnpluggedState()
+    {
+        // Closes the leak flagged under §8: a USB camera unplugged then
+        // deleted would leave a stale entry in
+        // UsbCameraLifecycleCoordinator.unpluggedCameras until process
+        // restart. Wiring ClearUnpluggedState from the delete handler
+        // means the coordinator's set tracks the storage exactly.
+        var storage = Substitute.For<ICameraStorageService>();
+        var lifecycle = Substitute.For<IUsbCameraLifecycleCoordinator>();
+        var cameraId = Guid.NewGuid();
+        storage.DeleteCamera(cameraId).Returns(true);
+        var handler = new DeleteCameraHandler(storage, lifecycle);
+
+        await handler.ExecuteAsync(
+            new DeleteCameraParameters(cameraId),
+            CancellationToken.None);
+
+        lifecycle.Received(1).ClearUnpluggedState(cameraId);
     }
 }
