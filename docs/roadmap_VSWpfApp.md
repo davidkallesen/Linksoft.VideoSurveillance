@@ -215,7 +215,7 @@ The following VS.Wpf dialogs/windows intentionally remain app-specific because t
 #### 10.3 Audit & Diagnostics
 - [ ] Event log viewer (API server events streamed via SignalR)
 - [ ] Camera health dashboard (uptime, reconnect frequency, stream quality)
-- [ ] Export diagnostics report (camera states, server info, connection logs)
+- [x] Export diagnostics report (camera states, server info, connection logs) — `IDiagnosticsExportService` builds a JSON snapshot from `ApplicationHelper.GetVersion()` + `RuntimeInformation` (client), `SurveillanceHubService.ConnectionState` + `GatewayService.GetCamerasAsync` (server), and the per-camera DTOs (id / name / source / IP or USB device id / connection state / recording flag). Surfaced as a "Export Diagnostics" button in the ribbon Backstage; `SaveFileDialog` defaults to Desktop with a timestamped filename. Gateway failures are captured in `GatewayErrorMessage` instead of thrown so a degraded-server scenario still produces a useful report. Log file contents are deliberately not bundled (size + rolling-lock concerns); the report includes the log path so support knows where to fetch them separately.
 
 #### 10.4 Timelapse Management
 - [ ] Timelapse browser (list server-side timelapse recordings)

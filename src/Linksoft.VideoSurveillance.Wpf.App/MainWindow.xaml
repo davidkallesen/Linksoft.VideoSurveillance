@@ -137,6 +137,15 @@
                             </fluent:Button.Icon>
                         </fluent:Button>
                         <fluent:Button
+                            Command="{Binding Path=ExportDiagnosticsCommand}"
+                            Header="Export Diagnostics"
+                            KeyTip="D"
+                            ToolTip="Save a JSON snapshot of client state, server URL, hub status, and camera list — for support / issue triage.">
+                            <fluent:Button.Icon>
+                                <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="FileExport" />
+                            </fluent:Button.Icon>
+                        </fluent:Button>
+                        <fluent:Button
                             Command="{Binding Path=ShowAboutCommand}"
                             Header="About"
                             KeyTip="A">
