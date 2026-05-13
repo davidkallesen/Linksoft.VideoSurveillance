@@ -30,6 +30,7 @@
 
             <ComboBox
                 DisplayMemberPath="FriendlyName"
+                IsEnabled="{Binding Path=CanEditUsbDevice}"
                 ItemsSource="{Binding Path=UsbDevices}"
                 SelectedItem="{Binding Path=SelectedUsbDevice, Mode=TwoWay}" />
         </StackPanel>
@@ -42,7 +43,8 @@
             Padding="12,6"
             Command="{Binding Path=RefreshUsbDevicesCommand}"
             Content="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
-                                          Key=Refresh}" />
+                                          Key=Refresh}"
+            IsEnabled="{Binding Path=CanEditUsbDevice}" />
 
         <!--  Capability-driven dropdowns. Items cascade off the
               selected device's advertised stream formats: resolution

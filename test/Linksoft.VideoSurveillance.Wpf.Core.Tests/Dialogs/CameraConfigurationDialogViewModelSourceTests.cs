@@ -86,6 +86,15 @@ public class CameraConfigurationDialogViewModelSourceTests
     }
 
     [Fact]
+    public void CanEditUsbDevice_Is_True_For_New_Camera_And_False_For_Existing()
+    {
+        var camera = BuildUsbCamera();
+
+        BuildVm(camera, isNew: true).CanEditUsbDevice.Should().BeTrue();
+        BuildVm(camera, isNew: false).CanEditUsbDevice.Should().BeFalse();
+    }
+
+    [Fact]
     public void HasMinimumSourceIdentity_Network_Requires_IpAddress()
     {
         // Indirect check via CanSave — directly testing the private
@@ -116,6 +125,63 @@ public class CameraConfigurationDialogViewModelSourceTests
     }
 
     [Fact]
+    public async Task TestConnection_UsbCamera_Opens_Pipeline_With_Dshow_Locator()
+    {
+        // USB cameras must route the test-connection path through
+        // CameraUriHelper.BuildSourceLocator so the dshow input-format
+        // + raw device spec reach the player. Network's BuildUri()
+        // path would throw InvalidOperationException for USB sources.
+        var camera = BuildUsbCamera();
+        camera.Display.DisplayName = "Lab Cam";
+        camera.Connection.Usb = new UsbConnectionSettings
+        {
+            DeviceId = @"\\?\usb#vid_046d&pid_085e",
+            FriendlyName = "Logitech BRIO",
+            Format = new Linksoft.VideoSurveillance.Models.UsbStreamFormat
+            {
+                Width = 1920,
+                Height = 1080,
+                FrameRate = 30,
+                PixelFormat = "nv12",
+            },
+        };
+
+        Uri? capturedUri = null;
+        StreamOptions? capturedOptions = null;
+        var player = Substitute.For<IVideoPlayer>();
+        player
+            .When(p => p.Open(Arg.Any<Uri>(), Arg.Any<StreamOptions>()))
+            .Do(call =>
+            {
+                capturedUri = call.Arg<Uri>();
+                capturedOptions = call.Arg<StreamOptions>();
+                player.StateChanged += Raise.EventWith(
+                    player,
+                    new PlayerStateChangedEventArgs(PlayerState.Stopped, PlayerState.Playing));
+            });
+
+        var playerFactory = Substitute.For<IVideoPlayerFactory>();
+        playerFactory.Create().Returns(player);
+
+        var vm = BuildVmWithPlayerFactory(camera, playerFactory);
+
+        await vm.TestConnectionCommand.ExecuteAsync(parameter: null);
+
+        capturedOptions.Should().NotBeNull();
+        capturedOptions!.InputFormat.Should().Be(InputFormatKind.Dshow);
+        capturedOptions.RawDeviceSpec.Should().Be("video=Logitech BRIO");
+        capturedOptions.VideoSize.Should().Be("1920x1080");
+        capturedOptions.FrameRate.Should().Be("30");
+
+        // PixelFormat is deliberately suppressed for USB by CameraUriHelper
+        // (see comment at CameraUriHelper.cs:120) — MF enumerates transcoded
+        // formats but dshow only sees raw output, so forwarding PixelFormat
+        // breaks MJPG-only cameras. This assertion guards against accidental
+        // pixel-format forwarding being reintroduced.
+        capturedOptions.PixelFormat.Should().BeNull();
+    }
+
+    [Fact]
     public void Endpoint_Uniqueness_Skipped_For_Usb_Cameras()
     {
         // The endpoint-uniqueness check is bypassed for USB cameras
@@ -142,6 +208,19 @@ public class CameraConfigurationDialogViewModelSourceTests
         CameraConfiguration camera,
         IReadOnlyCollection<(string IpAddress, string? Path)> endpoints,
         bool isNew = true)
+        => BuildVmCore(camera, endpoints, Substitute.For<IVideoPlayerFactory>(), isNew);
+
+    private static CameraConfigurationDialogViewModel BuildVmWithPlayerFactory(
+        CameraConfiguration camera,
+        IVideoPlayerFactory playerFactory,
+        bool isNew = true)
+        => BuildVmCore(camera, [], playerFactory, isNew);
+
+    private static CameraConfigurationDialogViewModel BuildVmCore(
+        CameraConfiguration camera,
+        IReadOnlyCollection<(string IpAddress, string? Path)> endpoints,
+        IVideoPlayerFactory playerFactory,
+        bool isNew)
     {
         var settingsService = Substitute.For<IWpfCoreSettingsService>();
         settingsService.CameraDisplay.Returns(new CameraDisplayAppSettings());
@@ -149,8 +228,6 @@ public class CameraConfigurationDialogViewModelSourceTests
         settingsService.Recording.Returns(new RecordingSettings());
         settingsService.Performance.Returns(new PerformanceSettings());
         settingsService.MotionDetection.Returns(new MotionDetectionSettings());
-
-        var playerFactory = Substitute.For<IVideoPlayerFactory>();
 
         return new CameraConfigurationDialogViewModel(
             camera,
