@@ -27,6 +27,26 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private ConnectionState connectionState = ConnectionState.Disconnected;
 
+    /// <summary>
+    /// Symbolic-link / device-id of the underlying USB device when this
+    /// tile is bound to a USB camera. Empty for network cameras. Used
+    /// by <see cref="LiveViewViewModel"/> to match
+    /// <see cref="Linksoft.VideoSurveillance.Services.IUsbCameraWatcher"/>
+    /// events back to the right tile.
+    /// </summary>
+    [ObservableProperty]
+    private string usbDeviceId = string.Empty;
+
+    /// <summary>
+    /// True when the underlying USB device is currently unplugged.
+    /// Orthogonal to <see cref="ConnectionState"/>: a USB camera can be
+    /// <c>ConnectionFailed</c> *and* unplugged simultaneously, and the
+    /// overlay surfaces both signals. Cleared automatically when the
+    /// watcher reports the device returned.
+    /// </summary>
+    [ObservableProperty]
+    private bool isDeviceUnplugged;
+
     private bool isRecording;
     private DispatcherTimer? recordingTimer;
     private DateTime recordingStartUtc;

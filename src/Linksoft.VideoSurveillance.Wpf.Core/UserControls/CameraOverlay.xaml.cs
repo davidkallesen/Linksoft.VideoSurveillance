@@ -75,6 +75,22 @@ public partial class CameraOverlay
     private bool isUsbSource;
 
     /// <summary>
+    /// True when the underlying USB device has been physically unplugged
+    /// (cable removed, device powered off). Surfaces a distinctive
+    /// affordance over the existing status row so operators can tell
+    /// "physical device gone" apart from "stream error" or "still
+    /// reconnecting" — backoff doesn't help here; the host must wait
+    /// for <see cref="Services.IUsbCameraWatcher.DeviceArrived"/>.
+    /// Modelled as an orthogonal bool (not a new <c>ConnectionState</c>
+    /// value) because the overlay's <see cref="ConnectionState"/> DP is
+    /// the <c>Atc.Network.ConnectionState</c> enum, which has no
+    /// equivalent. Device-presence and stream-lifecycle are independent
+    /// dimensions.
+    /// </summary>
+    [DependencyProperty(DefaultValue = false)]
+    private bool isDeviceUnplugged;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="CameraOverlay"/> class.
     /// </summary>
     public CameraOverlay()

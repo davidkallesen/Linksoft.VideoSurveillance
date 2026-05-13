@@ -1,4 +1,6 @@
 using ConnectionState = Atc.Network.ConnectionState;
+using IUsbCameraWatcher = Linksoft.VideoSurveillance.Services.IUsbCameraWatcher;
+using UsbCameraEventArgs = Linksoft.VideoSurveillance.Events.UsbCameraEventArgs;
 
 namespace Linksoft.VideoSurveillance.Wpf.ViewModels;
 
@@ -11,8 +13,10 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
     private readonly GatewayService gatewayService;
     private readonly SurveillanceHubService hubService;
     private readonly IVideoPlayerFactory videoPlayerFactory;
+    private readonly IUsbCameraWatcher usbCameraWatcher;
     private readonly string apiBaseAddress;
     private bool disposed;
+    private bool usbWatcherSubscribed;
 
     [ObservableProperty]
     private ObservableCollection<CameraTileViewModel> cameraTiles = [];
@@ -30,16 +34,85 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
         GatewayService gatewayService,
         SurveillanceHubService hubService,
         IVideoPlayerFactory videoPlayerFactory,
+        IUsbCameraWatcher usbCameraWatcher,
         string apiBaseAddress)
     {
         ArgumentNullException.ThrowIfNull(gatewayService);
         ArgumentNullException.ThrowIfNull(hubService);
         ArgumentNullException.ThrowIfNull(videoPlayerFactory);
+        ArgumentNullException.ThrowIfNull(usbCameraWatcher);
 
         this.gatewayService = gatewayService;
         this.hubService = hubService;
         this.videoPlayerFactory = videoPlayerFactory;
+        this.usbCameraWatcher = usbCameraWatcher;
         this.apiBaseAddress = apiBaseAddress;
+
+        // Subscribe immediately so unplug events that arrive before the
+        // first LoadAsync (e.g. SignalR backlog replay) are still
+        // applied once the matching tile materializes.
+        SubscribeToUsbWatcher();
+    }
+
+    private void SubscribeToUsbWatcher()
+    {
+        if (usbWatcherSubscribed)
+        {
+            return;
+        }
+
+        usbCameraWatcher.DeviceArrived += OnUsbDeviceArrived;
+        usbCameraWatcher.DeviceRemoved += OnUsbDeviceRemoved;
+        usbCameraWatcher.Start();
+        usbWatcherSubscribed = true;
+    }
+
+    private void OnUsbDeviceArrived(
+        object? sender,
+        UsbCameraEventArgs e)
+        => UpdateTileUnpluggedState(e.Device.DeviceId, unplugged: false);
+
+    private void OnUsbDeviceRemoved(
+        object? sender,
+        UsbCameraEventArgs e)
+        => UpdateTileUnpluggedState(e.Device.DeviceId, unplugged: true);
+
+    private void UpdateTileUnpluggedState(
+        string deviceId,
+        bool unplugged)
+    {
+        if (string.IsNullOrEmpty(deviceId))
+        {
+            return;
+        }
+
+        // RemoteUsbCameraWatcher forwards SignalR payloads on whatever
+        // thread the hub fires them on — marshal to the UI dispatcher
+        // before mutating observable properties bound to the WPF view.
+        // When there's no Application.Current (unit-test scenario) run
+        // synchronously on the current thread — there's no UI binding
+        // to violate and the test setup is single-threaded anyway.
+        var app = Application.Current;
+        if (app is null)
+        {
+            ApplyTileUnpluggedState(deviceId, unplugged);
+            return;
+        }
+
+        _ = app.Dispatcher.BeginInvoke(() => ApplyTileUnpluggedState(deviceId, unplugged));
+    }
+
+    private void ApplyTileUnpluggedState(
+        string deviceId,
+        bool unplugged)
+    {
+        foreach (var tile in CameraTiles)
+        {
+            if (string.Equals(tile.UsbDeviceId, deviceId, StringComparison.OrdinalIgnoreCase))
+            {
+                tile.IsDeviceUnplugged = unplugged;
+            }
+        }
     }
 
     [RelayCommand("Load")]
@@ -75,6 +148,7 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
                         Description = camera.Description ?? string.Empty,
                         ConnectionState = MapApiConnectionState(camera.ConnectionState),
                         IsRecording = camera.IsRecording,
+                        UsbDeviceId = camera.UsbDeviceId ?? string.Empty,
                     };
 
                     CameraTiles.Add(tile);
@@ -179,6 +253,14 @@ public sealed partial class LiveViewViewModel : ViewModelBase, IDisposable
         }
 
         disposed = true;
+
+        if (usbWatcherSubscribed)
+        {
+            usbCameraWatcher.DeviceArrived -= OnUsbDeviceArrived;
+            usbCameraWatcher.DeviceRemoved -= OnUsbDeviceRemoved;
+            usbCameraWatcher.Stop();
+            usbWatcherSubscribed = false;
+        }
 
         // DI scope teardown at app shutdown calls Dispose on a worker
         // thread, so mutating CameraTiles (which is bound to a WPF

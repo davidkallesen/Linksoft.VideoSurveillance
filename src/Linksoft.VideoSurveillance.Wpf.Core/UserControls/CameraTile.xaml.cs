@@ -21,6 +21,18 @@ public partial class CameraTile : IDisposable
     [DependencyProperty(DefaultValue = ConnectionState.Disconnected, PropertyChangedCallback = nameof(OnConnectionStateChanged))]
     private ConnectionState connectionState;
 
+    /// <summary>
+    /// True when this tile's USB camera is currently unplugged. Set by
+    /// the manager / dashboard from the
+    /// <see cref="IUsbCameraWatcher"/> events; cleared automatically on
+    /// <see cref="IUsbCameraWatcher.DeviceArrived"/>. Cascades to the
+    /// overlay so the operator sees a distinct affordance without
+    /// fighting the connection-state row (the two are orthogonal — see
+    /// <see cref="CameraOverlay.IsDeviceUnplugged"/>).
+    /// </summary>
+    [DependencyProperty(DefaultValue = false, PropertyChangedCallback = nameof(OnIsDeviceUnpluggedChanged))]
+    private bool isDeviceUnplugged;
+
     [DependencyProperty(PropertyChangedCallback = nameof(OnIsSelectedChanged))]
     private bool isSelected;
 
@@ -1038,6 +1050,20 @@ public partial class CameraTile : IDisposable
         }
     }
 
+    private static void OnIsDeviceUnpluggedChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraTile tile && e.NewValue is bool unplugged)
+        {
+            var overlay = tile.GetCameraOverlay();
+            if (overlay is not null)
+            {
+                overlay.IsDeviceUnplugged = unplugged;
+            }
+        }
+    }
+
     private static void OnCameraNameChanged(
         DependencyObject d,
         DependencyPropertyChangedEventArgs e)
@@ -1545,6 +1571,7 @@ public partial class CameraTile : IDisposable
             cachedOverlay.Title = CameraName;
             cachedOverlay.Description = CameraDescription;
             cachedOverlay.ConnectionState = ConnectionState;
+            cachedOverlay.IsDeviceUnplugged = IsDeviceUnplugged;
             ApplyOverlaySettings();
             UpdateOverlayRecordingOnMotion();
         }

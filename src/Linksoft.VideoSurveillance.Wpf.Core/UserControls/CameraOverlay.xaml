@@ -111,6 +111,30 @@
                         Text="{Binding Path=StatusText, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 </StackPanel>
 
+                <!--
+                    USB device-unplugged row. Renders next to the connection
+                    status row (does not replace it) — a USB camera can be
+                    "ConnectionFailed" *and* unplugged simultaneously; we
+                    want both signals visible. Hidden unless the watcher
+                    has reported the device as gone.
+                -->
+                <StackPanel
+                    x:Name="DeviceUnpluggedRow"
+                    Orientation="Horizontal"
+                    Visibility="{Binding Path=IsDeviceUnplugged, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        FontSize="10"
+                        Foreground="#FFB347"
+                        Text="🔌" />
+                    <TextBlock
+                        FontSize="9"
+                        FontWeight="SemiBold"
+                        Foreground="#FFB347"
+                        Text="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                   Key=UsbDeviceUnplugged}" />
+                </StackPanel>
+
                 <!--  Recording indicator row  -->
                 <StackPanel x:Name="RecordingIndicator" Orientation="Horizontal">
                     <StackPanel.Style>

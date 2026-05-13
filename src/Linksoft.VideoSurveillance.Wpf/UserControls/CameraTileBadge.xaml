@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:atcNetworkValueConverters="clr-namespace:Atc.Wpf.Network.ValueConverters;assembly=Atc.Wpf.Network"
+    xmlns:atcTranslation="https://github.com/atc-net/atc-wpf/tree/main/schemas/translations"
     xmlns:coreControls="clr-namespace:Linksoft.VideoSurveillance.Wpf.Core.UserControls;assembly=Linksoft.VideoSurveillance.Wpf.Core"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:lve="clr-namespace:Linksoft.VideoPlayer.Wpf;assembly=Linksoft.VideoPlayer.Wpf"
@@ -68,6 +69,31 @@
                                 Foreground="Red"
                                 Text="{Binding Path=HostDataContext.RecordingDurationText}" />
                         </StackPanel>
+                        <!--  USB device-unplugged indicator (visible when the watcher reports the device is gone)  -->
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=HostDataContext.IsDeviceUnplugged}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock
+                                Margin="0,0,4,0"
+                                FontSize="10"
+                                Foreground="#FFB347"
+                                Text="🔌" />
+                            <TextBlock
+                                FontSize="9"
+                                FontWeight="SemiBold"
+                                Foreground="#FFB347"
+                                Text="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                            Key=UsbDeviceUnplugged}" />
+                        </StackPanel>
+
                         <!--  Motion indicator (orange dot, visible when IsMotionDetected)  -->
                         <StackPanel Orientation="Horizontal">
                             <StackPanel.Style>
