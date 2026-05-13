@@ -484,6 +484,9 @@ components:
           type: string
         usbCaptureAudio:
           type: boolean
+        usbAudioDeviceName:
+          type: string
+          description: DirectShow friendly name of the companion audio capture device (e.g. "Microphone (Logitech BRIO)"). Only consulted when usbCaptureAudio is true.
         overlayPosition:
           type: string
           enum: [topLeft, topRight, bottomLeft, bottomRight]
@@ -594,6 +597,9 @@ components:
           type: string
         usbCaptureAudio:
           type: boolean
+        usbAudioDeviceName:
+          type: string
+          description: DirectShow friendly name of the companion audio capture device (e.g. "Microphone (Logitech BRIO)"). Only consulted when usbCaptureAudio is true.
         overlayPosition:
           type: string
           enum: [topLeft, topRight, bottomLeft, bottomRight]
@@ -650,6 +656,9 @@ components:
           type: string
         usbCaptureAudio:
           type: boolean
+        usbAudioDeviceName:
+          type: string
+          description: DirectShow friendly name of the companion audio capture device (e.g. "Microphone (Logitech BRIO)"). Only consulted when usbCaptureAudio is true.
         overlayPosition:
           type: string
           enum: [topLeft, topRight, bottomLeft, bottomRight]

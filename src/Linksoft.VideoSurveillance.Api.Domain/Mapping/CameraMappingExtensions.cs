@@ -36,6 +36,7 @@ internal static class CameraMappingExtensions
             UsbFrameRate: format?.FrameRate ?? 0,
             UsbPixelFormat: format?.PixelFormat ?? string.Empty,
             UsbCaptureAudio: usb?.PreferAudio ?? false,
+            UsbAudioDeviceName: usb?.AudioDeviceName ?? string.Empty,
             OverlayPosition: ToApiOverlayPosition(core.Display.OverlayPosition),
             StreamUseLowLatencyMode: core.Stream.UseLowLatencyMode,
             StreamMaxLatencyMs: core.Stream.MaxLatencyMs,
@@ -265,6 +266,7 @@ internal static class CameraMappingExtensions
             DeviceId = request.UsbDeviceId ?? string.Empty,
             FriendlyName = request.UsbFriendlyName ?? string.Empty,
             PreferAudio = request.UsbCaptureAudio,
+            AudioDeviceName = request.UsbAudioDeviceName ?? string.Empty,
             Format = (request.UsbWidth > 0 && request.UsbHeight > 0)
                 ? new CoreUsbStreamFormat
                 {
@@ -286,7 +288,8 @@ internal static class CameraMappingExtensions
             || request.UsbHeight > 0
             || request.UsbFrameRate > 0
             || request.UsbPixelFormat is not null
-            || request.UsbCaptureAudio;
+            || request.UsbCaptureAudio
+            || request.UsbAudioDeviceName is not null;
 
         if (!hasUsbField && core.Connection.Source != CoreCameraSource.Usb)
         {
@@ -311,6 +314,11 @@ internal static class CameraMappingExtensions
         if (request.UsbCaptureAudio)
         {
             core.Connection.Usb.PreferAudio = true;
+        }
+
+        if (request.UsbAudioDeviceName is not null)
+        {
+            core.Connection.Usb.AudioDeviceName = request.UsbAudioDeviceName;
         }
 
         if (request.UsbWidth > 0 || request.UsbHeight > 0 ||
