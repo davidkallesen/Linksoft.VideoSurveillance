@@ -212,6 +212,44 @@ public class UsbCameraLifecycleCoordinatorTests
     }
 
     [Fact]
+    public void ClearUnpluggedState_RemovesEntry_ForCameraDeletedWhileUnplugged()
+    {
+        // Reproduces the leak the §8 finding called out: a USB camera
+        // unplugged → deleted → the coordinator's ConcurrentDictionary
+        // would otherwise retain the Guid forever because the watcher
+        // only clears on a matching DeviceArrived event, which never
+        // resolves to the deleted camera's Guid.
+        var cameraId = Guid.NewGuid();
+        var (coordinator, watcher, storage) = Build();
+        storage.GetAllCameras().Returns(new List<CameraConfiguration>
+        {
+            UsbCamera(cameraId, deviceId: "abc"),
+        });
+
+        coordinator.Start();
+        watcher.DeviceRemoved += Raise.EventWith(
+            watcher,
+            new UsbCameraEventArgs(SampleDescriptor("abc")));
+        coordinator.IsUnplugged(cameraId).Should().BeTrue();
+
+        coordinator.ClearUnpluggedState(cameraId);
+
+        coordinator.IsUnplugged(cameraId).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ClearUnpluggedState_UnknownCameraId_IsNoOp()
+    {
+        // DeleteCameraHandler calls this for every delete (network or
+        // USB, present or absent) — must not throw.
+        var (coordinator, _, _) = Build();
+
+        var act = () => coordinator.ClearUnpluggedState(Guid.NewGuid());
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
     public void Dispose_StopsListening_AndIsIdempotent()
     {
         var (coordinator, watcher, _) = Build();

@@ -36,4 +36,13 @@ public interface IUsbCameraLifecycleCoordinator : IDisposable
     /// <see cref="Start"/> resumes notifications.
     /// </summary>
     void Stop();
+
+    /// <summary>
+    /// Drops any unplugged-state record for the given camera id. Called
+    /// after a camera is deleted from storage so a stale entry doesn't
+    /// linger in the coordinator's set — without this, every USB camera
+    /// deleted while unplugged would leak an entry until process restart.
+    /// No-op when the camera was never marked unplugged.
+    /// </summary>
+    void ClearUnpluggedState(Guid cameraId);
 }
