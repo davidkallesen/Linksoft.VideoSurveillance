@@ -3317,7 +3317,16 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
                 return ResourceManager.GetString("UsbCaptureAudio", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Device in use by another app.
+        /// </summary>
+        public static string UsbDeviceBusy {
+            get {
+                return ResourceManager.GetString("UsbDeviceBusy", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Device unplugged.
         /// </summary>

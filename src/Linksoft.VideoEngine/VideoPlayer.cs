@@ -295,7 +295,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
 
             SetState(PlayerState.Playing);
 
-            RunReadLoop(source);
+            RunReadLoop(source, options.InputFormat);
         }
         catch (Exception ex)
         {
@@ -343,9 +343,13 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
         }
     }
 
-    private void RunReadLoop(string source)
+    private void RunReadLoop(
+        string source,
+        InputFormatKind inputFormat)
     {
         int consecutiveErrors = 0;
+        int lastErrorCode = 0;
+        bool anyFramesReceived = false;
         fpsWatch.Restart();
         fpsFrameCount = 0;
 
@@ -364,7 +368,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
                 // dies, no recovery).
                 if (!stopRequested)
                 {
-                    SetState(PlayerState.Error, "End of stream");
+                    SetState(PlayerState.Error, "End of stream", StreamFailureReason.EndOfStream);
                 }
 
                 return;
@@ -373,15 +377,26 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
             if (ret < 0)
             {
                 consecutiveErrors++;
+                lastErrorCode = ret;
+
                 if (consecutiveErrors > MaxConsecutiveReadErrors)
                 {
                     LogExceededConsecutiveReadErrors(source, MaxConsecutiveReadErrors);
+
+                    var reason = ReadErrorClassifier.Classify(
+                        inputFormat,
+                        anyFramesReceived,
+                        lastErrorCode);
+
+                    // Log the raw FFmpeg error code so unknown patterns can
+                    // be diagnosed from operator logs without rebuilding.
+                    LogReadErrorCode(source, lastErrorCode, reason);
 
                     // Same reasoning as the EOF path above: drive a real state
                     // transition so auto-reconnect can fire.
                     if (!stopRequested)
                     {
-                        SetState(PlayerState.Error, "Exceeded consecutive read errors");
+                        SetState(PlayerState.Error, "Exceeded consecutive read errors", reason);
                     }
 
                     return;
@@ -391,6 +406,7 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
             }
 
             consecutiveErrors = 0;
+            anyFramesReceived = true;
             Interlocked.Exchange(ref lastPacketTicks, DateTime.UtcNow.Ticks);
 
             if (demuxer.IsVideoPacket)
@@ -447,10 +463,11 @@ public sealed unsafe partial class VideoPlayer : IVideoPlayer
 
     private void SetState(
         PlayerState newState,
-        string? errorMessage = null)
+        string? errorMessage = null,
+        StreamFailureReason reason = StreamFailureReason.Unknown)
     {
         var previous = state;
         state = newState;
-        StateChanged?.Invoke(this, new PlayerStateChangedEventArgs(previous, newState, errorMessage));
+        StateChanged?.Invoke(this, new PlayerStateChangedEventArgs(previous, newState, errorMessage, reason));
     }
 }

@@ -33,6 +33,17 @@ public partial class CameraTile : IDisposable
     [DependencyProperty(DefaultValue = false, PropertyChangedCallback = nameof(OnIsDeviceUnpluggedChanged))]
     private bool isDeviceUnplugged;
 
+    /// <summary>
+    /// True when the underlying USB device opens but reads stall — typically
+    /// "another app has the camera" (Teams, browser, OBS). Set by
+    /// <see cref="OnPlayerStateChanged"/> when the engine reports
+    /// <see cref="StreamFailureReason.DeviceBusy"/>; cleared on the next
+    /// successful Connected transition (auto-reconnect path). Cascades to
+    /// the overlay row the same way <see cref="IsDeviceUnplugged"/> does.
+    /// </summary>
+    [DependencyProperty(DefaultValue = false, PropertyChangedCallback = nameof(OnIsDeviceBusyChanged))]
+    private bool isDeviceBusy;
+
     [DependencyProperty(PropertyChangedCallback = nameof(OnIsSelectedChanged))]
     private bool isSelected;
 
@@ -1064,6 +1075,20 @@ public partial class CameraTile : IDisposable
         }
     }
 
+    private static void OnIsDeviceBusyChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CameraTile tile && e.NewValue is bool busy)
+        {
+            var overlay = tile.GetCameraOverlay();
+            if (overlay is not null)
+            {
+                overlay.IsDeviceBusy = busy;
+            }
+        }
+    }
+
     private static void OnCameraNameChanged(
         DependencyObject d,
         DependencyPropertyChangedEventArgs e)
@@ -1508,6 +1533,7 @@ public partial class CameraTile : IDisposable
     {
         // Capture state immediately - don't re-read inside BeginInvoke
         var capturedState = e.NewState;
+        var capturedReason = e.Reason;
         var reconnecting = isReconnecting;
 
         _ = Dispatcher.BeginInvoke(() =>
@@ -1516,6 +1542,10 @@ public partial class CameraTile : IDisposable
             {
                 case PlayerState.Playing:
                     isReconnecting = false;
+                    // Reads are flowing again — clear any sticky device-busy
+                    // hint from a prior failed open. The unplugged flag is
+                    // owned by IUsbCameraWatcher and stays untouched here.
+                    IsDeviceBusy = false;
                     UpdateConnectionState(ConnectionState.Connected);
                     break;
                 case PlayerState.Opening:
@@ -1532,6 +1562,7 @@ public partial class CameraTile : IDisposable
                     break;
                 case PlayerState.Error:
                     isReconnecting = false;
+                    IsDeviceBusy = capturedReason == StreamFailureReason.DeviceBusy;
                     UpdateConnectionState(ConnectionState.ConnectionFailed, e.ErrorMessage);
                     break;
                 default:

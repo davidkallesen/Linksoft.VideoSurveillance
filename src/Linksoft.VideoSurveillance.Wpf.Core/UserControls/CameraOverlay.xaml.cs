@@ -91,6 +91,20 @@ public partial class CameraOverlay
     private bool isDeviceUnplugged;
 
     /// <summary>
+    /// True when the underlying USB device opened successfully but every
+    /// subsequent read failed — the canonical "another app holds the
+    /// device's exclusive lock" pattern (Teams, browser camera test,
+    /// OBS, etc.). Orthogonal to <see cref="ConnectionState"/> for the
+    /// same reason as <see cref="IsDeviceUnplugged"/>: the operator
+    /// sees both a red "ConnectionFailed" indicator *and* the amber
+    /// "device in use" row at once, because both facts are true.
+    /// Auto-reconnect keeps running so the tile resumes the moment the
+    /// device is released.
+    /// </summary>
+    [DependencyProperty(DefaultValue = false)]
+    private bool isDeviceBusy;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="CameraOverlay"/> class.
     /// </summary>
     public CameraOverlay()

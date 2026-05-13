@@ -1248,6 +1248,9 @@
   <data name="UsbAudioDeviceName" xml:space="preserve">
     <value>Lydenhed</value>
   </data>
+  <data name="UsbDeviceBusy" xml:space="preserve">
+    <value>Enhed bruges af en anden app</value>
+  </data>
   <data name="UsbDeviceUnplugged" xml:space="preserve">
     <value>Enhed frakoblet</value>
   </data>
