@@ -77,7 +77,7 @@ public class CameraWallManagerUsbTests
         // strictly scoped to enrolled cameras to avoid silently
         // tearing down unrelated recording sessions.
         var enrolled = BuildUsbCamera(@"\\?\usb#vid_046d&pid_085e");
-        var (manager, deps) = BuildManager(usbCameras: [enrolled]);
+        var (_, deps) = BuildManager(usbCameras: [enrolled]);
 
         RaiseDeviceRemoved(deps.UsbWatcher, @"\\?\usb#vid_dead&pid_beef");
 
@@ -179,7 +179,9 @@ public class CameraWallManagerUsbTests
         return camera;
     }
 
-    private static void RaiseDeviceArrived(IUsbCameraWatcher watcher, string deviceId)
+    private static void RaiseDeviceArrived(
+        IUsbCameraWatcher watcher,
+        string deviceId)
     {
         var descriptor = new UsbDeviceDescriptor(deviceId, friendlyName: "Test Cam");
         watcher.DeviceArrived += Raise.EventWith<UsbCameraEventArgs>(
@@ -187,7 +189,9 @@ public class CameraWallManagerUsbTests
             new UsbCameraEventArgs(descriptor));
     }
 
-    private static void RaiseDeviceRemoved(IUsbCameraWatcher watcher, string deviceId)
+    private static void RaiseDeviceRemoved(
+        IUsbCameraWatcher watcher,
+        string deviceId)
     {
         var descriptor = new UsbDeviceDescriptor(deviceId, friendlyName: "Test Cam");
         watcher.DeviceRemoved += Raise.EventWith<UsbCameraEventArgs>(
