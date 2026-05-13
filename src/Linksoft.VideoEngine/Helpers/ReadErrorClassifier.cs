@@ -21,14 +21,16 @@ public static class ReadErrorClassifier
     /// <see cref="StreamFailureReason.Unknown"/> (likely a hardware
     /// disconnect / driver hiccup, not exclusive lock).</param>
     /// <param name="lastErrorCode">Most recent FFmpeg return code from
-    /// <c>av_read_frame</c>. We classify on this and not the full
-    /// history because FFmpeg's dshow demuxer consistently emits the
-    /// same code while the device is locked.</param>
+    /// <c>av_read_frame</c>. Logged for diagnostic purposes (see
+    /// <c>VideoPlayer.Log.LogReadErrorCode</c>) but no longer used to
+    /// gate the classification — see comment below.</param>
     public static StreamFailureReason Classify(
         InputFormatKind inputFormat,
         bool anyFramesReceived,
         int lastErrorCode)
     {
+        _ = lastErrorCode;
+
         if (inputFormat != InputFormatKind.Dshow)
         {
             return StreamFailureReason.Unknown;
@@ -39,17 +41,20 @@ public static class ReadErrorClassifier
             return StreamFailureReason.Unknown;
         }
 
-        // AVERROR(EAGAIN) on a dshow source that never delivered a
-        // frame is the canonical "device locked by another consumer"
-        // pattern. EAGAIN under FFmpeg's POSIX-style errno conversion
-        // is -11 on Windows builds; pulling the constant from the
-        // global static-using keeps the build portable if the binding
-        // ever changes.
-        if (lastErrorCode == AVERROR_EAGAIN)
-        {
-            return StreamFailureReason.DeviceBusy;
-        }
-
-        return StreamFailureReason.Unknown;
+        // A dshow source that opened successfully but never delivered a
+        // single frame, then tripped the read-error threshold, is almost
+        // always "device blocked by another process" — Teams / browser /
+        // OBS holding the exclusive capture lock. Empirically the
+        // underlying FFmpeg error varies: -11 (AVERROR(EAGAIN)) on some
+        // builds, -5 (AVERROR(EIO)) on others (observed against
+        // "USB2.0 FHD UVC WebCam" with Teams active, see commit log).
+        // Matching specific codes invited false negatives, and the
+        // "dshow + zero frames received before burst" predicate is
+        // already a strong enough discriminator: network cameras are
+        // excluded by inputFormat, and a camera that streamed then
+        // stopped mid-session is excluded by anyFramesReceived. False
+        // positives (driver crash, device powered off pre-open) still
+        // give the operator an actionable starting hint.
+        return StreamFailureReason.DeviceBusy;
     }
 }
