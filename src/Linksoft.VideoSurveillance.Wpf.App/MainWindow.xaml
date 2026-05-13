@@ -120,6 +120,13 @@
                                 <fontIcons:ImageAwesomeSolid Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}" Icon="Cog" />
                             </fluent:Button.Icon>
                         </fluent:Button>
+                        <CheckBox
+                            Margin="20,16,20,8"
+                            Content="Start with Windows"
+                            FontSize="14"
+                            Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}"
+                            IsChecked="{Binding Path=StartWithWindows, Mode=TwoWay}"
+                            ToolTip="Run this app automatically when you sign in to Windows. Stored under HKCU so no admin rights are required." />
                         <fluent:SeparatorTabItem />
                         <fluent:Button
                             Command="{Binding Path=ShowCheckForUpdatesCommand}"

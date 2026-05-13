@@ -350,6 +350,9 @@ public partial class App
                 // GitHub release service
                 services.AddSingleton<IGitHubReleaseService, GitHubReleaseService>();
 
+                // Windows per-user auto-start toggle (HKCU Run key).
+                services.AddSingleton<IAutoStartService, AutoStartService>();
+
                 // Toast notification + notification coordinator
                 services.AddSingleton<IToastNotificationService, ToastNotificationService>();
                 services.AddSingleton<NotificationCoordinator>();
@@ -376,6 +379,7 @@ public partial class App
                     sp.GetRequiredService<SurveillanceHubService>(),
                     sp.GetRequiredService<IGitHubReleaseService>(),
                     sp.GetRequiredService<IApplicationSettingsService>(),
+                    sp.GetRequiredService<IAutoStartService>(),
                     sp.GetRequiredService<LiveViewViewModel>(),
                     sp.GetRequiredService<DashboardViewModel>(),
                     sp.GetRequiredService<CameraListViewModel>(),

@@ -197,7 +197,7 @@ The following VS.Wpf dialogs/windows intentionally remain app-specific because t
 #### 9.4 Installer ✅
 - [x] WiX installer project for Wpf.App (matching CameraWall.Wpf.App installer pattern)
 - [x] Desktop and Start Menu shortcuts
-- [ ] Auto-start option (Windows startup registry)
+- [x] Auto-start option (Windows startup registry) — `IAutoStartService` / `AutoStartService` write the per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` value (HKCU so no admin elevation needed). Surfaced as a "Start with Windows" checkbox in the ribbon Backstage; `MainWindowViewModel.StartWithWindows` seeds from the registry at construction and routes toggle changes back through the service. Registry I/O failures are logged and treated as "disabled" so the UI never crashes the app.
 - [x] Upgrade support (preserve local config on update)
 
 ### Phase 10: Advanced Capabilities

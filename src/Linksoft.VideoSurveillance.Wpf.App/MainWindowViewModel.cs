@@ -9,6 +9,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SurveillanceHubService hubService; // Used for event subscriptions in constructor
     private readonly IGitHubReleaseService gitHubReleaseService;
     private readonly IApplicationSettingsService settingsService;
+    private readonly IAutoStartService autoStartService;
     private readonly LiveViewViewModel liveViewViewModel;
     private readonly DashboardViewModel dashboardViewModel;
     private readonly CameraListViewModel cameraListViewModel;
@@ -20,6 +21,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private WindowStyle previousWindowStyle = WindowStyle.SingleBorderWindow;
     private ResizeMode previousResizeMode = ResizeMode.CanResize;
     private DispatcherTimer? latencyTimer;
+    private bool suppressAutoStartCallback;
 
     [ObservableProperty]
     private string statusText = "Ready";
@@ -48,6 +50,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string serverLatency = "--";
 
+    [ObservableProperty(AfterChangedCallback = nameof(OnStartWithWindowsChanged))]
+    private bool startWithWindows;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
     /// </summary>
@@ -56,6 +61,7 @@ public partial class MainWindowViewModel : ViewModelBase
         SurveillanceHubService hubService,
         IGitHubReleaseService gitHubReleaseService,
         IApplicationSettingsService settingsService,
+        IAutoStartService autoStartService,
         LiveViewViewModel liveViewViewModel,
         DashboardViewModel dashboardViewModel,
         CameraListViewModel cameraListViewModel,
@@ -69,6 +75,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ArgumentNullException.ThrowIfNull(hubService);
         ArgumentNullException.ThrowIfNull(gitHubReleaseService);
         ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(autoStartService);
         ArgumentNullException.ThrowIfNull(liveViewViewModel);
         ArgumentNullException.ThrowIfNull(dashboardViewModel);
         ArgumentNullException.ThrowIfNull(cameraListViewModel);
@@ -80,6 +87,7 @@ public partial class MainWindowViewModel : ViewModelBase
         this.hubService = hubService;
         this.gitHubReleaseService = gitHubReleaseService;
         this.settingsService = settingsService;
+        this.autoStartService = autoStartService;
         this.liveViewViewModel = liveViewViewModel;
         this.dashboardViewModel = dashboardViewModel;
         this.cameraListViewModel = cameraListViewModel;
@@ -88,6 +96,14 @@ public partial class MainWindowViewModel : ViewModelBase
         this.notificationHistoryViewModel = notificationHistoryViewModel;
         serverUrl = apiBaseAddress;
         this.isAspireManaged = isAspireManaged;
+
+        // Seed from the registry. Use the suppression flag so the
+        // AfterChangedCallback doesn't write back during construction —
+        // that would be a redundant registry round-trip and would mask
+        // a future bug where the seed disagreed with the registry state.
+        suppressAutoStartCallback = true;
+        StartWithWindows = autoStartService.IsEnabled;
+        suppressAutoStartCallback = false;
 
         // Default view
         CurrentView = liveViewViewModel;
@@ -204,6 +220,23 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private static void Exit()
         => Application.Current.Shutdown();
+
+    private void OnStartWithWindowsChanged()
+    {
+        if (suppressAutoStartCallback)
+        {
+            return;
+        }
+
+        if (StartWithWindows)
+        {
+            autoStartService.Enable();
+        }
+        else
+        {
+            autoStartService.Disable();
+        }
+    }
 
     [RelayCommand]
     private void ToggleFullScreen()
