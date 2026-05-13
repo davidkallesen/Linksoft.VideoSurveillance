@@ -353,6 +353,18 @@ public partial class App
                 // Windows per-user auto-start toggle (HKCU Run key).
                 services.AddSingleton<IAutoStartService, AutoStartService>();
 
+                // Support-flow diagnostics export — captures a client-side
+                // snapshot (versions, server URL, hub state, camera list)
+                // into a JSON file for issue triage.
+                services.AddSingleton<IDiagnosticsExportService>(sp =>
+                    new DiagnosticsExportService(
+                        sp.GetRequiredService<GatewayService>(),
+                        sp.GetRequiredService<SurveillanceHubService>(),
+                        sp.GetRequiredService<IApplicationSettingsService>(),
+                        sp.GetRequiredService<IAutoStartService>(),
+                        apiBaseAddress,
+                        sp.GetRequiredService<ILogger<DiagnosticsExportService>>()));
+
                 // Toast notification + notification coordinator
                 services.AddSingleton<IToastNotificationService, ToastNotificationService>();
                 services.AddSingleton<NotificationCoordinator>();
@@ -380,6 +392,7 @@ public partial class App
                     sp.GetRequiredService<IGitHubReleaseService>(),
                     sp.GetRequiredService<IApplicationSettingsService>(),
                     sp.GetRequiredService<IAutoStartService>(),
+                    sp.GetRequiredService<IDiagnosticsExportService>(),
                     sp.GetRequiredService<LiveViewViewModel>(),
                     sp.GetRequiredService<DashboardViewModel>(),
                     sp.GetRequiredService<CameraListViewModel>(),

@@ -10,6 +10,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IGitHubReleaseService gitHubReleaseService;
     private readonly IApplicationSettingsService settingsService;
     private readonly IAutoStartService autoStartService;
+    private readonly IDiagnosticsExportService diagnosticsExportService;
     private readonly LiveViewViewModel liveViewViewModel;
     private readonly DashboardViewModel dashboardViewModel;
     private readonly CameraListViewModel cameraListViewModel;
@@ -62,6 +63,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IGitHubReleaseService gitHubReleaseService,
         IApplicationSettingsService settingsService,
         IAutoStartService autoStartService,
+        IDiagnosticsExportService diagnosticsExportService,
         LiveViewViewModel liveViewViewModel,
         DashboardViewModel dashboardViewModel,
         CameraListViewModel cameraListViewModel,
@@ -76,6 +78,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ArgumentNullException.ThrowIfNull(gitHubReleaseService);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(autoStartService);
+        ArgumentNullException.ThrowIfNull(diagnosticsExportService);
         ArgumentNullException.ThrowIfNull(liveViewViewModel);
         ArgumentNullException.ThrowIfNull(dashboardViewModel);
         ArgumentNullException.ThrowIfNull(cameraListViewModel);
@@ -88,6 +91,7 @@ public partial class MainWindowViewModel : ViewModelBase
         this.gitHubReleaseService = gitHubReleaseService;
         this.settingsService = settingsService;
         this.autoStartService = autoStartService;
+        this.diagnosticsExportService = diagnosticsExportService;
         this.liveViewViewModel = liveViewViewModel;
         this.dashboardViewModel = dashboardViewModel;
         this.cameraListViewModel = cameraListViewModel;
@@ -198,6 +202,46 @@ public partial class MainWindowViewModel : ViewModelBase
         };
 
         dialog.ShowDialog();
+    }
+
+    [RelayCommand("ExportDiagnostics")]
+    private async Task ExportDiagnosticsAsync()
+    {
+        var defaultFileName = $"VideoSurveillance-Diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.json";
+        var dialog = new SaveFileDialog
+        {
+            Title = "Export Diagnostics",
+            FileName = defaultFileName,
+            DefaultExt = ".json",
+            Filter = "JSON file (*.json)|*.json|All files (*.*)|*.*",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            OverwritePrompt = true,
+        };
+
+        // Owner-relative dialog so it lands over the main window instead
+        // of jumping to a random monitor.
+        var owner = Application.Current.MainWindow;
+        var result = owner is null ? dialog.ShowDialog() : dialog.ShowDialog(owner);
+        if (result != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var report = await diagnosticsExportService
+                .BuildReportAsync()
+                .ConfigureAwait(true);
+            await diagnosticsExportService
+                .WriteAsync(dialog.FileName, report)
+                .ConfigureAwait(true);
+
+            StatusText = $"Diagnostics exported to {dialog.FileName}";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            StatusText = $"Diagnostics export failed: {ex.Message}";
+        }
     }
 
     /// <summary>
