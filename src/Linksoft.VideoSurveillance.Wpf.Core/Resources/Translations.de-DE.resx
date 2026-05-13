@@ -1248,6 +1248,9 @@
   <data name="UsbAudioDeviceName" xml:space="preserve">
     <value>Audiogerät</value>
   </data>
+  <data name="UsbDeviceBusy" xml:space="preserve">
+    <value>Gerät wird von einer anderen App verwendet</value>
+  </data>
   <data name="UsbDeviceUnplugged" xml:space="preserve">
     <value>Gerät getrennt</value>
   </data>

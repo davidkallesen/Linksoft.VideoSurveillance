@@ -31,4 +31,7 @@ public sealed partial class VideoPlayer
 
     [LoggerMessage(Level = Microsoft.Extensions.Logging.LogLevel.Error, Message = "[{Source}] Exceeded {Max} consecutive read errors")]
     private partial void LogExceededConsecutiveReadErrors(string source, int max);
+
+    [LoggerMessage(Level = Microsoft.Extensions.Logging.LogLevel.Warning, Message = "[{Source}] Read-error burst classified: lastErrorCode={LastErrorCode}, reason={Reason}")]
+    private partial void LogReadErrorCode(string source, int lastErrorCode, StreamFailureReason reason);
 }

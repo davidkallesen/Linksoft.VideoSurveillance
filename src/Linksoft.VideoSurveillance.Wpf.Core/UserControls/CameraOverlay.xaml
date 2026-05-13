@@ -135,6 +135,30 @@
                                                    Key=UsbDeviceUnplugged}" />
                 </StackPanel>
 
+                <!--
+                    USB device-busy row. Same orthogonal-signal reasoning as
+                    DeviceUnpluggedRow above — a busy USB camera will *also*
+                    be ConnectionFailed; the amber hint just explains why.
+                    Auto-reconnect keeps retrying and clears this when the
+                    other app releases the device.
+                -->
+                <StackPanel
+                    x:Name="DeviceBusyRow"
+                    Orientation="Horizontal"
+                    Visibility="{Binding Path=IsDeviceBusy, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={x:Static atcValueConverters:BoolToVisibilityVisibleValueConverter.Instance}}">
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        FontSize="10"
+                        Foreground="#FFB347"
+                        Text="⛔" />
+                    <TextBlock
+                        FontSize="9"
+                        FontWeight="SemiBold"
+                        Foreground="#FFB347"
+                        Text="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                   Key=UsbDeviceBusy}" />
+                </StackPanel>
+
                 <!--  Recording indicator row  -->
                 <StackPanel x:Name="RecordingIndicator" Orientation="Horizontal">
                     <StackPanel.Style>
