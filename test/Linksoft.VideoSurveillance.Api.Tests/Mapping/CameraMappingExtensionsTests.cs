@@ -179,6 +179,7 @@ public class CameraMappingExtensionsTests
             DeviceId = "abc",
             FriendlyName = "Logitech BRIO",
             PreferAudio = true,
+            AudioDeviceName = "Microphone (Logitech BRIO)",
             Format = new UsbStreamFormat { Width = 1920, Height = 1080, FrameRate = 30, PixelFormat = "nv12" },
         };
         core.Display.DisplayName = "USB Cam";
@@ -193,6 +194,27 @@ public class CameraMappingExtensionsTests
         api.UsbFrameRate.Should().Be(30);
         api.UsbPixelFormat.Should().Be("nv12");
         api.UsbCaptureAudio.Should().BeTrue();
+        api.UsbAudioDeviceName.Should().Be("Microphone (Logitech BRIO)");
+    }
+
+    [Fact]
+    public void ToApiModel_UsbCamera_WithoutAudioDevice_EmitsEmptyAudioDeviceName()
+    {
+        var core = new CameraConfiguration();
+        core.Connection.Source = CoreCameraSource.Usb;
+        core.Connection.Usb = new UsbConnectionSettings
+        {
+            DeviceId = "abc",
+            FriendlyName = "Webcam",
+
+            // AudioDeviceName intentionally left default to pin that
+            // a USB camera with no audio device round-trips as "" not null.
+        };
+        core.Display.DisplayName = "USB Cam";
+
+        var api = core.ToApiModel();
+
+        api.UsbAudioDeviceName.Should().BeEmpty();
     }
 
     [Fact]
@@ -214,6 +236,7 @@ public class CameraMappingExtensionsTests
             UsbFrameRate: 60,
             UsbPixelFormat: "mjpeg",
             UsbCaptureAudio: true,
+            UsbAudioDeviceName: "Microphone (Logitech BRIO)",
             OverlayPosition: null,
             StreamUseLowLatencyMode: true,
             StreamMaxLatencyMs: 500,
@@ -228,11 +251,63 @@ public class CameraMappingExtensionsTests
         core.Connection.Usb!.DeviceId.Should().Be("device-1");
         core.Connection.Usb.FriendlyName.Should().Be("Logitech BRIO");
         core.Connection.Usb.PreferAudio.Should().BeTrue();
+        core.Connection.Usb.AudioDeviceName.Should().Be("Microphone (Logitech BRIO)");
         core.Connection.Usb.Format.Should().NotBeNull();
         core.Connection.Usb.Format!.Width.Should().Be(1280);
         core.Connection.Usb.Format.Height.Should().Be(720);
         core.Connection.Usb.Format.FrameRate.Should().Be(60);
         core.Connection.Usb.Format.PixelFormat.Should().Be("mjpeg");
+    }
+
+    [Fact]
+    public void ApplyUpdate_UsbAudioDeviceName_OverwritesExistingValue()
+    {
+        // Existing USB camera with an audio device set; an update that
+        // changes only the audio device name must take effect and not
+        // require resetting the entire format block. Mirrors the
+        // "PreferAudio is opt-in" wording in ApplyUsbUpdate.
+        var core = new CameraConfiguration();
+        core.Connection.Source = CoreCameraSource.Usb;
+        core.Connection.Usb = new UsbConnectionSettings
+        {
+            DeviceId = "device-1",
+            FriendlyName = "Logitech BRIO",
+            PreferAudio = true,
+            AudioDeviceName = "Old microphone",
+        };
+
+        var request = new UpdateCameraRequest(
+            DisplayName: null!,
+            Description: null!,
+            Source: null,
+            IpAddress: null!,
+            Port: 0,
+            Protocol: null,
+            Path: null!,
+            Username: null!,
+            Password: null!,
+            UsbDeviceId: null!,
+            UsbFriendlyName: null!,
+            UsbWidth: 0,
+            UsbHeight: 0,
+            UsbFrameRate: 0,
+            UsbPixelFormat: null!,
+            UsbCaptureAudio: false,
+            UsbAudioDeviceName: "Microphone (Logitech BRIO)",
+            OverlayPosition: null,
+            StreamUseLowLatencyMode: true,
+            StreamMaxLatencyMs: 500,
+            StreamRtspTransport: null,
+            StreamBufferDurationMs: 0);
+
+        core.ApplyUpdate(request);
+
+        core.Connection.Usb!.AudioDeviceName.Should().Be("Microphone (Logitech BRIO)");
+
+        // PreferAudio left intact: ApplyUsbUpdate only flips it to true,
+        // never back to false, so an unrelated update with usbCaptureAudio
+        // omitted (default false) must not silently disable audio.
+        core.Connection.Usb.PreferAudio.Should().BeTrue();
     }
 
     [Fact]
@@ -275,6 +350,7 @@ public class CameraMappingExtensionsTests
             UsbFrameRate: 0,
             UsbPixelFormat: string.Empty,
             UsbCaptureAudio: false,
+            UsbAudioDeviceName: string.Empty,
             OverlayPosition: null,
             StreamUseLowLatencyMode: true,
             StreamMaxLatencyMs: 500,
@@ -304,6 +380,7 @@ public class CameraMappingExtensionsTests
             UsbFrameRate: 0,
             UsbPixelFormat: null!,
             UsbCaptureAudio: false,
+            UsbAudioDeviceName: null!,
             OverlayPosition: null,
             StreamUseLowLatencyMode: true,
             StreamMaxLatencyMs: 500,
