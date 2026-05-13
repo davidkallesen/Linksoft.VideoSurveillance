@@ -244,10 +244,44 @@ In addition to the override system, each camera has its own direct configuration
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `IpAddress` | string | *(required)* | Camera IP address or hostname |
-| `Protocol` | enum | `Rtsp` | Streaming protocol |
-| `Port` | int | `554` | Streaming port (1-65535) |
-| `Path` | string | `null` | Optional stream path (e.g., `/stream`) |
+| `Source` | enum | `Network` | Camera source kind — see [Source Options](#camera-source-options). Disabled in the dialog after the camera is created (the source kind is part of the camera's identity). |
+| `IpAddress` | string | `""` | Network camera only — IP address or hostname |
+| `Protocol` | enum | `Rtsp` | Network camera only — streaming protocol |
+| `Port` | int | `554` | Network camera only — streaming port (1-65535) |
+| `Path` | string | `null` | Network camera only — optional stream path (e.g., `/stream`) |
+| `Usb` | object | `null` | USB camera only — see [USB Connection Settings](#usb-connection-settings-per-camera) |
+
+Network and USB shapes are mutually exclusive. The unused branch's fields are ignored at runtime. The `Linksoft.VideoSurveillance.Wpf.Core` dialog (`CameraConfigurationDialog`) presents `Source` as a radio at the top; the IP/Port/Auth fields and the USB device picker swap into view based on the selection.
+
+#### Camera Source Options
+
+| Source | Description |
+|--------|-------------|
+| `Network` | IP / RTSP / HTTP camera. Uses `IpAddress`, `Port`, `Protocol`, `Path`, and optional authentication. |
+| `Usb` | Local DirectShow / UVC webcam attached to the host. Uses the `Usb` sub-object. Windows-only at present (Linux V4L2 / macOS AVFoundation are Phase ≥10). |
+
+### USB Connection Settings (per camera)
+
+Populated when `Source = Usb`; `null` otherwise. Lives under `Connection.Usb` in `cameras.json` and behind the "USB" branch of the camera configuration dialog (`UsbDevicePart`).
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `DeviceId` | string | *(required)* | Stable DirectShow / Media Foundation symbolic link (e.g., `\\?\usb#vid_046d&pid_085e&mi_00#...`). The only identifier that survives a USB hub reshuffle — never use `FriendlyName` for identity. Locked in the dialog after the camera is created. |
+| `FriendlyName` | string | `""` | Human-readable name reported by the OS (e.g., `Logitech BRIO`). Display-only. |
+| `Format` | object | `null` | Capture format — see [USB Stream Format](#usb-stream-format). `null` lets the driver pick its default. Editable on existing cameras (format does not change identity). |
+| `PreferAudio` | bool | `false` | Open the companion audio capture device alongside video. Ignored unless `AudioDeviceName` is also set, so we don't blindly grab the first audio endpoint on the host. |
+| `AudioDeviceName` | string | `""` | DirectShow friendly name of the companion audio capture device (e.g., `Microphone (Logitech BRIO)`). Free-form — accepts whatever name appears in `ffmpeg -list_devices true -f dshow -i dummy`. |
+
+#### USB Stream Format
+
+The capture-format triple negotiated with the device. Maps to FFmpeg dshow / v4l2 options (`video_size`, `framerate`, `pixel_format`).
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `Width` | int | `0` | Frame width in pixels (1-8192) |
+| `Height` | int | `0` | Frame height in pixels (1-8192) |
+| `FrameRate` | double | `0` | Frame rate in Hz. `double` so non-integer rates such as 29.97 / 59.94 round-trip cleanly. |
+| `PixelFormat` | string | `""` | FFmpeg pixel-format string (e.g., `yuyv422`, `nv12`, `mjpeg`, `h264`). Pass-through — no enum mapping. Suppressed when building the dshow locator: Media Foundation enumerates *transcoded* formats but dshow only sees the camera's raw output, so forwarding `PixelFormat` to FFmpeg breaks MJPG-only cameras. See `CameraUriHelper.BuildSourceLocator`. |
 
 ### Authentication Settings (per camera)
 

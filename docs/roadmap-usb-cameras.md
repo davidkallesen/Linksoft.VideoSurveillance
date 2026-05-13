@@ -551,6 +551,7 @@ Many UVC cameras expose an integrated microphone. Add it as an optional companio
 - ⬜ `Remuxer.Open` is hard-coded to one output stream (`avformat_new_stream` once, `clonedPkt->stream_index = 0;`). Refactor `Open` to accept an optional audio codecpar + timebase, allocate a second output stream, and route packets by source stream index.
 - ⬜ `VideoPlayer.ProcessPackets` only forwards video packets — extend to call `remuxer.WritePacket(...)` for audio too once the Remuxer accepts them.
 - ✅ Dialog: surface the new `AudioDeviceName` field in `UsbDevicePart.xaml`. Free-form `atc:LabelTextBox` below the Capture-audio checkbox. `IsEnabled` cascades off `UsbCaptureAudio` so typing while audio is disabled is visually gated, but the model preserves the typed-in name across toggles. New `UsbAudioDeviceName` VM property + 2 round-trip tests + `UsbAudioDeviceName` translation key (en / da-DK / de-DE).
+- ⬜ API contract: add `usbAudioDeviceName` to the `Camera`, `CameraCreate`, and `CameraUpdate` schemas in `src/VideoSurveillance.yaml`, alongside the existing `usbCaptureAudio` field. Surface mapped through `CameraEndpointHandlerExtensions` (`ToApi` / `ToDomain`). Without it the API-client edition silently drops the audio device name on round-trip, so a server-stored USB camera that has audio configured locally on the WPF host can't be edited from the client. Found via the Phase 12 Swagger sanity check.
 
 **Acceptance for Phase 9:** USB cameras with a built-in mic produce MP4s with both streams; the toggle is opt-in and off by default. Packet-level work blocked on hardware.
 
@@ -575,7 +576,7 @@ Per-device exposure / brightness / focus / white-balance — Blue Iris-grade. Sc
 
 ---
 
-### Phase 12 — Documentation  🟨
+### Phase 12 — Documentation  ✅
 
 Documentation lands alongside the code, not after.
 
@@ -587,8 +588,8 @@ Documentation lands alongside the code, not after.
 - ✅ Updated `CLAUDE.md` (project root) — extended the "Solution Structure" list with `Linksoft.VideoEngine.Windows`, added the architecture note, and described `CameraSource` + `BuildSourceLocator` in a new "Camera Source vs. Protocol" section under Enums.
 - ✅ Created `docs/usb-cameras.md` — operator-facing architecture, configuration model, identity / hot-plug behaviour, DI wiring, API surface, privacy gotchas, scope deferrals, and a troubleshooting matrix. Covers enumeration, device-id stability, DirectShow caveats (single-tenant, format constraints), and the troubleshooting matrix (privacy permissions, `KSCATEGORY_VIDEO_CAMERA` not present, format mismatch). Known-incompatible-devices list grows as we hit them.
 - ✅ Added both docs (`docs/usb-cameras.md`, `docs/roadmap-usb-cameras.md`) to the `Linksoft.VideoSurveillance.slnx` `/docs/` folder.
-- ⬜ Update `docs/settings.md` — note where Source / USB fields appear in the camera dialog. Lower priority — picks up after the remaining Phase 4 dialog polish (Test Connection, edit-mode constraints) lands.
-- ⬜ Verify Swagger / OpenAPI consumer doc renders the new `/devices/usb` endpoint and the additive `Camera` fields correctly. Auto-generated; sanity check only.
+- ✅ Updated `docs/settings.md` — added the `Source` discriminator to the Per-Camera Connection Settings table, a new "USB Connection Settings (per camera)" subsection covering `DeviceId` / `FriendlyName` / `Format` / `PreferAudio` / `AudioDeviceName`, and a "USB Stream Format" sub-table (Width / Height / FrameRate / PixelFormat) with the dshow `PixelFormat` suppression rationale called out in-line.
+- ✅ Verified Swagger / OpenAPI consumer doc against `src/VideoSurveillance.yaml`. `/devices/usb` (operationId `listUsbDevices`) is present with a 200 → `UsbDeviceDescriptor[]` response and a 503 fallback for non-Windows hosts. The three `Camera*` schemas (read / create / update) consistently expose `source`, `usbDeviceId`, `usbFriendlyName`, `usbWidth`, `usbHeight`, `usbFrameRate`, `usbPixelFormat`, `usbCaptureAudio`. **Finding:** `AudioDeviceName` (added to the Core model in Phase 9.1) is *not* yet on the API surface — see the new bullet under Phase 9 for the contract delta.
 - ⏸️ Update `docs/roadmap.md` cross-link — the master roadmap is structured around the `VS.Wpf.App` rollout, not strictly per-feature; the file here stands on its own. Defer until master roadmap is restructured.
 
 ---
