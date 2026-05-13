@@ -106,6 +106,15 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
 
         EnsureDefaultLayoutExists();
         LoadStartupLayout();
+
+        // Subscribe to the watcher events here (not in Initialize) so the
+        // recording-stop + unplugged-state-push side effects are testable
+        // without a CameraGrid. The watcher's Start() — which on Windows
+        // creates the WMI subscription — still happens in Initialize so
+        // we don't burn resources before the UI is alive.
+        usbCameraWatcher.DeviceArrived += OnUsbDeviceArrived;
+        usbCameraWatcher.DeviceRemoved += OnUsbDeviceRemoved;
+        usbWatcherSubscribed = true;
     }
 
     /// <inheritdoc />
@@ -173,26 +182,73 @@ public sealed partial class CameraWallManager : ObservableObject, ICameraWallMan
 
     private void SubscribeToUsbWatcher()
     {
-        if (usbWatcherSubscribed)
-        {
-            return;
-        }
-
-        usbCameraWatcher.DeviceArrived += OnUsbDeviceArrived;
-        usbCameraWatcher.DeviceRemoved += OnUsbDeviceRemoved;
+        // Event hookup happens in the constructor. This method just
+        // kicks the watcher's underlying source (WMI on Windows) to
+        // begin firing events — kept separate so production code goes
+        // through Initialize but tests can fire events directly via
+        // NSubstitute's Raise.EventWith without needing Start().
         usbCameraWatcher.Start();
-        usbWatcherSubscribed = true;
     }
 
     private void OnUsbDeviceArrived(
         object? sender,
         UsbCameraEventArgs e)
-        => ShowUsbHotPlugToast(e.Device.DeviceId, isArrival: true);
+    {
+        ShowUsbHotPlugToast(e.Device.DeviceId, isArrival: true);
+        UpdateTileUnpluggedState(e.Device.DeviceId, unplugged: false);
+    }
 
     private void OnUsbDeviceRemoved(
         object? sender,
         UsbCameraEventArgs e)
-        => ShowUsbHotPlugToast(e.Device.DeviceId, isArrival: false);
+    {
+        ShowUsbHotPlugToast(e.Device.DeviceId, isArrival: false);
+        UpdateTileUnpluggedState(e.Device.DeviceId, unplugged: true);
+
+        // Stop any in-flight recording for an unplugged camera so the
+        // blinking record dot clears via the normal RecordingStateChanged
+        // path. Without this, the operator sees a still-blinking dot next
+        // to a "Device unplugged" indicator — confusing, and the file
+        // grows with no incoming packets anyway.
+        var camera = ResolveStoredUsbCamera(e.Device.DeviceId);
+        if (camera is not null)
+        {
+            recordingService.StopRecording(camera.Id);
+        }
+    }
+
+    private void UpdateTileUnpluggedState(
+        string deviceId,
+        bool unplugged)
+    {
+        if (string.IsNullOrEmpty(deviceId))
+        {
+            return;
+        }
+
+        var camera = ResolveStoredUsbCamera(deviceId);
+        if (camera is null)
+        {
+            return;
+        }
+
+        var grid = CameraGrid;
+        if (grid is null)
+        {
+            return;
+        }
+
+        // Watcher fires on a WMI thread (Windows) — marshal to the UI
+        // dispatcher before touching DependencyProperties.
+        if (grid.Dispatcher.CheckAccess())
+        {
+            grid.SetUsbDeviceUnplugged(camera.Id, unplugged);
+        }
+        else
+        {
+            _ = grid.Dispatcher.BeginInvoke(() => grid.SetUsbDeviceUnplugged(camera.Id, unplugged));
+        }
+    }
 
     private void ShowUsbHotPlugToast(
         string deviceId,

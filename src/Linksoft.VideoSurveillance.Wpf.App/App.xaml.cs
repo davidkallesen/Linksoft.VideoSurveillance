@@ -362,6 +362,7 @@ public partial class App
                     sp.GetRequiredService<GatewayService>(),
                     sp.GetRequiredService<SurveillanceHubService>(),
                     sp.GetRequiredService<IVideoPlayerFactory>(),
+                    sp.GetRequiredService<Linksoft.VideoSurveillance.Services.IUsbCameraWatcher>(),
                     apiBaseAddress));
                 services.AddSingleton(sp => new RecordingsViewModel(
                     sp.GetRequiredService<GatewayService>(),

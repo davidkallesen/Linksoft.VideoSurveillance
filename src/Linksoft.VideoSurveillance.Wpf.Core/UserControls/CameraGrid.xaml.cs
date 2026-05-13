@@ -375,6 +375,33 @@ public partial class CameraGrid
     }
 
     /// <summary>
+    /// Sets the device-unplugged flag on the tile bound to the
+    /// specified camera id. Called by the camera-wall manager (or the
+    /// API-client equivalent) from the
+    /// <see cref="Linksoft.VideoSurveillance.Services.IUsbCameraWatcher"/>
+    /// events — on
+    /// <see cref="Linksoft.VideoSurveillance.Services.IUsbCameraWatcher.DeviceRemoved"/>
+    /// with <paramref name="unplugged"/> = <c>true</c>, on
+    /// <see cref="Linksoft.VideoSurveillance.Services.IUsbCameraWatcher.DeviceArrived"/>
+    /// with <c>false</c>. The lookup is via the tracked-tile registry
+    /// (not the visual tree) so unplug events received before the tile
+    /// container materializes still hit the right instance once it
+    /// shows up.
+    /// </summary>
+    public void SetUsbDeviceUnplugged(
+        Guid cameraId,
+        bool unplugged)
+    {
+        var tile = trackedTiles.FirstOrDefault(t => t.Camera?.Id == cameraId);
+        if (tile is null)
+        {
+            return;
+        }
+
+        tile.IsDeviceUnplugged = unplugged;
+    }
+
+    /// <summary>
     /// Forces the tile bound to the specified camera id to re-read its
     /// display-time settings (rotation, overlay position, name, description)
     /// after the Edit Camera dialog has mutated the configuration in place.
