@@ -9,7 +9,6 @@ End-to-end plan for adding USB / DirectShow / UVC webcam support to **`Linksoft.
 | Emoji | Meaning |
 |-------|---------|
 | ⬜ | Not started |
-| 🟦 | Planned (queued for the next iteration) |
 | 🟨 | In progress |
 | ✅ | Complete |
 | 🧪 | Test scaffolding only (red — no production code yet) |
@@ -177,7 +176,7 @@ Foundation. **No UI, no FFmpeg, no Windows.** Pure POCOs + interfaces that every
 - ✅ 🟩 `test/.../Models/UsbStreamFormatTests.cs` — clone / value-equality / `ToString` formatting for fractional FPS.
 - ✅ 🟩 `test/.../Models/Settings/UsbConnectionSettingsTests.cs` — clone / round-trip / null-format equality.
 - ✅ Shipped:
-  - `Models/Settings/UsbConnectionSettings.cs` — `DeviceId` (symbolic link, the stable identity), `FriendlyName` (display only), `Format` (`UsbStreamFormat?`), `PreferAudio` (bool).
+  - `Models/Settings/UsbConnectionSettings.cs` — `DeviceId` (symbolic link, the stable identity), `FriendlyName` (display only), `Format` (`UsbStreamFormat?`), `PreferAudio` (bool). (`AudioDeviceName` added later in Phase 9.1.)
   - `Models/UsbDeviceDescriptor.cs` — `DeviceId`, `FriendlyName`, `VendorId`, `ProductId`, `IsPresent`, `Capabilities` (read-only list, currently empty by design).
   - `Models/UsbStreamFormat.cs` — `Width`, `Height`, `FrameRate` (double), `PixelFormat` (string).
 - ⏸️ `Enums/UsbPixelFormat.cs` — kept as string for FFmpeg pass-through; deferred unless we hit a real need.
@@ -309,13 +308,13 @@ A new project: `Linksoft.VideoEngine.Windows` (net10.0-windows). Pure-managed CO
 - ✅ Added `Linksoft.VideoEngine.Windows.DependencyInjection.ServiceCollectionExtensions.AddWindowsUsbCameraSupport(IServiceCollection)` — replaces any prior `IUsbCameraEnumerator` / `IUsbCameraWatcher` binding with the Windows implementation.
 - ✅ Wired into `Linksoft.CameraWall.Wpf.App.App.xaml.cs` (project reference + DI call) and `Linksoft.VideoSurveillance.Api.Program.cs` (project reference + DI call gated on `OperatingSystem.IsWindows()`).
 - 📝 Note: Did **not** use `[Registration]` (Atc.SourceGenerators) — explicit DI is clearer here because the Windows enumerator deliberately replaces the Null fallback that the rest of the stack composes against. Both call-sites do an explicit `AddSingleton<IUsbCameraEnumerator>(NullUsbCameraEnumerator.Instance)` first so non-Windows hosts (future) compose correctly.
-- ✅ The API host moved from `net10.0` → `net10.0-windows` to reference `Linksoft.VideoEngine.Windows`. Linux server support remains an explicit Phase 10 deferral.
+- ✅ The API host moved from `net10.0` → `net10.0-windows` to reference `Linksoft.VideoEngine.Windows`. Linux server support remains an explicit Phase ≥10 deferral.
 
 **Acceptance for Phase 3:** `IUsbCameraEnumerator.EnumerateDevices()` returns the actual webcams on a Windows host; hot-plug events fire within 2 s of unplug/replug.
 
 ---
 
-### Phase 4 — WPF Dialog Redesign  🟨 *(Source radio + USB picker + capability-driven cascading dropdowns shipped with full ViewModel coverage. Tile USB badge + live preview still ⬜.)*
+### Phase 4 — WPF Dialog Redesign  ✅ *(Source radio + USB picker + capability-driven cascading dropdowns + Test-Connection USB coverage + edit-mode locks all shipped. Tile USB badge landed under Phase 5.6; the live-preview thumbnail in the mockup is an undocumented stretch goal — see ⏸️ note below.)*
 
 This is the biggest UX change. Today the dialog **always** shows a network scanner banner up top and IP/Port/Auth fields below. We need a clean source-type switch where USB cameras feel native, not bolted-on.
 
@@ -357,16 +356,16 @@ When editing an existing camera, the **Source** radio is disabled (changing sour
 
 #### 4.2 Source-type switch (TDD)
 
-- ⬜ 🧪 `test/Linksoft.VideoSurveillance.Wpf.Core.Tests/Dialogs/CameraConfigurationDialogViewModelSourceTests.cs`:
+- ✅ 🟩 `test/Linksoft.VideoSurveillance.Wpf.Core.Tests/Dialogs/CameraConfigurationDialogViewModelSourceTests.cs`:
   - `IsNetworkSource_True_When_Connection_Source_Is_Network`
   - `IsUsbSource_True_When_Connection_Source_Is_Usb`
   - `Switching_From_Network_To_Usb_Resets_IpAddress_Port_Auth`
   - `Switching_From_Usb_To_Network_Resets_UsbDeviceId_Format`
   - `Source_Switch_Disabled_When_Editing_Existing_Camera`
-- ⬜ Extend `CameraConfigurationDialogViewModel`:
-  - New `SelectedSourceKey` property (binds to a `LabelComboBox` or two radios via `IsNetworkSource`/`IsUsbSource`).
+- ✅ Extended `CameraConfigurationDialogViewModel`:
+  - `SelectedSourceKey` property binds to the source picker and exposes `IsNetworkSource` / `IsUsbSource` for visibility triggers.
   - Switch logic clears the *other* source's fields so a half-saved network config can't leak into a USB camera.
-- ⬜ Add `Linksoft.VideoSurveillance.Wpf.Core/Dialogs/Parts/CameraConfigurations/SourceTypePart.xaml` — radios + visibility triggers for Network / USB sub-trees.
+- ✅ Added `Linksoft.VideoSurveillance.Wpf.Core/Dialogs/Parts/CameraConfigurations/SourceTypePart.xaml` — radios + visibility triggers for Network / USB sub-trees.
 
 #### 4.3 USB device picker (TDD)
 
@@ -378,15 +377,17 @@ When editing an existing camera, the **Source** radio is disabled (changing sour
 
 #### 4.4 Test Connection (USB)
 
-- ⬜ 🧪 `TestConnection_UsbCamera_Opens_Pipeline_Reports_FrameSize`
-- ⬜ Reuse the existing `videoPlayerFactory.Create()` flow in `CameraConfigurationDialogViewModel.TestStreamWithPlayerAsync`. The only delta: build the locator via `CameraUriHelper.BuildSourceLocator` so dshow path is exercised.
+- ✅ 🟩 `TestConnection_UsbCamera_Opens_Pipeline_With_Dshow_Locator` — uses NSubstitute-mocked `IVideoPlayerFactory` / `IVideoPlayer`, captures the `StreamOptions` passed to `player.Open`, and asserts `InputFormat = Dshow`, `RawDeviceSpec = "video=Logitech BRIO"`, `VideoSize = "1920x1080"`, `FrameRate = "30"`, plus an explicit `PixelFormat.Should().BeNull()` regression guard. The PixelFormat suppression is intentional (see `CameraUriHelper.cs:120`): MF enumerates transcoded formats but dshow only sees raw output, so forwarding PixelFormat breaks MJPG-only cameras.
+- ✅ `videoPlayerFactory.Create()` flow in `CameraConfigurationDialogViewModel.TestConnection` / `TestStreamWithPlayerAsync` already builds via `CameraUriHelper.BuildSourceLocator(camera.Core)` (lines 1504-1547) and maps the locator's `InputFormat` / `RawDeviceSpec` / `VideoSize` / `FrameRate` / `PixelFormat` into `StreamOptions`. The branching is transparent — Network cameras get `rtsp://` + `InputFormatKind.Auto`; USB cameras get the dshow path. No production-code change needed under §4.4 itself.
 
 #### 4.5 Edit-mode constraints
 
-- ⬜ Disable `SourceTypePart` when `IsEditing == true` (mirror existing `CanEditConnectionSettings`).
-- ⬜ For USB cameras, allow **format / FPS / pixel format** to be edited even on existing cameras (these don't change identity).
+- ✅ `SourceTypePart` is disabled when `IsEditing == true` — `CanEditSource => isNew` on `CameraConfigurationDialogViewModel`, bound on both `RadioButton.IsEnabled` in `SourceTypePart.xaml`. Covered by `CanEditSource_Is_True_For_New_Camera_And_False_For_Existing`.
+- ✅ For USB cameras, the **device dropdown + Refresh** are locked on edit (`CanEditUsbDevice => isNew`, bound in `UsbDevicePart.xaml`) — the symbolic link is the camera's identity. Format / FPS / pixel-format / capture-audio / audio-device-name stay editable since they don't change identity. Covered by `CanEditUsbDevice_Is_True_For_New_Camera_And_False_For_Existing`.
 
-**Acceptance for Phase 4:** add → save → reopen flow works for both Network and USB cameras with no surprises; ViewModel has full unit coverage; existing network-camera tests still pass.
+**Acceptance for Phase 4:** ✅ add → save → reopen flow works for both Network and USB cameras with no surprises; ViewModel has full unit coverage (40 WpfCore tests green, including the new `TestConnection_UsbCamera_Opens_Pipeline_With_Dshow_Locator` and `CanEditUsbDevice_Is_True_For_New_Camera_And_False_For_Existing`); existing network-camera tests still pass.
+
+⏸️ **Stretch goal — Live preview thumbnail.** The Phase 4 UX mockup shows a "Live preview thumbnail — first frame after Test" panel; no §4.x checkbox ever required it. The current `TestConnection` only reports success/failure text. Picking up the thumbnail later would mean reusing `IVideoPlayer.CaptureFrameAsync` after the first `Playing` state and surfacing the PNG bytes in the dialog. Deferred until there's a concrete request.
 
 ---
 
@@ -442,14 +443,14 @@ Bring the headless server up to parity. Touches `VideoSurveillance.yaml`, genera
 
 #### 6.4 Server pipeline factory
 
-- ⬜ 🧪 `VideoEngineMediaPipelineFactoryUsbTests` — not yet authored as a separate suite; the path is exercised end-to-end by the integration tests on the WPF side and would benefit from a self-hosted runner test in due course.
+- ⏸️ 🧪 `VideoEngineMediaPipelineFactoryUsbTests` — deferred. The locator-to-`StreamOptions` mapping is already covered by `DemuxerOptionPairsTests` + `CameraUriHelperTests`; a dedicated factory suite would only add value alongside a self-hosted hardware runner.
 - ✅ `VideoEngineMediaPipelineFactory.Create(CameraConfiguration)` now calls `CameraUriHelper.BuildSourceLocator(camera)` and feeds the locator to `pipeline.Open(SourceLocator, StreamSettings)`. Network cameras keep the legacy behaviour (locator built from `camera.BuildUri()`); USB cameras get the dshow input-format + device-spec.
 
 #### 6.5 SignalR `SurveillanceHub`
 
 - ✅ HLS streaming for USB sources is explicitly **not yet implemented** — `StreamingService.CreateSession` throws `NotSupportedException` with a clear message when `camera.Connection.Source != CameraSource.Network`, so the SignalR `StreamStarted` event for USB cameras surfaces as a clean error rather than a confused ffmpeg launch. Tracked as a Phase ≥9 enhancement.
-- ⬜ `RecordingStateChanged` / `MotionDetected` re-validation for USB — these events ride downstream of the demuxer in design; empirical hardware verification deferred.
-- ⬜ Add a new SignalR event `UsbDeviceUnplugged(cameraId)` + broadcaster test. Lands with Phase 8 lifecycle wiring.
+- ⏸️ `RecordingStateChanged` / `MotionDetected` re-validation for USB — these events ride downstream of the demuxer in design; empirical hardware verification deferred to a self-hosted runner.
+- ✅ SignalR `UsbCameraLifecycleChanged(cameraId, phase, deviceId, friendlyName, timestamp)` event shipped under Phase 7.2 (broadcaster + client adapter + tests). Supersedes the originally-planned `UsbDeviceUnplugged(cameraId)` — `phase` carries `Unplugged` / `Replugged` so the same event covers both lifecycle transitions.
 
 #### 6.6 Storage migration
 
@@ -519,12 +520,16 @@ Polish the lifecycle so USB cameras behave well in a 24×7 deployment.
   - `DoWorkAsync` short-circuits unplugged cameras: stops any active recording, schedules the managed pipeline for deferred disposal, and `continue`s without attempting reconnection. **Avoids the ~1 M / yr failed-attempt anti-pattern flagged in `CameraConnectionService.cs` original comments.**
   - On `DeviceUnplugged` → `LogUsbCameraUnplugged`, stops recording, schedules pipeline disposal.
   - On `DeviceReplugged` → clears `backoffs[cameraId]` so the next tick attempts the camera fresh, no matter how long the unplug lasted.
-- ⬜ Surface the unplugged state in the camera overlay (`CameraOverlay`) — text: *"Device unplugged"*, icon: 🔌-with-X. Tracked under Phase 4 (dialog UI work).
+- ✅ Surface the unplugged state in the camera overlay. **Design pivot from the original "🔌-with-X icon on `CameraOverlay`" framing** — the overlay's `ConnectionState` DP is typed `Atc.Network.ConnectionState` (via `WPF.Core/GlobalUsings.cs:74` alias) which has no `DeviceUnplugged` value, so squeezing the new state into the existing colored-dot row would have meant either re-aliasing the enum (large refactor) or losing the distinct visual. Instead, modelled device-presence as **orthogonal** to connection state — a USB camera can be `ConnectionFailed` *and* unplugged at the same time, and operators want both signals.
+  - New `IsDeviceUnplugged` bool `[DependencyProperty]` on `CameraOverlay` + an extra status row (🔌 glyph + localized `UsbDeviceUnplugged` text, amber) below the existing connection-state row.
+  - New `IsDeviceUnplugged` bool `[DependencyProperty]` on `CameraTile` cascading to its overlay (mirrors the existing `ConnectionState` cascade pattern).
+  - New `CameraGrid.SetUsbDeviceUnplugged(Guid cameraId, bool unplugged)` helper that looks the tile up via the existing `trackedTiles` registry.
+  - **Standalone edition** (`CameraWallManager`): subscribes to `IUsbCameraWatcher` in its constructor (decoupled from `Initialize` so the recording-stop side effect is unit-testable without a `CameraGrid`); on `DeviceRemoved` → marshals to the grid dispatcher to set `IsDeviceUnplugged = true`, *and* calls `recordingService.StopRecording(camera.Id)` so the blinking record dot clears via the normal `RecordingStateChanged` path (advisor flagged that an unplugged camera with a still-blinking dot is a misleading visual state). On `DeviceArrived` → clears the bool. Covered by `CameraWallManagerUsbTests` (4 new tests: stored-camera-stops-recording, unknown-device-id-no-op, arrival-doesn't-stop, network-camera-defence-in-depth; 7 total in the class).
+  - **API-client edition** (`LiveViewViewModel`): subscribes to `IUsbCameraWatcher` (which on this edition is `RemoteUsbCameraWatcher`, SignalR-fed). On events, marshals to `Application.Current.Dispatcher` (with a sync fallback when `Application.Current is null` so future unit tests don't deadlock) and updates the matching `CameraTileViewModel.IsDeviceUnplugged` by case-insensitive `UsbDeviceId` match. `CameraTileViewModel` gained `UsbDeviceId` and `IsDeviceUnplugged` observable properties; `LiveViewViewModel.LoadAsync` populates `UsbDeviceId` from the API DTO's `Camera.UsbDeviceId`. The API-client `CameraTileBadge.xaml` got the same 🔌 + amber row.
+  - **Test coverage parity:** standalone has direct unit coverage via `CameraWallManagerUsbTests`; the API-client edition relies on the identical logic shape — constructing `GatewayService` in a unit test fights the `EndpointRegistration` source generator (17 endpoint interfaces, all generated, with namespaces only resolvable at compile time) so a `LiveViewViewModelUsbTests` was attempted and dropped after the cost / value calculation. The standalone tests pin the watcher-event → matching-tile transitions; the API-client edition uses the same `IUsbCameraWatcher.DeviceArrived` / `DeviceRemoved` contract, so behaviour is reasonably guarded. Self-hosted-runner end-to-end would close the gap; tracked alongside the other hardware-required items.
 - ⬜ Update `JsonCameraStorageService` so a deleted USB camera does not block re-adding the same physical device later. Lower priority — the coordinator's resolution is `FirstOrDefault` so duplicate device IDs are safely tolerated; storage hardening can land alongside other Phase 5 polish.
 
-**Acceptance for Phase 8:** ✅ on the server side. Unplug + replug cycles are now seamless from `CameraConnectionService`'s perspective; logs make the lifecycle explicit (`LogUsbCameraUnplugged` / `LogUsbCameraReplugged`); the test suite exercises every transition deterministically without a real watcher.
-
-**Acceptance for Phase 8:** unplug + replug cycles are seamless; the camera resumes recording within 5 s of replug; logs make the lifecycle explicit.
+**Acceptance for Phase 8:** ✅ on the server side. Unplug + replug cycles are now seamless from `CameraConnectionService`'s perspective; logs make the lifecycle explicit (`LogUsbCameraUnplugged` / `LogUsbCameraReplugged`); the test suite exercises every transition deterministically without a real watcher. End-to-end "camera resumes recording within 5 s of replug" verification stays open against a hardware runner.
 
 ---
 
@@ -570,7 +575,7 @@ Per-device exposure / brightness / focus / white-balance — Blue Iris-grade. Sc
 
 ---
 
-### Phase 12 — Documentation  ✅
+### Phase 12 — Documentation  🟨
 
 Documentation lands alongside the code, not after.
 
@@ -579,18 +584,12 @@ Documentation lands alongside the code, not after.
 - ✅ Updated `docs/architecture.md`:
   - Added `Linksoft.VideoEngine.Windows` node to the assembly dependency graph + edges from `App` and `API`.
   - Inline note explaining the optional Windows-only USB layer + Phase 10 deferral for V4L2.
-- ⬜ Update `docs/settings.md` — note where Source / USB fields appear in the camera dialog. Lower priority — the dialog UI hasn't landed yet (Phase 4.2), so settings doc entries would describe vapourware.
-- ⏸️ Update `docs/roadmap.md` cross-link — the master roadmap is structured around the `VS.Wpf.App` rollout, not strictly per-feature; the file here stands on its own. Defer until master roadmap is restructured.
 - ✅ Updated `CLAUDE.md` (project root) — extended the "Solution Structure" list with `Linksoft.VideoEngine.Windows`, added the architecture note, and described `CameraSource` + `BuildSourceLocator` in a new "Camera Source vs. Protocol" section under Enums.
-- ✅ Created `docs/usb-cameras.md` — operator-facing architecture, configuration model, identity / hot-plug behaviour, DI wiring, API surface, privacy gotchas, scope deferrals, and a troubleshooting matrix.
-- ✅ Added all three docs (`docs/usb-cameras.md`, `docs/roadmap-usb-cameras.md`) to the `Linksoft.VideoSurveillance.slnx` `/docs/` folder.
-- ⬜ New page `docs/usb-cameras.md`:
-  - How USB-camera enumeration works
-  - Device-id stability across reboots
-  - DirectShow caveats (single-tenant, format constraints)
-  - Troubleshooting (privacy permissions, `KSCATEGORY_VIDEO_CAMERA` not present, format mismatch)
-  - Known incompatible devices
-- ⬜ Update API consumer doc (Swagger) — already auto-generated from OpenAPI; verify the new endpoints render correctly.
+- ✅ Created `docs/usb-cameras.md` — operator-facing architecture, configuration model, identity / hot-plug behaviour, DI wiring, API surface, privacy gotchas, scope deferrals, and a troubleshooting matrix. Covers enumeration, device-id stability, DirectShow caveats (single-tenant, format constraints), and the troubleshooting matrix (privacy permissions, `KSCATEGORY_VIDEO_CAMERA` not present, format mismatch). Known-incompatible-devices list grows as we hit them.
+- ✅ Added both docs (`docs/usb-cameras.md`, `docs/roadmap-usb-cameras.md`) to the `Linksoft.VideoSurveillance.slnx` `/docs/` folder.
+- ⬜ Update `docs/settings.md` — note where Source / USB fields appear in the camera dialog. Lower priority — picks up after the remaining Phase 4 dialog polish (Test Connection, edit-mode constraints) lands.
+- ⬜ Verify Swagger / OpenAPI consumer doc renders the new `/devices/usb` endpoint and the additive `Camera` fields correctly. Auto-generated; sanity check only.
+- ⏸️ Update `docs/roadmap.md` cross-link — the master roadmap is structured around the `VS.Wpf.App` rollout, not strictly per-feature; the file here stands on its own. Defer until master roadmap is restructured.
 
 ---
 
