@@ -126,6 +126,15 @@ public partial class CameraConfigurationDialogViewModel : ViewModelDialogBase
     public bool CanEditSource => isNew;
 
     /// <summary>
+    /// Gets a value indicating whether the USB device selection (device
+    /// dropdown + refresh) can be changed. Disabled on existing cameras
+    /// because the symbolic link is the camera's identity. Format / FPS /
+    /// pixel-format / audio toggles remain editable — they don't change
+    /// identity.
+    /// </summary>
+    public bool CanEditUsbDevice => isNew;
+
+    /// <summary>
     /// Convenience predicate for XAML visibility triggers — the
     /// network-only branch (BasicConnectionSettings, Authentication,
     /// NetworkScanner) is shown when this is <see langword="true"/>.
