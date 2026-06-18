@@ -44,7 +44,7 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 FontSize="16"
-                Foreground="White"
+                Foreground="{DynamicResource AtcApps.Brushes.ThemeForeground}"
                 Text="Loading cameras..." />
         </Border>
     </Grid>
