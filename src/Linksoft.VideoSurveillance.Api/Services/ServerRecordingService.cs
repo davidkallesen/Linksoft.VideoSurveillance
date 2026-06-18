@@ -65,7 +65,11 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
             return false;
         }
 
-        ReclaimDiskSpaceIfNeeded();
+        if (!ReclaimDiskSpaceIfNeeded())
+        {
+            LogDiskSpaceGateFailed(camera.Display.DisplayName);
+            return false;
+        }
 
         var filePath = GenerateRecordingFilename(camera, GetEffectiveRecordingFormat(camera));
 
@@ -208,18 +212,18 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         // No-op for server implementation (no post-motion timer needed)
     }
 
-    private void ReclaimDiskSpaceIfNeeded()
+    private bool ReclaimDiskSpaceIfNeeded()
     {
         var cleanup = settingsService.Recording.Cleanup;
         if (!cleanup.EnableDiskSpaceGuard)
         {
-            return;
+            return true;
         }
 
         var recordingPath = settingsService.Recording.RecordingPath;
         if (string.IsNullOrEmpty(recordingPath))
         {
-            return;
+            return true;
         }
 
         try
@@ -227,14 +231,14 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
             var driveRoot = Path.GetPathRoot(Path.GetFullPath(recordingPath));
             if (string.IsNullOrEmpty(driveRoot))
             {
-                return;
+                return true;
             }
 
             var minFreeBytes = (long)cleanup.MinFreeSpaceMb * 1024L * 1024L;
             var freeBytes = new DriveInfo(driveRoot).AvailableFreeSpace;
             if (freeBytes >= minFreeBytes)
             {
-                return;
+                return true;
             }
 
             LogDiskSpaceLowBeforeRecording(driveRoot, freeBytes / (1024.0 * 1024.0), cleanup.MinFreeSpaceMb);
@@ -259,15 +263,16 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
             if (run.StillShort)
             {
                 LogDiskSpaceReclaimStillShort(driveRoot, run.BytesFreed / (1024.0 * 1024.0));
+                return false;
             }
-            else
-            {
-                LogDiskSpaceReclaimComplete(run.BytesFreed / (1024.0 * 1024.0), run.DeletedFiles.Count);
-            }
+
+            LogDiskSpaceReclaimComplete(run.BytesFreed / (1024.0 * 1024.0), run.DeletedFiles.Count);
+            return true;
         }
         catch (Exception ex)
         {
             LogDiskSpaceReclaimFailed(ex);
+            return true;
         }
     }
 

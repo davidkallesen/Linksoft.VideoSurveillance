@@ -67,4 +67,7 @@ public partial class RecordingService
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Disk space reclaim failed before recording start")]
     private partial void LogDiskSpaceReclaimFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Disk space still below threshold after reclaim — recording aborted for camera '{CameraName}'")]
+    private partial void LogDiskSpaceGateFailed(string cameraName);
 }

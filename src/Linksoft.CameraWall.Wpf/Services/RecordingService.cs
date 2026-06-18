@@ -77,7 +77,11 @@ public partial class RecordingService : IRecordingService, IDisposable
             return false;
         }
 
-        ReclaimDiskSpaceIfNeeded();
+        if (!ReclaimDiskSpaceIfNeeded())
+        {
+            LogDiskSpaceGateFailed(camera.Display.DisplayName);
+            return false;
+        }
 
         var format = GetEffectiveRecordingFormat(camera);
         var filePath = GenerateRecordingFilename(camera, format);
@@ -201,6 +205,12 @@ public partial class RecordingService : IRecordingService, IDisposable
             {
                 return false;
             }
+        }
+
+        if (!ReclaimDiskSpaceIfNeeded())
+        {
+            LogDiskSpaceGateFailed(camera.Display.DisplayName);
+            return false;
         }
 
         var format = GetEffectiveRecordingFormat(camera);
@@ -443,18 +453,18 @@ public partial class RecordingService : IRecordingService, IDisposable
         disposed = true;
     }
 
-    private void ReclaimDiskSpaceIfNeeded()
+    private bool ReclaimDiskSpaceIfNeeded()
     {
         var cleanup = settingsService.Recording.Cleanup;
         if (!cleanup.EnableDiskSpaceGuard)
         {
-            return;
+            return true;
         }
 
         var recordingPath = settingsService.Recording.RecordingPath;
         if (string.IsNullOrEmpty(recordingPath))
         {
-            return;
+            return true;
         }
 
         try
@@ -462,14 +472,14 @@ public partial class RecordingService : IRecordingService, IDisposable
             var driveRoot = Path.GetPathRoot(Path.GetFullPath(recordingPath));
             if (string.IsNullOrEmpty(driveRoot))
             {
-                return;
+                return true;
             }
 
             var minFreeBytes = (long)cleanup.MinFreeSpaceMb * 1024L * 1024L;
             var freeBytes = new DriveInfo(driveRoot).AvailableFreeSpace;
             if (freeBytes >= minFreeBytes)
             {
-                return;
+                return true;
             }
 
             LogDiskSpaceLowBeforeRecording(driveRoot, freeBytes / (1024.0 * 1024.0), cleanup.MinFreeSpaceMb);
@@ -494,15 +504,16 @@ public partial class RecordingService : IRecordingService, IDisposable
             if (run.StillShort)
             {
                 LogDiskSpaceReclaimStillShort(driveRoot, run.BytesFreed / (1024.0 * 1024.0));
+                return false;
             }
-            else
-            {
-                LogDiskSpaceReclaimComplete(run.BytesFreed / (1024.0 * 1024.0), run.DeletedFiles.Count);
-            }
+
+            LogDiskSpaceReclaimComplete(run.BytesFreed / (1024.0 * 1024.0), run.DeletedFiles.Count);
+            return true;
         }
         catch (Exception ex)
         {
             LogDiskSpaceReclaimFailed(ex);
+            return true;
         }
     }
 
