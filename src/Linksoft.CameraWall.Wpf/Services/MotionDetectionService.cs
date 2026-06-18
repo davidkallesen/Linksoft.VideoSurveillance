@@ -6,7 +6,7 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// Uses a staggered scheduler to analyze cameras in sequence, preventing CPU spikes.
 /// </summary>
 [Registration(Lifetime.Singleton)]
-public class MotionDetectionService : IMotionDetectionService, IDisposable
+public partial class MotionDetectionService : IMotionDetectionService, IDisposable
 {
     private const int DefaultAnalysisWidth = 800;
     private const int DefaultAnalysisHeight = 600;
@@ -19,9 +19,19 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
     private readonly List<Guid> scheduledCameras = [];
     private readonly Lock schedulerLock = new();
     private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
+    private readonly ILogger<MotionDetectionService> logger;
     private DispatcherTimer? schedulerTimer;
     private int currentCameraIndex;
     private bool disposed;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MotionDetectionService"/> class.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    public MotionDetectionService(ILogger<MotionDetectionService> logger)
+    {
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
     /// <inheritdoc/>
     public event EventHandler<MotionDetectedEventArgs>? MotionDetected;
@@ -243,10 +253,15 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
             }
 
             ProcessCapturedFrame(cameraId, frameBytes);
+            context.ConsecutiveFails = 0;
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently ignore - next frame will be analyzed
+            context.ConsecutiveFails++;
+            if (context.ConsecutiveFails == 1 || context.ConsecutiveFails % 60 == 0)
+            {
+                LogFrameCaptureFailed(ex, cameraId, context.ConsecutiveFails);
+            }
         }
         finally
         {
@@ -328,9 +343,9 @@ public class MotionDetectionService : IMotionDetectionService, IDisposable
             // Store current frame for next comparison
             context.PreviousFrame = currentFrame;
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently ignore frame analysis errors - next frame will be analyzed
+            LogFrameAnalysisFailed(ex, cameraId);
         }
     }
 

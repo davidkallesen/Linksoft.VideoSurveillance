@@ -1331,8 +1331,6 @@ public partial class CameraTile : IDisposable
             if (ConnectionState == ConnectionState.Connected)
             {
                 // Motion detection settings changed - restart motion detection with new settings
-                Debug.WriteLine($"[MotionDetection] Override changed for '{Camera?.Display.DisplayName}' - restarting motion detection");
-
                 StopMotionDetection();
 
                 if (ShouldRunMotionDetection)
@@ -2439,7 +2437,7 @@ public partial class CameraTile : IDisposable
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Snapshot failed: {ex.Message}");
+                LogSnapshotFailed(ex);
             }
         }
     }
@@ -2520,11 +2518,6 @@ public partial class CameraTile : IDisposable
                 return;
             }
 
-            Debug.WriteLine(
-                $"[MotionDetection] Motion event for '{Camera.Display.DisplayName}' - " +
-                $"IsActive={e.IsMotionActive}, BoundingBoxCount={e.BoundingBoxes.Count}, " +
-                $"ChangePercentage={e.ChangePercentage:F2}%");
-
             // Update motion state based on IsMotionActive
             var wasMotionDetected = IsMotionDetected;
             IsMotionDetected = e.IsMotionActive;
@@ -2533,7 +2526,6 @@ public partial class CameraTile : IDisposable
             // Update bounding box overlay
             if (e is { IsMotionActive: true, HasBoundingBoxes: true })
             {
-                Debug.WriteLine($"[MotionDetection] Updating {e.BoundingBoxes.Count} bounding boxes, AnalysisRes={e.AnalysisWidth}x{e.AnalysisHeight}");
                 UpdateMotionBoundingBoxes(e.BoundingBoxes.ToRects(), e.AnalysisWidth, e.AnalysisHeight);
             }
             else
@@ -2658,7 +2650,6 @@ public partial class CameraTile : IDisposable
         var motionOverlay = GetMotionBoundingBoxOverlay();
         if (motionOverlay is null)
         {
-            Debug.WriteLine($"[MotionDetection] ApplyBoundingBoxSettings for '{Camera?.Display.DisplayName ?? "null"}' - overlay not found!");
             return;
         }
 
@@ -2667,10 +2658,6 @@ public partial class CameraTile : IDisposable
         var effectiveColor = GetEffectiveBoundingBoxColor();
         var effectiveThickness = GetEffectiveBoundingBoxThickness();
         var effectiveSmoothing = GetEffectiveBoundingBoxSmoothing();
-
-        Debug.WriteLine(
-            $"[MotionDetection] ApplyBoundingBoxSettings for '{Camera?.Display.DisplayName ?? "null"}' - " +
-            $"ShowBoundingBoxInGrid={effectiveShowInGrid}, Color={effectiveColor}, Thickness={effectiveThickness}");
 
         motionOverlay.IsOverlayEnabled = effectiveShowInGrid;
         motionOverlay.BoxColor = effectiveColor;
@@ -2733,10 +2720,6 @@ public partial class CameraTile : IDisposable
             containerSize = new Size(VideoPlayer.Overlay.ActualWidth, VideoPlayer.Overlay.ActualHeight);
         }
 
-        Debug.WriteLine(
-            $"[MotionDetection] UpdateMotionBoundingBoxes - overlay.IsOverlayEnabled={motionOverlay.IsOverlayEnabled}, " +
-            $"containerSize={containerSize.Width}x{containerSize.Height}, analysisRes={analysisWidth}x{analysisHeight}, boxCount={boundingBoxes?.Count ?? 0}");
-
         motionOverlay.UpdateBoundingBoxes(boundingBoxes, containerSize);
     }
 
@@ -2745,15 +2728,8 @@ public partial class CameraTile : IDisposable
     /// </summary>
     public void StartMotionDetection()
     {
-        Debug.WriteLine(
-            $"[MotionDetection] StartMotionDetection called for '{Camera?.Display.DisplayName ?? "null"}' - " +
-            $"Camera={Camera is not null}, Pipeline={mediaPipeline is not null}, Service={motionDetectionService is not null}, " +
-            $"EnableRecordingOnMotion={GetEffectiveEnableRecordingOnMotion()}, ShowBoundingBoxInGrid={GetEffectiveShowBoundingBoxInGrid()}, " +
-            $"ShouldRun={ShouldRunMotionDetection}");
-
         if (Camera is null || mediaPipeline is null || motionDetectionService is null || !ShouldRunMotionDetection)
         {
-            Debug.WriteLine("[MotionDetection] StartMotionDetection early return - preconditions not met");
             return;
         }
 
@@ -2780,11 +2756,6 @@ public partial class CameraTile : IDisposable
             },
         };
 
-        Debug.WriteLine(
-            $"[MotionDetection] Starting detection for '{Camera.Display.DisplayName}' with " +
-            $"ShowInGrid={settings.BoundingBox.ShowInGrid}, MinArea={settings.BoundingBox.MinArea}, " +
-            $"Sensitivity={settings.Sensitivity}, Resolution={settings.AnalysisWidth}x{settings.AnalysisHeight}, " +
-            $"OverrideMinArea={Camera.Overrides?.MotionDetection.BoundingBox.MinArea}");
         motionDetectionService.StartDetection(Camera.Id, mediaPipeline, settings);
 
         // Apply bounding box settings AFTER starting detection so the overlay gets the correct resolution

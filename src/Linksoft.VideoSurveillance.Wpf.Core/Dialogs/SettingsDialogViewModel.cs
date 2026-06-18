@@ -379,7 +379,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         // Motion Detection Tab
         MotionSensitivity = DropDownItemsFactory.DefaultMotionSensitivity;
         PostMotionDurationSeconds = DropDownItemsFactory.DefaultPostMotionDuration;
-        AnalysisFrameRate = 30;
+        AnalysisFrameRate = 15;
         SelectedAnalysisResolution = DropDownItemsFactory.DefaultMotionAnalysisResolution;
         CooldownSeconds = 5;
         ShowBoundingBoxInGrid = false;

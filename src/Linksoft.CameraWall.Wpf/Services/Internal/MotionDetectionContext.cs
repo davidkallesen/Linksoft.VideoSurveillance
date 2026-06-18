@@ -33,9 +33,12 @@ internal sealed class MotionDetectionContext : IDisposable
     [SuppressMessage("", "SA1401: Volatile requires a field, not a property", Justification = "OK")]
     public volatile bool IsAnalyzing;
 
+    public int ConsecutiveFails { get; set; }
+
     public void Dispose()
     {
         PreviousFrame = null;
         LastBoundingBoxes = [];
+        ConsecutiveFails = 0;
     }
 }

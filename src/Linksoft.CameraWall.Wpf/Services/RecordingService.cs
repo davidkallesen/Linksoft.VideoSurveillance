@@ -308,14 +308,6 @@ public partial class RecordingService : IRecordingService, IDisposable
         {
             StopRecording(cameraId);
         }
-
-        // Stop all timers
-        foreach (var timer in postMotionTimers.Values)
-        {
-            timer.Stop();
-        }
-
-        postMotionTimers.Clear();
     }
 
     /// <inheritdoc/>
