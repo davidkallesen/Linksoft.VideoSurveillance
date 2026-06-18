@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="480"
     d:DesignWidth="640"
-    Background="#1E1E1E"
+    Background="{DynamicResource AtcApps.Brushes.ThemeBackground}"
     mc:Ignorable="d">
 
     <Grid>
@@ -192,7 +192,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             FontSize="16"
-            Foreground="#888888"
+            Foreground="{DynamicResource AtcApps.Brushes.Gray5}"
             Text="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
                                        Key=NoCamerasConfigured}"
             Visibility="Collapsed" />
