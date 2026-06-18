@@ -933,6 +933,30 @@
   <data name="RetentionPeriod1Year" xml:space="preserve">
     <value>1 Jahr</value>
   </data>
+  <data name="EnableDiskSpaceGuard" xml:space="preserve">
+    <value>Festplatzwächter aktivieren</value>
+  </data>
+  <data name="MinFreeSpace" xml:space="preserve">
+    <value>Mindest-Festplatzspeicher</value>
+  </data>
+  <data name="MinFreeSpace500Mb" xml:space="preserve">
+    <value>500 MB</value>
+  </data>
+  <data name="MinFreeSpace1Gb" xml:space="preserve">
+    <value>1 GB</value>
+  </data>
+  <data name="MinFreeSpace2Gb" xml:space="preserve">
+    <value>2 GB (Empfohlen)</value>
+  </data>
+  <data name="MinFreeSpace5Gb" xml:space="preserve">
+    <value>5 GB</value>
+  </data>
+  <data name="MinFreeSpace10Gb" xml:space="preserve">
+    <value>10 GB</value>
+  </data>
+  <data name="MinFreeSpace20Gb" xml:space="preserve">
+    <value>20 GB</value>
+  </data>
   <data name="RecordingSegmentation" xml:space="preserve">
     <value>Aufnahme-Segmentierung</value>
   </data>

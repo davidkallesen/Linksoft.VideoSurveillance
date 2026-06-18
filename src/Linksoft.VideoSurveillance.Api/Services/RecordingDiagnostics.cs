@@ -22,4 +22,11 @@ public sealed record RecordingDiagnostics(
     string FilePath,
     DateTime StartedAtUtc,
     TimeSpan Duration,
-    bool IsPipelineActive);
+    bool IsPipelineActive)
+{
+    /// <summary>
+    /// True when the recording drive's free space is below the configured
+    /// <c>MinFreeSpaceMb</c> threshold at the time diagnostics were collected.
+    /// </summary>
+    public bool DiskSpaceLow { get; init; }
+}

@@ -45,6 +45,23 @@
                 Orientation="Vertical"
                 SelectedKey="{Binding Path=SelectedSnapshotRetention, Mode=TwoWay}" />
 
+            <Separator Margin="0,8,0,0" />
+
+            <atc:LabelToggleSwitch
+                IsEnabled="{Binding Path=IsCleanupEnabled}"
+                IsOn="{Binding Path=IsDiskSpaceGuardEnabled, Mode=TwoWay}"
+                LabelPosition="Right"
+                LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                Key=EnableDiskSpaceGuard}" />
+
+            <atc:LabelComboBox
+                IsEnabled="{Binding Path=IsDiskSpaceGuardControlEnabled}"
+                Items="{Binding Path=MinFreeSpaceItems}"
+                LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
+                                                Key=MinFreeSpace}"
+                Orientation="Vertical"
+                SelectedKey="{Binding Path=SelectedMinFreeSpace, Mode=TwoWay}" />
+
         </StackPanel>
     </GroupBox>
 </UserControl>

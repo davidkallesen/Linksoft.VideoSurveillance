@@ -219,6 +219,7 @@ try
                 UptimeSeconds = (long)uptime.TotalSeconds,
                 ActiveRecordings = diagnostics.Count,
                 StuckRecordings = stuck,
+                DiskSpaceLow = diagnostics.Any(d => d.DiskSpaceLow),
                 Sessions = diagnostics.Select(d => new
                 {
                     d.CameraId,
@@ -227,6 +228,7 @@ try
                     StartedAtUtc = d.StartedAtUtc.ToString("o", System.Globalization.CultureInfo.InvariantCulture),
                     DurationSeconds = (long)d.Duration.TotalSeconds,
                     d.IsPipelineActive,
+                    d.DiskSpaceLow,
                 }),
             });
         })

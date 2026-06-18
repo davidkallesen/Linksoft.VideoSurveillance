@@ -236,7 +236,7 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         => EnableTimelapse;
 
     // Media Cleanup Settings
-    [ObservableProperty(DependentPropertyNames = [nameof(IsCleanupEnabled), nameof(IsSnapshotRetentionEnabled)])]
+    [ObservableProperty(DependentPropertyNames = [nameof(IsCleanupEnabled), nameof(IsSnapshotRetentionEnabled), nameof(IsDiskSpaceGuardControlEnabled)])]
     private string selectedCleanupSchedule = DropDownItemsFactory.DefaultMediaCleanupSchedule;
 
     public IDictionary<string, string> CleanupScheduleItems
@@ -268,6 +268,22 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
     /// </summary>
     public bool IsSnapshotRetentionEnabled
         => IsCleanupEnabled && IncludeSnapshotsInCleanup;
+
+    [ObservableProperty(DependentPropertyNames = [nameof(IsDiskSpaceGuardControlEnabled)])]
+    private bool isDiskSpaceGuardEnabled = true;
+
+    [ObservableProperty]
+    private string selectedMinFreeSpace = DropDownItemsFactory.DefaultMinFreeSpaceMb;
+
+    public IDictionary<string, string> MinFreeSpaceItems
+        => DropDownItemsFactory.MinFreeSpaceItems;
+
+    /// <summary>
+    /// Gets a value indicating whether the minimum free-space dropdown
+    /// should be enabled (cleanup is on AND disk guard is on).
+    /// </summary>
+    public bool IsDiskSpaceGuardControlEnabled
+        => IsCleanupEnabled && IsDiskSpaceGuardEnabled;
 
     // Playback Overlay Settings
     [ObservableProperty]
@@ -394,6 +410,8 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SelectedRecordingRetention = DropDownItemsFactory.DefaultRecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
         IncludeSnapshotsInCleanup = false;
         SelectedSnapshotRetention = DropDownItemsFactory.DefaultSnapshotRetentionDays.ToString(CultureInfo.InvariantCulture);
+        IsDiskSpaceGuardEnabled = true;
+        SelectedMinFreeSpace = DropDownItemsFactory.DefaultMinFreeSpaceMb;
 
         // Playback Overlay
         ShowPlaybackFilename = true;
@@ -494,6 +512,8 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
         SelectedRecordingRetention = recording.Cleanup.RecordingRetentionDays.ToString(CultureInfo.InvariantCulture);
         IncludeSnapshotsInCleanup = recording.Cleanup.IncludeSnapshots;
         SelectedSnapshotRetention = recording.Cleanup.SnapshotRetentionDays.ToString(CultureInfo.InvariantCulture);
+        IsDiskSpaceGuardEnabled = recording.Cleanup.EnableDiskSpaceGuard;
+        SelectedMinFreeSpace = recording.Cleanup.MinFreeSpaceMb.ToString(CultureInfo.InvariantCulture);
 
         // Playback Overlay Settings
         ShowPlaybackFilename = recording.PlaybackOverlay.ShowFilename;
@@ -635,6 +655,10 @@ public partial class SettingsDialogViewModel : ViewModelDialogBase
                 RecordingRetentionDays = recordingRetention > 0 ? recordingRetention : DropDownItemsFactory.DefaultRecordingRetentionDays,
                 IncludeSnapshots = IncludeSnapshotsInCleanup,
                 SnapshotRetentionDays = snapshotRetention > 0 ? snapshotRetention : DropDownItemsFactory.DefaultSnapshotRetentionDays,
+                EnableDiskSpaceGuard = IsDiskSpaceGuardEnabled,
+                MinFreeSpaceMb = int.TryParse(SelectedMinFreeSpace, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minFreeSpaceMb) && minFreeSpaceMb > 0
+                    ? minFreeSpaceMb
+                    : int.Parse(DropDownItemsFactory.DefaultMinFreeSpaceMb, CultureInfo.InvariantCulture),
             },
             PlaybackOverlay = new PlaybackOverlaySettings
             {

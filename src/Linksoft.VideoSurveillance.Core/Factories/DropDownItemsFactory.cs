@@ -125,6 +125,16 @@ public static class DropDownItemsFactory
         ["365"] = "1 Year",
     };
 
+    public static IDictionary<string, string> MinFreeSpaceItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["512"] = "500 MB",
+        ["1024"] = "1 GB",
+        ["2048"] = "2 GB (Recommended)",
+        ["5120"] = "5 GB",
+        ["10240"] = "10 GB",
+        ["20480"] = "20 GB",
+    };
+
     public static IDictionary<string, string> MaxRecordingDurationItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["15"] = "15 minutes",
@@ -177,6 +187,7 @@ public static class DropDownItemsFactory
     public const string DefaultDayFilter = "_ALL_";
     public const string DefaultTimeFilter = "_ALL_";
     public const string DefaultTimelapseInterval = "5m";
+    public const string DefaultMinFreeSpaceMb = "2048";
 
     public static int GetMaxResolutionFromQuality(string videoQuality)
         => videoQuality switch

@@ -200,6 +200,8 @@ When `EnableHourlySegmentation` is enabled, recordings are split at clock-aligne
 | `RecordingRetentionDays` | int | `30` | Keep recordings for this many days |
 | `IncludeSnapshots` | bool | `false` | Also clean up old snapshots |
 | `SnapshotRetentionDays` | int | `7` | Keep snapshots for this many days |
+| `EnableDiskSpaceGuard` | bool | `true` | Automatically reclaim disk space before starting recordings and after each scheduled cleanup pass |
+| `MinFreeSpaceMb` | int | `2048` | Minimum free disk space in MB to maintain (oldest recordings deleted first when below this threshold) |
 
 #### Cleanup Schedule Options
 
@@ -486,7 +488,9 @@ All default paths are relative to `%ProgramData%\Linksoft\CameraWall\`:
       "schedule": "disabled",
       "recordingRetentionDays": 30,
       "includeSnapshots": false,
-      "snapshotRetentionDays": 7
+      "snapshotRetentionDays": 7,
+      "enableDiskSpaceGuard": true,
+      "minFreeSpaceMb": 2048
     },
     "playbackOverlay": {
       "showFilename": true,

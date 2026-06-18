@@ -11,4 +11,12 @@ public sealed record MediaCleanupRunResult(
     IReadOnlyList<string> DeletedFiles,
     IReadOnlyList<string> DeletedThumbnails,
     long BytesFreed,
-    IReadOnlyList<MediaCleanupRunError> Errors);
+    IReadOnlyList<MediaCleanupRunError> Errors)
+{
+    /// <summary>
+    /// Gets a value indicating whether the reclaim pass exhausted all eligible
+    /// files without reaching the target free-space goal. Only meaningful for
+    /// results returned by <see cref="MediaCleanupRunner.ReclaimBySize"/>.
+    /// </summary>
+    public bool StillShort { get; init; }
+}

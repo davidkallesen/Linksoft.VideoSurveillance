@@ -119,6 +119,11 @@ public partial class MediaCleanupService : BackgroundServiceBase<MediaCleanupSer
                 result.ErrorCount);
 
             OnCleanupCompleted(result);
+
+            // Disk-space guard runs after age-based cleanup so the reclaim pass
+            // benefits from any files already deleted above.
+            await ReclaimBySpaceAsync().ConfigureAwait(false);
+
             return result;
         }
         finally
@@ -128,6 +133,112 @@ public partial class MediaCleanupService : BackgroundServiceBase<MediaCleanupSer
                 isRunning = false;
             }
         }
+    }
+
+    /// <inheritdoc/>
+    public async Task<MediaCleanupResult> RunDiskSpaceReclaimAsync()
+    {
+        lock (lockObject)
+        {
+            if (isRunning)
+            {
+                LogCleanupAlreadyInProgress();
+                return new MediaCleanupResult();
+            }
+
+            isRunning = true;
+        }
+
+        try
+        {
+            return await ReclaimBySpaceAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            lock (lockObject)
+            {
+                isRunning = false;
+            }
+        }
+    }
+
+    private async Task<MediaCleanupResult> ReclaimBySpaceAsync()
+    {
+        var cleanup = settingsService.Recording.Cleanup;
+        if (!cleanup.EnableDiskSpaceGuard)
+        {
+            return new MediaCleanupResult();
+        }
+
+        var recordingPath = settingsService.Recording.RecordingPath;
+        if (string.IsNullOrEmpty(recordingPath))
+        {
+            return new MediaCleanupResult();
+        }
+
+        var minFreeBytes = (long)cleanup.MinFreeSpaceMb * 1024L * 1024L;
+
+        try
+        {
+            var driveRoot = Path.GetPathRoot(Path.GetFullPath(recordingPath));
+            if (string.IsNullOrEmpty(driveRoot))
+            {
+                return new MediaCleanupResult();
+            }
+
+            var freeBytes = new DriveInfo(driveRoot).AvailableFreeSpace;
+            if (freeBytes >= minFreeBytes)
+            {
+                LogDiskSpaceOk(driveRoot, freeBytes / (1024.0 * 1024.0), cleanup.MinFreeSpaceMb);
+                return new MediaCleanupResult();
+            }
+
+            LogDiskSpaceLow(driveRoot, freeBytes / (1024.0 * 1024.0), cleanup.MinFreeSpaceMb);
+        }
+        catch (Exception ex)
+        {
+            LogDiskSpaceCheckFailed(ex, recordingPath);
+            return new MediaCleanupResult();
+        }
+
+        var activePaths = GetActiveRecordingPaths();
+
+        var run = await Task.Run(() => MediaCleanupRunner.ReclaimBySize(
+            recordingPath,
+            RecordingExtensions,
+            minFreeBytes,
+            activePaths,
+            deleteCompanionThumbnail: true)).ConfigureAwait(false);
+
+        foreach (var f in run.DeletedFiles)
+        {
+            LogDeletedOldMediaFile(f);
+        }
+
+        foreach (var t in run.DeletedThumbnails)
+        {
+            LogDeletedThumbnail(t);
+        }
+
+        var result = new MediaCleanupResult
+        {
+            RecordingsDeleted = run.DeletedFiles.Count,
+            ThumbnailsDeleted = run.DeletedThumbnails.Count,
+            BytesFreed = run.BytesFreed,
+            ErrorCount = run.Errors.Count,
+        };
+
+        if (run.StillShort)
+        {
+            LogDiskSpaceReclaimStillShort(recordingPath, run.BytesFreed / (1024.0 * 1024.0));
+        }
+        else
+        {
+            LogDiskSpaceReclaimComplete(recordingPath, run.BytesFreed / (1024.0 * 1024.0), run.DeletedFiles.Count);
+        }
+
+        OnCleanupCompleted(result);
+        return result;
     }
 
     private void RunCleanupCore(

@@ -12,14 +12,6 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// </summary>
 public sealed partial class ServerMediaCleanupService : BackgroundServiceBase<ServerMediaCleanupService>
 {
-    // Free-space thresholds for the recording drive. Below "low" we warn so
-    // operators can reduce retention or free space before recordings fail;
-    // below "critical" we promote to error level. We don't refuse new
-    // recordings here — that policy belongs upstream — but the alarm gives
-    // the operator time to act before MKVs corrupt mid-write.
-    private const double DiskSpaceLowGb = 10.0;
-    private const double DiskSpaceCriticalGb = 2.0;
-
     private static readonly string[] RecordingExtensions = [".mp4", ".mkv", ".avi"];
     private static readonly string[] SnapshotExtensions = [".png", ".jpg", ".jpeg", ".bmp"];
 
@@ -85,43 +77,87 @@ public sealed partial class ServerMediaCleanupService : BackgroundServiceBase<Se
             FormatBytes(summary.BytesFreed),
             summary.ErrorCount);
 
-        CheckDiskSpace(settingsService.Recording.RecordingPath);
+        await CheckAndReclaimDiskSpaceAsync(settingsService.Recording.RecordingPath).ConfigureAwait(false);
     }
 
-    private void CheckDiskSpace(string recordingPath)
+    private async Task CheckAndReclaimDiskSpaceAsync(string recordingPath)
     {
         if (string.IsNullOrEmpty(recordingPath))
         {
             return;
         }
 
+        var cleanup = settingsService.Recording.Cleanup;
+        if (!cleanup.EnableDiskSpaceGuard)
+        {
+            return;
+        }
+
+        var minFreeBytes = (long)cleanup.MinFreeSpaceMb * 1024L * 1024L;
+
+        long freeBytes;
+        string driveRoot;
         try
         {
-            var root = Path.GetPathRoot(Path.GetFullPath(recordingPath));
-            if (string.IsNullOrEmpty(root))
+            driveRoot = Path.GetPathRoot(Path.GetFullPath(recordingPath)) ?? string.Empty;
+            if (string.IsNullOrEmpty(driveRoot))
             {
                 return;
             }
 
-            var drive = new DriveInfo(root);
-            var freeGb = drive.AvailableFreeSpace / (1024.0 * 1024.0 * 1024.0);
-
-            if (freeGb < DiskSpaceCriticalGb)
-            {
-                LogDiskSpaceCritical(root, freeGb);
-            }
-            else if (freeGb < DiskSpaceLowGb)
-            {
-                LogDiskSpaceLow(root, freeGb);
-            }
-            else
-            {
-                LogDiskSpaceOk(root, freeGb);
-            }
+            freeBytes = new DriveInfo(driveRoot).AvailableFreeSpace;
         }
         catch (Exception ex)
         {
             LogDiskSpaceCheckFailed(ex, recordingPath);
+            return;
+        }
+
+        var freeMb = freeBytes / (1024.0 * 1024.0);
+
+        if (freeBytes >= minFreeBytes)
+        {
+            LogDiskSpaceOk(driveRoot, freeMb);
+            return;
+        }
+
+        // Below minimum — escalate to Error when critically low (≤ 25% of threshold)
+        if (freeBytes <= minFreeBytes / 4)
+        {
+            LogDiskSpaceCritical(driveRoot, freeMb);
+        }
+        else
+        {
+            LogDiskSpaceLow(driveRoot, freeMb, cleanup.MinFreeSpaceMb);
+        }
+
+        LogDiskSpaceReclaimStarted(recordingPath, cleanup.MinFreeSpaceMb);
+
+        var activePaths = GetActiveRecordingPaths();
+        var run = await Task.Run(() => MediaCleanupRunner.ReclaimBySize(
+            recordingPath,
+            RecordingExtensions,
+            minFreeBytes,
+            activePaths,
+            deleteCompanionThumbnail: true)).ConfigureAwait(false);
+
+        foreach (var f in run.DeletedFiles)
+        {
+            LogDeletedFile(f);
+        }
+
+        foreach (var t in run.DeletedThumbnails)
+        {
+            LogDeletedThumbnail(t);
+        }
+
+        if (run.StillShort)
+        {
+            LogDiskSpaceReclaimStillShort(recordingPath, run.BytesFreed / (1024.0 * 1024.0));
+        }
+        else
+        {
+            LogDiskSpaceReclaimComplete(recordingPath, run.BytesFreed / (1024.0 * 1024.0), run.DeletedFiles.Count);
         }
     }
 

@@ -9,6 +9,8 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     // a slow keyframe interval, short enough to recover within one CCM tick.
     private const int StalePacketThresholdSeconds = 15;
 
+    private static readonly string[] RecordingFileExtensions = [".mp4", ".mkv", ".avi"];
+
     private readonly IApplicationSettingsService settingsService;
     private readonly ICameraStorageService cameraStorageService;
     private readonly ILogger<ServerRecordingService> logger;
@@ -62,6 +64,8 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         {
             return false;
         }
+
+        ReclaimDiskSpaceIfNeeded();
 
         var filePath = GenerateRecordingFilename(camera, settingsService.Recording.RecordingFormat);
 
@@ -180,6 +184,69 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         // No-op for server implementation (no post-motion timer needed)
     }
 
+    private void ReclaimDiskSpaceIfNeeded()
+    {
+        var cleanup = settingsService.Recording.Cleanup;
+        if (!cleanup.EnableDiskSpaceGuard)
+        {
+            return;
+        }
+
+        var recordingPath = settingsService.Recording.RecordingPath;
+        if (string.IsNullOrEmpty(recordingPath))
+        {
+            return;
+        }
+
+        try
+        {
+            var driveRoot = Path.GetPathRoot(Path.GetFullPath(recordingPath));
+            if (string.IsNullOrEmpty(driveRoot))
+            {
+                return;
+            }
+
+            var minFreeBytes = (long)cleanup.MinFreeSpaceMb * 1024L * 1024L;
+            var freeBytes = new DriveInfo(driveRoot).AvailableFreeSpace;
+            if (freeBytes >= minFreeBytes)
+            {
+                return;
+            }
+
+            LogDiskSpaceLowBeforeRecording(driveRoot, freeBytes / (1024.0 * 1024.0), cleanup.MinFreeSpaceMb);
+
+            var skipPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var session in sessions.Values)
+            {
+                if (!string.IsNullOrEmpty(session.CurrentFilePath))
+                {
+                    skipPaths.Add(Path.GetFullPath(session.CurrentFilePath));
+                    skipPaths.Add(Path.GetFullPath(Path.ChangeExtension(session.CurrentFilePath, ".png")));
+                }
+            }
+
+            var run = MediaCleanupRunner.ReclaimBySize(
+                recordingPath,
+                RecordingFileExtensions,
+                minFreeBytes,
+                skipPaths,
+                deleteCompanionThumbnail: true);
+
+            if (run.StillShort)
+            {
+                LogDiskSpaceReclaimStillShort(driveRoot, run.BytesFreed / (1024.0 * 1024.0));
+            }
+            else
+            {
+                LogDiskSpaceReclaimComplete(run.BytesFreed / (1024.0 * 1024.0), run.DeletedFiles.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            LogDiskSpaceReclaimFailed(ex);
+        }
+    }
+
     /// <inheritdoc/>
     public string GenerateRecordingFilename(
         CameraConfiguration camera,
@@ -239,6 +306,8 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
             Directory.CreateDirectory(directory);
         }
 
+        ReclaimDiskSpaceIfNeeded();
+
         try
         {
             // Atomic switch: packets arriving from the demux thread mid-switch
@@ -282,6 +351,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     public IReadOnlyList<RecordingDiagnostics> GetDiagnostics()
     {
         var snapshot = sessions.Values.ToList();
+        var diskSpaceLow = IsDiskSpaceLow();
         var result = new List<RecordingDiagnostics>(snapshot.Count);
         foreach (var session in snapshot)
         {
@@ -294,10 +364,40 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
                 session.CurrentFilePath,
                 session.StartTime,
                 session.Duration,
-                pipelineActive));
+                pipelineActive)
+            {
+                DiskSpaceLow = diskSpaceLow,
+            });
         }
 
         return result;
+    }
+
+    private bool IsDiskSpaceLow()
+    {
+        try
+        {
+            var cleanup = settingsService.Recording.Cleanup;
+            if (!cleanup.EnableDiskSpaceGuard)
+            {
+                return false;
+            }
+
+            var recordingPath = settingsService.Recording.RecordingPath;
+            var driveRoot = Path.GetPathRoot(Path.GetFullPath(recordingPath));
+            if (string.IsNullOrEmpty(driveRoot))
+            {
+                return false;
+            }
+
+            var freeBytes = new DriveInfo(driveRoot).AvailableFreeSpace;
+            var minFreeBytes = (long)cleanup.MinFreeSpaceMb * 1024L * 1024L;
+            return freeBytes < minFreeBytes;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <inheritdoc/>
