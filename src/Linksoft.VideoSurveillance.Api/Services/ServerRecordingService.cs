@@ -67,7 +67,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
 
         ReclaimDiskSpaceIfNeeded();
 
-        var filePath = GenerateRecordingFilename(camera, settingsService.Recording.RecordingFormat);
+        var filePath = GenerateRecordingFilename(camera, GetEffectiveRecordingFormat(camera));
 
         var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -76,11 +76,35 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         }
 
         pipeline.StartRecording(filePath);
-        pipelines[camera.Id] = pipeline;
 
         var session = new RecordingSession(camera.Id, camera.Display.DisplayName, filePath, isManualRecording: true);
 
-        sessions[camera.Id] = session;
+        if (!sessions.TryAdd(camera.Id, session))
+        {
+            // Lost the race — a concurrent StartRecording already registered
+            // this camera. Clean up the pipeline we started and bail.
+            try
+            {
+                pipeline.StopRecording();
+            }
+            catch (Exception ex)
+            {
+                LogStopPipelineFailed(ex, camera.Id);
+            }
+
+            try
+            {
+                pipeline.Dispose();
+            }
+            catch (Exception ex)
+            {
+                LogDisposePipelineFailed(ex, camera.Id);
+            }
+
+            return false;
+        }
+
+        pipelines[camera.Id] = pipeline;
 
         // Forward subsequent pipeline connection-state changes onto the
         // aggregated event so the broadcaster (and any other observer) sees
@@ -262,7 +286,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         var ext = string.IsNullOrEmpty(format) ? "mp4" : format.TrimStart('.');
 
         return UniqueFilename.EnsureUnique(Path.Combine(
-            settingsService.Recording.RecordingPath,
+            GetEffectiveRecordingPath(camera),
             safeName,
             $"{safeName}_{timestamp}.{ext}"));
     }
@@ -298,7 +322,7 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
         }
 
         var oldFilePath = session.CurrentFilePath;
-        var newFilePath = GenerateRecordingFilename(camera, settingsService.Recording.RecordingFormat);
+        var newFilePath = GenerateRecordingFilename(camera, GetEffectiveRecordingFormat(camera));
 
         var directory = Path.GetDirectoryName(newFilePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -328,7 +352,13 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
             State = session.State,
         };
 
-        sessions[cameraId] = newSession;
+        if (!sessions.TryUpdate(cameraId, newSession, session))
+        {
+            LogSegmentFailed(
+                new InvalidOperationException("Concurrent modification during segment boundary"),
+                cameraId);
+            return false;
+        }
 
         RaiseStateChanged(cameraId, session.State, RecordingState.Idle, oldFilePath);
         RaiseStateChanged(cameraId, RecordingState.Idle, newSession.State, newFilePath);
@@ -472,6 +502,18 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     public void Dispose()
     {
         StopAllRecordings();
+    }
+
+    private string GetEffectiveRecordingPath(CameraConfiguration camera)
+    {
+        var overridePath = camera.Overrides?.Recording.RecordingPath;
+        return !string.IsNullOrEmpty(overridePath) ? overridePath : settingsService.Recording.RecordingPath;
+    }
+
+    private string GetEffectiveRecordingFormat(CameraConfiguration camera)
+    {
+        var overrideFormat = camera.Overrides?.Recording.RecordingFormat;
+        return !string.IsNullOrEmpty(overrideFormat) ? overrideFormat : settingsService.Recording.RecordingFormat;
     }
 
     private void RaiseStateChanged(

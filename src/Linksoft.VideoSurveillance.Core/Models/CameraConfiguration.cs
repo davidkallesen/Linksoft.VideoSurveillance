@@ -64,8 +64,11 @@ public class CameraConfiguration
             ? string.Empty
             : $"/{Connection.Path.TrimStart('/')}";
 
-        return new Uri($"{scheme}://{userInfo}{Connection.IpAddress}:{Connection.Port}{normalizedPath}");
+        return new Uri($"{scheme}://{userInfo}{BracketIfIPv6(Connection.IpAddress)}:{Connection.Port}{normalizedPath}");
     }
+
+    private static string BracketIfIPv6(string host)
+        => host.StartsWith('[') ? host : host.Contains(':', StringComparison.Ordinal) ? $"[{host}]" : host;
 
     /// <inheritdoc />
     public override string ToString()

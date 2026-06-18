@@ -75,6 +75,7 @@ global using IGitHubReleaseService = Linksoft.VideoSurveillance.Services.IGitHub
 global using IMediaPipeline = Linksoft.VideoSurveillance.Services.IMediaPipeline;
 global using IMotionDetectionService = Linksoft.VideoSurveillance.Services.IMotionDetectionService;
 global using MotionDetectedEventArgs = Linksoft.VideoSurveillance.Events.MotionDetectedEventArgs;
+global using ReconnectBackoff = Linksoft.VideoSurveillance.Helpers.ReconnectBackoff;
 global using RecordingSession = Linksoft.VideoSurveillance.Models.RecordingSession;
 global using RecordingStateChangedEventArgs = Linksoft.VideoSurveillance.Events.RecordingStateChangedEventArgs;
 global using SafeJsonFile = Linksoft.VideoSurveillance.Helpers.SafeJsonFile;

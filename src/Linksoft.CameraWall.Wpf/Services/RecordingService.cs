@@ -376,13 +376,8 @@ public partial class RecordingService : IRecordingService, IDisposable
             // in the close/open gap.
             pipeline.SwitchRecording(newFilePath);
 
-            // 4. Remove old session
-            sessions.TryRemove(cameraId, out _);
-
-            // 5. Fire state changed event for old segment completion
-            OnRecordingStateChanged(cameraId, oldState, RecordingState.Idle, oldFilePath);
-
-            // 7. Create new session with preserved state
+            // 4. Atomically replace the session so IsRecording never dips
+            // to false during the segment boundary.
             var newState = isManualRecording ? RecordingState.Recording : RecordingState.RecordingMotion;
             var newSession = new RecordingSession(cameraId, camera.Display.DisplayName, newFilePath, isManualRecording)
             {
@@ -390,19 +385,15 @@ public partial class RecordingService : IRecordingService, IDisposable
                 State = newState,
             };
 
-            if (!sessions.TryAdd(cameraId, newSession))
-            {
-                pipeline.StopRecording();
-                LogFailedToAddNewSession(camera.Display.DisplayName);
-                return false;
-            }
+            sessions[cameraId] = newSession;
 
             // Keep pipeline reference
             pipelines[cameraId] = pipeline;
 
             LogRecordingSegmented(camera.Display.DisplayName, newFilePath);
 
-            // 8. Fire state changed events for new segment start
+            // 5/8. Fire state-change events: old segment complete, then new segment start.
+            OnRecordingStateChanged(cameraId, oldState, RecordingState.Idle, oldFilePath);
             OnRecordingStateChanged(cameraId, RecordingState.Idle, newState, newFilePath);
 
             // 9. Start thumbnail capture for new segment with configured tile count
