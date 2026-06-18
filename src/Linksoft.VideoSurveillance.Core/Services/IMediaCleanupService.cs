@@ -10,4 +10,13 @@ public interface IMediaCleanupService
     bool IsRunning { get; }
 
     Task<MediaCleanupResult> RunCleanupAsync();
+
+    /// <summary>
+    /// Checks free space on the recording drive and, if below the configured
+    /// <see cref="MediaCleanupSettings.MinFreeSpaceMb"/> threshold, deletes the
+    /// oldest recordings first until the target is met or all non-active files
+    /// are exhausted. No-op when
+    /// <see cref="MediaCleanupSettings.EnableDiskSpaceGuard"/> is <c>false</c>.
+    /// </summary>
+    Task<MediaCleanupResult> RunDiskSpaceReclaimAsync();
 }

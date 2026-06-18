@@ -215,6 +215,20 @@ public static class DropDownItemsFactory
         };
 
     /// <summary>
+    /// Gets the minimum free disk space options for dropdowns (in megabytes).
+    /// Keys are MB values as strings, values are display text.
+    /// </summary>
+    public static IDictionary<string, string> MinFreeSpaceItems { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["512"] = "500 MB",
+        ["1024"] = "1 GB",
+        ["2048"] = "2 GB (Recommended)",
+        ["5120"] = "5 GB",
+        ["10240"] = "10 GB",
+        ["20480"] = "20 GB",
+    };
+
+    /// <summary>
     /// Gets the timelapse capture interval options for dropdowns.
     /// Keys are interval codes (e.g., "10s", "1m"), values are display text.
     /// </summary>
@@ -364,6 +378,11 @@ public static class DropDownItemsFactory
     /// Gets the default timelapse capture interval.
     /// </summary>
     public const string DefaultTimelapseInterval = "5m";
+
+    /// <summary>
+    /// Gets the default minimum free disk space in MB (2 GB).
+    /// </summary>
+    public const string DefaultMinFreeSpaceMb = "2048";
 
     /// <summary>
     /// Converts a video quality setting to the maximum vertical resolution in pixels.

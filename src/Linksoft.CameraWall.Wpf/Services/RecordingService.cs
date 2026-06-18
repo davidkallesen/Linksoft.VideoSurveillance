@@ -11,6 +11,8 @@ public partial class RecordingService : IRecordingService, IDisposable
     // setting exceeds a few minutes, so 24h is a wide safety margin.
     private static readonly TimeSpan CooldownEntryMaxAge = TimeSpan.FromHours(24);
 
+    private static readonly string[] RecordingFileExtensions = [".mp4", ".mkv", ".avi"];
+
     private readonly ILogger<RecordingService> logger;
     private readonly IApplicationSettingsService settingsService;
     private readonly IThumbnailGeneratorService thumbnailService;
@@ -74,6 +76,8 @@ public partial class RecordingService : IRecordingService, IDisposable
         {
             return false;
         }
+
+        ReclaimDiskSpaceIfNeeded();
 
         var format = GetEffectiveRecordingFormat(camera);
         var filePath = GenerateRecordingFilename(camera, format);
@@ -363,6 +367,9 @@ public partial class RecordingService : IRecordingService, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
+            // 2.5. Reclaim disk space before opening the next segment
+            ReclaimDiskSpaceIfNeeded();
+
             // 3. Atomically switch the recording so packets arriving from
             // the demux thread between the two file boundaries land in
             // either the previous segment or the new one — never dropped
@@ -446,6 +453,69 @@ public partial class RecordingService : IRecordingService, IDisposable
         }
 
         disposed = true;
+    }
+
+    private void ReclaimDiskSpaceIfNeeded()
+    {
+        var cleanup = settingsService.Recording.Cleanup;
+        if (!cleanup.EnableDiskSpaceGuard)
+        {
+            return;
+        }
+
+        var recordingPath = settingsService.Recording.RecordingPath;
+        if (string.IsNullOrEmpty(recordingPath))
+        {
+            return;
+        }
+
+        try
+        {
+            var driveRoot = Path.GetPathRoot(Path.GetFullPath(recordingPath));
+            if (string.IsNullOrEmpty(driveRoot))
+            {
+                return;
+            }
+
+            var minFreeBytes = (long)cleanup.MinFreeSpaceMb * 1024L * 1024L;
+            var freeBytes = new DriveInfo(driveRoot).AvailableFreeSpace;
+            if (freeBytes >= minFreeBytes)
+            {
+                return;
+            }
+
+            LogDiskSpaceLowBeforeRecording(driveRoot, freeBytes / (1024.0 * 1024.0), cleanup.MinFreeSpaceMb);
+
+            var skipPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var session in sessions.Values)
+            {
+                if (!string.IsNullOrEmpty(session.CurrentFilePath))
+                {
+                    skipPaths.Add(Path.GetFullPath(session.CurrentFilePath));
+                    skipPaths.Add(Path.GetFullPath(Path.ChangeExtension(session.CurrentFilePath, ".png")));
+                }
+            }
+
+            var run = MediaCleanupRunner.ReclaimBySize(
+                recordingPath,
+                RecordingFileExtensions,
+                minFreeBytes,
+                skipPaths,
+                deleteCompanionThumbnail: true);
+
+            if (run.StillShort)
+            {
+                LogDiskSpaceReclaimStillShort(driveRoot, run.BytesFreed / (1024.0 * 1024.0));
+            }
+            else
+            {
+                LogDiskSpaceReclaimComplete(run.BytesFreed / (1024.0 * 1024.0), run.DeletedFiles.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            LogDiskSpaceReclaimFailed(ex);
+        }
     }
 
     private string GetEffectiveRecordingPath(CameraConfiguration camera)

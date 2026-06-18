@@ -1141,6 +1141,15 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enable disk space guard.
+        /// </summary>
+        public static string EnableDiskSpaceGuard {
+            get {
+                return ResourceManager.GetString("EnableDiskSpaceGuard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enable hourly segmentation.
         /// </summary>
         public static string EnableHourlySegmentation {
@@ -1767,6 +1776,69 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
         public static string MediaCleanup {
             get {
                 return ResourceManager.GetString("MediaCleanup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Minimum free disk space.
+        /// </summary>
+        public static string MinFreeSpace {
+            get {
+                return ResourceManager.GetString("MinFreeSpace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 10 GB.
+        /// </summary>
+        public static string MinFreeSpace10Gb {
+            get {
+                return ResourceManager.GetString("MinFreeSpace10Gb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 GB.
+        /// </summary>
+        public static string MinFreeSpace1Gb {
+            get {
+                return ResourceManager.GetString("MinFreeSpace1Gb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 20 GB.
+        /// </summary>
+        public static string MinFreeSpace20Gb {
+            get {
+                return ResourceManager.GetString("MinFreeSpace20Gb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 2 GB (Recommended).
+        /// </summary>
+        public static string MinFreeSpace2Gb {
+            get {
+                return ResourceManager.GetString("MinFreeSpace2Gb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 500 MB.
+        /// </summary>
+        public static string MinFreeSpace500Mb {
+            get {
+                return ResourceManager.GetString("MinFreeSpace500Mb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 5 GB.
+        /// </summary>
+        public static string MinFreeSpace5Gb {
+            get {
+                return ResourceManager.GetString("MinFreeSpace5Gb", resourceCulture);
             }
         }
         
@@ -3317,7 +3389,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
                 return ResourceManager.GetString("UsbCaptureAudio", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Device in use by another app.
         /// </summary>
@@ -3326,7 +3398,7 @@ namespace Linksoft.VideoSurveillance.Wpf.Core.Resources {
                 return ResourceManager.GetString("UsbDeviceBusy", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Device unplugged.
         /// </summary>

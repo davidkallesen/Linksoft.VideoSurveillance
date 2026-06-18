@@ -31,4 +31,16 @@ public sealed partial class ServerRecordingService
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Reaper swept {ReapedCount} inactive recording session(s)")]
     private partial void LogReaperSwept(int reapedCount);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Disk space low on '{Drive}': {FreeMb:F0} MB free (threshold {ThresholdMb} MB) — reclaiming oldest recordings before start")]
+    private partial void LogDiskSpaceLowBeforeRecording(string drive, double freeMb, int thresholdMb);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Disk space reclaim complete before recording: freed {FreedMb:F2} MB ({Count} files)")]
+    private partial void LogDiskSpaceReclaimComplete(double freedMb, int count);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Disk space reclaim exhausted all non-active recordings on '{Drive}': freed {FreedMb:F2} MB but still below threshold")]
+    private partial void LogDiskSpaceReclaimStillShort(string drive, double freedMb);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Disk space reclaim failed before recording start")]
+    private partial void LogDiskSpaceReclaimFailed(Exception ex);
 }
