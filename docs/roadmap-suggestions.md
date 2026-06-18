@@ -10,20 +10,20 @@ This document is a candid product assessment of **Linksoft.VideoSurveillance**, 
 
 These are concrete defects found in the code that will cause incorrect behaviour in production, ordered by severity.
 
-### 🔴 ServerRecordingService silently overwrites concurrent recording sessions
+### ✅ ServerRecordingService silently overwrites concurrent recording sessions *(Fixed — already used TryAdd)*
 `ServerRecordingService.StartRecording` (line ~63) guards with `if (sessions.ContainsKey(camera.Id))` and then does `sessions[camera.Id] = session` (indexer assignment, line ~83). The check and the write are not atomic — two concurrent callers can both pass the check, and the second indexer write **silently replaces** the first session, leaking its FFmpeg pipeline and orphaning a half-written recording file with no error.
 **Why it matters:** API recording start is reachable by any caller (see Security) and by motion triggers on background threads; a double-fire produces a leaked process and a corrupt file.
 **Fix:** Drop the `ContainsKey` pre-check; rely solely on `TryAdd` and treat a `false` return as "already recording." The WPF `RecordingService` already does this correctly with `TryAdd`.
 
-### 🔴 SegmentRecording uses unconditional indexer replacement, not TryUpdate
+### ✅ SegmentRecording uses unconditional indexer replacement, not TryUpdate *(Fixed — already used TryUpdate on server; WPF fixed in batch 3)*
 `ServerRecordingService.SegmentRecording` (line ~331) does `sessions[cameraId] = newSession`. If `StopRecording` runs concurrently (e.g. from the inactive-session reaper) and removes the entry between the `TryGetValue` and the assignment, the new session is re-inserted for a camera that is **no longer supposed to be recording** — an orphaned entry with no owning pipeline.
 **Fix:** Use `ConcurrentDictionary.TryUpdate(cameraId, newSession, oldSession)` so the replacement is conditional on the expected old value still being present.
 
-### 🟠 Segment-swap window where IsRecording returns false for an active camera (WPF)
+### ✅ Segment-swap window where IsRecording returns false for an active camera (WPF) *(Fixed — batch 3: replaced TryRemove+TryAdd with TryUpdate)*
 Because `RecordingSession.CurrentFilePath` is get-only, `RecordingService.SegmentRecording` does `TryRemove` (line ~380) then `TryAdd` (line ~393) to swap in a new session object. Between those two calls, `IsRecording` returns `false` for an actively recording camera, and `GetActiveSessions` returns stale data. A second `StartRecording` slipping into that window starts a **second pipeline on the same camera**.
 **Fix:** Make `RecordingSession` mutable for the file path (or swap under a per-camera lock), so the dictionary entry is never absent mid-segment.
 
-### 🟠 ServerRecordingService ignores per-camera RecordingPath/Format overrides
+### ✅ ServerRecordingService ignores per-camera RecordingPath/Format overrides *(Fixed — already routed through GetEffectiveRecordingPath/Format)*
 `ServerRecordingService.GenerateRecordingFilename` / `StartRecording` always read `settingsService.Recording.RecordingPath` and `.RecordingFormat`, ignoring `camera.Overrides?.Recording.RecordingPath` / `.RecordingFormat`. The WPF side correctly uses `GetEffectiveRecordingPath` / `GetEffectiveRecordingFormat` helpers. **Per-camera path/format overrides configured through the API are a silent no-op on the server.**
 **Fix:** Route the server through the same effective-value helpers as WPF.
 
@@ -31,7 +31,7 @@ Because `RecordingSession.CurrentFilePath` is get-only, `RecordingService.Segmen
 `ReclaimDiskSpaceIfNeeded` runs in `StartRecording` and `SegmentRecording` only. On a long manual recording (segmentation disabled, or `MaxRecordingDurationMinutes = 0`) the disk can fill completely while FFmpeg keeps writing, producing a corrupt/truncated file with no warning event and no fallback stop. See [`disk-space-guard.md`](disk-space-guard.md) for the current design.
 **Fix:** Poll free space on a timer during active recordings; raise a warning event and gracefully stop (closing the muxer cleanly) when below `MinFreeSpaceMb` and reclaim cannot recover.
 
-### 🟠 No hard pre-recording disk gate
+### ✅ No hard pre-recording disk gate *(Fixed — batch 4: ReclaimDiskSpaceIfNeeded returns bool; StartRecording/TriggerMotionRecording abort on false)*
 `ReclaimDiskSpaceIfNeeded` tries to free space but if `EnableDiskSpaceGuard` is false or reclaim returns `StillShort`, recording **starts anyway**, producing a zero-byte/corrupt file. There is no hard refusal-to-start.
 **Fix:** When reclaim fails to reach `MinFreeSpaceMb`, abort the start, raise an error event, and surface it on the tile/API rather than starting a doomed recording.
 
@@ -43,20 +43,20 @@ Because `RecordingSession.CurrentFilePath` is get-only, `RecordingService.Segmen
 **Verified:** `CameraConfiguration.BuildUri()` builds `$"{scheme}://{userInfo}{Connection.IpAddress}:{Connection.Port}{normalizedPath}"` with no IPv6 bracketing. `fe80::1` becomes `rtsp://fe80::1:554/stream`, which `System.Uri` and FFmpeg both reject — IPv6 literals must be bracketed (`rtsp://[fe80::1]:554/stream`).
 **Fix:** Detect `IPAddress.TryParse` → `AddressFamily.InterNetworkV6` and wrap the host in `[...]`.
 
-### 🟡 AnalysisFrameRate default (30) is silently halved to 15
+### ✅ AnalysisFrameRate default (30) is silently halved to 15 *(Fixed — batch 2: default lowered to 15 to match MaxTargetFps cap)*
 `MotionDetectionSettings.AnalysisFrameRate` defaults to 30, but `MotionDetectionService` clamps to `MaxTargetFps = 15` with no log line or UI warning. Operators tuning for "30 fps analysis" silently get 15. Documented in [`motion-detection.md`](motion-detection.md) but invisible at runtime.
 **Fix:** Lower the default to a value inside the clamp range, or log/surface the clamp.
 
-### 🟡 Motion-frame analysis swallows all exceptions
+### ✅ Motion-frame analysis swallows all exceptions *(Fixed — batch 2: throttled warning logging with ConsecutiveFails counter)*
 `MotionDetectionService.CaptureAndProcessAsync` / `ProcessCapturedFrame` catch blocks discard every exception with "Silently ignore." A corrupt JPEG, `System.Drawing` failure, or OOM produces "no motion ever detected" with **zero diagnostic trail**.
 **Fix:** Log at warning level with throttling; expose a consecutive-failure counter on the service.
 
 ### 🟡 Server-side motion detection is a no-op stub
 `ServerMotionDetectionService.RunDetectionLoopAsync` only `await Task.Delay(Timeout.Infinite)` and logs a warning; `MotionDetected` is never raised, no frames are analysed, and `GetAnalysisResolution` hard-returns `(320, 240)` ignoring settings. **Any server-hosted camera produces zero motion alerts and zero motion-triggered recordings.** This is a functional hole, not a tuning issue — it should be flagged prominently in docs until implemented.
 
-### 🟢 Low-severity cleanups
-- `RecordingService.StopAllRecordings` double-sweeps `postMotionTimers` (the audit itself calls this "minor, logic is confused") — simplify to a single removal path.
-- `Debug.WriteLine` used in `CameraTile.xaml.cs` motion paths (verified at lines ~1333, ~2434, ~2515) — invisible to the Serilog sink. `ILogger<CameraTile>` is already injected; switch these calls over.
+### ✅ Low-severity cleanups *(Fixed — batch 1 & batch 2)*
+- `RecordingService.StopAllRecordings` double-sweeps `postMotionTimers` — fixed.
+- `Debug.WriteLine` in `CameraTile.xaml.cs` motion paths — removed; snapshot failure now routed through `LogSnapshotFailed`.
 
 ---
 
