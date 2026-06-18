@@ -217,6 +217,7 @@ public partial class CameraTile : IDisposable
     private DispatcherTimer? reconnectTimer;
     private DispatcherTimer? autoReconnectTimer;
     private int reconnectCheckCount;
+    private int reconnectAttemptCount;
 
     // Stream health monitoring
     private DispatcherTimer? streamHealthTimer;
@@ -1436,6 +1437,7 @@ public partial class CameraTile : IDisposable
         {
             CameraName = string.Empty;
             CameraDescription = string.Empty;
+            reconnectAttemptCount = 0;
             previousOverrideVideoQuality = null;
             previousOverrideHardwareAcceleration = null;
             previousOverrideEnableRecordingOnMotion = null;
@@ -1863,6 +1865,9 @@ public partial class CameraTile : IDisposable
         }
         else if (newState == ConnectionState.Connected)
         {
+            // Successful connection — reset backoff so the next failure series starts fresh.
+            reconnectAttemptCount = 0;
+
             if (previousState is ConnectionState.Disconnected or ConnectionState.ConnectionFailed or ConnectionState.Connecting
                 && ShowNotificationOnReconnect)
             {
@@ -1908,16 +1913,19 @@ public partial class CameraTile : IDisposable
             return;
         }
 
-        // When AutoReconnectOnFailure is true, retry forever with configured delay
-        var delaySeconds = GetEffectiveReconnectDelaySeconds();
+        reconnectAttemptCount++;
 
-        LogAutoReconnectScheduled(Camera.Display.DisplayName, delaySeconds);
+        // Exponential backoff: base delay doubles each consecutive failure, capped at 15 min.
+        var delay = ReconnectBackoff.ComputeDelay(
+            reconnectAttemptCount,
+            TimeSpan.FromSeconds(GetEffectiveReconnectDelaySeconds()));
 
-        // Schedule auto-reconnect after delay (use effective value for per-camera override)
+        LogAutoReconnectScheduled(Camera.Display.DisplayName, (int)delay.TotalSeconds);
+
         autoReconnectTimer?.Stop();
         autoReconnectTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(delaySeconds),
+            Interval = delay,
         };
 
         autoReconnectTimer.Tick += (_, _) =>

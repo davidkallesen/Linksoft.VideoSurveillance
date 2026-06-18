@@ -30,11 +30,13 @@ public static class CameraUriHelper
         string? userName = null,
         string? password = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ipAddress);
+
         var scheme = protocol.ToScheme();
         var userInfo = BuildUserInfo(userName, password);
         var pathSegment = BuildPath(path);
 
-        return new Uri($"{scheme}://{userInfo}{ipAddress}:{port}{pathSegment}");
+        return new Uri($"{scheme}://{userInfo}{BracketIfIPv6(ipAddress)}:{port}{pathSegment}");
     }
 
     /// <summary>
@@ -184,4 +186,7 @@ public static class CameraUriHelper
 
         return $"/{path.TrimStart('/')}";
     }
+
+    private static string BracketIfIPv6(string host)
+        => host.StartsWith('[') ? host : host.Contains(':', StringComparison.Ordinal) ? $"[{host}]" : host;
 }
