@@ -35,8 +35,8 @@ public partial class RecordingService
     [LoggerMessage(Level = LogLevel.Information, Message = "Segmenting recording for camera: {CameraName}, old file: {OldFilePath}")]
     private partial void LogSegmentingRecording(string cameraName, string oldFilePath);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to add new session for camera '{CameraName}'")]
-    private partial void LogFailedToAddNewSession(string cameraName);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Segment swap lost the race for camera '{CameraName}' — StopRecording ran concurrently; segment abandoned")]
+    private partial void LogSegmentRaceLost(string cameraName);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Recording segmented for camera: {CameraName}, new file: {NewFilePath}")]
     private partial void LogRecordingSegmented(string cameraName, string newFilePath);

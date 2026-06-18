@@ -377,10 +377,15 @@ public partial class RecordingService : IRecordingService, IDisposable
                 State = newState,
             };
 
-            sessions[cameraId] = newSession;
-
-            // Keep pipeline reference
-            pipelines[cameraId] = pipeline;
+            // 4. Atomically replace the session using TryUpdate so the swap
+            // is conditional on the old session still being present.
+            // If TryUpdate returns false, StopRecording won the race and
+            // already removed the entry — don't re-insert an orphaned session.
+            if (!sessions.TryUpdate(cameraId, newSession, session))
+            {
+                LogSegmentRaceLost(camera.Display.DisplayName);
+                return false;
+            }
 
             LogRecordingSegmented(camera.Display.DisplayName, newFilePath);
 
