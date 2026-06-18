@@ -16,6 +16,8 @@
         <StackPanel Margin="0,5,0,-20" Orientation="Vertical">
 
             <atc:LabelToggleSwitch
+                Margin="0,0,0,10"
+                HideAreas="Validation"
                 IsOn="{Binding Path=EnableHourlySegmentation, Mode=TwoWay}"
                 LabelPosition="Right"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
@@ -26,7 +28,8 @@
                 Items="{Binding Path=MaxRecordingDurationItems}"
                 LabelText="{atcTranslation:Resx ResxName=Linksoft.VideoSurveillance.Wpf.Core.Resources.Translations,
                                                 Key=MaxRecordingDuration}"
-                Orientation="Vertical" />
+                Orientation="Vertical"
+                SelectedKey="{Binding Path=SelectedMaxRecordingDuration, Mode=TwoWay}" />
 
         </StackPanel>
     </GroupBox>
