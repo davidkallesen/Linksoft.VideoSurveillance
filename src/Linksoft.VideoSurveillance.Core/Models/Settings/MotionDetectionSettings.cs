@@ -9,7 +9,7 @@ public class MotionDetectionSettings
 
     public double MinimumChangePercent { get; set; } = 0.5;
 
-    public int AnalysisFrameRate { get; set; } = 30;
+    public int AnalysisFrameRate { get; set; } = 15;
 
     public int AnalysisWidth { get; set; } = 800;
 
