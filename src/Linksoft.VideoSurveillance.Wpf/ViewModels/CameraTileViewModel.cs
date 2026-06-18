@@ -34,8 +34,11 @@ public sealed partial class CameraTileViewModel : ViewModelBase, IDisposable
     /// <see cref="Linksoft.VideoSurveillance.Services.IUsbCameraWatcher"/>
     /// events back to the right tile.
     /// </summary>
-    [ObservableProperty]
+    [ObservableProperty(DependentPropertyNames = [nameof(IsUsbSource)])]
     private string usbDeviceId = string.Empty;
+
+    /// <summary>True when this tile represents a USB camera source.</summary>
+    public bool IsUsbSource => !string.IsNullOrEmpty(UsbDeviceId);
 
     /// <summary>
     /// True when the underlying USB device is currently unplugged.

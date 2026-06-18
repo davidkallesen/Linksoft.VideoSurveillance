@@ -45,6 +45,25 @@
                                 Foreground="#AAAAAA"
                                 Text="{Binding Path=HostDataContext.ConnectionState, Converter={x:Static atcNetworkValueConverters:ConnectionStateToTextValueConverter.Instance}}" />
                         </StackPanel>
+                        <!--  USB source badge (visible when the camera is a USB device)  -->
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=HostDataContext.IsUsbSource}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock
+                                FontSize="9"
+                                FontWeight="SemiBold"
+                                Foreground="#7EB8D4"
+                                Text="USB" />
+                        </StackPanel>
+
                         <!--  Recording indicator (red dot, visible when IsRecording)  -->
                         <StackPanel Orientation="Horizontal">
                             <StackPanel.Style>
