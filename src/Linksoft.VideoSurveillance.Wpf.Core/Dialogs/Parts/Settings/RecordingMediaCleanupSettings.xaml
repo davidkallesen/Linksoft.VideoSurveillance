@@ -31,6 +31,8 @@
                 SelectedKey="{Binding Path=SelectedRecordingRetention, Mode=TwoWay}" />
 
             <atc:LabelToggleSwitch
+                Margin="0,0,0,10"
+                HideAreas="Validation"
                 IsEnabled="{Binding Path=IsCleanupEnabled}"
                 IsOn="{Binding Path=IncludeSnapshotsInCleanup, Mode=TwoWay}"
                 LabelPosition="Right"
@@ -45,9 +47,9 @@
                 Orientation="Vertical"
                 SelectedKey="{Binding Path=SelectedSnapshotRetention, Mode=TwoWay}" />
 
-            <Separator Margin="0,8,0,0" />
-
             <atc:LabelToggleSwitch
+                Margin="0,0,0,10"
+                HideAreas="Validation"
                 IsEnabled="{Binding Path=IsCleanupEnabled}"
                 IsOn="{Binding Path=IsDiskSpaceGuardEnabled, Mode=TwoWay}"
                 LabelPosition="Right"
