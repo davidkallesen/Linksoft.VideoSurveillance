@@ -45,6 +45,19 @@ public partial class CameraWallApp
                 // Library services (auto-registered via [Registration] attribute)
                 services.AddDependencyRegistrationsFromWpf(includeReferencedAssemblies: true);
 
+                // Cleanup + segmentation each derive from Atc.Hosting's
+                // BackgroundServiceBase. Register one singleton instance and
+                // expose it both as its UI-facing interface and as an
+                // IHostedService so the Generic Host drives the periodic work
+                // and stops it gracefully on shutdown.
+                services.AddSingleton<MediaCleanupService>();
+                services.AddSingleton<IMediaCleanupService>(sp => sp.GetRequiredService<MediaCleanupService>());
+                services.AddHostedService(sp => sp.GetRequiredService<MediaCleanupService>());
+
+                services.AddSingleton<RecordingSegmentationService>();
+                services.AddSingleton<IRecordingSegmentationService>(sp => sp.GetRequiredService<RecordingSegmentationService>());
+                services.AddHostedService(sp => sp.GetRequiredService<RecordingSegmentationService>());
+
                 // Toast notification service (used by library and app)
                 services.AddSingleton<IToastNotificationService, ToastNotificationService>();
 
@@ -197,13 +210,9 @@ public partial class CameraWallApp
             mainWindow.WindowState = WindowState.Maximized;
         }
 
-        // Initialize media cleanup service (90%)
-        var cleanupService = host.Services.GetRequiredService<IMediaCleanupService>();
-        cleanupService.Initialize();
-
-        // Initialize recording segmentation service
-        var segmentationService = host.Services.GetRequiredService<IRecordingSegmentationService>();
-        segmentationService.Initialize();
+        // Media cleanup and recording segmentation are hosted background
+        // services — the Generic Host started them in host.StartAsync() above,
+        // so there's no explicit Initialize() here anymore.
 
         // Complete (100%)
         AppHelper.RenderLoadingInitializeMessage(logger, Translations.InitializeComplete, 100);
@@ -285,14 +294,9 @@ public partial class CameraWallApp
             LogAllRecordingsStopped();
         }
 
-        // Stop recording segmentation service
-        var segmentationService = host.Services.GetService<IRecordingSegmentationService>();
-        segmentationService?.StopService();
-
-        // Stop media cleanup service
-        var cleanupService = host.Services.GetService<IMediaCleanupService>();
-        cleanupService?.StopService();
-
+        // Cleanup + segmentation are hosted services; host.StopAsync() below
+        // stops them gracefully (their BackgroundServiceBase loops observe the
+        // stopping token), so no explicit StopService() calls are needed.
         await host
             .StopAsync()
             .ConfigureAwait(false);

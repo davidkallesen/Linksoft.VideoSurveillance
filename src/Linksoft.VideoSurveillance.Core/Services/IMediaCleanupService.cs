@@ -9,9 +9,5 @@ public interface IMediaCleanupService
 
     bool IsRunning { get; }
 
-    void Initialize();
-
-    void StopService();
-
     Task<MediaCleanupResult> RunCleanupAsync();
 }

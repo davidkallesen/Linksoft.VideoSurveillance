@@ -3,23 +3,19 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// <summary>
 /// Service for automatically cleaning up old recordings and snapshots.
 /// </summary>
-[Registration]
-public partial class MediaCleanupService : IMediaCleanupService, IDisposable
+// Not auto-registered via [Registration]: the App registers this explicitly so
+// the SAME singleton instance is exposed both as IMediaCleanupService (for the
+// UI: events, IsRunning, manual RunCleanupAsync) and as an IHostedService (for
+// the Generic Host to drive its periodic DoWorkAsync loop and graceful stop).
+public partial class MediaCleanupService : BackgroundServiceBase<MediaCleanupService>, IMediaCleanupService
 {
     private static readonly string[] RecordingExtensions = [".mp4", ".mkv", ".avi"];
     private static readonly string[] SnapshotExtensions = [".png", ".jpg", ".jpeg", ".bmp"];
-    private static readonly TimeSpan PeriodicInterval = TimeSpan.FromHours(6);
 
-    private readonly ILogger<MediaCleanupService> logger;
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
     private readonly Lock lockObject = new();
-
-    // Threading.Timer (not DispatcherTimer) so cleanup ticks fire even when
-    // the UI thread is busy rendering 10+ video tiles.
-    private Timer? periodicTimer;
     private bool isRunning;
-    private bool disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediaCleanupService"/> class.
@@ -31,8 +27,13 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
         ILogger<MediaCleanupService> logger,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService)
+        : base(logger, new DefaultBackgroundServiceOptions
+        {
+            ServiceName = nameof(MediaCleanupService),
+            StartupDelaySeconds = 5,
+            RepeatIntervalSeconds = 6 * 60 * 60,
+        })
     {
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         this.recordingService = recordingService ?? throw new ArgumentNullException(nameof(recordingService));
     }
@@ -52,35 +53,27 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
         }
     }
 
-    /// <inheritdoc/>
-    public void Initialize()
+    /// <summary>
+    /// Periodic cleanup tick driven by the host. The <see cref="MediaCleanupSchedule"/>
+    /// is re-read each pass: <c>Disabled</c> is a no-op, <c>OnStartup</c> runs
+    /// once then stops the service, and <c>OnStartupAndPeriodically</c> runs on
+    /// every tick (the first at startup, via the short startup delay).
+    /// </summary>
+    /// <param name="stoppingToken">The stopping token.</param>
+    public override async Task DoWorkAsync(CancellationToken stoppingToken)
     {
-        var settings = settingsService.Recording.Cleanup;
-
-        LogCleanupInitializing(settings.Schedule);
-
-        switch (settings.Schedule)
+        var schedule = settingsService.Recording.Cleanup.Schedule;
+        if (schedule == MediaCleanupSchedule.Disabled)
         {
-            case MediaCleanupSchedule.Disabled:
-                LogCleanupDisabled();
-                break;
-
-            case MediaCleanupSchedule.OnStartup:
-                _ = RunCleanupAsync();
-                break;
-
-            case MediaCleanupSchedule.OnStartupAndPeriodically:
-                _ = RunCleanupAsync();
-                StartPeriodicTimer();
-                break;
+            return;
         }
-    }
 
-    /// <inheritdoc/>
-    public void StopService()
-    {
-        StopPeriodicTimer();
-        LogCleanupStopped();
+        await RunCleanupAsync().ConfigureAwait(false);
+
+        if (schedule == MediaCleanupSchedule.OnStartup)
+        {
+            await StopAsync(stoppingToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -263,65 +256,6 @@ public partial class MediaCleanupService : IMediaCleanupService, IDisposable
         }
 
         result.ErrorCount += errors.Count;
-    }
-
-    /// <summary>
-    /// Disposes of the service resources.
-    /// </summary>
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        if (disposing)
-        {
-            StopService();
-        }
-
-        disposed = true;
-    }
-
-    private void StartPeriodicTimer()
-    {
-        periodicTimer = new Timer(OnPeriodicTimerTick, state: null, PeriodicInterval, PeriodicInterval);
-        LogPeriodicTimerStarted(PeriodicInterval);
-    }
-
-    private void StopPeriodicTimer()
-    {
-        if (periodicTimer is not null)
-        {
-            periodicTimer.Dispose();
-            periodicTimer = null;
-            LogPeriodicTimerStopped();
-        }
-    }
-
-    private void OnPeriodicTimerTick(object? state)
-        => _ = RunCleanupSafelyAsync();
-
-    // The Timer callback is on a thread-pool thread, but we still need to
-    // catch all exceptions: an unobserved exception in fire-and-forget
-    // continuations would terminate the process via the unhandled-exception
-    // path.
-    private async Task RunCleanupSafelyAsync()
-    {
-        try
-        {
-            await RunCleanupAsync().ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            LogPeriodicTickFailed(ex);
-        }
     }
 
     // Builds an unordered, case-insensitive set of file paths currently being

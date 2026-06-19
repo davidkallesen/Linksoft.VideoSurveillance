@@ -4,22 +4,18 @@ namespace Linksoft.CameraWall.Wpf.Services;
 /// Service for automatically segmenting recordings at clock-aligned interval boundaries
 /// (e.g., every 15 minutes at :00, :15, :30, :45).
 /// </summary>
-[Registration(Lifetime.Singleton)]
-public partial class RecordingSegmentationService : IRecordingSegmentationService, IDisposable
+// Not auto-registered via [Registration]: the App registers this explicitly so
+// the SAME singleton instance is exposed both as IRecordingSegmentationService
+// (for the UI: RecordingSegmented event, IsRunning) and as an IHostedService
+// (for the Generic Host to drive its periodic DoWorkAsync loop and graceful stop).
+public partial class RecordingSegmentationService : BackgroundServiceBase<RecordingSegmentationService>, IRecordingSegmentationService
 {
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(30);
-
-    private readonly ILogger<RecordingSegmentationService> logger;
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
     private readonly Lock lockObject = new();
-
-    // Threading.Timer (not DispatcherTimer) so segmentation ticks fire even
-    // when the UI thread is busy rendering many video tiles.
-    private Timer? checkTimer;
-    private (DateOnly Date, int Slot) lastProcessed = (DateOnly.MinValue, -1);
+    private (DateOnly Date, int Slot) lastProcessed;
     private bool isRunning;
-    private bool disposed;
+    private bool started;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RecordingSegmentationService"/> class.
@@ -31,10 +27,24 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
         ILogger<RecordingSegmentationService> logger,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService)
+        : base(logger, new DefaultBackgroundServiceOptions
+        {
+            ServiceName = nameof(RecordingSegmentationService),
+            StartupDelaySeconds = 5,
+            RepeatIntervalSeconds = 30,
+        })
     {
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         this.recordingService = recordingService ?? throw new ArgumentNullException(nameof(recordingService));
+
+        // Seed the high-water mark to the current slot so an app restart
+        // doesn't immediately segment a recording that just started. Guard the
+        // interval: ComputeSlot throws on a non-positive value, and a throwing
+        // ctor would take down host startup over a mere misconfiguration.
+        var intervalMinutes = settingsService.Recording.MaxRecordingDurationMinutes;
+        lastProcessed = intervalMinutes > 0
+            ? RecordingSlotCalculator.ComputeSlot(DateTime.Now, intervalMinutes)
+            : (DateOnly.MinValue, -1);
     }
 
     /// <inheritdoc/>
@@ -52,112 +62,39 @@ public partial class RecordingSegmentationService : IRecordingSegmentationServic
         }
     }
 
-    /// <inheritdoc/>
-    public void Initialize()
-    {
-        var settings = settingsService.Recording;
-
-        if (!settings.EnableHourlySegmentation)
-        {
-            LogSegmentationDisabled();
-            return;
-        }
-
-        LogSegmentationInitializing(settings.MaxRecordingDurationMinutes);
-
-        // Initialize last processed slot based on current time and interval
-        var intervalMinutes = settings.MaxRecordingDurationMinutes;
-        lastProcessed = RecordingSlotCalculator.ComputeSlot(DateTime.Now, intervalMinutes);
-
-        StartCheckTimer();
-
-        lock (lockObject)
-        {
-            isRunning = true;
-        }
-
-        LogSegmentationStarted();
-    }
-
-    /// <inheritdoc/>
-    public void StopService()
-    {
-        StopCheckTimer();
-
-        lock (lockObject)
-        {
-            isRunning = false;
-        }
-
-        LogSegmentationStopped();
-    }
-
     /// <summary>
-    /// Disposes of the service resources.
+    /// Periodic segmentation tick driven by the host. The
+    /// <see cref="RecordingSettings.EnableHourlySegmentation"/> flag is re-read
+    /// each pass, so toggling it at runtime takes effect without a restart.
     /// </summary>
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        if (disposing)
-        {
-            StopService();
-        }
-
-        disposed = true;
-    }
-
-    private void StartCheckTimer()
-    {
-        checkTimer = new Timer(OnCheckTimerTick, state: null, CheckInterval, CheckInterval);
-        LogSegmentationTimerStarted(CheckInterval);
-    }
-
-    private void StopCheckTimer()
-    {
-        if (checkTimer is not null)
-        {
-            checkTimer.Dispose();
-            checkTimer = null;
-            LogSegmentationTimerStopped();
-        }
-    }
-
-    // Threading.Timer callback runs on a thread-pool thread; PerformSegmentationCheck
-    // calls into IRecordingService which is thread-safe (ConcurrentDictionary +
-    // sync locks). Catches all exceptions so an unobserved one cannot terminate
-    // the process.
-    private void OnCheckTimerTick(object? state)
-    {
-        try
-        {
-            PerformSegmentationCheck();
-        }
-        catch (Exception ex)
-        {
-            LogSegmentationTickFailed(ex);
-        }
-    }
-
-    private void PerformSegmentationCheck()
+    /// <param name="stoppingToken">The stopping token.</param>
+    public override Task DoWorkAsync(CancellationToken stoppingToken)
     {
         var settings = settingsService.Recording;
+        var enabled = settings.EnableHourlySegmentation;
 
-        // Check if service is still enabled (settings may have changed)
-        if (!settings.EnableHourlySegmentation)
+        lock (lockObject)
         {
-            return;
+            isRunning = enabled;
         }
 
+        if (!enabled)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (!started)
+        {
+            LogSegmentationStarted();
+            started = true;
+        }
+
+        PerformSegmentationCheck(settings);
+        return Task.CompletedTask;
+    }
+
+    private void PerformSegmentationCheck(RecordingSettings settings)
+    {
         var now = DateTime.Now;
         var intervalMinutes = settings.MaxRecordingDurationMinutes;
         var currentSlot = RecordingSlotCalculator.ComputeSlot(now, intervalMinutes);

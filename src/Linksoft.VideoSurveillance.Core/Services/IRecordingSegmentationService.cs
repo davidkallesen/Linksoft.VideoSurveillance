@@ -8,8 +8,4 @@ public interface IRecordingSegmentationService
     event EventHandler<RecordingSegmentedEventArgs>? RecordingSegmented;
 
     bool IsRunning { get; }
-
-    void Initialize();
-
-    void StopService();
 }

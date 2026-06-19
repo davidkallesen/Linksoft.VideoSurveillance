@@ -13,9 +13,9 @@ public sealed partial class StreamingService : IDisposable
     //
     // 60s inactivity with a 30s client heartbeat gives 30s of margin — a
     // single dropped heartbeat (Wi-Fi blip, GC pause) won't kill the stream.
-    // Reaper sweeps every 10s so worst-case lag from drop to reap is ~70s.
+    // The sweep cadence lives in HlsStreamReaperService (the hosted worker that
+    // drives ReapIdleSessions); worst-case lag from drop to reap is ~70s.
     private static readonly TimeSpan InactivityTimeout = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan ReaperInterval = TimeSpan.FromSeconds(10);
 
     private readonly ICameraStorageService storage;
     private readonly ILogger<StreamingService> logger;
@@ -29,7 +29,6 @@ public sealed partial class StreamingService : IDisposable
 
     private readonly Lock ownershipLock = new();
     private readonly string hlsOutputRoot;
-    private readonly Timer reaperTimer;
     private bool disposed;
 
     public StreamingService(
@@ -41,8 +40,6 @@ public sealed partial class StreamingService : IDisposable
 
         hlsOutputRoot = Path.Combine(Path.GetTempPath(), "linksoft-hls");
         Directory.CreateDirectory(hlsOutputRoot);
-
-        reaperTimer = new Timer(ReapIdleSessions, state: null, ReaperInterval, ReaperInterval);
     }
 
     /// <summary>
@@ -228,8 +225,6 @@ public sealed partial class StreamingService : IDisposable
 
         disposed = true;
 
-        reaperTimer.Dispose();
-
         foreach (var session in sessions.Values)
         {
             session.Dispose();
@@ -238,7 +233,13 @@ public sealed partial class StreamingService : IDisposable
         sessions.Clear();
     }
 
-    private void ReapIdleSessions(object? state)
+    /// <summary>
+    /// Disposes any stream session whose last client activity is older than the
+    /// inactivity timeout. Driven periodically by <see cref="HlsStreamReaperService"/>
+    /// so an orphaned FFmpeg transcoder (client dropped its socket without
+    /// calling StopStream) is torn down instead of running forever.
+    /// </summary>
+    public void ReapIdleSessions()
     {
         if (disposed)
         {

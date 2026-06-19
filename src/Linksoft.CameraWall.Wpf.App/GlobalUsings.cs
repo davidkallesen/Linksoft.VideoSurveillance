@@ -43,3 +43,5 @@ global using Serilog.Events;
 global using ApplicationHelper = Linksoft.VideoSurveillance.Helpers.ApplicationHelper;
 global using IMediaCleanupService = Linksoft.VideoSurveillance.Services.IMediaCleanupService;
 global using IRecordingSegmentationService = Linksoft.VideoSurveillance.Services.IRecordingSegmentationService;
+global using MediaCleanupService = Linksoft.CameraWall.Wpf.Services.MediaCleanupService;
+global using RecordingSegmentationService = Linksoft.CameraWall.Wpf.Services.RecordingSegmentationService;

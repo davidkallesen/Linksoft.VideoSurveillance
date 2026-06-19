@@ -2,12 +2,15 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 
 /// <summary>
 /// Server-side periodic media cleanup. Mirrors the WPF
-/// <c>MediaCleanupService</c> but runs as an <see cref="IHostedService"/>
-/// driven by <see cref="System.Threading.Timer"/> so it has no UI / dispatcher
-/// dependency. Delegates the file-system work to the shared
-/// <see cref="MediaCleanupRunner"/>.
+/// <c>MediaCleanupService</c> but runs via <see cref="BackgroundServiceBase{T}"/>
+/// so it has no UI / dispatcher dependency and inherits sequential (no-overlap)
+/// ticking plus exception logging. Delegates the file-system work to the shared
+/// <see cref="MediaCleanupRunner"/>. The <see cref="MediaCleanupSchedule"/> is
+/// re-read on every tick: <c>Disabled</c> is a no-op, <c>OnStartup</c> runs once
+/// then stops the service, and <c>OnStartupAndPeriodically</c> runs each tick
+/// (the first at startup, thanks to a zero startup delay).
 /// </summary>
-public sealed partial class ServerMediaCleanupService : IHostedService, IAsyncDisposable
+public sealed partial class ServerMediaCleanupService : BackgroundServiceBase<ServerMediaCleanupService>
 {
     // Free-space thresholds for the recording drive. Below "low" we warn so
     // operators can reduce retention or free space before recordings fail;
@@ -20,134 +23,69 @@ public sealed partial class ServerMediaCleanupService : IHostedService, IAsyncDi
     private static readonly string[] RecordingExtensions = [".mp4", ".mkv", ".avi"];
     private static readonly string[] SnapshotExtensions = [".png", ".jpg", ".jpeg", ".bmp"];
 
-    // Server runs cleanup more frequently than WPF (which runs on user-driven
-    // schedule). 4 hours is a safe default for autonomous service operation.
-    private static readonly TimeSpan PeriodicInterval = TimeSpan.FromHours(4);
-
-    private readonly ILogger<ServerMediaCleanupService> logger;
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
-    private readonly Lock runLock = new();
-    private Timer? timer;
-    private bool isRunning;
-    private bool disposed;
 
     public ServerMediaCleanupService(
         ILogger<ServerMediaCleanupService> logger,
+        ServerMediaCleanupServiceOptions options,
+        IBackgroundServiceHealthService healthService,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService)
+        : base(logger, options, healthService)
     {
-        this.logger = logger;
         this.settingsService = settingsService;
         this.recordingService = recordingService;
+
+        healthService.SetMaxStalenessInSeconds(
+            ServiceName,
+            BackgroundServiceHealthHelper.StalenessFor(options));
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public override async Task DoWorkAsync(CancellationToken stoppingToken)
     {
         var schedule = settingsService.Recording.Cleanup.Schedule;
-        LogServiceStarting(schedule);
-
-        switch (schedule)
-        {
-            case MediaCleanupSchedule.Disabled:
-                LogDisabled();
-                break;
-
-            case MediaCleanupSchedule.OnStartup:
-                _ = Task.Run(RunCleanupSafelyAsync, cancellationToken);
-                break;
-
-            case MediaCleanupSchedule.OnStartupAndPeriodically:
-                _ = Task.Run(RunCleanupSafelyAsync, cancellationToken);
-                timer = new Timer(OnPeriodicTick, null, PeriodicInterval, PeriodicInterval);
-                break;
-        }
-
-        return Task.CompletedTask;
-    }
-
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        if (timer is not null)
-        {
-            await timer.DisposeAsync().ConfigureAwait(false);
-            timer = null;
-        }
-
-        LogServiceStopped();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (disposed)
+        if (schedule == MediaCleanupSchedule.Disabled)
         {
             return;
         }
 
-        disposed = true;
-        await StopAsync(CancellationToken.None).ConfigureAwait(false);
-    }
+        await RunCleanupAsync().ConfigureAwait(false);
 
-    private void OnPeriodicTick(object? state)
-        => _ = RunCleanupSafelyAsync();
-
-    private async Task RunCleanupSafelyAsync()
-    {
-        try
+        if (schedule == MediaCleanupSchedule.OnStartup)
         {
-            await RunCleanupAsync().ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            LogCleanupTickFailed(ex);
+            // Run-once mode: stop the loop so we don't spin a 4-hour timer
+            // forever. Safe to call from within DoWorkAsync — StopAsync
+            // observes the now-cancelled stopping token and returns.
+            await StopAsync(stoppingToken).ConfigureAwait(false);
         }
     }
 
     private async Task RunCleanupAsync()
     {
-        lock (runLock)
-        {
-            if (isRunning)
-            {
-                LogAlreadyInProgress();
-                return;
-            }
+        var settings = settingsService.Recording.Cleanup;
 
-            isRunning = true;
-        }
+        LogCleanupStarting(
+            settings.RecordingRetentionDays,
+            settings.IncludeSnapshots,
+            settings.SnapshotRetentionDays);
 
-        try
-        {
-            var settings = settingsService.Recording.Cleanup;
+        var activePaths = GetActiveRecordingPaths();
 
-            LogCleanupStarting(
-                settings.RecordingRetentionDays,
-                settings.IncludeSnapshots,
-                settings.SnapshotRetentionDays);
+        // File-system work runs on the thread pool so a large recording tree
+        // doesn't stall the host's background-service loop.
+        var summary = await Task.Run(() => RunCore(settings, activePaths)).ConfigureAwait(false);
 
-            var activePaths = GetActiveRecordingPaths();
+        LogCleanupCompleted(
+            summary.RecordingsDeleted,
+            summary.SnapshotsDeleted,
+            summary.ThumbnailsDeleted,
+            summary.DirectoriesRemoved,
+            FormatBytes(summary.BytesFreed),
+            summary.ErrorCount);
 
-            // File-system work runs on the thread pool — never block the
-            // hosted-service start-up sequence with synchronous IO.
-            var summary = await Task.Run(() => RunCore(settings, activePaths)).ConfigureAwait(false);
-
-            LogCleanupCompleted(
-                summary.RecordingsDeleted,
-                summary.SnapshotsDeleted,
-                summary.ThumbnailsDeleted,
-                summary.DirectoriesRemoved,
-                FormatBytes(summary.BytesFreed),
-                summary.ErrorCount);
-
-            CheckDiskSpace(settingsService.Recording.RecordingPath);
-        }
-        finally
-        {
-            lock (runLock)
-            {
-                isRunning = false;
-            }
-        }
+        CheckDiskSpace(settingsService.Recording.RecordingPath);
     }
 
     private void CheckDiskSpace(string recordingPath)

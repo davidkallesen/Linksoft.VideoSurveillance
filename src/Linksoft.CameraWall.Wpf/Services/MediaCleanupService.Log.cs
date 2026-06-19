@@ -2,15 +2,6 @@ namespace Linksoft.CameraWall.Wpf.Services;
 
 public partial class MediaCleanupService
 {
-    [LoggerMessage(Level = LogLevel.Information, Message = "Media cleanup service initializing with schedule: {Schedule}")]
-    private partial void LogCleanupInitializing(MediaCleanupSchedule schedule);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Media cleanup is disabled")]
-    private partial void LogCleanupDisabled();
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Media cleanup service stopped")]
-    private partial void LogCleanupStopped();
-
     [LoggerMessage(Level = LogLevel.Debug, Message = "Cleanup already in progress, skipping")]
     private partial void LogCleanupAlreadyInProgress();
 
@@ -19,15 +10,6 @@ public partial class MediaCleanupService
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Media cleanup completed - Recordings: {Recordings}, Snapshots: {Snapshots}, Thumbnails: {Thumbnails}, Directories: {Directories}, Bytes freed: {Bytes}, Errors: {Errors}")]
     private partial void LogCleanupCompleted(int recordings, int snapshots, int thumbnails, int directories, string bytes, int errors);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Periodic cleanup timer started with interval: {Interval}")]
-    private partial void LogPeriodicTimerStarted(TimeSpan interval);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Periodic cleanup timer stopped")]
-    private partial void LogPeriodicTimerStopped();
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Periodic cleanup tick failed; cleanup will retry on next interval")]
-    private partial void LogPeriodicTickFailed(Exception ex);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to enumerate active recording sessions during cleanup; falling back to deleting all eligible files")]
     private partial void LogActiveSessionLookupFailed(Exception ex);
