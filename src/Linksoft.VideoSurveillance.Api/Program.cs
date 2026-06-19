@@ -117,9 +117,11 @@ try
     builder.Services.AddSingleton<ITimeProvider, SystemTimeProvider>();
     builder.Services.AddSingleton<IBackgroundServiceHealthService, BackgroundServiceHealthService>();
 
-    // Register the event broadcaster hosted service. This stays a plain
-    // IHostedService (not BackgroundServiceBase) — it only subscribes/
-    // unsubscribes to Core events in Start/Stop and has no recurring work.
+    // Event broadcaster: forwards Core events to SignalR. Built on
+    // BackgroundServiceBase for consistency with the other workers (it
+    // subscribes/unsubscribes in Start/Stop; DoWorkAsync is a no-op and the
+    // idle loop parks on a long delay).
+    builder.Services.AddSingleton(new SurveillanceEventBroadcasterOptions());
     builder.Services.AddHostedService<SurveillanceEventBroadcaster>();
 
     // Each BackgroundServiceBase-derived worker gets its OWN typed options

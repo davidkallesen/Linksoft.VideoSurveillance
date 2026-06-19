@@ -3,8 +3,15 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 /// <summary>
 /// Background service that subscribes to Core service events and broadcasts them
 /// to connected SignalR clients via the <see cref="SurveillanceHub"/>.
+/// <br/><br/>
+/// Built on <see cref="BackgroundServiceBase{T}"/> for consistency with the
+/// other hosted workers (shared start/stop logging and health-running state),
+/// even though the work itself is event-driven rather than periodic:
+/// <see cref="DoWorkAsync"/> is a no-op and the base idle loop parks on a long
+/// delay (see <see cref="SurveillanceEventBroadcasterOptions"/>). Subscription
+/// happens in <see cref="StartAsync"/> and tear-down in <see cref="StopAsync"/>.
 /// </summary>
-public sealed partial class SurveillanceEventBroadcaster : IHostedService
+public sealed partial class SurveillanceEventBroadcaster : BackgroundServiceBase<SurveillanceEventBroadcaster>
 {
     // Bound the time any single broadcast can spend in SendAsync so a
     // slow/disconnected client cannot accumulate unbounded in-flight tasks
@@ -16,26 +23,26 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
     private readonly ServerRecordingService serverRecordingService;
     private readonly IMotionDetectionService motionDetectionService;
     private readonly IUsbCameraLifecycleCoordinator usbLifecycle;
-    private readonly ILogger<SurveillanceEventBroadcaster> logger;
 
     public SurveillanceEventBroadcaster(
+        ILogger<SurveillanceEventBroadcaster> logger,
+        SurveillanceEventBroadcasterOptions options,
         IHubContext<SurveillanceHub> hubContext,
         IRecordingService recordingService,
         ServerRecordingService serverRecordingService,
         IMotionDetectionService motionDetectionService,
-        IUsbCameraLifecycleCoordinator usbLifecycle,
-        ILogger<SurveillanceEventBroadcaster> logger)
+        IUsbCameraLifecycleCoordinator usbLifecycle)
+        : base(logger, options)
     {
         this.hubContext = hubContext;
         this.recordingService = recordingService;
         this.serverRecordingService = serverRecordingService;
         this.motionDetectionService = motionDetectionService;
         this.usbLifecycle = usbLifecycle;
-        this.logger = logger;
     }
 
     /// <inheritdoc />
-    public Task StartAsync(CancellationToken cancellationToken)
+    public override Task StartAsync(CancellationToken cancellationToken)
     {
         recordingService.RecordingStateChanged += OnRecordingStateChanged;
         motionDetectionService.MotionDetected += OnMotionDetected;
@@ -44,11 +51,11 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
 
         LogBroadcasterStarted();
 
-        return Task.CompletedTask;
+        return base.StartAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public Task StopAsync(CancellationToken cancellationToken)
+    public override Task StopAsync(CancellationToken cancellationToken)
     {
         recordingService.RecordingStateChanged -= OnRecordingStateChanged;
         motionDetectionService.MotionDetected -= OnMotionDetected;
@@ -57,8 +64,12 @@ public sealed partial class SurveillanceEventBroadcaster : IHostedService
 
         LogBroadcasterStopped();
 
-        return Task.CompletedTask;
+        return base.StopAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public override Task DoWorkAsync(CancellationToken stoppingToken)
+        => Task.CompletedTask; // Event-driven: all work runs in the handlers wired up in StartAsync.
 
     // Sync event handlers that fire-and-forget a Task. async void in an event
     // handler means an unhandled synchronous-portion exception escapes onto

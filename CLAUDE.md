@@ -43,7 +43,7 @@ Long-running periodic work uses `Atc.Hosting` base classes instead of hand-rolle
 
 - **`BackgroundServiceBase<T>`** — fixed-interval work. Override `DoWorkAsync(CancellationToken)`. Cadence comes from `IBackgroundServiceOptions` (`StartupDelaySeconds`, then `RepeatIntervalSeconds` *after* each tick completes — it is delay-after-completion, not fixed-rate).
 - **`BackgroundScheduleServiceBase<T>`** — cron-scheduled work via `IBackgroundScheduleServiceOptions.CronExpression` (5-field, evaluated against **UTC**). Use for wall-clock schedules ("daily at 03:00"); use `BackgroundServiceBase` for plain intervals.
-- Pure event-wiring services (subscribe in `StartAsync`, unsubscribe in `StopAsync`, no recurring work) stay a **plain `IHostedService`** — neither base fits.
+- **Do not use a plain `IHostedService`.** Every hosted worker derives from an `Atc.Hosting` `*ServiceBase`, even pure event-wiring services with no recurring work. Subscribe in an overridden `StartAsync` (then call `base.StartAsync`), unsubscribe in an overridden `StopAsync` (then call `base.StopAsync`), and make `DoWorkAsync` a no-op with `RepeatIntervalSeconds = ushort.MaxValue` so the idle loop parks on a long delay rather than spinning (see `SurveillanceEventBroadcaster`).
 
 ### Per-service typed options (avoid the shared-singleton footgun)
 `BackgroundServiceBase` takes the *interface* `IBackgroundServiceOptions`, so registering one `DefaultBackgroundServiceOptions` as that interface makes **every** worker share one interval. Give each worker its **own** typed options class and register it by that concrete type:
