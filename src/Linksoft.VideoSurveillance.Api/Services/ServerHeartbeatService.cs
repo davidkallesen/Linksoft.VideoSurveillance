@@ -26,13 +26,18 @@ public sealed partial class ServerHeartbeatService : BackgroundServiceBase<Serve
 
     public ServerHeartbeatService(
         ILogger<ServerHeartbeatService> logger,
-        ServerHeartbeatServiceOptions backgroundServiceOptions,
+        ServerHeartbeatServiceOptions options,
+        IBackgroundServiceHealthService healthService,
         ServerRecordingService recordingService,
         IApplicationSettingsService settingsService)
-        : base(logger, backgroundServiceOptions)
+        : base(logger, options, healthService)
     {
         this.recordingService = recordingService;
         this.settingsService = settingsService;
+
+        healthService.SetMaxStalenessInSeconds(
+            ServiceName,
+            BackgroundServiceHealthHelper.StalenessFor(options));
     }
 
     /// <inheritdoc />

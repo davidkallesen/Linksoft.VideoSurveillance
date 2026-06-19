@@ -91,34 +91,45 @@ try
     // Register SignalR for real-time events
     builder.Services.AddSignalR();
 
-    // Register the event broadcaster hosted service
+    // Shared health tracker for all BackgroundServiceBase-derived workers.
+    // Each worker reports its running state around every DoWorkAsync tick and
+    // sets its own max-staleness window; the /health endpoint reads this to
+    // surface a wedged or stopped background service.
+    builder.Services.AddSingleton<ITimeProvider, SystemTimeProvider>();
+    builder.Services.AddSingleton<IBackgroundServiceHealthService, BackgroundServiceHealthService>();
+
+    // Register the event broadcaster hosted service. This stays a plain
+    // IHostedService (not BackgroundServiceBase) — it only subscribes/
+    // unsubscribes to Core events in Start/Stop and has no recurring work.
     builder.Services.AddHostedService<SurveillanceEventBroadcaster>();
 
-    // Register the camera connection manager for auto-recording on connect
-    builder.Services.AddSingleton<IBackgroundServiceOptions>(new DefaultBackgroundServiceOptions
-    {
-        ServiceName = nameof(CameraConnectionService),
-        StartupDelaySeconds = 3,
-        RepeatIntervalSeconds = 30,
-    });
+    // Each BackgroundServiceBase-derived worker gets its OWN typed options
+    // instance so they can run on independent intervals — a single shared
+    // IBackgroundServiceOptions singleton would force them all onto one cadence.
 
+    // Camera connection manager: auto-records cameras on connect and reaps
+    // dead sessions every 30s.
+    builder.Services.AddSingleton(new CameraConnectionServiceOptions());
     builder.Services.AddHostedService<CameraConnectionService>();
 
     // Periodic disk-retention enforcement; without this, continuous server
-    // recording fills the disk and crashes the host. Mirrors the WPF app's
-    // MediaCleanupService but runs on a System.Threading.Timer (no UI).
+    // recording fills the disk and crashes the host.
+    builder.Services.AddSingleton(new ServerMediaCleanupServiceOptions());
     builder.Services.AddHostedService<ServerMediaCleanupService>();
 
     // Clock-aligned segment rollover so server recordings don't grow into
     // single multi-day files. Uses the shared RecordingSlotCalculator so
     // boundary detection is immune to NTP rollback, midnight, and DST.
+    builder.Services.AddSingleton(new ServerRecordingSegmentationServiceOptions());
     builder.Services.AddHostedService<ServerRecordingSegmentationService>();
+
+    // Idle HLS stream reaper — sweeps orphaned FFmpeg transcoders every 10s.
+    // Extracted from StreamingService's former internal Timer.
+    builder.Services.AddSingleton(new HlsStreamReaperServiceOptions());
+    builder.Services.AddHostedService<HlsStreamReaperService>();
 
     // Periodic liveness beacon so a 4-day soak log shows steady process /
     // recording-state metrics rather than going silent between disruptions.
-    // Typed options (vs. the shared IBackgroundServiceOptions singleton CCM
-    // uses) so the two BackgroundServiceBase-derived services can coexist
-    // with different intervals.
     builder.Services.AddSingleton(new ServerHeartbeatServiceOptions());
     builder.Services.AddHostedService<ServerHeartbeatService>();
 
@@ -146,8 +157,34 @@ try
     // soak-monitoring surface — gives a single round-trip view of which
     // sessions are alive and which are "stuck" (session present but the
     // pipeline died and the reaper hasn't swept yet).
+    // Liveness gate over the always-on background workers. Cleanup and
+    // segmentation are intentionally excluded: cleanup may legitimately stop
+    // (OnStartup run-once mode) and both no-op when disabled, so their state
+    // isn't a process-health signal. A stale/stopped always-on worker flips
+    // this to 503 so an orchestrator restarts the host.
+    string[] monitoredServices =
+    [
+        nameof(CameraConnectionService),
+        nameof(HlsStreamReaperService),
+        nameof(ServerHeartbeatService),
+    ];
+
     app
-        .MapGet("/health", () => Results.Ok(new { Status = "ok" }))
+        .MapGet("/health", (IBackgroundServiceHealthService health) =>
+        {
+            var services = monitoredServices.ToDictionary(
+                name => name,
+                health.IsServiceRunning,
+                StringComparer.Ordinal);
+
+            var healthy = services.Values.All(running => running);
+
+            var payload = new { Status = healthy ? "ok" : "degraded", Services = services };
+
+            return healthy
+                ? Results.Ok(payload)
+                : Results.Json(payload, statusCode: StatusCodes.Status503ServiceUnavailable);
+        })
         .ExcludeFromDescription();
 
     app

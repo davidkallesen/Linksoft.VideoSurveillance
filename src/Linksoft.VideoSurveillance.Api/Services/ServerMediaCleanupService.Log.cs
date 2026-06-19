@@ -2,26 +2,11 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 
 public sealed partial class ServerMediaCleanupService
 {
-    [LoggerMessage(Level = LogLevel.Information, Message = "Server media cleanup starting (schedule: {Schedule})")]
-    private partial void LogServiceStarting(MediaCleanupSchedule schedule);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Server media cleanup is disabled by configuration")]
-    private partial void LogDisabled();
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Server media cleanup stopped")]
-    private partial void LogServiceStopped();
-
     [LoggerMessage(Level = LogLevel.Information, Message = "Cleanup pass starting - Recording retention: {RecordingDays} days, Include snapshots: {IncludeSnapshots}, Snapshot retention: {SnapshotDays} days")]
     private partial void LogCleanupStarting(int recordingDays, bool includeSnapshots, int snapshotDays);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Cleanup pass complete - Recordings: {Recordings}, Snapshots: {Snapshots}, Thumbnails: {Thumbnails}, Directories: {Directories}, Bytes freed: {Bytes}, Errors: {Errors}")]
     private partial void LogCleanupCompleted(int recordings, int snapshots, int thumbnails, int directories, string bytes, int errors);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Cleanup already in progress, skipping this tick")]
-    private partial void LogAlreadyInProgress();
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "Periodic cleanup tick failed; will retry on next interval")]
-    private partial void LogCleanupTickFailed(Exception ex);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Deleted media file: {File}")]
     private partial void LogDeletedFile(string file);

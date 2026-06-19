@@ -16,17 +16,22 @@ public sealed partial class CameraConnectionService : BackgroundServiceBase<Came
 
     public CameraConnectionService(
         ILogger<CameraConnectionService> logger,
-        IBackgroundServiceOptions backgroundServiceOptions,
+        CameraConnectionServiceOptions options,
+        IBackgroundServiceHealthService healthService,
         ICameraStorageService storageService,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService,
         IMediaPipelineFactory pipelineFactory)
-        : base(logger, backgroundServiceOptions)
+        : base(logger, options, healthService)
     {
         this.storageService = storageService;
         this.settingsService = settingsService;
         this.recordingService = recordingService;
         this.pipelineFactory = pipelineFactory;
+
+        healthService.SetMaxStalenessInSeconds(
+            ServiceName,
+            BackgroundServiceHealthHelper.StalenessFor(options));
     }
 
     /// <inheritdoc />

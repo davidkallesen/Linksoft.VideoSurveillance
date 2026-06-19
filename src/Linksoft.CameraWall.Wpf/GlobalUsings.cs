@@ -14,6 +14,7 @@ global using System.Windows;
 global using System.Windows.Threading;
 
 global using Atc.DependencyInjection;
+global using Atc.Hosting;
 global using Atc.SourceGenerators.Annotations;
 global using Atc.Wpf.Notifications;
 global using Atc.XamlToolkit.Controls.Attributes;

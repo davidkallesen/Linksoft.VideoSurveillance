@@ -36,6 +36,51 @@ The REST API + SignalR server enables headless video surveillance:
 - **SignalR hub**: `/hubs/surveillance` broadcasts connection state, motion, and recording events
 - **Run with Aspire**: `dotnet run --project src/Linksoft.VideoSurveillance.Aspire` starts the API with the Aspire dashboard
 
+## Hosted Background Services (Atc.Hosting)
+Long-running periodic work uses `Atc.Hosting` base classes instead of hand-rolled `System.Threading.Timer` loops. The base class supplies the loop, sequential (no-overlap) ticking, exception logging via `OnExceptionAsync`, and optional health tracking.
+
+- **`BackgroundServiceBase<T>`** — fixed-interval work. Override `DoWorkAsync(CancellationToken)`. Cadence comes from `IBackgroundServiceOptions` (`StartupDelaySeconds`, then `RepeatIntervalSeconds` *after* each tick completes — it is delay-after-completion, not fixed-rate).
+- **`BackgroundScheduleServiceBase<T>`** — cron-scheduled work via `IBackgroundScheduleServiceOptions.CronExpression` (5-field, evaluated against **UTC**). Use for wall-clock schedules ("daily at 03:00"); use `BackgroundServiceBase` for plain intervals.
+- Pure event-wiring services (subscribe in `StartAsync`, unsubscribe in `StopAsync`, no recurring work) stay a **plain `IHostedService`** — neither base fits.
+
+### Per-service typed options (avoid the shared-singleton footgun)
+`BackgroundServiceBase` takes the *interface* `IBackgroundServiceOptions`, so registering one `DefaultBackgroundServiceOptions` as that interface makes **every** worker share one interval. Give each worker its **own** typed options class and register it by that concrete type:
+```csharp
+public sealed class CameraConnectionServiceOptions : IBackgroundServiceOptions
+{
+    public ushort StartupDelaySeconds { get; set; } = 3;
+    public ushort RepeatIntervalSeconds { get; set; } = 30;
+    public string? ServiceName { get; set; } = nameof(CameraConnectionService);
+}
+
+// Program.cs
+builder.Services.AddSingleton(new CameraConnectionServiceOptions());
+builder.Services.AddHostedService<CameraConnectionService>();
+```
+
+### Health tracking
+Register the tracker once and let each worker report staleness; the API's `/health` endpoint returns 503 when an always-on worker goes stale:
+```csharp
+builder.Services.AddSingleton<ITimeProvider, SystemTimeProvider>();
+builder.Services.AddSingleton<IBackgroundServiceHealthService, BackgroundServiceHealthService>();
+```
+Each worker passes `healthService` to the 3-arg base ctor and sets its own window in its constructor:
+```csharp
+: base(logger, options, healthService)
+{
+    healthService.SetMaxStalenessInSeconds(ServiceName, BackgroundServiceHealthHelper.StalenessFor(options));
+}
+```
+
+### WPF hosting (shared singleton + interface)
+WPF services that are both UI-facing (events, `IsRunning`, manual triggers) and periodic derive from `BackgroundServiceBase<T>` **and** implement their interface. They are NOT `[Registration]`-auto-registered; the App registers one singleton exposed both ways so the same instance serves the UI and the host:
+```csharp
+services.AddSingleton<MediaCleanupService>();
+services.AddSingleton<IMediaCleanupService>(sp => sp.GetRequiredService<MediaCleanupService>());
+services.AddHostedService(sp => sp.GetRequiredService<MediaCleanupService>());
+```
+These start on `host.StartAsync()` and stop on `host.StopAsync()` — no explicit `Initialize()`/`StopService()`.
+
 ## Key Frameworks & Packages
 - **Atc.XamlToolkit** - MVVM source generators (`[ObservableProperty]`, `[RelayCommand]`, `[DependencyProperty]`)
 - **Atc.SourceGenerators** - Source generators for DI registration (`[Registration]`), options binding (`[OptionsBinding]`)

@@ -2,113 +2,69 @@ namespace Linksoft.VideoSurveillance.Api.Services;
 
 /// <summary>
 /// Server-side periodic segmentation. Mirrors the WPF
-/// <c>RecordingSegmentationService</c> but runs as an
-/// <see cref="IHostedService"/> driven by <see cref="System.Threading.Timer"/>
-/// and uses the shared <see cref="RecordingSlotCalculator"/> for boundary
-/// detection that is immune to NTP rollback, midnight, and DST.
+/// <c>RecordingSegmentationService</c>, driven by
+/// <see cref="BackgroundServiceBase{T}"/> (sequential, no-overlap ticks) and
+/// the shared <see cref="RecordingSlotCalculator"/> for boundary detection that
+/// is immune to NTP rollback, midnight, and DST.
 /// </summary>
-public sealed partial class ServerRecordingSegmentationService : IHostedService, IAsyncDisposable
+public sealed partial class ServerRecordingSegmentationService : BackgroundServiceBase<ServerRecordingSegmentationService>
 {
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(30);
-
-    private readonly ILogger<ServerRecordingSegmentationService> logger;
     private readonly IApplicationSettingsService settingsService;
     private readonly IRecordingService recordingService;
 
-    private Timer? checkTimer;
-    private (DateOnly Date, int Slot) lastProcessed = (DateOnly.MinValue, -1);
-    private int tickInProgress;
-    private bool disposed;
+    private (DateOnly Date, int Slot) lastProcessed;
+    private bool started;
 
     public ServerRecordingSegmentationService(
         ILogger<ServerRecordingSegmentationService> logger,
+        ServerRecordingSegmentationServiceOptions options,
+        IBackgroundServiceHealthService healthService,
         IApplicationSettingsService settingsService,
         IRecordingService recordingService)
+        : base(logger, options, healthService)
     {
-        this.logger = logger;
         this.settingsService = settingsService;
         this.recordingService = recordingService;
+
+        // Seed the high-water mark to the current slot so a service restart
+        // doesn't immediately segment a recording that just started. Guard the
+        // interval: ComputeSlot throws on a non-positive value, and a throwing
+        // ctor would take down host startup over a mere misconfiguration.
+        var intervalMinutes = settingsService.Recording.MaxRecordingDurationMinutes;
+        lastProcessed = intervalMinutes > 0
+            ? RecordingSlotCalculator.ComputeSlot(DateTime.Now, intervalMinutes)
+            : (DateOnly.MinValue, -1);
+
+        healthService.SetMaxStalenessInSeconds(
+            ServiceName,
+            BackgroundServiceHealthHelper.StalenessFor(options));
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public override Task DoWorkAsync(CancellationToken stoppingToken)
     {
         var settings = settingsService.Recording;
+
         if (!settings.EnableHourlySegmentation)
         {
-            LogSegmentationDisabled();
+            // Segmentation can be toggled at runtime; a disabled tick is a
+            // cheap no-op (vs. the old design that only read the flag once at
+            // startup and required a restart to pick up changes).
             return Task.CompletedTask;
         }
 
-        // Initialize the high-water mark to the current slot so we don't
-        // segment a recording that just started during a service restart
-        // boundary alignment.
-        lastProcessed = RecordingSlotCalculator.ComputeSlot(
-            DateTime.Now,
-            settings.MaxRecordingDurationMinutes);
+        if (!started)
+        {
+            LogSegmentationStarted(settings.MaxRecordingDurationMinutes);
+            started = true;
+        }
 
-        checkTimer = new Timer(OnCheckTimerTick, state: null, CheckInterval, CheckInterval);
-        LogSegmentationStarted(settings.MaxRecordingDurationMinutes);
+        PerformSegmentationCheck(settings);
         return Task.CompletedTask;
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    private void PerformSegmentationCheck(RecordingSettings settings)
     {
-        if (checkTimer is not null)
-        {
-            await checkTimer.DisposeAsync().ConfigureAwait(false);
-            checkTimer = null;
-        }
-
-        LogSegmentationStopped();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        disposed = true;
-        await StopAsync(CancellationToken.None).ConfigureAwait(false);
-    }
-
-    private void OnCheckTimerTick(object? state)
-    {
-        // System.Threading.Timer can overlap ticks if a previous tick takes
-        // longer than the interval (e.g. SwitchRecording stalls during an
-        // RTSP reconnect). Without this guard, two threads would compute
-        // identical currentSlot values and both call SegmentRecording on
-        // the same camera — the recording service's TryGetValue/mutate is
-        // not atomic, so the result would be undefined.
-        if (Interlocked.CompareExchange(ref tickInProgress, 1, 0) != 0)
-        {
-            return;
-        }
-
-        try
-        {
-            PerformSegmentationCheck();
-        }
-        catch (Exception ex)
-        {
-            LogSegmentationTickFailed(ex);
-        }
-        finally
-        {
-            Interlocked.Exchange(ref tickInProgress, 0);
-        }
-    }
-
-    private void PerformSegmentationCheck()
-    {
-        var settings = settingsService.Recording;
-
-        if (!settings.EnableHourlySegmentation)
-        {
-            return;
-        }
-
         var now = DateTime.Now;
         var intervalMinutes = settings.MaxRecordingDurationMinutes;
         var currentSlot = RecordingSlotCalculator.ComputeSlot(now, intervalMinutes);
