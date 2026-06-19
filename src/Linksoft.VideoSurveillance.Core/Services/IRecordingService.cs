@@ -43,4 +43,14 @@ public interface IRecordingService
     /// Returns the number of sessions reaped.
     /// </summary>
     int ReapInactiveSessions();
+
+    /// <summary>
+    /// Checks disk space mid-recording. Attempts to reclaim space; if the
+    /// drive is still below the guard threshold after reclaim, stops all
+    /// active recordings to prevent disk exhaustion.
+    /// Returns true if recordings were stopped; false otherwise.
+    /// No-op (returns false) when the disk-space guard is disabled or no
+    /// recordings are active.
+    /// </summary>
+    bool EnforceDiskSpaceGuard();
 }

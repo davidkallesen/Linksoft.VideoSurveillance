@@ -45,6 +45,10 @@ public sealed partial class ServerRecordingSegmentationService : BackgroundServi
     {
         var settings = settingsService.Recording;
 
+        // Disk guard runs independently of the segmentation setting so manual
+        // recordings are protected even when hourly segmentation is disabled.
+        recordingService.EnforceDiskSpaceGuard();
+
         if (!settings.EnableHourlySegmentation)
         {
             // Segmentation can be toggled at runtime; a disabled tick is a

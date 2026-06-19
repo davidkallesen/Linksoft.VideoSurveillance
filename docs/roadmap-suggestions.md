@@ -27,7 +27,7 @@ Because `RecordingSession.CurrentFilePath` is get-only, `RecordingService.Segmen
 `ServerRecordingService.GenerateRecordingFilename` / `StartRecording` always read `settingsService.Recording.RecordingPath` and `.RecordingFormat`, ignoring `camera.Overrides?.Recording.RecordingPath` / `.RecordingFormat`. The WPF side correctly uses `GetEffectiveRecordingPath` / `GetEffectiveRecordingFormat` helpers. **Per-camera path/format overrides configured through the API are a silent no-op on the server.**
 **Fix:** Route the server through the same effective-value helpers as WPF.
 
-### 🟠 Disk-space guard only fires at segment boundaries, never mid-recording
+### ✅ Disk-space guard only fires at segment boundaries, never mid-recording *(Fixed — batch 5: EnforceDiskSpaceGuard() on IRecordingService; segmentation timer starts when either EnableHourlySegmentation or EnableDiskSpaceGuard is true; WPF overlap guard added)*
 `ReclaimDiskSpaceIfNeeded` runs in `StartRecording` and `SegmentRecording` only. On a long manual recording (segmentation disabled, or `MaxRecordingDurationMinutes = 0`) the disk can fill completely while FFmpeg keeps writing, producing a corrupt/truncated file with no warning event and no fallback stop. See [`disk-space-guard.md`](disk-space-guard.md) for the current design.
 **Fix:** Poll free space on a timer during active recordings; raise a warning event and gracefully stop (closing the muxer cleanly) when below `MinFreeSpaceMb` and reclaim cannot recover.
 
