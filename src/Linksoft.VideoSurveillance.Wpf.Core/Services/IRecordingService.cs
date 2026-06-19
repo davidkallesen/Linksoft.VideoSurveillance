@@ -93,4 +93,15 @@ public interface IRecordingService
     /// </summary>
     /// <returns>A read-only list of active recording sessions.</returns>
     IReadOnlyList<RecordingSession> GetActiveSessions();
+
+    /// <summary>
+    /// Checks disk space mid-recording. Attempts to reclaim space; if the
+    /// drive is still below the guard threshold after reclaim, stops all
+    /// active recordings to prevent disk exhaustion.
+    /// </summary>
+    /// <returns>
+    /// True if recordings were stopped; false otherwise.
+    /// Returns false when the disk-space guard is disabled or no recordings are active.
+    /// </returns>
+    bool EnforceDiskSpaceGuard();
 }

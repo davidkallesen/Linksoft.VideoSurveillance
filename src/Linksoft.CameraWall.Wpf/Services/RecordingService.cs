@@ -429,6 +429,24 @@ public partial class RecordingService : IRecordingService, IDisposable
     [SuppressMessage("Minor Code Smell", "S3400:Methods should not return constants", Justification = "Intentional interface no-op; tile lifecycle handles dead-pipeline reaping on WPF.")]
     public int ReapInactiveSessions() => 0;
 
+    /// <inheritdoc/>
+    public bool EnforceDiskSpaceGuard()
+    {
+        if (sessions.IsEmpty)
+        {
+            return false;
+        }
+
+        if (!ReclaimDiskSpaceIfNeeded())
+        {
+            LogDiskSpaceGuardStoppingAllRecordings(sessions.Count);
+            StopAllRecordings();
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Disposes of the service resources.
     /// </summary>

@@ -504,6 +504,24 @@ public sealed partial class ServerRecordingService : IRecordingService, IDisposa
     }
 
     /// <inheritdoc/>
+    public bool EnforceDiskSpaceGuard()
+    {
+        if (sessions.IsEmpty)
+        {
+            return false;
+        }
+
+        if (!ReclaimDiskSpaceIfNeeded())
+        {
+            LogDiskSpaceGuardStoppingAllRecordings(sessions.Count);
+            StopAllRecordings();
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc/>
     public void Dispose()
     {
         StopAllRecordings();

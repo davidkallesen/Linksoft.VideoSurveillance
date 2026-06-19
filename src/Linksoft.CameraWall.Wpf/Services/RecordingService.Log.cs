@@ -70,4 +70,7 @@ public partial class RecordingService
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Disk space still below threshold after reclaim — recording aborted for camera '{CameraName}'")]
     private partial void LogDiskSpaceGateFailed(string cameraName);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Disk still below threshold mid-recording — stopping {Count} active recording(s) to prevent disk exhaustion")]
+    private partial void LogDiskSpaceGuardStoppingAllRecordings(int count);
 }

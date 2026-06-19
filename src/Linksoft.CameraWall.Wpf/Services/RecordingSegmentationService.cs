@@ -70,6 +70,10 @@ public partial class RecordingSegmentationService : BackgroundServiceBase<Record
     /// <param name="stoppingToken">The stopping token.</param>
     public override Task DoWorkAsync(CancellationToken stoppingToken)
     {
+        // Disk guard runs independently of the segmentation setting so manual
+        // recordings are protected even when hourly segmentation is disabled.
+        recordingService.EnforceDiskSpaceGuard();
+
         var settings = settingsService.Recording;
         var enabled = settings.EnableHourlySegmentation;
 
